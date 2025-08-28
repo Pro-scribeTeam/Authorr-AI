@@ -16,7 +16,75 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function initializeApplication() {
-    console.log('🎵 AI Audiobook Creator - Voice Cloning Studio Initialized');
+    console.log('🎵 AUTHORR AI - Complete Platform Initialized');
+    
+    // Detect current page and initialize accordingly
+    const currentPage = getCurrentPage();
+    console.log(`Current page: ${currentPage}`);
+    
+    // Initialize common functionality
+    initializeCommonFeatures();
+    
+    // Initialize page-specific functionality
+    switch(currentPage) {
+        case 'dashboard':
+            initializeDashboard();
+            break;
+        case 'workspace':
+            initializeWorkspace();
+            break;
+        case 'narration':
+            initializeNarration();
+            break;
+        case 'export':
+            initializeExport();
+            break;
+        default:
+            initializeDashboard(); // Default to dashboard
+    }
+}
+
+function getCurrentPage() {
+    const path = window.location.pathname;
+    if (path === '/' || path === '/dashboard') return 'dashboard';
+    if (path.startsWith('/workspace')) return 'workspace';
+    if (path.startsWith('/narration')) return 'narration';
+    if (path.startsWith('/export')) return 'export';
+    return 'dashboard';
+}
+
+function initializeCommonFeatures() {
+    console.log('🔧 Initializing common features...');
+    
+    // Add any common functionality that works across all pages
+    setupGlobalEventListeners();
+}
+
+function initializeDashboard() {
+    console.log('📊 Initializing Dashboard...');
+    
+    // Load recent projects
+    loadRecentProjects();
+    
+    // Setup project creation form
+    setupProjectCreationForm();
+}
+
+function initializeWorkspace() {
+    console.log('✍️ Initializing Workspace...');
+    
+    // Initialize writing tools
+    setupWritingTools();
+    
+    // Initialize manuscript editor
+    setupManuscriptEditor();
+    
+    // Initialize writing statistics
+    setupWritingStatistics();
+}
+
+function initializeNarration() {
+    console.log('🎙️ Initializing Narration Studio...');
     
     // Initialize audio visualizer
     initializeAudioVisualizer();
@@ -538,3 +606,272 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 console.log('🚀 AI Audiobook Creator - Voice Cloning Studio Ready!');
+
+// =============================================================================
+// DASHBOARD PAGE FUNCTIONS
+// =============================================================================
+
+function loadRecentProjects() {
+    axios.get('/api/projects')
+        .then(response => {
+            const projects = response.data.projects;
+            const projectsList = document.getElementById('projects-list');
+            if (projectsList && projects) {
+                projectsList.innerHTML = projects.map(project => `
+                    <div class="bg-gray-700 rounded-lg p-6 hover:bg-gray-600 transition-colors cursor-pointer">
+                        <div class="flex justify-between items-start mb-3">
+                            <h4 class="font-semibold text-white">${project.title}</h4>
+                            <span class="text-xs px-2 py-1 rounded ${project.status === 'Complete' ? 'bg-green-600' : 'bg-yellow-600'} text-white">
+                                ${project.status}
+                            </span>
+                        </div>
+                        <p class="text-sm text-gray-300 mb-2">by ${project.author}</p>
+                        <p class="text-xs text-gray-400">Created: ${project.created}</p>
+                        <div class="mt-4 flex gap-2">
+                            <button class="bg-cyan-600 hover:bg-cyan-500 text-white px-3 py-1 rounded text-xs transition-all">
+                                <i class="fas fa-edit mr-1"></i>Edit
+                            </button>
+                            <button class="bg-purple-600 hover:bg-purple-500 text-white px-3 py-1 rounded text-xs transition-all">
+                                <i class="fas fa-microphone mr-1"></i>Narrate
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        })
+        .catch(error => {
+            console.error('Failed to load projects:', error);
+        });
+}
+
+function setupProjectCreationForm() {
+    const projectForm = document.getElementById('project-form');
+    if (projectForm) {
+        projectForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = {
+                title: document.getElementById('book-title')?.value,
+                author: document.getElementById('author-name')?.value,
+                audience: document.getElementById('target-audience')?.value,
+                genre: document.getElementById('genre')?.value,
+                tone: document.getElementById('tone-voice')?.value,
+                perspective: document.getElementById('narrative-perspective')?.value,
+                theme: document.getElementById('theme-message')?.value
+            };
+            
+            if (!formData.title || !formData.author) {
+                alert('Please fill in the required fields (Title and Author)');
+                return;
+            }
+            
+            try {
+                const response = await axios.post('/api/project/create', formData);
+                console.log('Project created:', response.data);
+                alert('Project created successfully! Redirecting to workspace...');
+                window.location.href = '/workspace';
+            } catch (error) {
+                console.error('Failed to create project:', error);
+                alert('Failed to create project. Please try again.');
+            }
+        });
+    }
+}
+
+// =============================================================================
+// WORKSPACE PAGE FUNCTIONS
+// =============================================================================
+
+function setupWritingTools() {
+    // AI Writing Tools buttons
+    const toolButtons = document.querySelectorAll('[class*="bg-purple-600"], [class*="bg-blue-600"], [class*="bg-green-600"], [class*="bg-orange-600"], [class*="bg-red-600"], [class*="bg-teal-600"]');
+    
+    toolButtons.forEach(button => {
+        if (button.textContent.includes('Generate Ideas')) {
+            button.addEventListener('click', () => {
+                console.log('Generate Ideas clicked');
+                alert('AI Ideas Generator coming soon!');
+            });
+        } else if (button.textContent.includes('Create Outline')) {
+            button.addEventListener('click', () => {
+                console.log('Create Outline clicked');
+                alert('AI Outline Creator coming soon!');
+            });
+        } else if (button.textContent.includes('Expand Text')) {
+            button.addEventListener('click', () => {
+                console.log('Expand Text clicked');
+                alert('AI Text Expander coming soon!');
+            });
+        } else if (button.textContent.includes('Summarize')) {
+            button.addEventListener('click', () => {
+                console.log('Summarize clicked');
+                alert('AI Summarizer coming soon!');
+            });
+        } else if (button.textContent.includes('Rewrite')) {
+            button.addEventListener('click', () => {
+                console.log('Rewrite clicked');
+                alert('AI Rewriter coming soon!');
+            });
+        } else if (button.textContent.includes('Character Builder')) {
+            button.addEventListener('click', () => {
+                console.log('Character Builder clicked');
+                alert('AI Character Builder coming soon!');
+            });
+        }
+    });
+}
+
+function setupManuscriptEditor() {
+    const editor = document.getElementById('manuscript-editor');
+    const chapterTitle = document.getElementById('chapter-title');
+    
+    if (editor) {
+        editor.addEventListener('input', updateWritingStatistics);
+        
+        // Auto-save functionality
+        let saveTimeout;
+        editor.addEventListener('input', () => {
+            clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(() => {
+                console.log('Auto-saving manuscript...');
+                // Implement auto-save here
+            }, 2000);
+        });
+    }
+    
+    if (chapterTitle) {
+        chapterTitle.addEventListener('input', () => {
+            console.log('Chapter title updated:', chapterTitle.value);
+        });
+    }
+}
+
+function setupWritingStatistics() {
+    updateWritingStatistics();
+}
+
+function updateWritingStatistics() {
+    const editor = document.getElementById('manuscript-editor');
+    if (!editor) return;
+    
+    const text = editor.value || '';
+    const wordCount = text.trim() ? text.trim().split(/\s+/).length : 0;
+    const charCount = text.length;
+    const paraCount = text.split('\n\n').filter(p => p.trim()).length;
+    const readingTime = Math.ceil(wordCount / 200); // Average reading speed
+    
+    const updateElement = (id, value) => {
+        const element = document.getElementById(id);
+        if (element) element.textContent = value;
+    };
+    
+    updateElement('word-count', wordCount.toLocaleString());
+    updateElement('char-count', charCount.toLocaleString());
+    updateElement('para-count', paraCount);
+    updateElement('reading-time', `${readingTime} min`);
+}
+
+// =============================================================================
+// EXPORT PAGE FUNCTIONS
+// =============================================================================
+
+function initializeExport() {
+    console.log('📤 Initializing Export & Publishing...');
+    
+    // Initialize cover generation
+    setupCoverGeneration();
+    
+    // Initialize export formats
+    setupExportFormats();
+    
+    // Initialize publishing platforms
+    setupPublishingPlatforms();
+}
+
+function setupCoverGeneration() {
+    const generateBtn = document.getElementById('generate-cover-btn');
+    if (generateBtn) {
+        generateBtn.addEventListener('click', () => {
+            console.log('🎨 Generating AI cover...');
+            
+            const description = document.getElementById('cover-description')?.value;
+            const style = document.getElementById('cover-style')?.value;
+            const format = document.getElementById('cover-format')?.value;
+            
+            if (!description) {
+                alert('Please provide a book description for cover generation');
+                return;
+            }
+            
+            // Simulate cover generation
+            const preview = document.getElementById('cover-preview');
+            if (preview) {
+                preview.innerHTML = `
+                    <div class="bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg h-80 flex items-center justify-center text-white">
+                        <div class="text-center">
+                            <i class="fas fa-image text-6xl mb-4 opacity-50"></i>
+                            <p class="font-bold text-lg">Generated Cover</p>
+                            <p class="text-sm opacity-75">${style} style</p>
+                        </div>
+                    </div>
+                `;
+                
+                // Enable download and regenerate buttons
+                document.getElementById('download-cover-btn').disabled = false;
+                document.getElementById('regenerate-cover-btn').disabled = false;
+            }
+            
+            console.log('Cover generated with:', { description, style, format });
+        });
+    }
+}
+
+function setupExportFormats() {
+    const exportBtn = document.getElementById('export-audio-btn');
+    if (exportBtn) {
+        exportBtn.addEventListener('click', () => {
+            console.log('📁 Starting audio export...');
+            
+            const quality = document.getElementById('audio-quality')?.value;
+            const structure = document.getElementById('chapter-structure')?.value;
+            
+            // Get selected formats
+            const formats = [];
+            const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+            checkboxes.forEach(checkbox => {
+                if (checkbox.checked) {
+                    const label = checkbox.parentNode.textContent;
+                    if (label.includes('MP3')) formats.push('MP3');
+                    if (label.includes('M4B')) formats.push('M4B');
+                    if (label.includes('WAV')) formats.push('WAV');
+                }
+            });
+            
+            console.log('Exporting audio:', { quality, structure, formats });
+            alert('Audio export started! You will be notified when complete.');
+        });
+    }
+}
+
+function setupPublishingPlatforms() {
+    // Setup platform connection buttons
+    const connectButtons = document.querySelectorAll('button');
+    connectButtons.forEach(button => {
+        if (button.textContent.includes('Connect Account')) {
+            button.addEventListener('click', () => {
+                const platform = button.closest('.bg-gray-700').querySelector('h4').textContent;
+                console.log(`Connecting to ${platform}...`);
+                alert(`${platform} integration coming soon!`);
+            });
+        }
+    });
+}
+
+// =============================================================================
+// COMMON FUNCTIONS
+// =============================================================================
+
+function setupGlobalEventListeners() {
+    // Add any global event listeners here
+    console.log('🌐 Global event listeners initialized');
+}
