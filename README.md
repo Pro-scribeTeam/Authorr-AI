@@ -6,7 +6,7 @@
 - **Features**: Comprehensive suite for transforming text into professional audiobooks
 
 ## URLs
-- **Development**: https://3000-i3g5x2z4qagj80c234hk6.e2b.dev
+- **Live Development**: https://3000-io8bj4t9h6z5c0rl7cbxr-6532622b.e2b.dev
 - **GitHub Repository**: https://github.com/Pro-scribeTeam/Authorr-AI
 - **Project Backup**: https://page.gensparksite.com/project_backups/tooluse_Bud5y367SqubR9zB_TBpmg.tar.gz
 
@@ -144,13 +144,14 @@
 5. **Create Clone**: Process voice model for future use
 
 ## Deployment
-- **Platform**: Cloudflare Pages (deployment ready)
-- **Status**: ✅ Active (Complete Multi-Page Application)
+- **Platform**: Cloudflare Pages/Workers (deployment ready)
+- **Status**: ✅ Active (Complete Multi-Page Application) - Local Development Ready
 - **Tech Stack**: Hono + TypeScript + TailwindCSS + Font Awesome + Axios
-- **Build System**: Custom build with manual compilation for optimal compatibility
+- **Build System**: Vite + TypeScript compilation, builds to dist/_worker.js (79.49 kB)
 - **Process Management**: PM2 with ecosystem.config.cjs
 - **Version Control**: Git with comprehensive commit history
-- **Last Updated**: 2025-08-28 (Complete Website Restoration)
+- **Last Updated**: 2025-08-31 (Build System Fixed, Local Deployment Working)
+- **Cloudflare Status**: API token permissions needed for production deployment
 
 ## Recommended Next Steps for Development
 
