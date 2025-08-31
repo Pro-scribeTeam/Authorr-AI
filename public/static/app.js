@@ -104,6 +104,9 @@ function initializeNarration() {
     // Initialize TTS providers and voices
     loadTTSProviders();
     loadVoices();
+    
+    // Initialize enhanced lighting effects
+    initializeNarrationLighting();
 }
 
 // Audio Visualizer Functions
@@ -241,11 +244,32 @@ function updateRecordingUI(recording) {
         if (recordText) recordText.textContent = 'Recording...';
         stopBtn?.classList.remove('hidden');
         recordingVisual?.classList.add('recording');
+        
+        // Activate enhanced waveform
+        animateVoiceWaveform('recording-visual', true);
+        updateStatusLight('record-btn', 'processing');
+        
+        // Add recording glow effect to record button
+        if (recordBtn) {
+            recordBtn.style.boxShadow = `
+                0 0 20px rgba(239, 68, 68, 0.8),
+                0 0 40px rgba(239, 68, 68, 0.4)
+            `;
+        }
     } else {
         recordBtn?.classList.remove('recording');
         if (recordText) recordText.textContent = 'Start Recording';
         stopBtn?.classList.add('hidden');
         recordingVisual?.classList.remove('recording');
+        
+        // Deactivate waveform
+        animateVoiceWaveform('recording-visual', false);
+        updateStatusLight('record-btn', 'ready');
+        
+        // Remove recording glow effect
+        if (recordBtn) {
+            recordBtn.style.boxShadow = '';
+        }
     }
 }
 
@@ -884,6 +908,207 @@ function setupPublishingPlatforms() {
 function setupGlobalEventListeners() {
     // Add any global event listeners here
     console.log('🌐 Global event listeners initialized');
+    
+    // Initialize enhanced button effects
+    initializeEnhancedButtonEffects();
+    
+    // Initialize status lights
+    initializeStatusLights();
+}
+
+// =============================================================================
+// ENHANCED LIGHTING AND VISUAL EFFECTS
+// =============================================================================
+
+function initializeEnhancedButtonEffects() {
+    // Add glow effects to all buttons
+    const buttons = document.querySelectorAll('button, .btn');
+    buttons.forEach(button => {
+        if (!button.classList.contains('btn-glow')) {
+            button.classList.add('btn-glow');
+        }
+        
+        // Add click ripple effect
+        button.addEventListener('click', createRippleEffect);
+        
+        // Add enhanced hover effects
+        button.addEventListener('mouseenter', enhanceGlow);
+        button.addEventListener('mouseleave', normalizeGlow);
+    });
+}
+
+function createRippleEffect(e) {
+    const button = e.target;
+    const rect = button.getBoundingClientRect();
+    const size = Math.max(rect.width, rect.height);
+    const x = e.clientX - rect.left - size / 2;
+    const y = e.clientY - rect.top - size / 2;
+    
+    const ripple = document.createElement('span');
+    ripple.style.cssText = `
+        position: absolute;
+        width: ${size}px;
+        height: ${size}px;
+        left: ${x}px;
+        top: ${y}px;
+        background: radial-gradient(circle, rgba(135, 206, 235, 0.6) 0%, transparent 70%);
+        border-radius: 50%;
+        pointer-events: none;
+        transform: scale(0);
+        animation: ripple 0.6s ease-out forwards;
+    `;
+    
+    // Add ripple keyframes if not exists
+    if (!document.querySelector('#ripple-style')) {
+        const style = document.createElement('style');
+        style.id = 'ripple-style';
+        style.textContent = `
+            @keyframes ripple {
+                0% { transform: scale(0); opacity: 1; }
+                100% { transform: scale(2); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    
+    button.style.position = 'relative';
+    button.appendChild(ripple);
+    
+    setTimeout(() => {
+        if (ripple.parentNode) {
+            ripple.parentNode.removeChild(ripple);
+        }
+    }, 600);
+}
+
+function enhanceGlow(e) {
+    const button = e.target;
+    button.style.boxShadow = `
+        0 8px 25px rgba(135, 206, 235, 0.6),
+        0 0 40px rgba(135, 206, 235, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2)
+    `;
+}
+
+function normalizeGlow(e) {
+    const button = e.target;
+    button.style.boxShadow = '';
+}
+
+function initializeStatusLights() {
+    // Add status lights to various elements
+    addStatusLight('voice-select', 'ready');
+    addStatusLight('text-input', 'ready');
+    addStatusLight('record-btn', 'ready');
+}
+
+function addStatusLight(elementId, status = 'ready') {
+    const element = document.getElementById(elementId);
+    if (element && !element.querySelector('.status-light')) {
+        const statusLight = document.createElement('span');
+        statusLight.className = `status-light ${status}`;
+        
+        const container = element.parentNode;
+        if (container) {
+            const label = container.querySelector('label');
+            if (label) {
+                label.insertBefore(statusLight, label.firstChild);
+            }
+        }
+    }
+}
+
+function updateStatusLight(elementId, status) {
+    const element = document.getElementById(elementId);
+    if (element) {
+        const container = element.parentNode;
+        const statusLight = container?.querySelector('.status-light');
+        if (statusLight) {
+            statusLight.className = `status-light ${status}`;
+        }
+    }
+}
+
+// Enhanced Voice Waveform Visualization
+function createVoiceWaveform(containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    
+    // Clear existing content
+    container.innerHTML = '';
+    container.className = 'voice-waveform';
+    
+    // Create waveform bars
+    for (let i = 0; i < 10; i++) {
+        const bar = document.createElement('div');
+        bar.className = 'waveform-bar';
+        bar.style.height = Math.random() * 30 + 3 + 'px';
+        container.appendChild(bar);
+    }
+}
+
+function animateVoiceWaveform(containerId, active = true) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    
+    const bars = container.querySelectorAll('.waveform-bar');
+    bars.forEach((bar, index) => {
+        if (active) {
+            bar.style.animation = `waveform ${1.2 + Math.random() * 0.8}s ease-in-out infinite alternate`;
+            bar.style.animationDelay = `${index * 0.1}s`;
+        } else {
+            bar.style.animation = 'none';
+            bar.style.height = '3px';
+        }
+    });
+}
+
+// Enhanced Audio Visualizer
+function enhanceAudioVisualizer() {
+    const visualizer = document.querySelector('.audio-visualizer');
+    if (!visualizer) return;
+    
+    // Add pulse ring effect
+    const pulseRing = document.createElement('div');
+    pulseRing.className = 'pulse-ring';
+    visualizer.appendChild(pulseRing);
+    
+    // Add spinning light ring
+    const lightRing = document.createElement('div');
+    lightRing.className = 'light-ring';
+    visualizer.appendChild(lightRing);
+}
+
+// Initialize enhanced lighting effects for narration page
+function initializeNarrationLighting() {
+    console.log('✨ Initializing enhanced narration lighting...');
+    
+    // Create voice waveform in recording area
+    setTimeout(() => {
+        const recordingVisual = document.getElementById('recording-visual');
+        if (recordingVisual) {
+            createVoiceWaveform('recording-visual');
+        }
+        
+        // Enhance main audio visualizer
+        enhanceAudioVisualizer();
+        
+        // Add glow effects to cards
+        const cards = document.querySelectorAll('.card-glow, .bg-gray-800');
+        cards.forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                card.style.boxShadow = `
+                    0 0 30px rgba(135, 206, 235, 0.4),
+                    0 0 60px rgba(192, 192, 192, 0.3),
+                    0 8px 40px -8px rgba(0, 0, 0, 0.4)
+                `;
+            });
+            
+            card.addEventListener('mouseleave', () => {
+                card.style.boxShadow = '';
+            });
+        });
+    }, 500);
 }
 
 // =============================================================================
