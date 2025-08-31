@@ -81,13 +81,18 @@ function getPageLayout(title: string, content: string, activePage: string = '') 
     </head>
     <body class="bg-gray-900 text-white min-h-screen">
         <!-- Header -->
-        <header class="bg-gray-800 border-b border-gray-700 p-4">
+        <header class="authorr-header p-4">
             <div class="max-w-7xl mx-auto flex items-center justify-between">
                 <div class="flex items-center space-x-3">
-                    <div class="logo-icon">
-                        <i class="fas fa-book-reader text-3xl text-cyan-400"></i>
+                    <div class="logo-container">
+                        <img src="https://page.gensparksite.com/v1/base64_upload/6a18a03a0473af4977f9af6b7e149097" 
+                             alt="Authorr AI" 
+                             class="logo-image h-12 w-auto">
                     </div>
-                    <h1 class="text-2xl font-bold text-glow">AUTHORR AI</h1>
+                    <div class="brand-text">
+                        <h1 class="text-2xl font-bold authorr-brand-text">AUTHOrr AI</h1>
+                        <p class="text-xs text-teal-300 font-medium">Advanced Narration Platform</p>
+                    </div>
                 </div>
                 <nav class="flex space-x-6">
                     <a href="/" class="nav-link ${activePage === 'dashboard' ? 'active' : ''}">
@@ -132,7 +137,7 @@ app.get('/', (c) => {
 
       <!-- Project Initialization -->
       <div class="bg-gray-800 rounded-lg border border-gray-700 p-8">
-        <h3 class="text-2xl font-bold mb-6 text-cyan-400">
+        <h3 class="text-2xl font-bold mb-6 authorr-accent-text">
           <i class="fas fa-rocket mr-3"></i>Start New Project
         </h3>
         
@@ -141,13 +146,13 @@ app.get('/', (c) => {
             <div>
               <label class="block text-sm font-medium text-gray-300 mb-2">Book Title *</label>
               <input type="text" id="book-title" placeholder="Enter your book title..." 
-                class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white focus:border-cyan-400">
+                class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white focus:border-teal-300 focus:shadow-teal">
             </div>
             
             <div>
               <label class="block text-sm font-medium text-gray-300 mb-2">Author Name *</label>
               <input type="text" id="author-name" placeholder="Your name..." 
-                class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white focus:border-cyan-400">
+                class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white focus:border-teal-300 focus:shadow-teal">
             </div>
             
             <div>
@@ -205,7 +210,7 @@ app.get('/', (c) => {
             <div>
               <label class="block text-sm font-medium text-gray-300 mb-2">Theme or Message</label>
               <textarea id="theme-message" placeholder="Describe the main theme or message of your book..." 
-                class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white h-24 resize-none focus:border-cyan-400"></textarea>
+                class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white h-24 resize-none focus:border-teal-300 focus:shadow-teal"></textarea>
             </div>
             
             <button type="submit" class="btn-glow w-full bg-cyan-600 hover:bg-cyan-500 text-white py-3 px-6 rounded-lg font-semibold transition-all mt-6">
@@ -217,7 +222,7 @@ app.get('/', (c) => {
 
       <!-- Recent Projects -->
       <div class="bg-gray-800 rounded-lg border border-gray-700 p-8">
-        <h3 class="text-2xl font-bold mb-6 text-cyan-400">
+        <h3 class="text-2xl font-bold mb-6 authorr-accent-text">
           <i class="fas fa-history mr-3"></i>Recent Projects
         </h3>
         
@@ -300,7 +305,7 @@ app.get('/workspace', (c) => {
         <div class="lg:col-span-3">
           <div class="bg-gray-800 rounded-lg border border-gray-700 p-6">
             <div class="flex items-center justify-between mb-4">
-              <h3 class="text-lg font-bold text-cyan-400">
+              <h3 class="text-lg font-bold authorr-accent-text">
                 <i class="fas fa-pen mr-2"></i>Manuscript Editor
               </h3>
               <div class="flex space-x-2">
@@ -318,10 +323,10 @@ app.get('/workspace', (c) => {
             
             <div class="space-y-4">
               <input type="text" id="chapter-title" placeholder="Chapter Title..." 
-                class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white text-xl font-semibold focus:border-cyan-400">
+                class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white text-xl font-semibold focus:border-teal-300 focus:shadow-teal">
               
               <textarea id="manuscript-editor" placeholder="Start writing your story here..." 
-                class="w-full bg-gray-700 border border-gray-600 rounded px-4 py-3 text-white h-96 resize-none focus:border-cyan-400 font-mono"></textarea>
+                class="w-full bg-gray-700 border border-gray-600 rounded px-4 py-3 text-white h-96 resize-none focus:border-teal-300 focus:shadow-teal font-mono"></textarea>
             </div>
             
             <div class="flex justify-between items-center mt-4">
@@ -825,7 +830,7 @@ app.get('/export', (c) => {
         </div>
         
         <div class="bg-gray-700 rounded-lg p-6">
-          <h4 class="font-semibold mb-4 text-cyan-400">
+          <h4 class="font-semibold mb-4 authorr-accent-text">
             <i class="fas fa-check-circle mr-2"></i>Project Complete
           </h4>
           <div class="text-center">
