@@ -12,9 +12,8 @@ module.exports = {
       instances: 1,
       exec_mode: 'fork',
       log_date_format: 'YYYY-MM-DD HH:mm:ss',
-      error_file: '/dev/null',
-      out_file: '/dev/null',
-      pid_file: '/dev/null'
+      error_file: './logs/webapp-error.log',
+      out_file: './logs/webapp-out.log'
     }
   ]
 }
