@@ -379,112 +379,198 @@ app.get('/narration', (c) => {
               
               <!-- Voice Controls Column -->
               <div class="space-y-6">
-                  <h3 class="text-lg font-semibold mb-4">🎛️ Voice Controls</h3>
+                  <h3 class="text-lg font-semibold mb-4 authorr-accent-text">
+                      <span class="status-light ready"></span>🎛️ Voice Controls
+                  </h3>
                   
                   <!-- Voice Actor Selection -->
-                  <div class="card-glow bg-gray-800 p-6 rounded-lg border border-gray-700">
-                      <label class="block text-sm font-medium text-gray-300 mb-2">Voice Actors</label>
-                      <select id="voice-select" class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white mb-4">
+                  <div class="futuristic-panel card-glow bg-gray-800 p-6 rounded-lg border border-gray-700">
+                      <label class="block text-sm font-medium text-gray-300 mb-2">
+                          <span class="status-light ready"></span>Voice Actors
+                      </label>
+                      <select id="voice-select" class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white mb-4 focus:border-teal-300 focus:shadow-teal">
                           <option value="">Loading voices...</option>
                       </select>
-                      <button id="voice-preview-btn" class="btn-glow w-full bg-blue-600 hover:bg-blue-500 text-white py-2 px-4 rounded transition-all">
+                      <button id="voice-preview-btn" class="btn-glow w-full bg-blue-600 hover:bg-blue-500 text-white py-2 px-4 rounded transition-all mb-2">
                           <i class="fas fa-play mr-1"></i>Preview Voice Actor
                       </button>
-                      <button id="voice-review-btn" class="btn btn-primary w-full mt-3">
+                      <button id="voice-review-btn" class="btn btn-primary w-full">
                           <i class="fas fa-microphone-alt mr-2"></i>Review Voice Configuration
                       </button>
                   </div>
 
+                  <!-- Advanced Voice Controls -->
+                  <div class="futuristic-panel card-glow bg-gray-800 p-6 rounded-lg border border-gray-700">
+                      <label class="block text-sm font-medium text-gray-300 mb-4">
+                          <span class="status-light ready"></span>Voice Settings
+                      </label>
+                      <div class="space-y-4">
+                          <div>
+                              <label class="block text-xs text-gray-400 mb-2">Speed</label>
+                              <input type="range" min="0.5" max="2" step="0.1" value="1" class="w-full accent-light-blue">
+                              <div class="flex justify-between text-xs text-gray-500">
+                                  <span>0.5x</span>
+                                  <span>Normal</span>
+                                  <span>2x</span>
+                              </div>
+                          </div>
+                          <div>
+                              <label class="block text-xs text-gray-400 mb-2">Pitch</label>
+                              <input type="range" min="-12" max="12" step="1" value="0" class="w-full accent-light-blue">
+                              <div class="flex justify-between text-xs text-gray-500">
+                                  <span>Low</span>
+                                  <span>Normal</span>
+                                  <span>High</span>
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+
                   <!-- Text Input -->
-                  <div class="card-glow bg-gray-800 p-6 rounded-lg border border-gray-700">
-                      <label class="block text-sm font-medium text-gray-300 mb-2">Text to Narrate</label>
+                  <div class="futuristic-panel card-glow bg-gray-800 p-6 rounded-lg border border-gray-700">
+                      <label class="block text-sm font-medium text-gray-300 mb-2">
+                          <span class="status-light ready"></span>Text to Narrate
+                      </label>
                       <textarea id="text-input" placeholder="Enter your text here..." 
-                          class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white h-32 resize-none"></textarea>
+                          class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white h-32 resize-none focus:border-teal-300 focus:shadow-teal"></textarea>
+                      <div class="mt-2 text-xs text-gray-500">
+                          Characters: <span id="char-count">0</span> | Est. Duration: <span id="duration-est">0s</span>
+                      </div>
                   </div>
 
                   <!-- Generation Button -->
-                  <button id="generate-btn" class="btn-glow w-full bg-green-600 hover:bg-green-500 text-white py-3 px-6 rounded-lg font-semibold transition-all">
+                  <button id="generate-btn" class="btn-glow w-full bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-500 hover:to-teal-500 text-white py-4 px-8 rounded-lg font-bold text-lg transition-all shadow-lg">
+                      <span class="status-light ready"></span>
                       <i class="fas fa-magic mr-2"></i>Generate Narration
                   </button>
               </div>
-
+              
               <!-- Audio Preview Column -->
               <div class="space-y-6">
-                  <h3 class="text-lg font-semibold mb-4">🎵 Audio Preview</h3>
+                  <h3 class="text-lg font-semibold mb-4 authorr-accent-text">
+                      <span class="status-light ready"></span>🔊 Audio Preview
+                  </h3>
                   
-                  <!-- Main Illuminating Display -->
-                  <div class="audio-preview-card card-glow bg-gray-800 p-8 rounded-lg border border-gray-700 text-center">
-                      <div class="illuminating-display mb-6">
-                          <div class="audio-visualizer" id="audio-visualizer">
-                              <div class="eq-bar" style="animation-delay: 0s;"></div>
-                              <div class="eq-bar" style="animation-delay: 0.1s;"></div>
-                              <div class="eq-bar" style="animation-delay: 0.2s;"></div>
-                              <div class="eq-bar" style="animation-delay: 0.3s;"></div>
-                              <div class="eq-bar" style="animation-delay: 0.4s;"></div>
-                              <div class="eq-bar" style="animation-delay: 0.5s;"></div>
-                              <div class="eq-bar" style="animation-delay: 0.6s;"></div>
-                              <div class="eq-bar" style="animation-delay: 0.7s;"></div>
-                          </div>
-                      </div>
+                  <!-- MAIN Illuminating Light Display -->
+                  <div class="illuminating-display futuristic-panel card-glow bg-gray-800 p-8 rounded-xl border border-cyan-500/30 relative overflow-hidden">
+                      <!-- Spinning Light Ring Background -->
+                      <div class="light-ring"></div>
                       
-                      <audio id="audio-player" controls class="w-full mb-4" style="display: none;">
-                          <source src="" type="audio/mp3">
-                      </audio>
+                      <!-- Pulse Ring Effects -->
+                      <div class="pulse-ring"></div>
                       
-                      <div id="audio-status" class="text-gray-400 mb-4">
-                          <i class="fas fa-headphones mr-2"></i>
-                          Ready to generate audio
-                      </div>
-                      
-                      <div class="flex gap-4 justify-center">
-                          <button id="play-btn" class="btn-glow bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded transition-all" disabled>
-                              <i class="fas fa-play mr-1"></i>Play
-                          </button>
-                          <button id="download-btn" class="btn-glow bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 rounded transition-all" disabled>
-                              <i class="fas fa-download mr-1"></i>Download
-                          </button>
-                      </div>
-                  </div>
-              </div>
-
-              <!-- Generation Status Column -->
-              <div class="space-y-6">
-                  <h3 class="text-lg font-semibold mb-4">📊 Generation Status</h3>
-                  
-                  <div class="card-glow bg-gray-800 p-6 rounded-lg border border-gray-700">
-                      <div class="mb-4">
-                          <div class="flex justify-between text-sm text-gray-300 mb-2">
-                              <span>Progress</span>
-                              <span id="progress-percent">0%</span>
-                          </div>
-                          <div class="progress-bar bg-gray-700 rounded-full h-2">
-                              <div id="progress-fill" class="progress-fill h-full rounded-full transition-all duration-300" style="width: 0%"></div>
-                          </div>
-                      </div>
-                      
-                      <div id="status-log" class="space-y-2 text-sm">
-                          <div class="text-gray-400">
-                              <i class="fas fa-circle text-gray-600 mr-2"></i>
-                              Ready to start generation
-                          </div>
-                      </div>
-                  </div>
-
-                  <!-- Audio Settings -->
-                  <div class="card-glow bg-gray-800 p-6 rounded-lg border border-gray-700">
-                      <h4 class="text-sm font-semibold text-gray-300 mb-4">Audio Settings</h4>
-                      
-                      <div class="space-y-3">
-                          <div>
-                              <label class="block text-xs text-gray-400 mb-1">Speed</label>
-                              <input type="range" id="speed-slider" min="0.5" max="2" step="0.1" value="1" class="w-full">
-                              <span id="speed-value" class="text-xs text-gray-400">1.0x</span>
+                      <!-- Main Content -->
+                      <div class="relative z-10">
+                          <div class="text-center mb-6">
+                              <p class="text-cyan-300 mb-3 text-lg font-medium">Click to preview current chapter narration</p>
+                              <div class="text-3xl font-mono text-cyan-400 font-bold glow-text">
+                                  <span id="current-time">0:00</span> / <span id="total-time">0:00</span>
+                              </div>
                           </div>
                           
-                          <div>
-                              <label class="block text-xs text-gray-400 mb-1">Pitch</label>
-                              <input type="range" id="pitch-slider" min="-12" max="12" step="1" value="0" class="w-full">
-                              <span id="pitch-value" class="text-xs text-gray-400">0</span>
+                          <!-- Enhanced Audio Visualizer with Glow -->
+                          <div id="audio-visualizer" class="audio-visualizer mb-6 relative">
+                              <div class="eq-bar"></div>
+                              <div class="eq-bar"></div>
+                              <div class="eq-bar"></div>
+                              <div class="eq-bar"></div>
+                              <div class="eq-bar"></div>
+                              <div class="eq-bar"></div>
+                              <div class="eq-bar"></div>
+                              <div class="eq-bar"></div>
+                              <div class="eq-bar"></div>
+                              <div class="eq-bar"></div>
+                              <div class="eq-bar"></div>
+                              <div class="eq-bar"></div>
+                          </div>
+                          
+                          <!-- Waveform Progress Bar -->
+                          <div class="waveform-progress mb-6">
+                              <div class="bg-gray-700 rounded-full h-2 relative overflow-hidden">
+                                  <div class="progress-shimmer"></div>
+                                  <div class="bg-gradient-to-r from-cyan-400 to-teal-400 h-full rounded-full w-0 transition-all duration-300 shadow-glow"></div>
+                              </div>
+                          </div>
+                          
+                          <button id="preview-audio-btn" class="glow-button w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white py-4 px-8 rounded-lg font-bold text-lg transition-all shadow-xl">
+                              <i class="fas fa-play mr-3"></i>Preview Audio
+                          </button>
+                          
+                          <!-- Chapter Selector -->
+                          <div class="mt-4">
+                              <select class="w-full bg-gray-700 border border-cyan-500/30 rounded px-3 py-2 text-white text-sm">
+                                  <option>Chapter 1: Introduction</option>
+                                  <option>Chapter 2: The Journey Begins</option>
+                                  <option>Chapter 3: Challenges Ahead</option>
+                              </select>
+                          </div>
+                      </div>
+                      
+                      <!-- Animated Background Gradient -->
+                      <div class="absolute inset-0 bg-gradient-to-br from-cyan-500/5 via-transparent to-teal-500/5 animated-gradient"></div>
+                  </div>
+              </div>
+              
+              <!-- Generation Status Column -->
+              <div class="space-y-6">
+                  <h3 class="text-lg font-semibold mb-4 authorr-accent-text">
+                      <span class="status-light ready"></span>⚡ Generation Status
+                  </h3>
+                  
+                  <!-- Status Display -->
+                  <div class="futuristic-panel card-glow bg-gray-800 p-6 rounded-lg border border-gray-700">
+                      <div class="flex items-center mb-6">
+                          <div class="status-light ready mr-3"></div>
+                          <span class="text-green-400 font-medium text-lg">Ready to generate audio</span>
+                      </div>
+                      
+                      <!-- Progress Visualization -->
+                      <div class="space-y-4 mb-6">
+                          <div class="flex justify-between items-center">
+                              <span class="text-gray-300 font-medium">Progress:</span>
+                              <span class="text-white font-bold text-lg">0%</span>
+                          </div>
+                          
+                          <div class="progress-container bg-gray-700 rounded-full h-4 relative overflow-hidden">
+                              <div class="progress-shimmer"></div>
+                              <div id="progress-bar" class="progress-bar bg-gradient-to-r from-cyan-500 via-blue-500 to-purple-500 h-full rounded-full w-0 transition-all duration-500 shadow-lg"></div>
+                              <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer"></div>
+                          </div>
+                          
+                          <div class="text-xs text-gray-400 text-center">
+                              Estimated time remaining: <span id="time-remaining">--</span>
+                          </div>
+                      </div>
+                      
+                      <!-- Action Buttons -->
+                      <div class="space-y-3">
+                          <button id="download-btn" class="btn-glow w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white py-3 px-6 rounded-lg font-semibold transition-all" disabled>
+                              <i class="fas fa-download mr-2"></i>Download Audio
+                          </button>
+                          
+                          <button id="save-project-btn" class="btn-glow w-full bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-500 hover:to-gray-600 text-white py-2 px-4 rounded-lg font-medium transition-all">
+                              <i class="fas fa-save mr-2"></i>Save Project
+                          </button>
+                      </div>
+                  </div>
+                  
+                  <!-- Generation Queue -->
+                  <div class="futuristic-panel card-glow bg-gray-800 p-6 rounded-lg border border-gray-700">
+                      <h4 class="text-md font-semibold text-gray-300 mb-4">
+                          <span class="status-light processing"></span>Generation Queue
+                      </h4>
+                      <div class="space-y-3 text-sm">
+                          <div class="flex justify-between items-center">
+                              <span class="text-gray-400">Position in queue:</span>
+                              <span class="text-cyan-400 font-semibold">#1</span>
+                          </div>
+                          <div class="flex justify-between items-center">
+                              <span class="text-gray-400">Estimated wait:</span>
+                              <span class="text-teal-400 font-semibold">< 1 minute</span>
+                          </div>
+                          <div class="flex justify-between items-center">
+                              <span class="text-gray-400">Voice model:</span>
+                              <span class="text-gray-300">Premium</span>
                           </div>
                       </div>
                   </div>
@@ -504,41 +590,71 @@ app.get('/narration', (c) => {
               
               <!-- Voice Input Methods Column -->
               <div class="space-y-6">
-                  <h3 class="text-lg font-semibold mb-4">🎤 Voice Input Methods</h3>
+                  <h3 class="text-lg font-semibold mb-4 authorr-accent-text">
+                      <span class="status-light ready"></span>🎤 Voice Input Methods
+                  </h3>
                   
                   <!-- Live Recording -->
-                  <div class="card-glow bg-gray-800 p-6 rounded-lg border border-gray-700">
+                  <div class="futuristic-panel card-glow bg-gray-800 p-6 rounded-lg border border-gray-700 relative overflow-hidden">
+                      <!-- Pulse Ring for Recording -->
+                      <div class="pulse-ring" style="display: none;"></div>
+                      
                       <h4 class="font-semibold mb-4 text-green-400">
+                          <span class="status-light ready"></span>
                           <i class="fas fa-microphone mr-2"></i>Live Recording
                       </h4>
                       
                       <div class="text-center mb-4">
-                          <div id="recording-display" class="recording-waveform mb-4">
-                              <div class="wave-bar" style="animation-delay: 0s;"></div>
-                              <div class="wave-bar" style="animation-delay: 0.1s;"></div>
-                              <div class="wave-bar" style="animation-delay: 0.2s;"></div>
-                              <div class="wave-bar" style="animation-delay: 0.3s;"></div>
-                              <div class="wave-bar" style="animation-delay: 0.4s;"></div>
+                          <!-- Enhanced Recording Waveform -->
+                          <div id="recording-visual" class="voice-waveform mb-6">
+                              <div class="waveform-bar"></div>
+                              <div class="waveform-bar"></div>
+                              <div class="waveform-bar"></div>
+                              <div class="waveform-bar"></div>
+                              <div class="waveform-bar"></div>
+                              <div class="waveform-bar"></div>
+                              <div class="waveform-bar"></div>
+                              <div class="waveform-bar"></div>
+                              <div class="waveform-bar"></div>
+                              <div class="waveform-bar"></div>
                           </div>
                           
-                          <button id="record-btn" class="btn-glow bg-red-600 hover:bg-red-500 text-white px-6 py-3 rounded-lg font-semibold transition-all">
-                              <i class="fas fa-microphone mr-2"></i>Start Recording
-                          </button>
+                          <!-- Recording Timer -->
+                          <div id="recording-timer" class="text-2xl font-mono text-cyan-400 mb-4" style="display: none;">
+                              00:00
+                          </div>
+                          
+                          <div class="space-y-3">
+                              <button id="record-btn" class="btn-glow bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-500 hover:to-pink-500 text-white px-6 py-3 rounded-lg font-semibold transition-all">
+                                  <i class="fas fa-microphone mr-2"></i>Start Recording
+                              </button>
+                              
+                              <div class="flex gap-2 justify-center">
+                                  <button id="play-btn" class="btn-glow bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded transition-all" disabled>
+                                      <i class="fas fa-play mr-1"></i>Play
+                                  </button>
+                                  <button id="stop-btn" class="btn-glow bg-gray-600 hover:bg-gray-500 text-white px-4 py-2 rounded transition-all" disabled>
+                                      <i class="fas fa-stop mr-1"></i>Stop
+                                  </button>
+                              </div>
+                          </div>
                       </div>
                       
                       <div id="recording-info" class="text-sm text-gray-400 text-center">
+                          <span class="status-light ready"></span>
                           <i class="fas fa-info-circle mr-1"></i>
                           Record at least 30 seconds for best results
                       </div>
                   </div>
 
                   <!-- File Upload -->
-                  <div class="card-glow bg-gray-800 p-6 rounded-lg border border-gray-700">
+                  <div class="futuristic-panel card-glow bg-gray-800 p-6 rounded-lg border border-gray-700">
                       <h4 class="font-semibold mb-4 text-blue-400">
+                          <span class="status-light ready"></span>
                           <i class="fas fa-upload mr-2"></i>Upload Audio File
                       </h4>
                       
-                      <div class="border-2 border-dashed border-gray-600 rounded-lg p-8 text-center hover:border-blue-500 transition-colors">
+                      <div id="upload-zone" class="border-2 border-dashed border-gray-600 rounded-lg p-8 text-center hover:border-blue-500 transition-all cursor-pointer">
                           <i class="fas fa-cloud-upload-alt text-3xl text-gray-400 mb-4"></i>
                           <p class="text-gray-300 mb-2">Drag & drop audio files here</p>
                           <p class="text-sm text-gray-400 mb-4">Supports MP3, WAV, M4A (Max 10MB)</p>

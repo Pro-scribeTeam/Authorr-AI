@@ -107,6 +107,9 @@ function initializeNarration() {
     
     // Initialize enhanced lighting effects
     initializeNarrationLighting();
+    
+    // Initialize character counter
+    initializeCharacterCounter();
 }
 
 // Audio Visualizer Functions
@@ -249,6 +252,18 @@ function updateRecordingUI(recording) {
         animateVoiceWaveform('recording-visual', true);
         updateStatusLight('record-btn', 'processing');
         
+        // Show pulse ring effect during recording
+        const pulseRing = document.querySelector('.pulse-ring');
+        if (pulseRing) {
+            pulseRing.style.display = 'block';
+        }
+        
+        // Show and start recording timer
+        const recordingTimer = document.getElementById('recording-timer');
+        if (recordingTimer) {
+            recordingTimer.style.display = 'block';
+        }
+        
         // Add recording glow effect to record button
         if (recordBtn) {
             recordBtn.style.boxShadow = `
@@ -265,6 +280,18 @@ function updateRecordingUI(recording) {
         // Deactivate waveform
         animateVoiceWaveform('recording-visual', false);
         updateStatusLight('record-btn', 'ready');
+        
+        // Hide pulse ring effect
+        const pulseRing = document.querySelector('.pulse-ring');
+        if (pulseRing) {
+            pulseRing.style.display = 'none';
+        }
+        
+        // Hide recording timer
+        const recordingTimer = document.getElementById('recording-timer');
+        if (recordingTimer) {
+            recordingTimer.style.display = 'none';
+        }
         
         // Remove recording glow effect
         if (recordBtn) {
@@ -634,6 +661,43 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
+}
+
+// Character Counter and Duration Estimator
+function initializeCharacterCounter() {
+    const textInput = document.getElementById('text-input');
+    const charCount = document.getElementById('char-count');
+    const durationEst = document.getElementById('duration-est');
+    
+    if (textInput && charCount && durationEst) {
+        textInput.addEventListener('input', function() {
+            const text = this.value;
+            const characters = text.length;
+            const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+            
+            // Update character count
+            charCount.textContent = characters;
+            
+            // Estimate duration (average 150 WPM reading speed)
+            const estimatedMinutes = words / 150;
+            const totalSeconds = Math.round(estimatedMinutes * 60);
+            const minutes = Math.floor(totalSeconds / 60);
+            const seconds = totalSeconds % 60;
+            
+            if (totalSeconds > 0) {
+                durationEst.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            } else {
+                durationEst.textContent = '0s';
+            }
+            
+            // Update status light based on content
+            if (characters > 0) {
+                updateStatusLight('text-input', 'ready');
+            } else {
+                updateStatusLight('text-input', 'error');
+            }
+        });
+    }
 });
 
 console.log('🚀 AI Audiobook Creator - Voice Cloning Studio Ready!');

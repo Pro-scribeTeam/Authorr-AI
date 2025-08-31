@@ -352,6 +352,68 @@
   100% { opacity: 0.3; }
 }
 
+/* Additional Visual Effects for Enhanced Illumination */
+.glow-text {
+  text-shadow: 
+    0 0 5px var(--brand-light-blue),
+    0 0 10px var(--brand-light-blue),
+    0 0 15px var(--brand-light-blue);
+}
+
+.shadow-glow {
+  box-shadow: 0 0 20px rgba(135, 206, 235, 0.6);
+}
+
+.progress-shimmer {
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
+.animate-shimmer {
+  animation: shimmer 3s ease-in-out infinite;
+}
+
+.animated-gradient {
+  background-size: 200% 200%;
+  animation: gradient-shift 4s ease infinite;
+}
+
+@keyframes gradient-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Enhanced Accent Colors */
+.accent-light-blue::-webkit-slider-thumb {
+  background: var(--brand-light-blue);
+  box-shadow: 0 0 10px rgba(135, 206, 235, 0.5);
+}
+
+.accent-light-blue::-moz-range-thumb {
+  background: var(--brand-light-blue);
+  box-shadow: 0 0 10px rgba(135, 206, 235, 0.5);
+}
+
+/* Waveform Progress Enhancement */
+.waveform-progress {
+  position: relative;
+}
+
+.waveform-progress:hover .progress-shimmer {
+  animation-duration: 1s;
+}
+
 .btn-primary:hover {
   background: linear-gradient(135deg, #2563eb, #1e40af);
   transform: translateY(-2px);
