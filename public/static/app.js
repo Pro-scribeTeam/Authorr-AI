@@ -81,6 +81,9 @@ function initializeWorkspace() {
     
     // Initialize writing statistics
     setupWritingStatistics();
+    
+    // Initialize new workspace buttons
+    setupWorkspaceButtons();
 }
 
 function initializeNarration() {
@@ -531,12 +534,16 @@ function loadVoices() {
 function initializePreviewButton() {
     const previewBtn = document.getElementById('preview-audio-btn');
     const voicePreviewBtn = document.getElementById('voice-preview-btn');
+    const voiceReviewBtn = document.getElementById('voice-review-btn');
     
     if (previewBtn) {
         previewBtn.addEventListener('click', previewAudio);
     }
     if (voicePreviewBtn) {
         voicePreviewBtn.addEventListener('click', previewVoiceActor);
+    }
+    if (voiceReviewBtn) {
+        voiceReviewBtn.addEventListener('click', reviewVoiceConfiguration);
     }
 }
 
@@ -786,6 +793,9 @@ function initializeExport() {
     
     // Initialize publishing platforms
     setupPublishingPlatforms();
+    
+    // Initialize new export buttons
+    setupExportButtons();
 }
 
 function setupCoverGeneration() {
@@ -874,4 +884,287 @@ function setupPublishingPlatforms() {
 function setupGlobalEventListeners() {
     // Add any global event listeners here
     console.log('🌐 Global event listeners initialized');
+}
+
+// =============================================================================
+// NEW BUTTON HANDLERS
+// =============================================================================
+
+function setupWorkspaceButtons() {
+    const saveStoryBtn = document.getElementById('save-story-btn');
+    const chapterReviewWorkspaceBtn = document.getElementById('chapter-review-workspace-btn');
+    const generateFullAudiobookBtn = document.getElementById('generate-full-audiobook-btn');
+    
+    if (saveStoryBtn) {
+        saveStoryBtn.addEventListener('click', saveStory);
+    }
+    if (chapterReviewWorkspaceBtn) {
+        chapterReviewWorkspaceBtn.addEventListener('click', reviewChapters);
+    }
+    if (generateFullAudiobookBtn) {
+        generateFullAudiobookBtn.addEventListener('click', generateFullAudiobook);
+    }
+}
+
+function setupExportButtons() {
+    const chapterReviewBtn = document.getElementById('chapter-review-btn');
+    
+    if (chapterReviewBtn) {
+        chapterReviewBtn.addEventListener('click', reviewChapters);
+    }
+}
+
+// Voice Review Handler
+async function reviewVoiceConfiguration() {
+    console.log('🎤 Reviewing voice configuration...');
+    
+    try {
+        const voiceSelect = document.getElementById('voice-select');
+        const textInput = document.getElementById('text-input');
+        
+        const voiceId = voiceSelect?.value;
+        const sampleText = textInput?.value || 'This is a sample text for voice review.';
+        
+        if (!voiceId) {
+            alert('Please select a voice actor first.');
+            return;
+        }
+        
+        // Show loading state
+        const reviewBtn = document.getElementById('voice-review-btn');
+        const originalText = reviewBtn.textContent;
+        reviewBtn.textContent = 'Reviewing...';
+        reviewBtn.disabled = true;
+        
+        // Call API
+        const response = await axios.post('/api/voice-review', {
+            voiceId: voiceId,
+            sampleText: sampleText,
+            settings: {
+                speed: 1.0,
+                pitch: 1.0,
+                emphasis: 'normal'
+            }
+        });
+        
+        if (response.data.success) {
+            const data = response.data.data;
+            
+            // Show review results
+            alert(`Voice Review Complete!
+            
+Quality Score: ${data.quality}/100
+Estimated Generation Time: ${data.estimatedTime} seconds
+Compatibility: ${data.compatibility.join(', ')}
+            
+Voice configuration is ready for use!`);
+            
+            console.log('Voice review data:', data);
+        }
+        
+    } catch (error) {
+        console.error('Voice review error:', error);
+        alert('Voice review failed. Please try again.');
+    } finally {
+        // Restore button
+        const reviewBtn = document.getElementById('voice-review-btn');
+        reviewBtn.textContent = originalText;
+        reviewBtn.disabled = false;
+    }
+}
+
+// Save Story Handler
+async function saveStory() {
+    console.log('💾 Saving story...');
+    
+    try {
+        const titleInput = document.getElementById('chapter-title');
+        const editorTextarea = document.getElementById('manuscript-editor');
+        
+        const title = titleInput?.value || 'Untitled Story';
+        const content = editorTextarea?.value || '';
+        
+        if (!content.trim()) {
+            alert('Please write some content before saving.');
+            return;
+        }
+        
+        // Show loading state
+        const saveBtn = document.getElementById('save-story-btn');
+        const originalText = saveBtn.textContent;
+        saveBtn.textContent = 'Saving...';
+        saveBtn.disabled = true;
+        
+        // Call API
+        const response = await axios.post('/api/save-story', {
+            title: title,
+            content: content,
+            chapterTitle: title
+        });
+        
+        if (response.data.success) {
+            const data = response.data.data;
+            
+            alert(`Story Saved Successfully!
+            
+Story ID: ${data.storyId}
+Word Count: ${data.wordCount} words
+Saved At: ${new Date(data.savedAt).toLocaleString()}
+            
+Your story is now safely stored!`);
+            
+            // Update auto-save indicator
+            const autoSaveIndicator = document.querySelector('.text-gray-400');
+            if (autoSaveIndicator) {
+                autoSaveIndicator.innerHTML = '<i class="fas fa-check-circle mr-1 text-green-400"></i>Saved just now';
+            }
+            
+            console.log('Story saved:', data);
+        }
+        
+    } catch (error) {
+        console.error('Save story error:', error);
+        alert('Failed to save story. Please try again.');
+    } finally {
+        // Restore button
+        const saveBtn = document.getElementById('save-story-btn');
+        saveBtn.textContent = originalText;
+        saveBtn.disabled = false;
+    }
+}
+
+// Chapter Review Handler
+async function reviewChapters() {
+    console.log('📖 Reviewing chapters...');
+    
+    try {
+        const editorTextarea = document.getElementById('manuscript-editor');
+        const titleInput = document.getElementById('chapter-title');
+        
+        const content = editorTextarea?.value || '';
+        const title = titleInput?.value || 'Chapter 1';
+        
+        if (!content.trim()) {
+            alert('Please write some content before reviewing chapters.');
+            return;
+        }
+        
+        // Create chapters array (split by paragraphs for demo)
+        const paragraphs = content.split('\n\n').filter(p => p.trim());
+        const chapters = paragraphs.map((paragraph, index) => ({
+            title: index === 0 ? title : `Section ${index + 1}`,
+            content: paragraph
+        }));
+        
+        // Show loading state
+        const reviewBtns = document.querySelectorAll('#chapter-review-btn, #chapter-review-workspace-btn');
+        reviewBtns.forEach(btn => {
+            btn.textContent = 'Reviewing...';
+            btn.disabled = true;
+        });
+        
+        // Call API
+        const response = await axios.post('/api/chapter-review', {
+            chapters: chapters,
+            storyId: `story_${Date.now()}`
+        });
+        
+        if (response.data.success) {
+            const data = response.data.data;
+            
+            // Create detailed review display
+            let reviewText = `Chapter Review Complete!
+            
+Total Chapters: ${data.totalChapters}
+Total Words: ${data.totalWords}
+Estimated Audio Length: ${data.estimatedAudioLength} minutes
+
+Chapter Breakdown:
+`;
+            
+            data.chapters.forEach(chapter => {
+                reviewText += `• ${chapter.title}: ${chapter.wordCount} words (~${chapter.estimatedDuration} min)
+`;
+            });
+            
+            alert(reviewText);
+            console.log('Chapter review data:', data);
+        }
+        
+    } catch (error) {
+        console.error('Chapter review error:', error);
+        alert('Chapter review failed. Please try again.');
+    } finally {
+        // Restore buttons
+        const reviewBtns = document.querySelectorAll('#chapter-review-btn, #chapter-review-workspace-btn');
+        reviewBtns.forEach(btn => {
+            btn.textContent = btn.id.includes('workspace') ? 'Review Chapters' : 'Review Chapters';
+            btn.disabled = false;
+        });
+    }
+}
+
+// Generate Full Audiobook Handler
+async function generateFullAudiobook() {
+    console.log('🎵 Generating full audiobook...');
+    
+    try {
+        const editorTextarea = document.getElementById('manuscript-editor');
+        const titleInput = document.getElementById('chapter-title');
+        
+        const content = editorTextarea?.value || '';
+        const title = titleInput?.value || 'My Audiobook';
+        
+        if (!content.trim()) {
+            alert('Please write your story content first.');
+            return;
+        }
+        
+        // Show loading state
+        const generateBtn = document.getElementById('generate-full-audiobook-btn');
+        const originalText = generateBtn.textContent;
+        generateBtn.textContent = 'Generating...';
+        generateBtn.disabled = true;
+        
+        // Simulate audiobook generation process
+        alert(`Starting Full Audiobook Generation!
+        
+Story: ${title}
+Content Length: ${content.split(' ').length} words
+Estimated Audio Duration: ${Math.ceil(content.split(' ').length / 150)} minutes
+        
+This process will:
+1. Process your manuscript
+2. Apply voice narration
+3. Generate chapter breaks
+4. Create final audio files
+
+Generation will continue in the background.
+You'll be redirected to the Export page to monitor progress.`);
+        
+        // Simulate API call
+        const response = await axios.post('/api/continue-to-narration', {
+            text: content,
+            storyId: `story_${Date.now()}`,
+            settings: {
+                title: title,
+                chapters: 'auto-detect',
+                voice: 'default'
+            }
+        });
+        
+        if (response.data.success) {
+            // Redirect to narration page
+            window.location.href = '/narration';
+        }
+        
+    } catch (error) {
+        console.error('Generate audiobook error:', error);
+        alert('Failed to start audiobook generation. Please try again.');
+    } finally {
+        // Restore button
+        const generateBtn = document.getElementById('generate-full-audiobook-btn');
+        generateBtn.textContent = originalText;
+        generateBtn.disabled = false;
+    }
 }

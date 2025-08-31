@@ -1,11 +1,23 @@
-/* Original Authorr AI Brand Styles */
+/* Authorr AI Brand Colors - Light Blue, Silver, Black, White, Teal */
 :root {
-  /* Original Brand Colors */
-  --brand-teal-light: #00FFFF;
-  --brand-teal-dark: #008080;
+  /* Primary Brand Colors */
+  --brand-light-blue: #87CEEB;
+  --brand-light-blue-hover: #ADD8E6;
+  --brand-silver: #C0C0C0;
+  --brand-silver-dark: #808080;
   --brand-black: #000000;
+  --brand-white: #FFFFFF;
+  --brand-teal: #20B2AA;
+  --brand-teal-light: #48D1CC;
+  
+  /* Gradients */
   --brand-chrome: linear-gradient(135deg, #C0C0C0, #808080, #C0C0C0);
-  --brand-text-glow: 0 0 10px rgba(0, 255, 255, 0.5), 0 0 20px rgba(0, 255, 255, 0.3);
+  --brand-light-blue-gradient: linear-gradient(135deg, #87CEEB, #ADD8E6);
+  --brand-silver-gradient: linear-gradient(135deg, #C0C0C0, #A9A9A9, #C0C0C0);
+  
+  /* Effects */
+  --brand-text-glow: 0 0 10px rgba(135, 206, 235, 0.5), 0 0 20px rgba(135, 206, 235, 0.3);
+  --brand-teal-glow: 0 0 8px rgba(32, 178, 170, 0.4), 0 0 16px rgba(32, 178, 170, 0.2);
 }
 
 /* Dark Theme with Original Brand Colors */
@@ -31,7 +43,7 @@
 }
 
 .authorr-brand-text {
-  background: linear-gradient(135deg, var(--brand-teal-light), var(--brand-teal-dark));
+  background: var(--brand-light-blue-gradient);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -41,7 +53,7 @@
 }
 
 .brand-text p {
-  color: #4ade80;
+  color: var(--brand-teal);
   text-transform: uppercase;
   font-size: 0.7rem;
   letter-spacing: 0.1em;
@@ -58,16 +70,16 @@
 }
 
 .nav-link:hover {
-  color: var(--brand-teal-light);
-  background-color: rgba(0, 255, 255, 0.1);
-  box-shadow: 0 0 10px rgba(0, 255, 255, 0.2);
+  color: var(--brand-light-blue);
+  background-color: rgba(135, 206, 235, 0.1);
+  box-shadow: 0 0 10px rgba(135, 206, 235, 0.3);
 }
 
 .nav-link.active {
-  color: var(--brand-teal-light);
-  background: linear-gradient(135deg, rgba(0, 255, 255, 0.15), rgba(0, 128, 128, 0.1));
-  border: 1px solid rgba(0, 255, 255, 0.3);
-  box-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
+  color: var(--brand-light-blue);
+  background: linear-gradient(135deg, rgba(135, 206, 235, 0.15), rgba(192, 192, 192, 0.1));
+  border: 1px solid rgba(135, 206, 235, 0.4);
+  box-shadow: 0 0 15px rgba(135, 206, 235, 0.3);
 }
 
 /* Original Illuminating Light Display Effects */
@@ -77,20 +89,20 @@
 
 .card-glow {
   box-shadow: 
-    0 0 20px rgba(0, 255, 255, 0.15),
-    0 0 40px rgba(0, 128, 128, 0.1),
+    0 0 20px rgba(135, 206, 235, 0.2),
+    0 0 40px rgba(192, 192, 192, 0.1),
     0 4px 25px -5px rgba(0, 0, 0, 0.3),
     0 10px 10px -5px rgba(0, 0, 0, 0.1);
-  border: 1px solid rgba(0, 255, 255, 0.2);
+  border: 1px solid rgba(135, 206, 235, 0.3);
   transition: all 0.3s ease;
 }
 
 .card-glow:hover {
   box-shadow: 
-    0 0 30px rgba(0, 255, 255, 0.3),
-    0 0 60px rgba(0, 128, 128, 0.2),
+    0 0 30px rgba(135, 206, 235, 0.4),
+    0 0 60px rgba(192, 192, 192, 0.3),
     0 8px 40px -8px rgba(0, 0, 0, 0.4);
-  border-color: rgba(0, 255, 255, 0.4);
+  border-color: rgba(135, 206, 235, 0.5);
   transform: translateY(-2px);
 }
 
@@ -101,29 +113,29 @@
   font-weight: 600;
   text-align: center;
   transition: all 0.3s ease;
-  border: 1px solid rgba(0, 255, 255, 0.3);
-  background: linear-gradient(135deg, rgba(0, 255, 255, 0.1), rgba(0, 128, 128, 0.05));
-  color: var(--brand-teal-light);
-  box-shadow: 0 0 10px rgba(0, 255, 255, 0.1);
+  border: 1px solid rgba(135, 206, 235, 0.4);
+  background: linear-gradient(135deg, rgba(135, 206, 235, 0.1), rgba(192, 192, 192, 0.05));
+  color: var(--brand-light-blue);
+  box-shadow: 0 0 10px rgba(135, 206, 235, 0.2);
 }
 
 .btn:hover {
-  background: linear-gradient(135deg, rgba(0, 255, 255, 0.2), rgba(0, 128, 128, 0.1));
-  border-color: rgba(0, 255, 255, 0.5);
-  box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+  background: linear-gradient(135deg, rgba(135, 206, 235, 0.2), rgba(192, 192, 192, 0.1));
+  border-color: rgba(135, 206, 235, 0.6);
+  box-shadow: 0 0 20px rgba(135, 206, 235, 0.4);
   transform: translateY(-1px);
 }
 
 /* Original Brand Header */
 .authorr-header {
-  background: linear-gradient(135deg, #1a1a1a, #000000);
-  border-bottom: 2px solid rgba(0, 255, 255, 0.3);
-  box-shadow: 0 4px 20px rgba(0, 255, 255, 0.1);
+  background: linear-gradient(135deg, #1a1a1a, var(--brand-black));
+  border-bottom: 2px solid rgba(135, 206, 235, 0.4);
+  box-shadow: 0 4px 20px rgba(135, 206, 235, 0.2);
 }
 
 /* Brand Accent Text */
 .authorr-accent-text {
-  color: var(--brand-teal-light);
+  color: var(--brand-light-blue);
   text-shadow: var(--brand-text-glow);
 }
 
@@ -146,17 +158,17 @@
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, var(--brand-teal-light), var(--brand-teal-dark));
-  color: #000000;
+  background: var(--brand-light-blue-gradient);
+  color: var(--brand-black);
   font-weight: 700;
-  box-shadow: 0 4px 15px rgba(0, 255, 255, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 15px rgba(135, 206, 235, 0.4);
+  border: 1px solid var(--brand-silver);
 }
 
 .btn-primary:hover {
-  background: linear-gradient(135deg, #4ade80, var(--brand-teal-light));
-  box-shadow: 0 6px 25px rgba(0, 255, 255, 0.5);
-  border-color: rgba(255, 255, 255, 0.4);
+  background: linear-gradient(135deg, var(--brand-light-blue-hover), var(--brand-teal));
+  box-shadow: 0 6px 25px rgba(135, 206, 235, 0.6);
+  border-color: var(--brand-white);
 }
 
 /* Chrome-like Metallic Effects */
@@ -237,12 +249,12 @@
 
 .eq-bar {
   width: 4px;
-  background: linear-gradient(to top, var(--brand-teal-dark), var(--brand-teal-light), #4ade80);
+  background: linear-gradient(to top, var(--brand-silver-dark), var(--brand-light-blue), var(--brand-teal-light));
   border-radius: 2px;
   animation: equalizer 1.5s ease-in-out infinite alternate;
   opacity: 0.8;
   min-height: 4px;
-  box-shadow: 0 0 6px rgba(0, 255, 255, 0.4);
+  box-shadow: 0 0 6px rgba(135, 206, 235, 0.4);
 }
 
 .eq-bar:nth-child(1) { animation-delay: 0s; }

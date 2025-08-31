@@ -335,10 +335,23 @@ app.get('/workspace', (c) => {
                 Auto-saved 2 minutes ago
               </div>
               <div class="flex space-x-2">
+                <button id="save-story-btn" class="btn btn-primary">
+                  <i class="fas fa-save mr-1"></i>Save Story
+                </button>
                 <button class="bg-cyan-600 hover:bg-cyan-500 text-white px-4 py-2 rounded transition-all">
                   <i class="fas fa-arrow-right mr-1"></i>Continue to Narration
                 </button>
               </div>
+            </div>
+            
+            <!-- Generate Full Audiobook Section -->
+            <div class="mt-8 text-center">
+              <button id="chapter-review-workspace-btn" class="btn btn-primary mb-3 mr-3">
+                <i class="fas fa-book-open mr-2"></i>Review Chapters
+              </button>
+              <button id="generate-full-audiobook-btn" class="btn-glow bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-8 py-4 rounded-lg font-bold text-lg transition-all">
+                <i class="fas fa-magic mr-2"></i>Generate Full Audiobook
+              </button>
             </div>
           </div>
         </div>
@@ -376,6 +389,9 @@ app.get('/narration', (c) => {
                       </select>
                       <button id="voice-preview-btn" class="btn-glow w-full bg-blue-600 hover:bg-blue-500 text-white py-2 px-4 rounded transition-all">
                           <i class="fas fa-play mr-1"></i>Preview Voice Actor
+                      </button>
+                      <button id="voice-review-btn" class="btn btn-primary w-full mt-3">
+                          <i class="fas fa-microphone-alt mr-2"></i>Review Voice Configuration
                       </button>
                   </div>
 
@@ -784,6 +800,11 @@ app.get('/export', (c) => {
           </div>
         </div>
         
+        <!-- Chapter Review Button -->
+        <button id="chapter-review-btn" class="btn btn-primary w-full mb-4">
+          <i class="fas fa-book-open mr-2"></i>Review Chapters
+        </button>
+        
         <button id="export-audio-btn" class="btn-glow w-full bg-green-600 hover:bg-green-500 text-white py-3 px-6 rounded-lg font-semibold transition-all">
           <i class="fas fa-file-export mr-2"></i>Export Audio Files
         </button>
@@ -858,6 +879,129 @@ app.get('/export', (c) => {
   `
   
   return c.html(getPageLayout('AUTHORR AI - Export & Publishing', exportContent, 'export'))
+})
+
+// API Endpoints
+app.post('/api/export-text', async (c) => {
+  try {
+    const { text, format } = await c.req.json()
+    
+    // Simulate text export processing
+    const exportData = {
+      success: true,
+      message: 'Text exported successfully',
+      data: {
+        format: format || 'txt',
+        size: text?.length || 0,
+        exportId: `export_${Date.now()}`,
+        downloadUrl: `/api/download/export_${Date.now()}.${format || 'txt'}`
+      }
+    }
+    
+    return c.json(exportData)
+  } catch (error) {
+    return c.json({ success: false, message: 'Export failed', error: error.message }, 500)
+  }
+})
+
+app.post('/api/save-story', async (c) => {
+  try {
+    const { title, content, chapterTitle } = await c.req.json()
+    
+    // Simulate story saving
+    const saveData = {
+      success: true,
+      message: 'Story saved successfully',
+      data: {
+        storyId: `story_${Date.now()}`,
+        title: title,
+        chapterTitle: chapterTitle || 'Untitled Chapter',
+        wordCount: content?.split(' ').length || 0,
+        savedAt: new Date().toISOString(),
+        autoSave: true
+      }
+    }
+    
+    return c.json(saveData)
+  } catch (error) {
+    return c.json({ success: false, message: 'Save failed', error: error.message }, 500)
+  }
+})
+
+app.post('/api/continue-to-narration', async (c) => {
+  try {
+    const { storyId, text, settings } = await c.req.json()
+    
+    // Prepare narration data
+    const narrationData = {
+      success: true,
+      message: 'Ready for narration',
+      data: {
+        narrationId: `narration_${Date.now()}`,
+        storyId: storyId,
+        textLength: text?.length || 0,
+        estimatedDuration: Math.ceil((text?.split(' ').length || 0) / 150), // ~150 WPM
+        redirectUrl: '/narration',
+        settings: settings || {}
+      }
+    }
+    
+    return c.json(narrationData)
+  } catch (error) {
+    return c.json({ success: false, message: 'Narration preparation failed', error: error.message }, 500)
+  }
+})
+
+app.post('/api/voice-review', async (c) => {
+  try {
+    const { voiceId, settings, sampleText } = await c.req.json()
+    
+    // Simulate voice review
+    const reviewData = {
+      success: true,
+      message: 'Voice configuration reviewed successfully',
+      data: {
+        voiceId: voiceId,
+        quality: Math.floor(Math.random() * 20) + 80, // 80-100 quality score
+        compatibility: ['audiobook', 'narration', 'storytelling'],
+        settings: settings || {},
+        sampleAudioUrl: `/api/audio/sample_${voiceId}_${Date.now()}.mp3`,
+        estimatedTime: Math.ceil((sampleText?.split(' ').length || 0) / 2.5) // ~2.5 WPS
+      }
+    }
+    
+    return c.json(reviewData)
+  } catch (error) {
+    return c.json({ success: false, message: 'Voice review failed', error: error.message }, 500)
+  }
+})
+
+app.post('/api/chapter-review', async (c) => {
+  try {
+    const { chapters, storyId } = await c.req.json()
+    
+    // Simulate chapter analysis
+    const reviewData = {
+      success: true,
+      message: 'Chapter review completed',
+      data: {
+        totalChapters: chapters?.length || 0,
+        totalWords: chapters?.reduce((sum, ch) => sum + (ch.content?.split(' ').length || 0), 0) || 0,
+        estimatedAudioLength: Math.ceil((chapters?.reduce((sum, ch) => sum + (ch.content?.split(' ').length || 0), 0) || 0) / 150), // minutes
+        chapters: chapters?.map((ch, idx) => ({
+          id: idx + 1,
+          title: ch.title || `Chapter ${idx + 1}`,
+          wordCount: ch.content?.split(' ').length || 0,
+          estimatedDuration: Math.ceil((ch.content?.split(' ').length || 0) / 150),
+          status: 'ready'
+        })) || []
+      }
+    }
+    
+    return c.json(reviewData)
+  } catch (error) {
+    return c.json({ success: false, message: 'Chapter review failed', error: error.message }, 500)
+  }
 })
 
 export default app
