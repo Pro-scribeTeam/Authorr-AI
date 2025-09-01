@@ -174,25 +174,30 @@ body {
 
 /* Navigation Styles with Brand Colors */
 .nav-link {
-  color: #d1d5db;
+  color: #ffffff !important;
   text-decoration: none;
   padding: 0.5rem 1rem;
   border-radius: 0.375rem;
   transition: all 0.3s ease;
   position: relative;
+  border: 2px solid var(--brand-cyan);
+  background: rgba(0, 0, 0, 0.3);
+  font-weight: 600;
 }
 
 .nav-link:hover {
-  color: var(--brand-light-blue);
-  background-color: rgba(135, 206, 235, 0.1);
-  box-shadow: 0 0 10px rgba(135, 206, 235, 0.3);
+  color: #ffffff !important;
+  background: rgba(120, 227, 254, 0.2);
+  border-color: var(--brand-cyan);
+  box-shadow: var(--brand-cyan-glow);
+  transform: translateY(-1px);
 }
 
 .nav-link.active {
-  color: var(--brand-light-blue);
-  background: linear-gradient(135deg, rgba(135, 206, 235, 0.15), rgba(192, 192, 192, 0.1));
-  border: 1px solid rgba(135, 206, 235, 0.4);
-  box-shadow: 0 0 15px rgba(135, 206, 235, 0.3);
+  color: #ffffff !important;
+  background: rgba(120, 227, 254, 0.3);
+  border: 2px solid var(--brand-cyan);
+  box-shadow: var(--brand-cyan-glow), var(--brand-silver-glow);
 }
 
 /* Original Illuminating Light Display Effects */
@@ -281,6 +286,25 @@ h1, h2, h3, h4, h5, h6,
 .text-silver-glow {
   color: var(--brand-silver-light);
   text-shadow: var(--brand-silver-glow);
+}
+
+/* Iridescent Gold Text */
+.iridescent-gold {
+  background: linear-gradient(45deg, #ffd700, #ffed4e, #ffc107, #ff8f00, #ffd700);
+  background-size: 400% 400%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: iridescent-shift 3s ease-in-out infinite;
+  text-shadow: 0 0 10px rgba(255, 215, 0, 0.5), 0 0 20px rgba(255, 215, 0, 0.3);
+  font-weight: 800;
+  letter-spacing: 0.05em;
+}
+
+@keyframes iridescent-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 
 /* Enhanced Form Focus Effects */

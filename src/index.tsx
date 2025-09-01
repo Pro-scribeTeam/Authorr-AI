@@ -9,6 +9,7 @@ const DEMO_OPENAI_API_KEY = 'YOUR_ACTUAL_OPENAI_API_KEY_HERE'
 
 // Helper function to get OpenAI client based on environment
 function getOpenAIClient(env?: any) {
+  // Try to get API key from environment or return null
   const apiKey = env?.OPENAI_API_KEY || DEMO_OPENAI_API_KEY
   
   if (!apiKey || apiKey.includes('YOUR_ACTUAL_OPENAI_API_KEY_HERE')) {
@@ -85,7 +86,9 @@ app.post('/api/voice-clone', async (c) => {
 // Chapter Planning Endpoints
 app.post('/api/chapter/create', async (c) => {
   try {
-    const { bookTitle, authorName, genre, targetAudience, toneVoice, narrativePerspective, bookDescription } = await c.req.json()
+    const { bookTitle, authorName, genre, targetAudience, chapterSelection, wordCount, toneVoice, narrativePerspective, bookDescription } = await c.req.json()
+    
+    const numChapters = parseInt(chapterSelection) || 8
     
     const openai = getOpenAIClient(c.env)
     if (!openai) {
@@ -135,12 +138,15 @@ app.post('/api/chapter/create', async (c) => {
 
 Book Description: ${bookDescription}
 Target Audience: ${targetAudience}
+Chapters Requested: ${numChapters}
+Words per Chapter: ${wordCount} words
 Tone: ${toneVoice}
 Narrative: ${narrativePerspective}
 
-Provide 5-8 chapters. For each chapter, provide:
+Provide exactly ${numChapters} chapters. For each chapter, provide:
 1. A compelling chapter title
 2. A detailed outline (2-3 sentences describing the main events, character development, and plot progression)
+3. Consider that each chapter should be approximately ${wordCount} words when written
 
 Format your response as:
 Chapter 1: [Title]
@@ -149,7 +155,7 @@ Chapter 1: [Title]
 Chapter 2: [Title] 
 [Detailed outline describing what happens in this chapter]
 
-[Continue for all chapters]`
+[Continue for all ${numChapters} chapters]`
       }],
       max_tokens: 1500,
       temperature: 0.8
@@ -244,7 +250,7 @@ Chapter 2: [Title]
 
 app.post('/api/story/generate', async (c) => {
   try {
-    const { chapters, bookTitle, genre, toneVoice, narrativePerspective } = await c.req.json()
+    const { chapters, bookTitle, genre, wordCount, toneVoice, narrativePerspective } = await c.req.json()
     
     const openai = getOpenAIClient(c.env)
     if (!openai) {
@@ -264,7 +270,7 @@ app.post('/api/story/generate', async (c) => {
         content: `You are a professional ${genre} writer. Write engaging stories with ${toneVoice} tone in ${narrativePerspective} perspective.`
       }, {
         role: "user",
-        content: `Write a complete story for "${bookTitle}" based on these chapter outlines:\n\n${chapters.map(ch => `Chapter ${ch.id}: ${ch.title}\n${ch.outline}`).join('\n\n')}\n\nWrite the full story with rich descriptions, dialogue, and narrative flow. Make it engaging and true to the ${genre} genre.`
+        content: `Write a complete story for "${bookTitle}" based on these chapter outlines:\n\n${chapters.map(ch => `Chapter ${ch.id}: ${ch.title}\n${ch.outline}`).join('\n\n')}\n\nWrite the full story with rich descriptions, dialogue, and narrative flow. Make it engaging and true to the ${genre} genre. Each chapter should be approximately ${wordCount || '1000'} words. Create a cohesive narrative that flows smoothly from chapter to chapter.`
       }],
       max_tokens: 3000,
       temperature: 0.8
@@ -795,7 +801,7 @@ function getPageLayout(title: string, content: string, activePage: string = '') 
                     </div>
                     <div class="brand-text">
                         <h1 class="text-3xl font-bold authorr-brand-text">AUTHORR AI</h1>
-                        <p class="text-xs text-teal-300 font-medium">ADVANCED NARRATION PLATFORM</p>
+                        <p class="text-xs font-bold iridescent-gold">ADVANCED NARRATION PLATFORM</p>
                     </div>
                 </div>
                 <div class="flex items-center space-x-6">
@@ -876,6 +882,8 @@ function getPageLayout(title: string, content: string, activePage: string = '') 
                         authorName: document.getElementById('author-name')?.value || '',
                         genre: document.getElementById('genre')?.value || '',
                         targetAudience: document.getElementById('target-audience')?.value || '',
+                        chapterSelection: document.getElementById('chapter-selection')?.value || '8',
+                        wordCount: document.getElementById('word-count')?.value || '1000',
                         toneVoice: document.getElementById('tone-voice')?.value || '',
                         narrativePerspective: document.getElementById('narrative-perspective')?.value || '',
                         bookDescription: document.getElementById('book-description')?.value || ''
@@ -920,6 +928,201 @@ function getPageLayout(title: string, content: string, activePage: string = '') 
                 });
             }
             
+            // Setup regenerate chapters button
+            const regenerateBtn = document.getElementById('regenerate-chapters');
+            if (regenerateBtn) {
+                regenerateBtn.addEventListener('click', async function() {
+                    console.log('Regenerate chapters clicked');
+                    
+                    // Get current form data
+                    const formData = {
+                        bookTitle: document.getElementById('book-title')?.value || '',
+                        authorName: document.getElementById('author-name')?.value || '',
+                        genre: document.getElementById('genre')?.value || '',
+                        targetAudience: document.getElementById('target-audience')?.value || '',
+                        chapterSelection: document.getElementById('chapter-selection')?.value || '8',
+                        wordCount: document.getElementById('word-count')?.value || '1000',
+                        toneVoice: document.getElementById('tone-voice')?.value || '',
+                        narrativePerspective: document.getElementById('narrative-perspective')?.value || '',
+                        bookDescription: document.getElementById('book-description')?.value || ''
+                    };
+                    
+                    if (!formData.bookTitle.trim() || !formData.bookDescription.trim()) {
+                        alert('Please fill in the book title and description first.');
+                        return;
+                    }
+                    
+                    regenerateBtn.textContent = 'Regenerating...';
+                    regenerateBtn.disabled = true;
+                    
+                    try {
+                        const response = await axios.post('/api/chapter/create', formData);
+                        console.log('Regenerate response:', response.data);
+                        
+                        if (response.data.success) {
+                            const chapters = response.data.chapters;
+                            displayChapterPlan(chapters);
+                        } else {
+                            alert('Failed to regenerate chapters: ' + response.data.error);
+                        }
+                    } catch (error) {
+                        console.error('Chapter regeneration error:', error);
+                        alert('Failed to regenerate chapters. Please try again.');
+                    } finally {
+                        regenerateBtn.textContent = 'Regenerate Chapters';
+                        regenerateBtn.disabled = false;
+                    }
+                });
+            }
+            
+            // Setup create story button
+            const createStoryBtn = document.getElementById('create-story-btn');
+            if (createStoryBtn) {
+                createStoryBtn.addEventListener('click', async function() {
+                    console.log('Create story clicked');
+                    
+                    // Get all chapter data
+                    const chapterElements = document.querySelectorAll('.chapter-outline-item');
+                    if (chapterElements.length === 0) {
+                        alert('Please create chapters first.');
+                        return;
+                    }
+                    
+                    const chapters = [];
+                    chapterElements.forEach((element, index) => {
+                        const titleInput = element.querySelector('input[data-field="title"]');
+                        const outlineTextarea = element.querySelector('textarea[data-field="outline"]');
+                        
+                        if (titleInput && outlineTextarea) {
+                            chapters.push({
+                                id: index + 1,
+                                title: titleInput.value,
+                                outline: outlineTextarea.value
+                            });
+                        }
+                    });
+                    
+                    createStoryBtn.textContent = 'Creating Story...';
+                    createStoryBtn.disabled = true;
+                    
+                    // Get form data for story generation context
+                    const storyData = {
+                        chapters: chapters,
+                        bookTitle: document.getElementById('book-title')?.value || 'Untitled Book',
+                        genre: document.getElementById('genre')?.value || 'fiction',
+                        wordCount: document.getElementById('word-count')?.value || '1000',
+                        toneVoice: document.getElementById('tone-voice')?.value || 'engaging',
+                        narrativePerspective: document.getElementById('narrative-perspective')?.value || 'third-person'
+                    };
+                    
+                    try {
+                        const response = await axios.post('/api/story/generate', storyData);
+                        console.log('Story response:', response.data);
+                        
+                        if (response.data.success) {
+                            displayStoryContent(response.data.story);
+                            document.getElementById('story-generation').style.display = 'block';
+                            document.getElementById('story-generation').scrollIntoView({ behavior: 'smooth' });
+                        } else {
+                            alert('Failed to create story: ' + response.data.error);
+                        }
+                    } catch (error) {
+                        console.error('Story creation error:', error);
+                        alert('Failed to create story. Please try again.');
+                    } finally {
+                        createStoryBtn.textContent = 'Create Story';
+                        createStoryBtn.disabled = false;
+                    }
+                });
+            }
+            
+            // Setup regenerate story button
+            const regenerateStoryBtn = document.getElementById('regenerate-story');
+            if (regenerateStoryBtn) {
+                regenerateStoryBtn.addEventListener('click', async function() {
+                    console.log('Regenerate story clicked');
+                    
+                    // Get all chapter data again
+                    const chapterElements = document.querySelectorAll('.chapter-outline-item');
+                    if (chapterElements.length === 0) {
+                        alert('No chapters available for story regeneration.');
+                        return;
+                    }
+                    
+                    const chapters = [];
+                    chapterElements.forEach((element, index) => {
+                        const titleInput = element.querySelector('input[data-field="title"]');
+                        const outlineTextarea = element.querySelector('textarea[data-field="outline"]');
+                        
+                        if (titleInput && outlineTextarea) {
+                            chapters.push({
+                                id: index + 1,
+                                title: titleInput.value,
+                                outline: outlineTextarea.value
+                            });
+                        }
+                    });
+                    
+                    regenerateStoryBtn.textContent = 'Regenerating...';
+                    regenerateStoryBtn.disabled = true;
+                    
+                    // Get form data for story regeneration context
+                    const storyData = {
+                        chapters: chapters,
+                        bookTitle: document.getElementById('book-title')?.value || 'Untitled Book',
+                        genre: document.getElementById('genre')?.value || 'fiction',
+                        toneVoice: document.getElementById('tone-voice')?.value || 'engaging',
+                        narrativePerspective: document.getElementById('narrative-perspective')?.value || 'third-person'
+                    };
+                    
+                    try {
+                        const response = await axios.post('/api/story/generate', storyData);
+                        console.log('Regenerate story response:', response.data);
+                        
+                        if (response.data.success) {
+                            displayStoryContent(response.data.story);
+                        } else {
+                            alert('Failed to regenerate story: ' + response.data.error);
+                        }
+                    } catch (error) {
+                        console.error('Story regeneration error:', error);
+                        alert('Failed to regenerate story. Please try again.');
+                    } finally {
+                        regenerateStoryBtn.textContent = 'Regenerate Story';
+                        regenerateStoryBtn.disabled = false;
+                    }
+                });
+            }
+            
+            // Setup continue to workspace button
+            const continueToWorkspaceBtn = document.getElementById('continue-to-workspace');
+            if (continueToWorkspaceBtn) {
+                continueToWorkspaceBtn.addEventListener('click', function() {
+                    console.log('Continue to workspace clicked');
+                    
+                    // Get the generated story content
+                    const storyTextarea = document.getElementById('generated-story-text');
+                    if (!storyTextarea || !storyTextarea.value.trim()) {
+                        alert('No story content available to continue with.');
+                        return;
+                    }
+                    
+                    // Store story content in localStorage for workspace
+                    const storyData = {
+                        content: storyTextarea.value,
+                        bookTitle: document.getElementById('book-title')?.value || 'Untitled Book',
+                        author: document.getElementById('author-name')?.value || 'Unknown Author',
+                        genre: document.getElementById('genre')?.value || 'fiction',
+                        timestamp: new Date().toISOString()
+                    };
+                    
+                    localStorage.setItem('workspace-story', JSON.stringify(storyData));
+                    
+                    // Redirect to workspace
+                    window.location.href = '/workspace';
+                });
+            }
+            
             function displayChapterPlan(chapters) {
                 const container = document.getElementById('chapter-outlines');
                 if (!container) return;
@@ -950,6 +1153,29 @@ function getPageLayout(title: string, content: string, activePage: string = '') 
                     container.appendChild(chapterElement);
                 });
             }
+            
+            function displayStoryContent(story) {
+                const container = document.getElementById('story-content');
+                if (!container) return;
+                
+                container.innerHTML = \`
+                    <div class="bg-gray-700 p-6 rounded-lg border border-gray-600">
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-cyan-400 mb-2">
+                                <i class="fas fa-edit mr-2"></i>Generated Story (Editable)
+                            </label>
+                            <textarea id="generated-story-text" 
+                                      class="form-field-glow w-full rounded px-4 py-3 h-96 resize-vertical font-mono text-sm leading-relaxed" 
+                                      style="background: #4a5568 !important; color: #ffffff !important;" 
+                                      placeholder="Your AI-generated story will appear here...">\${story}</textarea>
+                        </div>
+                        <div class="text-sm text-gray-400 mb-4">
+                            <i class="fas fa-info-circle mr-1"></i>
+                            You can edit the generated story above. Use the buttons below to regenerate or continue to workspace.
+                        </div>
+                    </div>
+                \`;
+            }
         });
         </script>
     </body>
@@ -965,7 +1191,7 @@ app.get('/', (c) => {
       <div class="text-center mb-8">
         <h2 class="text-4xl font-bold mb-4" style="color: #78e3fe !important; text-shadow: 0 0 15px rgba(120, 227, 254, 0.6), 0 0 10px rgba(192, 192, 192, 0.8) !important;">Transform Text into Premium Audiobooks</h2>
         <p class="text-xl max-w-3xl mx-auto" style="color: #78e3fe !important; text-shadow: 0 0 10px rgba(192, 192, 192, 0.8) !important;">
-          Create professional audiobooks with AI-powered writing assistance, advanced narration, and voice cloning technology
+          <span class="text-white">Create professional audiobooks with AI-powered writing assistance, advanced narration, and voice cloning technology</span>
         </p>
       </div>
 
@@ -1001,32 +1227,116 @@ app.get('/', (c) => {
             </div>
             
             <div>
+              <label class="block text-sm font-medium text-cyan-glow mb-2">Chapter Selection</label>
+              <select id="chapter-selection" class="form-field-glow w-full rounded px-3 py-2 text-white">
+                <option value="">Select chapters...</option>
+                <option value="3">3 Chapters</option>
+                <option value="5">5 Chapters</option>
+                <option value="8">8 Chapters (Recommended)</option>
+                <option value="10">10 Chapters</option>
+                <option value="12">12 Chapters</option>
+                <option value="15">15 Chapters</option>
+                <option value="20">20 Chapters</option>
+                <option value="25">25 Chapters</option>
+              </select>
+            </div>
+            
+            <div>
               <label class="block text-sm font-medium text-cyan-glow mb-2">Genre</label>
               <select id="genre" class="form-field-glow w-full rounded px-3 py-2 text-white">
                 <option value="">Select genre...</option>
-                <option value="fiction">Fiction</option>
-                <option value="non-fiction">Non-Fiction</option>
-                <option value="mystery">Mystery & Thriller</option>
-                <option value="romance">Romance</option>
-                <option value="fantasy">Fantasy</option>
-                <option value="sci-fi">Science Fiction</option>
-                <option value="biography">Biography</option>
-                <option value="self-help">Self Help</option>
+                <optgroup label="Fiction">
+                  <option value="literary-fiction">Literary Fiction</option>
+                  <option value="contemporary-fiction">Contemporary Fiction</option>
+                  <option value="historical-fiction">Historical Fiction</option>
+                </optgroup>
+                <optgroup label="Romance">
+                  <option value="contemporary-romance">Contemporary Romance</option>
+                  <option value="historical-romance">Historical Romance</option>
+                  <option value="paranormal-romance">Paranormal Romance</option>
+                  <option value="romantic-suspense">Romantic Suspense</option>
+                </optgroup>
+                <optgroup label="Mystery & Thriller">
+                  <option value="cozy-mystery">Cozy Mystery</option>
+                  <option value="police-procedural">Police Procedural</option>
+                  <option value="psychological-thriller">Psychological Thriller</option>
+                  <option value="crime-thriller">Crime Thriller</option>
+                </optgroup>
+                <optgroup label="Fantasy">
+                  <option value="epic-fantasy">Epic Fantasy</option>
+                  <option value="urban-fantasy">Urban Fantasy</option>
+                  <option value="dark-fantasy">Dark Fantasy</option>
+                  <option value="paranormal-fantasy">Paranormal Fantasy</option>
+                </optgroup>
+                <optgroup label="Science Fiction">
+                  <option value="hard-sci-fi">Hard Science Fiction</option>
+                  <option value="space-opera">Space Opera</option>
+                  <option value="cyberpunk">Cyberpunk</option>
+                  <option value="dystopian">Dystopian</option>
+                </optgroup>
+                <optgroup label="Non-Fiction">
+                  <option value="biography">Biography</option>
+                  <option value="memoir">Memoir</option>
+                  <option value="self-help">Self Help</option>
+                  <option value="business">Business</option>
+                  <option value="health-fitness">Health & Fitness</option>
+                  <option value="history">History</option>
+                </optgroup>
               </select>
             </div>
           </div>
           
           <div class="space-y-4">
             <div>
+              <label class="block text-sm font-medium text-cyan-glow mb-2">Word Count Per Chapter</label>
+              <select id="word-count" class="form-field-glow w-full rounded px-3 py-2 text-white">
+                <option value="">Select word count...</option>
+                <option value="500">500 words (Short)</option>
+                <option value="1000">1,000 words (Standard)</option>
+                <option value="1500">1,500 words (Medium)</option>
+                <option value="2000">2,000 words (Long)</option>
+                <option value="2500">2,500 words (Extended)</option>
+                <option value="3000">3,000 words (Epic)</option>
+                <option value="custom">Custom Length</option>
+              </select>
+            </div>
+            
+            <div>
               <label class="block text-sm font-medium text-cyan-glow mb-2">Tone/Voice</label>
               <select id="tone-voice" class="form-field-glow w-full rounded px-3 py-2 text-white">
                 <option value="">Select tone...</option>
-                <option value="professional">Professional</option>
-                <option value="conversational">Conversational</option>
-                <option value="formal">Formal</option>
-                <option value="humorous">Humorous</option>
-                <option value="dramatic">Dramatic</option>
-                <option value="educational">Educational</option>
+                <optgroup label="Professional">
+                  <option value="professional">Professional</option>
+                  <option value="academic">Academic</option>
+                  <option value="business">Business</option>
+                  <option value="authoritative">Authoritative</option>
+                </optgroup>
+                <optgroup label="Conversational">
+                  <option value="conversational">Conversational</option>
+                  <option value="friendly">Friendly</option>
+                  <option value="casual">Casual</option>
+                  <option value="approachable">Approachable</option>
+                </optgroup>
+                <optgroup label="Creative">
+                  <option value="dramatic">Dramatic</option>
+                  <option value="humorous">Humorous</option>
+                  <option value="whimsical">Whimsical</option>
+                  <option value="poetic">Poetic</option>
+                  <option value="mysterious">Mysterious</option>
+                </optgroup>
+                <optgroup label="Emotional">
+                  <option value="heartwarming">Heartwarming</option>
+                  <option value="inspirational">Inspirational</option>
+                  <option value="melancholic">Melancholic</option>
+                  <option value="intense">Intense</option>
+                  <option value="uplifting">Uplifting</option>
+                </optgroup>
+                <optgroup label="Educational">
+                  <option value="educational">Educational</option>
+                  <option value="informative">Informative</option>
+                  <option value="instructional">Instructional</option>
+                  <option value="explanatory">Explanatory</option>
+                </optgroup>
               </select>
             </div>
             

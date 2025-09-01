@@ -1,0 +1,18 @@
+name = "authorr-ai-audiobook"
+main = "dist/_worker.js"
+compatibility_date = "2024-01-15"
+
+# Environment variables for production deployment
+# Set these in Cloudflare Dashboard under Workers & Pages > Settings > Environment Variables
+# 
+# Required environment variables:
+# OPENAI_API_KEY = "your-actual-openai-api-key-here"
+#
+# To set via CLI:
+# wrangler secret put OPENAI_API_KEY
+
+[env.production]
+name = "authorr-ai-audiobook"
+
+[env.preview]
+name = "authorr-ai-audiobook-preview"
