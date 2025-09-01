@@ -1,10 +1,12 @@
-/* Authorr AI Brand Colors - Light Blue, Silver, Black, White, Teal */
+/* Authorr AI Brand Colors - Cyan, Silver, Black, White, Teal */
 :root {
   /* Primary Brand Colors */
-  --brand-light-blue: #87CEEB;
-  --brand-light-blue-hover: #ADD8E6;
+  --brand-cyan: #78e3fe;
+  --brand-cyan-hover: #5dd8fc;
+  --brand-cyan-dark: #4dc9e8;
   --brand-silver: #C0C0C0;
   --brand-silver-dark: #808080;
+  --brand-silver-light: #E8E8E8;
   --brand-black: #000000;
   --brand-white: #FFFFFF;
   --brand-teal: #20B2AA;
@@ -12,18 +14,111 @@
   
   /* Gradients */
   --brand-chrome: linear-gradient(135deg, #C0C0C0, #808080, #C0C0C0);
-  --brand-light-blue-gradient: linear-gradient(135deg, #87CEEB, #ADD8E6);
-  --brand-silver-gradient: linear-gradient(135deg, #C0C0C0, #A9A9A9, #C0C0C0);
+  --brand-cyan-gradient: linear-gradient(135deg, #78e3fe, #5dd8fc);
+  --brand-silver-gradient: linear-gradient(135deg, #E8E8E8, #C0C0C0, #E8E8E8);
   
   /* Effects */
-  --brand-text-glow: 0 0 10px rgba(135, 206, 235, 0.5), 0 0 20px rgba(135, 206, 235, 0.3);
+  --brand-cyan-glow: 0 0 15px rgba(120, 227, 254, 0.6), 0 0 30px rgba(120, 227, 254, 0.3);
+  --brand-silver-glow: 0 0 10px rgba(192, 192, 192, 0.8), 0 0 20px rgba(192, 192, 192, 0.4);
   --brand-teal-glow: 0 0 8px rgba(32, 178, 170, 0.4), 0 0 16px rgba(32, 178, 170, 0.2);
+  
+  /* Light/Dark Mode Variables */
+  --bg-primary: #1a1a1a;
+  --bg-secondary: #2d2d2d;
+  --text-primary: #ffffff;
+  --text-secondary: #d1d5db;
 }
 
-/* Dark Theme with Original Brand Colors */
+/* Light/Dark Mode Toggle Styles */
+.theme-toggle {
+  position: relative;
+  display: inline-block;
+  width: 60px;
+  height: 30px;
+  background: linear-gradient(135deg, #4a5568, #2d3748);
+  border-radius: 15px;
+  border: 2px solid var(--brand-silver);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: var(--brand-silver-glow);
+}
+
+.theme-toggle:hover {
+  box-shadow: 0 0 20px rgba(192, 192, 192, 0.6);
+  border-color: var(--brand-cyan);
+}
+
+.theme-toggle-slider {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 24px;
+  height: 24px;
+  background: var(--brand-cyan-gradient);
+  border-radius: 50%;
+  transition: all 0.3s ease;
+  box-shadow: 0 0 10px rgba(120, 227, 254, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+}
+
+.theme-toggle.light .theme-toggle-slider {
+  transform: translateX(30px);
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  box-shadow: 0 0 10px rgba(251, 191, 36, 0.5);
+}
+
+/* Light Theme */
+.light-theme {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8fafc;
+  --bg-tertiary: #f1f5f9;
+  --text-primary: #1a202c;
+  --text-secondary: #4a5568;
+  --border-color: #e2e8f0;
+  --input-bg: #ffffff;
+  --input-text: #000000;
+}
+
+/* Dark Theme (Default) */
 .dark-theme {
-  background-color: var(--brand-black);
-  color: #f9fafb;
+  --bg-primary: #1a1a1a;
+  --bg-secondary: #2d2d2d;
+  --bg-tertiary: #374151;
+  --text-primary: #ffffff;
+  --text-secondary: #d1d5db;
+  --border-color: #4b5563;
+  --input-bg: #374151;
+  --input-text: #ffffff;
+}
+
+/* Apply theme variables */
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  transition: all 0.3s ease;
+}
+
+.bg-gray-800 {
+  background-color: var(--bg-secondary) !important;
+}
+
+.bg-gray-700 {
+  background-color: var(--bg-tertiary) !important;
+}
+
+.text-white {
+  color: var(--text-primary) !important;
+}
+
+.text-gray-300 {
+  color: var(--text-secondary) !important;
+}
+
+.border-gray-600, .border-gray-700 {
+  border-color: var(--border-color) !important;
 }
 
 /* Original Brand Header Styling */
@@ -33,30 +128,48 @@
 }
 
 .logo-image {
-  filter: drop-shadow(0 0 8px rgba(0, 255, 255, 0.3));
+  width: 4rem;
+  height: 4rem;
+  filter: drop-shadow(0 0 15px rgba(120, 227, 254, 0.6));
   transition: all 0.3s ease;
+  animation: logoPulse 2s ease-in-out infinite alternate;
 }
 
 .logo-image:hover {
-  filter: drop-shadow(0 0 15px rgba(0, 255, 255, 0.5));
-  transform: scale(1.05);
+  filter: drop-shadow(0 0 25px rgba(120, 227, 254, 0.8));
+  transform: scale(1.08);
+  animation-duration: 1s;
+}
+
+/* Pulsating logo animation */
+@keyframes logoPulse {
+  0% {
+    filter: drop-shadow(0 0 15px rgba(120, 227, 254, 0.6));
+    transform: scale(1);
+  }
+  100% {
+    filter: drop-shadow(0 0 25px rgba(120, 227, 254, 0.9));
+    transform: scale(1.02);
+  }
 }
 
 .authorr-brand-text {
-  background: var(--brand-light-blue-gradient);
+  background: var(--brand-cyan-gradient);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  text-shadow: var(--brand-text-glow);
+  text-shadow: var(--brand-cyan-glow);
   font-weight: 800;
   letter-spacing: 0.05em;
+  text-transform: uppercase;
 }
 
 .brand-text p {
-  color: var(--brand-teal);
+  color: var(--brand-cyan);
   text-transform: uppercase;
   font-size: 0.7rem;
   letter-spacing: 0.1em;
+  text-shadow: var(--brand-silver-glow);
 }
 
 /* Navigation Styles with Brand Colors */
@@ -135,17 +248,100 @@
 
 /* Brand Accent Text */
 .authorr-accent-text {
-  color: var(--brand-light-blue);
-  text-shadow: var(--brand-text-glow);
+  color: var(--brand-cyan);
+  text-shadow: var(--brand-cyan-glow);
 }
 
-/* Brand Form Focus Effects */
-.focus\:border-teal-300:focus {
-  border-color: rgba(0, 255, 255, 0.6) !important;
+/* Cyan Text with Glow - for ALL header elements */
+.text-cyan-glow {
+  color: var(--brand-cyan) !important;
+  text-shadow: var(--brand-cyan-glow);
+  font-weight: 700;
 }
 
-.focus\:shadow-teal:focus {
-  box-shadow: 0 0 0 3px rgba(0, 255, 255, 0.2) !important;
+/* Make ALL header and title text cyan with silver accents */
+h1, h2, h3, h4, h5, h6,
+.text-4xl, .text-3xl, .text-2xl, .text-xl,
+.font-bold {
+  color: var(--brand-cyan) !important;
+  text-shadow: var(--brand-silver-glow);
+}
+
+/* Specific overrides for welcome text and main headings */
+.authorr-header h1,
+.authorr-header .text-3xl,
+.text-4xl.font-bold,
+.text-3xl.font-bold,
+.text-2xl.font-bold {
+  color: var(--brand-cyan) !important;
+  text-shadow: var(--brand-cyan-glow), var(--brand-silver-glow) !important;
+}
+
+/* Silver Text with Glow */
+.text-silver-glow {
+  color: var(--brand-silver-light);
+  text-shadow: var(--brand-silver-glow);
+}
+
+/* Enhanced Form Focus Effects */
+.focus\:border-teal-300:focus,
+.focus\:border-cyan-300:focus {
+  border-color: var(--brand-cyan) !important;
+  box-shadow: var(--brand-cyan-glow) !important;
+}
+
+.focus\:shadow-teal:focus,
+.focus\:shadow-cyan:focus {
+  box-shadow: 0 0 0 3px rgba(120, 227, 254, 0.3) !important;
+}
+
+/* Form Field Silver Glow */
+.form-field-glow {
+  border: 2px solid rgba(192, 192, 192, 0.3);
+  box-shadow: var(--brand-silver-glow);
+  transition: all 0.3s ease;
+  background: #4a5568 !important;
+  color: #ffffff !important;
+}
+
+.form-field-glow:focus {
+  border-color: var(--brand-cyan);
+  box-shadow: var(--brand-cyan-glow), var(--brand-silver-glow);
+  background: #4a5568 !important;
+  color: #ffffff !important;
+}
+
+.form-field-glow:hover {
+  border-color: rgba(192, 192, 192, 0.6);
+  box-shadow: 0 0 15px rgba(192, 192, 192, 0.6), 0 0 25px rgba(192, 192, 192, 0.3);
+  background: #4a5568 !important;
+  color: #ffffff !important;
+}
+
+/* Force all form fields to have white text on dark gray background for visibility */
+input.form-field-glow,
+select.form-field-glow, 
+textarea.form-field-glow {
+  background: #4a5568 !important;
+  color: #ffffff !important;
+}
+
+/* Form field placeholders - make them light gray for visibility on dark background */
+.form-field-glow::placeholder {
+  color: #cbd5e0 !important;
+  opacity: 0.7;
+}
+
+/* Override any theme-based coloring for form fields */
+.light-theme .form-field-glow,
+.dark-theme .form-field-glow {
+  background: #4a5568 !important;
+  color: #ffffff !important;
+}
+
+.light-theme .form-field-glow::placeholder,
+.dark-theme .form-field-glow::placeholder {
+  color: #cbd5e0 !important;
 }
 
 /* Updated Button Properties */

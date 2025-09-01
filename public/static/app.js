@@ -39,6 +39,9 @@ function initializeApplication() {
         case 'export':
             initializeExport();
             break;
+        case 'config':
+            initializeConfig();
+            break;
         default:
             initializeDashboard(); // Default to dashboard
     }
@@ -50,11 +53,20 @@ function getCurrentPage() {
     if (path.startsWith('/workspace')) return 'workspace';
     if (path.startsWith('/narration')) return 'narration';
     if (path.startsWith('/export')) return 'export';
+    if (path.startsWith('/config')) return 'config';
     return 'dashboard';
 }
 
 function initializeCommonFeatures() {
     console.log('🔧 Initializing common features...');
+    
+    // Initialize theme (check localStorage or default to dark)
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'light') {
+        document.body.classList.add('light-theme');
+    } else {
+        document.body.classList.add('dark-theme');
+    }
     
     // Add any common functionality that works across all pages
     setupGlobalEventListeners();
@@ -63,11 +75,17 @@ function initializeCommonFeatures() {
 function initializeDashboard() {
     console.log('📊 Initializing Dashboard...');
     
+    // Initialize theme toggle
+    initializeThemeToggle();
+    
     // Load recent projects
     loadRecentProjects();
     
-    // Setup project creation form
-    setupProjectCreationForm();
+    // Setup chapter creation form
+    setupChapterCreationForm();
+    
+    // Setup chapter planning workflow
+    setupChapterWorkflow();
 }
 
 function initializeWorkspace() {
@@ -1455,5 +1473,609 @@ You'll be redirected to the Export page to monitor progress.`);
         const generateBtn = document.getElementById('generate-full-audiobook-btn');
         generateBtn.textContent = originalText;
         generateBtn.disabled = false;
+    }
+}
+
+// Configuration Page Initialization
+function initializeConfig() {
+    console.log('⚙️ Initializing Configuration...');
+    
+    // Check API status on load
+    checkOpenAIStatus();
+    
+    // Setup test API button
+    setupTestAPIButton();
+}
+
+// Check OpenAI API Status
+async function checkOpenAIStatus() {
+    try {
+        const response = await axios.get('/api/openai-status');
+        const data = response.data;
+        
+        const statusElement = document.getElementById('api-status');
+        if (statusElement) {
+            const indicator = statusElement.querySelector('.status-indicator');
+            const textSpan = statusElement.querySelector('span');
+            
+            if (data.configured) {
+                indicator.className = 'status-indicator w-3 h-3 rounded-full bg-green-500';
+                textSpan.textContent = 'OpenAI API is configured and ready!';
+                
+                // Hide demo mode warning
+                const demoWarning = document.querySelector('.border-yellow-500');
+                if (demoWarning) {
+                    demoWarning.style.display = 'none';
+                }
+            } else {
+                indicator.className = 'status-indicator w-3 h-3 rounded-full bg-red-500';
+                textSpan.textContent = 'OpenAI API key not configured - Demo mode active';
+            }
+        }
+        
+        console.log('OpenAI Status:', data);
+    } catch (error) {
+        console.error('Failed to check OpenAI status:', error);
+    }
+}
+
+// Setup Test API Button
+function setupTestAPIButton() {
+    const testBtn = document.getElementById('test-api');
+    if (testBtn) {
+        testBtn.addEventListener('click', async () => {
+            await testOpenAIAPI();
+        });
+    }
+}
+
+// Test OpenAI API
+async function testOpenAIAPI() {
+    try {
+        const testBtn = document.getElementById('test-api');
+        const originalText = testBtn.textContent;
+        testBtn.textContent = 'Testing...';
+        testBtn.disabled = true;
+        
+        // Test with a simple summarization request
+        const response = await axios.post('/api/ai/summarize', {
+            text: 'This is a test to verify that the OpenAI API integration is working correctly.',
+            length: 'brief'
+        });
+        
+        if (response.data.success) {
+            alert('OpenAI API Test Successful!\n\nThe API is working correctly and ready for use.');
+        } else {
+            alert(`OpenAI API Test Failed:\n\n${response.data.error}\n\nDetails: ${response.data.details || 'No additional details available'}`);
+        }
+        
+    } catch (error) {
+        console.error('OpenAI API Test Error:', error);
+        alert(`OpenAI API Test Failed:\n\nError: ${error.response?.data?.error || error.message}`);
+    } finally {
+        const testBtn = document.getElementById('test-api');
+        testBtn.textContent = 'Test API Configuration';
+        testBtn.disabled = false;
+    }
+}
+
+// AI Writing Tools Integration
+function setupWritingTools() {
+    console.log('🤖 Setting up AI Writing Tools...');
+    
+    // Setup all AI writing tool buttons
+    setupAIButton('Generate Ideas', generateAIIdeas);
+    setupAIButton('Create Outline', createAIOutline);
+    setupAIButton('Expand Text', expandText);
+    setupAIButton('Summarize', summarizeText);
+    setupAIButton('Rewrite', rewriteText);
+    setupAIButton('Character Builder', buildCharacter);
+}
+
+// Generic AI Button Setup
+function setupAIButton(buttonText, handlerFunction) {
+    const buttons = Array.from(document.querySelectorAll('button')).filter(btn => 
+        btn.textContent.includes(buttonText));
+    
+    buttons.forEach(button => {
+        button.addEventListener('click', async () => {
+            await handlerFunction();
+        });
+    });
+}
+
+// Generate AI Ideas
+async function generateAIIdeas() {
+    try {
+        const response = await axios.post('/api/ai/generate-ideas', {
+            genre: 'general',
+            audience: 'adult',
+            theme: 'creativity and innovation'
+        });
+        
+        if (response.data.success) {
+            const ideas = response.data.ideas || response.data.demo_response?.ideas;
+            showAIResponse('Generated Ideas', ideas);
+        } else {
+            showAIResponse('Generated Ideas (Demo Mode)', response.data.demo_response?.ideas);
+        }
+        
+    } catch (error) {
+        console.error('Generate Ideas Error:', error);
+        alert('Failed to generate ideas. Please try again.');
+    }
+}
+
+// Create AI Outline  
+async function createAIOutline() {
+    try {
+        const response = await axios.post('/api/ai/create-outline', {
+            title: 'My Story',
+            genre: 'fiction',
+            theme: 'adventure',
+            chapters: 10
+        });
+        
+        if (response.data.success) {
+            const outline = response.data.outline || response.data.demo_response?.outline;
+            showAIResponse('Story Outline', outline);
+        } else {
+            showAIResponse('Story Outline (Demo Mode)', response.data.demo_response?.outline);
+        }
+        
+    } catch (error) {
+        console.error('Create Outline Error:', error);
+        alert('Failed to create outline. Please try again.');
+    }
+}
+
+// Expand Text
+async function expandText() {
+    const selectedText = getSelectedOrPromptText();
+    if (!selectedText) return;
+    
+    try {
+        const response = await axios.post('/api/ai/expand-text', {
+            text: selectedText,
+            style: 'descriptive',
+            length: 'detailed'
+        });
+        
+        if (response.data.success) {
+            const expandedText = response.data.expanded_text || response.data.demo_response?.expanded_text;
+            showAIResponse('Expanded Text', expandedText);
+        } else {
+            showAIResponse('Expanded Text (Demo Mode)', response.data.demo_response?.expanded_text);
+        }
+        
+    } catch (error) {
+        console.error('Expand Text Error:', error);
+        alert('Failed to expand text. Please try again.');
+    }
+}
+
+// Summarize Text
+async function summarizeText() {
+    const selectedText = getSelectedOrPromptText();
+    if (!selectedText) return;
+    
+    try {
+        const response = await axios.post('/api/ai/summarize', {
+            text: selectedText,
+            length: 'concise'
+        });
+        
+        if (response.data.success) {
+            const summary = response.data.summary || response.data.demo_response?.summary;
+            showAIResponse('Text Summary', summary);
+        } else {
+            showAIResponse('Text Summary (Demo Mode)', response.data.demo_response?.summary);
+        }
+        
+    } catch (error) {
+        console.error('Summarize Text Error:', error);
+        alert('Failed to summarize text. Please try again.');
+    }
+}
+
+// Rewrite Text
+async function rewriteText() {
+    const selectedText = getSelectedOrPromptText();
+    if (!selectedText) return;
+    
+    try {
+        const response = await axios.post('/api/ai/rewrite', {
+            text: selectedText,
+            style: 'improved',
+            tone: 'engaging'
+        });
+        
+        if (response.data.success) {
+            const rewrittenText = response.data.rewritten_text || response.data.demo_response?.rewritten_text;
+            showAIResponse('Rewritten Text', rewrittenText);
+        } else {
+            showAIResponse('Rewritten Text (Demo Mode)', response.data.demo_response?.rewritten_text);
+        }
+        
+    } catch (error) {
+        console.error('Rewrite Text Error:', error);
+        alert('Failed to rewrite text. Please try again.');
+    }
+}
+
+// Build Character
+async function buildCharacter() {
+    const characterName = prompt('Enter character name (optional):');
+    
+    try {
+        const response = await axios.post('/api/ai/character-builder', {
+            character_name: characterName || 'New Character',
+            role: 'protagonist',
+            genre: 'fiction',
+            traits: 'intelligent, brave, curious'
+        });
+        
+        if (response.data.success) {
+            const characterProfile = response.data.character_profile || response.data.demo_response?.character_profile;
+            showAIResponse('Character Profile', characterProfile);
+        } else {
+            showAIResponse('Character Profile (Demo Mode)', response.data.demo_response?.character_profile);
+        }
+        
+    } catch (error) {
+        console.error('Build Character Error:', error);
+        alert('Failed to build character. Please try again.');
+    }
+}
+
+// Helper Functions
+function getSelectedOrPromptText() {
+    // Try to get selected text from manuscript editor
+    const editor = document.getElementById('manuscript-editor');
+    if (editor) {
+        const selectedText = editor.value.substring(editor.selectionStart, editor.selectionEnd);
+        if (selectedText.trim()) {
+            return selectedText;
+        }
+        
+        // If no selection, get all text or prompt for input
+        if (editor.value.trim()) {
+            const useAllText = confirm('No text selected. Use all text from editor?');
+            if (useAllText) {
+                return editor.value;
+            }
+        }
+    }
+    
+    // Prompt for text input
+    const inputText = prompt('Enter text to process:');
+    return inputText?.trim();
+}
+
+function showAIResponse(title, content) {
+    // Create a modal or alert to show AI response
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+    modal.innerHTML = `
+        <div class="bg-gray-800 rounded-lg p-6 max-w-2xl max-h-96 overflow-y-auto border border-gray-700">
+            <div class="flex justify-between items-start mb-4">
+                <h3 class="text-xl font-bold text-cyan-400">${title}</h3>
+                <button id="close-modal" class="text-gray-400 hover:text-white">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="text-gray-300 whitespace-pre-wrap">${content}</div>
+            <div class="mt-4 flex gap-2">
+                <button id="copy-response" class="bg-cyan-600 hover:bg-cyan-500 text-white px-4 py-2 rounded">
+                    <i class="fas fa-copy mr-2"></i>Copy
+                </button>
+                <button id="insert-response" class="bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded">
+                    <i class="fas fa-plus mr-2"></i>Insert to Editor
+                </button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Setup modal event listeners
+    modal.querySelector('#close-modal').addEventListener('click', () => {
+        document.body.removeChild(modal);
+    });
+    
+    modal.querySelector('#copy-response').addEventListener('click', () => {
+        navigator.clipboard.writeText(content);
+        alert('Response copied to clipboard!');
+    });
+    
+    modal.querySelector('#insert-response').addEventListener('click', () => {
+        const editor = document.getElementById('manuscript-editor');
+        if (editor) {
+            editor.value += '\n\n' + content;
+            updateWritingStatistics();
+        }
+        document.body.removeChild(modal);
+    });
+    
+    // Close on background click
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            document.body.removeChild(modal);
+        }
+    });
+}
+
+// Theme Toggle Functionality
+function initializeThemeToggle() {
+    const themeToggle = document.getElementById('theme-toggle');
+    if (themeToggle) {
+        themeToggle.addEventListener('click', toggleTheme);
+        
+        // Set initial state based on current theme
+        const isLight = document.body.classList.contains('light-theme');
+        updateThemeToggleUI(isLight);
+    }
+}
+
+function toggleTheme() {
+    const body = document.body;
+    const isDark = body.classList.contains('dark-theme');
+    
+    if (isDark) {
+        body.classList.remove('dark-theme');
+        body.classList.add('light-theme');
+        updateThemeToggleUI(true);
+        localStorage.setItem('theme', 'light');
+    } else {
+        body.classList.remove('light-theme');
+        body.classList.add('dark-theme');
+        updateThemeToggleUI(false);
+        localStorage.setItem('theme', 'dark');
+    }
+}
+
+function updateThemeToggleUI(isLight) {
+    const toggle = document.getElementById('theme-toggle');
+    const slider = toggle?.querySelector('.theme-toggle-slider');
+    const icon = slider?.querySelector('i');
+    
+    if (isLight) {
+        toggle.classList.add('light');
+        icon.className = 'fas fa-sun';
+    } else {
+        toggle.classList.remove('light');
+        icon.className = 'fas fa-moon';
+    }
+}
+
+// Chapter Creation Workflow
+function setupChapterCreationForm() {
+    const form = document.getElementById('chapter-form');
+    if (form) {
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await createChapterPlan();
+        });
+    }
+}
+
+function setupChapterWorkflow() {
+    // Setup regenerate chapters button
+    const regenerateBtn = document.getElementById('regenerate-chapters');
+    if (regenerateBtn) {
+        regenerateBtn.addEventListener('click', async () => {
+            await regenerateChapters();
+        });
+    }
+    
+    // Setup create story button
+    const createStoryBtn = document.getElementById('create-story-btn');
+    if (createStoryBtn) {
+        createStoryBtn.addEventListener('click', async () => {
+            await generateStory();
+        });
+    }
+    
+    // Setup regenerate story button
+    const regenerateStoryBtn = document.getElementById('regenerate-story');
+    if (regenerateStoryBtn) {
+        regenerateStoryBtn.addEventListener('click', async () => {
+            await regenerateStory();
+        });
+    }
+    
+    // Setup continue to workspace button
+    const continueBtn = document.getElementById('continue-to-workspace');
+    if (continueBtn) {
+        continueBtn.addEventListener('click', () => {
+            continueToWorkspace();
+        });
+    }
+}
+
+// Create Chapter Plan
+async function createChapterPlan() {
+    try {
+        const formData = getChapterFormData();
+        
+        if (!validateChapterForm(formData)) {
+            return;
+        }
+        
+        // Show loading state
+        const createBtn = document.getElementById('create-chapter-btn');
+        const originalText = createBtn.textContent;
+        createBtn.textContent = 'Creating Chapters...';
+        createBtn.disabled = true;
+        
+        // Call API
+        const response = await axios.post('/api/chapter/create', formData);
+        
+        if (response.data.success) {
+            const chapters = response.data.chapters || response.data.demo_response?.chapters;
+            displayChapterPlan(chapters);
+            
+            // Show chapter planning section
+            document.getElementById('chapter-planning').style.display = 'block';
+            
+            // Scroll to chapter planning
+            document.getElementById('chapter-planning').scrollIntoView({ behavior: 'smooth' });
+        } else {
+            alert('Failed to create chapter plan: ' + (response.data.error || 'Unknown error'));
+        }
+        
+    } catch (error) {
+        console.error('Chapter Creation Error:', error);
+        alert('Failed to create chapter plan. Please try again.');
+    } finally {
+        // Restore button
+        const createBtn = document.getElementById('create-chapter-btn');
+        createBtn.textContent = 'Create Chapter';
+        createBtn.disabled = false;
+    }
+}
+
+function getChapterFormData() {
+    return {
+        bookTitle: document.getElementById('book-title')?.value || '',
+        authorName: document.getElementById('author-name')?.value || '',
+        genre: document.getElementById('genre')?.value || '',
+        targetAudience: document.getElementById('target-audience')?.value || '',
+        toneVoice: document.getElementById('tone-voice')?.value || '',
+        narrativePerspective: document.getElementById('narrative-perspective')?.value || '',
+        bookDescription: document.getElementById('book-description')?.value || ''
+    };
+}
+
+function validateChapterForm(formData) {
+    if (!formData.bookTitle.trim()) {
+        alert('Please enter a book title.');
+        return false;
+    }
+    if (!formData.authorName.trim()) {
+        alert('Please enter the author name.');
+        return false;
+    }
+    if (!formData.bookDescription.trim()) {
+        alert('Please enter a book description.');
+        return false;
+    }
+    return true;
+}
+
+function displayChapterPlan(chapters) {
+    const container = document.getElementById('chapter-outlines');
+    if (!container) return;
+    
+    container.innerHTML = '';
+    
+    chapters.forEach((chapter, index) => {
+        const chapterElement = document.createElement('div');
+        chapterElement.className = 'chapter-outline-item bg-gray-700 p-6 rounded-lg border border-gray-600';
+        chapterElement.innerHTML = `
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-cyan-400 mb-2">Chapter ${chapter.id} Title</label>
+                <input type="text" 
+                       value="${chapter.title}" 
+                       class="form-field-glow w-full rounded px-3 py-2 text-white" 
+                       data-chapter-id="${chapter.id}" 
+                       data-field="title">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-cyan-400 mb-2">Chapter Outline</label>
+                <textarea class="form-field-glow w-full rounded px-3 py-2 text-white h-24 resize-none" 
+                          data-chapter-id="${chapter.id}" 
+                          data-field="outline">${chapter.outline}</textarea>
+            </div>
+        `;
+        container.appendChild(chapterElement);
+    });
+    
+    // Store chapters data globally
+    window.currentChapters = chapters;
+}
+
+// Generate and Continue Functions
+async function generateStory() {
+    try {
+        const updatedChapters = getCurrentChaptersFromForm();
+        const formData = getChapterFormData();
+        
+        const createStoryBtn = document.getElementById('create-story-btn');
+        createStoryBtn.textContent = 'Creating Story...';
+        createStoryBtn.disabled = true;
+        
+        const response = await axios.post('/api/story/generate', {
+            chapters: updatedChapters,
+            bookTitle: formData.bookTitle,
+            genre: formData.genre,
+            toneVoice: formData.toneVoice,
+            narrativePerspective: formData.narrativePerspective
+        });
+        
+        if (response.data.success) {
+            const story = response.data.story || response.data.demo_response?.story;
+            displayGeneratedStory(story);
+            document.getElementById('story-generation').style.display = 'block';
+            document.getElementById('story-generation').scrollIntoView({ behavior: 'smooth' });
+        }
+        
+    } catch (error) {
+        console.error('Story Generation Error:', error);
+        alert('Failed to generate story.');
+    } finally {
+        const createStoryBtn = document.getElementById('create-story-btn');
+        createStoryBtn.textContent = 'Create Story';
+        createStoryBtn.disabled = false;
+    }
+}
+
+function getCurrentChaptersFromForm() {
+    const chapters = [];
+    const chapterElements = document.querySelectorAll('.chapter-outline-item');
+    
+    chapterElements.forEach((element, index) => {
+        const titleInput = element.querySelector('[data-field="title"]');
+        const outlineTextarea = element.querySelector('[data-field="outline"]');
+        
+        chapters.push({
+            id: index + 1,
+            title: titleInput.value,
+            outline: outlineTextarea.value
+        });
+    });
+    
+    return chapters;
+}
+
+function displayGeneratedStory(story) {
+    const container = document.getElementById('story-content');
+    if (!container) return;
+    
+    container.innerHTML = `
+        <div class="bg-gray-700 p-6 rounded-lg border border-gray-600">
+            <label class="block text-sm font-medium text-cyan-400 mb-2">Generated Story</label>
+            <textarea id="generated-story-text" 
+                      class="form-field-glow w-full rounded px-3 py-2 text-white resize-none" 
+                      rows="20">${story}</textarea>
+        </div>
+    `;
+    window.currentStory = story;
+}
+
+function continueToWorkspace() {
+    const storyText = document.getElementById('generated-story-text')?.value;
+    const formData = getChapterFormData();
+    
+    if (storyText) {
+        localStorage.setItem('workspaceStory', JSON.stringify({
+            title: formData.bookTitle,
+            author: formData.authorName,
+            content: storyText,
+            timestamp: Date.now()
+        }));
+        window.location.href = '/workspace';
+    } else {
+        alert('No story content to transfer to workspace.');
     }
 }
