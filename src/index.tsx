@@ -3,8 +3,9 @@ import { cors } from 'hono/cors'
 import { serveStatic } from 'hono/cloudflare-workers'
 import OpenAI from 'openai'
 
-// OpenAI configuration - Replace with your actual API key
+// OpenAI configuration - Set OPENAI_API_KEY environment variable
 // In Cloudflare Workers, environment variables come from the context
+// For local development, set in .env: OPENAI_API_KEY=your_actual_api_key_here
 const DEMO_OPENAI_API_KEY = 'YOUR_ACTUAL_OPENAI_API_KEY_HERE'
 
 // Helper function to get OpenAI client based on environment
@@ -1217,6 +1218,81 @@ function getPageLayout(title: string, content: string, activePage: string = '') 
                 
                 // Filter out empty strings and count actual words
                 return words.filter(word => word.length > 0).length;
+            }
+            
+            // Workspace-specific functionality
+            if (window.location.pathname === '/workspace') {
+                console.log('Workspace page loaded, checking for story data...');
+                
+                // Load story content from localStorage into manuscript editor
+                const storyData = localStorage.getItem('workspace-story');
+                if (storyData) {
+                    try {
+                        const parsedData = JSON.parse(storyData);
+                        console.log('Story data found:', parsedData);
+                        
+                        // Populate manuscript editor with story content
+                        const manuscriptEditor = document.getElementById('manuscript-editor');
+                        const chapterTitle = document.getElementById('chapter-title');
+                        
+                        if (manuscriptEditor && parsedData.content) {
+                            manuscriptEditor.value = parsedData.content;
+                            console.log('Story content loaded into manuscript editor');
+                        }
+                        
+                        if (chapterTitle && parsedData.bookTitle) {
+                            chapterTitle.value = parsedData.bookTitle;
+                            console.log('Book title loaded into chapter title field');
+                        }
+                        
+                        // Add visual feedback that content was loaded
+                        const saveButton = document.getElementById('save-story-btn');
+                        if (saveButton) {
+                            saveButton.innerHTML = '<i class="fas fa-check mr-1"></i>Story Loaded';
+                            saveButton.classList.add('bg-green-600', 'hover:bg-green-500');
+                            setTimeout(() => {
+                                saveButton.innerHTML = '<i class="fas fa-save mr-1"></i>Save Story';
+                                saveButton.classList.remove('bg-green-600', 'hover:bg-green-500');
+                            }, 3000);
+                        }
+                        
+                        // Optional: Clear the localStorage after loading to prevent re-loading
+                        // localStorage.removeItem('workspace-story');
+                        
+                    } catch (error) {
+                        console.error('Error parsing story data:', error);
+                    }
+                } else {
+                    console.log('No story data found in localStorage');
+                }
+                
+                // Add save functionality for manuscript editor
+                const saveBtn = document.getElementById('save-story-btn');
+                if (saveBtn) {
+                    saveBtn.addEventListener('click', function() {
+                        const manuscriptEditor = document.getElementById('manuscript-editor');
+                        const chapterTitle = document.getElementById('chapter-title');
+                        
+                        if (manuscriptEditor) {
+                            const savedStory = {
+                                content: manuscriptEditor.value,
+                                title: chapterTitle?.value || 'Untitled Story',
+                                timestamp: new Date().toISOString(),
+                                wordCount: countWords(manuscriptEditor.value)
+                            };
+                            
+                            localStorage.setItem('saved-manuscript', JSON.stringify(savedStory));
+                            
+                            // Visual feedback
+                            this.innerHTML = '<i class="fas fa-check mr-1"></i>Saved!';
+                            this.classList.add('bg-green-600', 'hover:bg-green-500');
+                            setTimeout(() => {
+                                this.innerHTML = '<i class="fas fa-save mr-1"></i>Save Story';
+                                this.classList.remove('bg-green-600', 'hover:bg-green-500');
+                            }, 2000);
+                        }
+                    });
+                }
             }
         });
         </script>
