@@ -1158,6 +1158,9 @@ function getPageLayout(title: string, content: string, activePage: string = '') 
                 const container = document.getElementById('story-content');
                 if (!container) return;
                 
+                // Calculate initial word count
+                const wordCount = countWords(story);
+                
                 container.innerHTML = \`
                     <div class="bg-gray-700 p-6 rounded-lg border border-gray-600">
                         <div class="mb-4">
@@ -1173,8 +1176,47 @@ function getPageLayout(title: string, content: string, activePage: string = '') 
                             <i class="fas fa-info-circle mr-1"></i>
                             You can edit the generated story above. Use the buttons below to regenerate or continue to workspace.
                         </div>
+                        <div class="flex justify-between items-center text-sm">
+                            <div class="text-gray-400">
+                                <i class="fas fa-chart-bar mr-1"></i>Story Statistics
+                            </div>
+                            <div class="flex space-x-4">
+                                <span class="text-cyan-400 font-semibold">
+                                    <i class="fas fa-file-word mr-1"></i>
+                                    <span id="story-word-count">\${wordCount}</span> words
+                                </span>
+                                <span class="text-gray-500">
+                                    <i class="fas fa-font mr-1"></i>
+                                    <span id="story-char-count">\${story.length}</span> characters
+                                </span>
+                            </div>
+                        </div>
                     </div>
                 \`;
+                
+                // Add real-time word count updating
+                const textarea = document.getElementById('generated-story-text');
+                if (textarea) {
+                    textarea.addEventListener('input', function() {
+                        const text = this.value;
+                        const words = countWords(text);
+                        const chars = text.length;
+                        
+                        document.getElementById('story-word-count').textContent = words;
+                        document.getElementById('story-char-count').textContent = chars;
+                    });
+                }
+            }
+            
+            // Helper function to accurately count words
+            function countWords(text) {
+                if (!text || text.trim() === '') return 0;
+                
+                // Remove extra whitespace and split by whitespace
+                const words = text.trim().split(/\s+/);
+                
+                // Filter out empty strings and count actual words
+                return words.filter(word => word.length > 0).length;
             }
         });
         </script>
