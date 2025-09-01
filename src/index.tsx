@@ -732,6 +732,56 @@ function getPageLayout(title: string, content: string, activePage: string = '') 
         <script src="https://cdn.tailwindcss.com"></script>
         <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
         <link href="/static/styles.css" rel="stylesheet">
+        <style>
+            /* Critical Form Field Styles - Inline to ensure visibility */
+            .form-field-glow {
+                border: 2px solid rgba(192, 192, 192, 0.3) !important;
+                box-shadow: 0 0 10px rgba(192, 192, 192, 0.8), 0 0 20px rgba(192, 192, 192, 0.4) !important;
+                transition: all 0.3s ease !important;
+                background: #4a5568 !important;
+                color: #ffffff !important;
+            }
+            
+            .form-field-glow:focus {
+                border-color: #78e3fe !important;
+                box-shadow: 0 0 15px rgba(120, 227, 254, 0.6), 0 0 30px rgba(120, 227, 254, 0.3), 0 0 10px rgba(192, 192, 192, 0.8) !important;
+                background: #4a5568 !important;
+                color: #ffffff !important;
+            }
+            
+            .form-field-glow:hover {
+                border-color: rgba(192, 192, 192, 0.6) !important;
+                box-shadow: 0 0 15px rgba(192, 192, 192, 0.6), 0 0 25px rgba(192, 192, 192, 0.3) !important;
+                background: #4a5568 !important;
+                color: #ffffff !important;
+            }
+            
+            /* Force all form fields to have white text on dark gray background */
+            input.form-field-glow,
+            select.form-field-glow, 
+            textarea.form-field-glow {
+                background: #4a5568 !important;
+                color: #ffffff !important;
+            }
+            
+            /* Form field placeholders */
+            .form-field-glow::placeholder {
+                color: #cbd5e0 !important;
+                opacity: 0.7 !important;
+            }
+            
+            /* Override any theme-based coloring */
+            .light-theme .form-field-glow,
+            .dark-theme .form-field-glow {
+                background: #4a5568 !important;
+                color: #ffffff !important;
+            }
+            
+            .light-theme .form-field-glow::placeholder,
+            .dark-theme .form-field-glow::placeholder {
+                color: #cbd5e0 !important;
+            }
+        </style>
     </head>
     <body class="bg-gray-900 text-white min-h-screen">
         <!-- Header -->
