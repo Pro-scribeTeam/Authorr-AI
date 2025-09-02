@@ -912,6 +912,26 @@ function getPageLayout(title: string, content: string, activePage: string = '') 
               50% { background-position: 100% 50%; }
             }
             
+            /* AI Writing Tools Buttons - Black background, white text, gold glow */
+            .ai-writing-tool-btn {
+              background: #000000 !important;
+              color: #ffffff !important;
+              border: 2px solid #ffd700;
+              box-shadow: 0 0 10px rgba(255, 215, 0, 0.5), 0 0 20px rgba(255, 215, 0, 0.3);
+              font-weight: 600;
+            }
+            
+            .ai-writing-tool-btn:hover {
+              background: #1a1a1a !important;
+              box-shadow: 0 0 15px rgba(255, 215, 0, 0.7), 0 0 30px rgba(255, 215, 0, 0.4);
+              transform: translateY(-1px);
+            }
+            
+            .ai-writing-tool-btn:active {
+              transform: translateY(0);
+              box-shadow: 0 0 8px rgba(255, 215, 0, 0.6), 0 0 16px rgba(255, 215, 0, 0.3);
+            }
+            
             /* Navigation Styles */
             .nav-link {
               color: #ffffff !important;
@@ -1673,6 +1693,375 @@ function getPageLayout(title: string, content: string, activePage: string = '') 
                     });
                 }
             }
+
+            // Workspace functionality for editor controls
+            if (window.location.pathname === '/workspace') {
+                // Undo/Redo functionality with history
+                const undoStack = [];
+                const redoStack = [];
+                const maxHistorySize = 50;
+
+                // Get editor elements
+                const manuscriptEditor = document.getElementById('manuscript-editor');
+                const chapterTitle = document.getElementById('chapter-title');
+                const saveBtn = document.getElementById('save-btn');
+                const undoBtn = document.getElementById('undo-btn');
+                const redoBtn = document.getElementById('redo-btn');
+                const continueToNarrationBtn = document.getElementById('continue-to-narration-btn');
+
+                // Word count and statistics update
+                function updateWordCount() {
+                    if (!manuscriptEditor) return;
+                    
+                    const text = manuscriptEditor.value;
+                    const words = text.trim() ? text.trim().split(/\\s+/).filter(word => word.length > 0).length : 0;
+                    const characters = text.length;
+                    const paragraphs = text.trim() ? text.split(/\\n\\s*\\n/).filter(p => p.trim()).length : 0;
+                    const readingTime = Math.ceil(words / 200); // Average reading speed
+
+                    const wordCountEl = document.getElementById('word-count');
+                    const charCountEl = document.getElementById('char-count');
+                    const paraCountEl = document.getElementById('para-count');
+                    const readingTimeEl = document.getElementById('reading-time');
+
+                    if (wordCountEl) wordCountEl.textContent = words.toLocaleString();
+                    if (charCountEl) charCountEl.textContent = characters.toLocaleString();
+                    if (paraCountEl) paraCountEl.textContent = paragraphs.toLocaleString();
+                    if (readingTimeEl) readingTimeEl.textContent = readingTime + ' min';
+                }
+
+                // Save current state to history
+                function saveToHistory() {
+                    if (!manuscriptEditor) return;
+                    
+                    const currentState = {
+                        content: manuscriptEditor.value,
+                        title: chapterTitle?.value || '',
+                        timestamp: Date.now()
+                    };
+                    
+                    undoStack.push(currentState);
+                    if (undoStack.length > maxHistorySize) {
+                        undoStack.shift();
+                    }
+                    
+                    // Clear redo stack when new changes are made
+                    redoStack.length = 0;
+                    updateHistoryButtons();
+                }
+
+                // Update undo/redo button states
+                function updateHistoryButtons() {
+                    if (undoBtn) {
+                        undoBtn.disabled = undoStack.length === 0;
+                        undoBtn.style.opacity = undoStack.length === 0 ? '0.5' : '1';
+                    }
+                    if (redoBtn) {
+                        redoBtn.disabled = redoStack.length === 0;
+                        redoBtn.style.opacity = redoStack.length === 0 ? '0.5' : '1';
+                    }
+                }
+
+                // Set up event listeners
+                if (manuscriptEditor) {
+                    let timeout;
+                    manuscriptEditor.addEventListener('input', function() {
+                        updateWordCount();
+                        
+                        // Debounce history saving
+                        clearTimeout(timeout);
+                        timeout = setTimeout(saveToHistory, 1000);
+                    });
+
+                    // Initial word count and save initial state
+                    updateWordCount();
+                    saveToHistory();
+                }
+
+                // Save button functionality
+                if (saveBtn) {
+                    saveBtn.addEventListener('click', function() {
+                        if (!manuscriptEditor) return;
+                        
+                        const storyData = {
+                            content: manuscriptEditor.value,
+                            bookTitle: chapterTitle?.value || 'Untitled Story',
+                            timestamp: new Date().toISOString(),
+                            wordCount: manuscriptEditor.value.trim().split(/\\s+/).filter(word => word.length > 0).length
+                        };
+                        
+                        localStorage.setItem('workspace-story', JSON.stringify(storyData));
+                        
+                        // Visual feedback
+                        const originalText = this.innerHTML;
+                        this.innerHTML = '<i class="fas fa-check mr-1"></i>Saved!';
+                        this.style.background = '#10b981';
+                        
+                        setTimeout(() => {
+                            this.innerHTML = originalText;
+                            this.style.background = '';
+                        }, 2000);
+                    });
+                }
+
+                // Undo functionality
+                if (undoBtn) {
+                    undoBtn.addEventListener('click', function() {
+                        if (undoStack.length === 0 || !manuscriptEditor) return;
+                        
+                        // Save current state to redo stack
+                        const currentState = {
+                            content: manuscriptEditor.value,
+                            title: chapterTitle?.value || '',
+                            timestamp: Date.now()
+                        };
+                        redoStack.push(currentState);
+                        
+                        // Restore previous state
+                        const prevState = undoStack.pop();
+                        manuscriptEditor.value = prevState.content;
+                        if (chapterTitle) chapterTitle.value = prevState.title;
+                        
+                        updateWordCount();
+                        updateHistoryButtons();
+                    });
+                }
+
+                // Redo functionality
+                if (redoBtn) {
+                    redoBtn.addEventListener('click', function() {
+                        if (redoStack.length === 0 || !manuscriptEditor) return;
+                        
+                        // Save current state to undo stack
+                        const currentState = {
+                            content: manuscriptEditor.value,
+                            title: chapterTitle?.value || '',
+                            timestamp: Date.now()
+                        };
+                        undoStack.push(currentState);
+                        
+                        // Restore next state
+                        const nextState = redoStack.pop();
+                        manuscriptEditor.value = nextState.content;
+                        if (chapterTitle) chapterTitle.value = nextState.title;
+                        
+                        updateWordCount();
+                        updateHistoryButtons();
+                    });
+                }
+
+                // Continue to Narration functionality
+                if (continueToNarrationBtn) {
+                    continueToNarrationBtn.addEventListener('click', function() {
+                        if (!manuscriptEditor || !manuscriptEditor.value.trim()) {
+                            alert('Please write some content before continuing to narration.');
+                            return;
+                        }
+
+                        // Save story data for narration page
+                        const storyData = {
+                            content: manuscriptEditor.value,
+                            bookTitle: chapterTitle?.value || 'Untitled Story',
+                            author: 'Author',
+                            timestamp: new Date().toISOString(),
+                            wordCount: manuscriptEditor.value.trim().split(/\\s+/).filter(word => word.length > 0).length
+                        };
+
+                        localStorage.setItem('narration-story', JSON.stringify(storyData));
+                        
+                        // Visual feedback
+                        const originalText = this.innerHTML;
+                        this.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Transferring...';
+                        
+                        setTimeout(() => {
+                            window.location.href = '/narration';
+                        }, 500);
+                    });
+                }
+
+                // AI Writing Tools functionality
+                const aiButtons = {
+                    'ai-generate-ideas': 'Generate creative writing ideas and inspiration',
+                    'ai-create-outline': 'Create a structured outline for your story',
+                    'ai-expand-text': 'Expand and elaborate on selected text',
+                    'ai-summarize': 'Summarize and condense your content',
+                    'ai-rewrite': 'Rewrite and improve selected text',
+                    'ai-character-builder': 'Build detailed character profiles and development'
+                };
+
+                Object.keys(aiButtons).forEach(buttonId => {
+                    const button = document.getElementById(buttonId);
+                    if (button) {
+                        button.addEventListener('click', function() {
+                            const action = aiButtons[buttonId];
+                            
+                            // Visual feedback
+                            const originalText = this.innerHTML;
+                            this.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Processing...';
+                            this.disabled = true;
+
+                            // Simulate AI processing (replace with actual API call)
+                            setTimeout(() => {
+                                this.innerHTML = originalText;
+                                this.disabled = false;
+                                
+                                alert('AI Tool: ' + action + '\\n\\n(Ready for OpenAI API integration)');
+                            }, 2000);
+                        });
+                    }
+                });
+
+                // Initialize history buttons
+                updateHistoryButtons();
+            }
+
+            // Narration page functionality
+            if (window.location.pathname === '/narration') {
+                // Populate OpenAI voices
+                const voiceSelect = document.getElementById('voice-select');
+                if (voiceSelect) {
+                    voiceSelect.innerHTML = `
+                        <option value="">Select a voice...</option>
+                        <option value="alloy">Alloy - Neutral, Professional</option>
+                        <option value="echo">Echo - Male, Authoritative</option>
+                        <option value="fable">Fable - Female, Narrative</option>
+                        <option value="onyx">Onyx - Male, Deep & Rich</option>
+                        <option value="nova">Nova - Female, Energetic</option>
+                        <option value="shimmer">Shimmer - Female, Elegant</option>
+                    `;
+                }
+
+                // Voice preview functionality
+                const voicePreviewBtn = document.getElementById('voice-preview-btn');
+                if (voicePreviewBtn) {
+                    voicePreviewBtn.addEventListener('click', async function() {
+                        const selectedVoice = voiceSelect?.value;
+                        if (!selectedVoice) {
+                            alert('Please select a voice first.');
+                            return;
+                        }
+
+                        const originalText = this.innerHTML;
+                        this.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Generating Preview...';
+                        this.disabled = true;
+
+                        try {
+                            const previewText = `Hello, this is a preview of the ${selectedVoice} voice. This voice will be used to narrate your audiobook.`;
+                            
+                            const response = await fetch('/api/audio/generate', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    text: previewText,
+                                    voice: selectedVoice,
+                                    speed: 1.0
+                                })
+                            });
+
+                            const data = await response.json();
+
+                            if (data.success) {
+                                // Create and play audio preview
+                                const audioBlob = new Blob([
+                                    new Uint8Array(
+                                        atob(data.audio_data)
+                                            .split('')
+                                            .map(char => char.charCodeAt(0))
+                                    )
+                                ], { type: 'audio/mpeg' });
+                                
+                                const audioUrl = URL.createObjectURL(audioBlob);
+                                const audio = new Audio(audioUrl);
+                                audio.play();
+                                audio.addEventListener('ended', () => URL.revokeObjectURL(audioUrl));
+                            } else {
+                                alert('Voice preview failed: ' + (data.error || 'Unknown error'));
+                            }
+                        } catch (error) {
+                            console.error('Voice preview error:', error);
+                            alert('Failed to generate voice preview. Please try again.');
+                        } finally {
+                            this.innerHTML = originalText;
+                            this.disabled = false;
+                        }
+                    });
+                }
+
+                // Voice review button functionality
+                const voiceReviewBtn = document.getElementById('voice-review-btn');
+                if (voiceReviewBtn) {
+                    voiceReviewBtn.addEventListener('click', function() {
+                        const selectedVoice = voiceSelect?.value;
+                        if (!selectedVoice) {
+                            alert('Please select a voice first.');
+                            return;
+                        }
+                        
+                        // Show voice configuration summary
+                        alert(`✅ Voice Configuration Confirmed\\n\\nSelected Voice: ${selectedVoice}\\n\\nThis voice is now configured for narration generation. You can proceed with text-to-speech conversion using this voice.`);
+                    });
+                }
+
+                // Import story from workspace
+                const textInput = document.getElementById('text-input');
+                if (textInput && localStorage.getItem('narration-story')) {
+                    try {
+                        const storyData = JSON.parse(localStorage.getItem('narration-story'));
+                        if (storyData.content) {
+                            textInput.value = storyData.content;
+                            
+                            // Update character count and duration estimate
+                            updateNarrationStats();
+                            
+                            // Show import notification
+                            const notification = document.createElement('div');
+                            notification.className = 'bg-green-100 dark:bg-green-900 border border-green-400 text-green-700 dark:text-green-300 px-4 py-3 rounded mb-4';
+                            notification.innerHTML = '<strong>✅ Story Imported:</strong> "' + (storyData.bookTitle || 'Untitled Story') + '" has been loaded for narration (' + storyData.wordCount + ' words).';
+                            
+                            // Insert at top of page
+                            const narrationContent = document.querySelector('.space-y-12');
+                            if (narrationContent) {
+                                narrationContent.insertBefore(notification, narrationContent.firstChild);
+                                
+                                // Auto-remove after 7 seconds
+                                setTimeout(() => {
+                                    notification.style.transition = 'opacity 0.5s';
+                                    notification.style.opacity = '0';
+                                    setTimeout(() => notification.remove(), 500);
+                                }, 7000);
+                            }
+                        }
+                    } catch (error) {
+                        console.log('No story data to import');
+                    }
+                }
+
+                // Update narration statistics
+                function updateNarrationStats() {
+                    if (!textInput) return;
+                    
+                    const text = textInput.value;
+                    const charCount = text.length;
+                    const wordCount = text.trim() ? text.trim().split(/\\s+/).filter(word => word.length > 0).length : 0;
+                    const durationSeconds = Math.ceil((wordCount / 150) * 60); // ~150 words per minute
+
+                    const charCountEl = document.getElementById('char-count');
+                    const durationEl = document.getElementById('duration-est');
+                    
+                    if (charCountEl) charCountEl.textContent = charCount.toLocaleString();
+                    if (durationEl) {
+                        const minutes = Math.floor(durationSeconds / 60);
+                        const seconds = durationSeconds % 60;
+                        durationEl.textContent = minutes > 0 ? minutes + 'm ' + seconds + 's' : seconds + 's';
+                    }
+                }
+
+                // Add event listener for text changes
+                if (textInput) {
+                    textInput.addEventListener('input', updateNarrationStats);
+                    updateNarrationStats(); // Initial update
+                }
+            }
         });
         </script>
     </body>
@@ -1935,22 +2324,22 @@ app.get('/workspace', (c) => {
             </h3>
             
             <div class="space-y-3">
-              <button class="w-full bg-purple-600 hover:bg-purple-500 text-white py-2 px-4 rounded transition-all text-left">
+              <button id="ai-generate-ideas" class="ai-writing-tool-btn w-full py-2 px-4 rounded transition-all text-left">
                 <i class="fas fa-lightbulb mr-2"></i>Generate Ideas
               </button>
-              <button class="w-full bg-blue-600 hover:bg-blue-500 text-white py-2 px-4 rounded transition-all text-left">
+              <button id="ai-create-outline" class="ai-writing-tool-btn w-full py-2 px-4 rounded transition-all text-left">
                 <i class="fas fa-list mr-2"></i>Create Outline
               </button>
-              <button class="w-full bg-green-600 hover:bg-green-500 text-white py-2 px-4 rounded transition-all text-left">
+              <button id="ai-expand-text" class="ai-writing-tool-btn w-full py-2 px-4 rounded transition-all text-left">
                 <i class="fas fa-expand mr-2"></i>Expand Text
               </button>
-              <button class="w-full bg-orange-600 hover:bg-orange-500 text-white py-2 px-4 rounded transition-all text-left">
+              <button id="ai-summarize" class="ai-writing-tool-btn w-full py-2 px-4 rounded transition-all text-left">
                 <i class="fas fa-compress mr-2"></i>Summarize
               </button>
-              <button class="w-full bg-red-600 hover:bg-red-500 text-white py-2 px-4 rounded transition-all text-left">
+              <button id="ai-rewrite" class="ai-writing-tool-btn w-full py-2 px-4 rounded transition-all text-left">
                 <i class="fas fa-edit mr-2"></i>Rewrite
               </button>
-              <button class="w-full bg-teal-600 hover:bg-teal-500 text-white py-2 px-4 rounded transition-all text-left">
+              <button id="ai-character-builder" class="ai-writing-tool-btn w-full py-2 px-4 rounded transition-all text-left">
                 <i class="fas fa-users mr-2"></i>Character Builder
               </button>
             </div>
@@ -1990,13 +2379,13 @@ app.get('/workspace', (c) => {
                 <i class="fas fa-pen mr-2"></i>Manuscript Editor
               </h3>
               <div class="flex space-x-2">
-                <button class="bg-gray-700 hover:bg-gray-600 text-white px-3 py-1 rounded text-sm transition-all">
+                <button id="save-btn" class="bg-gray-700 hover:bg-gray-600 text-white px-3 py-1 rounded text-sm transition-all">
                   <i class="fas fa-save mr-1"></i>Save
                 </button>
-                <button class="bg-gray-700 hover:bg-gray-600 text-white px-3 py-1 rounded text-sm transition-all">
+                <button id="undo-btn" class="bg-gray-700 hover:bg-gray-600 text-white px-3 py-1 rounded text-sm transition-all">
                   <i class="fas fa-undo mr-1"></i>Undo
                 </button>
-                <button class="bg-gray-700 hover:bg-gray-600 text-white px-3 py-1 rounded text-sm transition-all">
+                <button id="redo-btn" class="bg-gray-700 hover:bg-gray-600 text-white px-3 py-1 rounded text-sm transition-all">
                   <i class="fas fa-redo mr-1"></i>Redo
                 </button>
               </div>
@@ -2019,7 +2408,7 @@ app.get('/workspace', (c) => {
                 <button id="save-story-btn" class="btn btn-primary">
                   <i class="fas fa-save mr-1"></i>Save Story
                 </button>
-                <button class="bg-cyan-600 hover:bg-cyan-500 text-white px-4 py-2 rounded transition-all">
+                <button id="continue-to-narration-btn" class="bg-cyan-600 hover:bg-cyan-500 text-white px-4 py-2 rounded transition-all">
                   <i class="fas fa-arrow-right mr-1"></i>Continue to Narration
                 </button>
               </div>
