@@ -331,10 +331,10 @@ app.post('/api/story/generate', async (c) => {
       console.log(`Generating Chapter ${chapter.id}: ${chapter.title} (Target: ${wordsPerChapter} words)`)
       
       const chapterCompletion = await openai.chat.completions.create({
-        model: "gpt-3.5-turbo", // Use standard model for individual chapters
+        model: "gpt-4o-mini", // GPT-4o-mini has 128k context and better quality
         messages: [{
           role: "system",
-          content: `You are a professional ${genre} writer. Your task is to write exactly ONE chapter with EXACTLY ${wordsPerChapter} words. Count every single word carefully. The chapter must be exactly ${wordsPerChapter} words - no more, no less.`
+          content: `You are a professional ${genre} writer. Your ONLY task is to write exactly ONE chapter with EXACTLY ${wordsPerChapter} words. This is absolutely critical - you must count every single word and ensure the chapter is exactly ${wordsPerChapter} words. No more, no less. Write until you reach exactly ${wordsPerChapter} words, then stop immediately.`
         }, {
           role: "user",
           content: `Write Chapter ${chapter.id} of "${bookTitle}" with EXACTLY ${wordsPerChapter} words.
@@ -342,19 +342,19 @@ app.post('/api/story/generate', async (c) => {
 Chapter Title: ${chapter.title}
 Chapter Outline: ${chapter.outline}
 
-Requirements:
+STRICT Requirements:
 - Genre: ${genre}
 - Tone: ${toneVoice} 
 - Perspective: ${narrativePerspective}
-- Word Count: EXACTLY ${wordsPerChapter} words (count carefully!)
+- Word Count: EXACTLY ${wordsPerChapter} words (this is mandatory - count every word!)
 - Include rich descriptions, dialogue, and narrative flow
 - Make it engaging and true to the ${genre} genre
 
 Start with "Chapter ${chapter.id}: ${chapter.title}" as the heading.
 
-CRITICAL: The chapter must be exactly ${wordsPerChapter} words. Count each word carefully and ensure you meet this exact requirement.`
+IMPORTANT: You must write exactly ${wordsPerChapter} words. Count as you write and continue writing until you reach exactly ${wordsPerChapter} words. Do not stop before reaching ${wordsPerChapter} words, and do not exceed ${wordsPerChapter} words. This word count requirement is absolute and non-negotiable.`
         }],
-        max_tokens: Math.min(Math.floor(wordsPerChapter * 2), 4000), // Conservative token limit per chapter
+        max_tokens: Math.min(Math.floor(wordsPerChapter * 1.4 + 300), 16384), // GPT-4o-mini supports up to 16,384 output tokens
         temperature: 0.7
       })
       
@@ -424,6 +424,186 @@ app.get('/api/projects', (c) => {
       }
     ]
   })
+})
+
+// Book Cover Generation Endpoint
+app.post('/api/cover/generate', async (c) => {
+  try {
+    const openai = getOpenAIClient(c.env)
+    if (!openai) {
+      return c.json({
+        success: false,
+        error: 'OpenAI API key not configured',
+        demo_mode: true,
+        demo_cover: 'https://via.placeholder.com/400x600/1f2937/78e3fe?text=Demo+Cover',
+        message: 'Demo cover generated. Configure OpenAI API key for AI-generated covers.'
+      })
+    }
+
+    const { bookTitle, genre, tone, description } = await c.req.json()
+    
+    console.log(`Generating cover for: "${bookTitle}" (${genre})`)
+    
+    // Create detailed prompt for DALL-E 3
+    const coverPrompt = `Create a professional book cover design for "${bookTitle}", a ${genre} book. 
+    Style: ${tone || 'modern and engaging'}
+    Description: ${description || 'compelling visual narrative'}
+    
+    Requirements:
+    - High-quality, professional book cover design
+    - Genre-appropriate imagery and colors
+    - Clean, readable layout suitable for both print and digital
+    - Artistic and visually striking
+    - No text or titles (cover art only)
+    - Vertical book cover aspect ratio
+    - ${genre} genre aesthetic with ${tone || 'engaging'} mood`
+
+    const imageResponse = await openai.images.generate({
+      model: "dall-e-3",
+      prompt: coverPrompt,
+      n: 1,
+      size: "1024x1792", // Vertical book cover ratio
+      quality: "hd",
+      style: "vivid"
+    })
+
+    const coverUrl = imageResponse.data[0].url
+    const revisedPrompt = imageResponse.data[0].revised_prompt
+
+    console.log(`Cover generated successfully: ${coverUrl}`)
+
+    return c.json({
+      success: true,
+      cover_url: coverUrl,
+      revised_prompt: revisedPrompt,
+      book_title: bookTitle,
+      genre: genre,
+      message: 'Book cover generated successfully!'
+    })
+
+  } catch (error) {
+    console.error('Cover Generation Error:', error)
+    return c.json({ 
+      success: false, 
+      error: 'Failed to generate book cover',
+      details: error.message 
+    }, 500)
+  }
+})
+
+// Text-to-Speech Endpoint
+app.post('/api/audio/generate', async (c) => {
+  try {
+    const openai = getOpenAIClient(c.env)
+    if (!openai) {
+      return c.json({
+        success: false,
+        error: 'OpenAI API key not configured',
+        demo_mode: true,
+        message: 'Configure OpenAI API key for audio generation.'
+      })
+    }
+
+    const { text, voice, speed } = await c.req.json()
+    
+    console.log(`Generating audio with voice: ${voice || 'alloy'}`)
+    
+    // Generate speech using OpenAI TTS
+    const audioResponse = await openai.audio.speech.create({
+      model: "tts-1-hd", // High definition TTS
+      voice: voice || "alloy", // Default to alloy if no voice specified
+      input: text,
+      speed: speed || 1.0 // Default normal speed
+    })
+
+    // Convert audio response to base64 for frontend handling
+    const audioBuffer = await audioResponse.arrayBuffer()
+    const audioBase64 = Buffer.from(audioBuffer).toString('base64')
+    
+    console.log(`Audio generated successfully (${audioBuffer.byteLength} bytes)`)
+
+    return c.json({
+      success: true,
+      audio_data: audioBase64,
+      audio_format: 'mp3',
+      voice_used: voice || 'alloy',
+      text_length: text.length,
+      message: 'Audio generated successfully!'
+    })
+
+  } catch (error) {
+    console.error('Audio Generation Error:', error)
+    return c.json({ 
+      success: false, 
+      error: 'Failed to generate audio',
+      details: error.message 
+    }, 500)
+  }
+})
+
+// Voice Analysis Endpoint (Enhanced with OpenAI voices)
+app.post('/api/voice/list', async (c) => {
+  try {
+    // Return available OpenAI TTS voices
+    const voices = [
+      {
+        id: 'alloy',
+        name: 'Alloy',
+        description: 'Neutral, balanced voice suitable for most content',
+        gender: 'Neutral',
+        style: 'Professional'
+      },
+      {
+        id: 'echo',
+        name: 'Echo',
+        description: 'Clear, resonant voice with good projection',
+        gender: 'Male',
+        style: 'Authoritative'
+      },
+      {
+        id: 'fable',
+        name: 'Fable',
+        description: 'Warm, storytelling voice perfect for narratives',
+        gender: 'Female',
+        style: 'Narrative'
+      },
+      {
+        id: 'onyx',
+        name: 'Onyx',
+        description: 'Deep, rich voice with gravitas',
+        gender: 'Male',
+        style: 'Deep'
+      },
+      {
+        id: 'nova',
+        name: 'Nova',
+        description: 'Bright, energetic voice with clarity',
+        gender: 'Female',
+        style: 'Energetic'
+      },
+      {
+        id: 'shimmer',
+        name: 'Shimmer',
+        description: 'Smooth, polished voice for professional content',
+        gender: 'Female',
+        style: 'Elegant'
+      }
+    ]
+
+    return c.json({
+      success: true,
+      voices: voices,
+      message: 'Available OpenAI TTS voices retrieved successfully.'
+    })
+
+  } catch (error) {
+    console.error('Voice List Error:', error)
+    return c.json({ 
+      success: false, 
+      error: 'Failed to retrieve voices',
+      details: error.message 
+    }, 500)
+  }
 })
 
 // AI Writing Tools Endpoints
@@ -895,7 +1075,7 @@ function getPageLayout(title: string, content: string, activePage: string = '') 
               -webkit-background-clip: text;
               -webkit-text-fill-color: transparent;
               background-clip: text;
-              text-shadow: var(--brand-cyan-glow);
+              text-shadow: 0 0 5px rgba(120, 227, 254, 0.3);
             }
             
             .iridescent-gold {
@@ -1673,6 +1853,201 @@ function getPageLayout(title: string, content: string, activePage: string = '') 
                     });
                 }
             }
+
+            // Book Cover Generation Functionality
+            const generateCoverBtn = document.getElementById('generate-cover');
+            if (generateCoverBtn) {
+                generateCoverBtn.addEventListener('click', async function() {
+                    const bookTitle = document.getElementById('book-title')?.value || 'Untitled Book';
+                    const genre = document.getElementById('genre')?.value || 'fiction';
+                    const toneVoice = document.getElementById('tone-voice')?.value || 'engaging';
+                    const description = document.getElementById('cover-description')?.value || '';
+
+                    if (!bookTitle.trim()) {
+                        alert('Please enter a book title first.');
+                        return;
+                    }
+
+                    const originalText = this.innerHTML;
+                    this.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Generating Cover...';
+                    this.disabled = true;
+
+                    try {
+                        const response = await axios.post('/api/cover/generate', {
+                            bookTitle,
+                            genre,
+                            tone: toneVoice,
+                            description
+                        });
+
+                        if (response.data.success) {
+                            const coverResult = document.getElementById('cover-result');
+                            const generatedCover = document.getElementById('generated-cover');
+                            const coverStatus = document.getElementById('cover-status');
+
+                            generatedCover.src = response.data.cover_url;
+                            coverStatus.textContent = response.data.message;
+                            coverResult.style.display = 'block';
+                        } else {
+                            if (response.data.demo_mode) {
+                                const coverResult = document.getElementById('cover-result');
+                                const generatedCover = document.getElementById('generated-cover');
+                                const coverStatus = document.getElementById('cover-status');
+
+                                generatedCover.src = response.data.demo_cover;
+                                coverStatus.textContent = response.data.message;
+                                coverResult.style.display = 'block';
+                            } else {
+                                alert('Failed to generate cover: ' + (response.data.error || 'Unknown error'));
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Cover generation error:', error);
+                        alert('Failed to generate cover. Please try again.');
+                    } finally {
+                        this.innerHTML = originalText;
+                        this.disabled = false;
+                    }
+                });
+            }
+
+            // Audio Generation Functionality
+            const generateAudioBtn = document.getElementById('generate-audio');
+            if (generateAudioBtn) {
+                // Update speed display
+                const speedSlider = document.getElementById('tts-speed');
+                const speedValue = document.getElementById('speed-value');
+                if (speedSlider && speedValue) {
+                    speedSlider.addEventListener('input', function() {
+                        speedValue.textContent = this.value + 'x';
+                    });
+                }
+
+                generateAudioBtn.addEventListener('click', async function() {
+                    const chapterSelect = document.getElementById('chapter-select');
+                    const voice = document.getElementById('tts-voice')?.value || 'alloy';
+                    const speed = parseFloat(document.getElementById('tts-speed')?.value) || 1.0;
+
+                    if (!chapterSelect.value) {
+                        alert('Please select a chapter to convert to audio.');
+                        return;
+                    }
+
+                    // Get the chapter text from the story content
+                    const generatedStoryText = document.getElementById('generated-story-text');
+                    if (!generatedStoryText || !generatedStoryText.value.trim()) {
+                        alert('No story content available for audio generation.');
+                        return;
+                    }
+
+                    const storyText = generatedStoryText.value;
+                    const chapters = storyText.split(/Chapter \\d+:/).filter(chapter => chapter.trim());
+                    const selectedChapterIndex = parseInt(chapterSelect.value) - 1;
+                    
+                    if (selectedChapterIndex < 0 || selectedChapterIndex >= chapters.length) {
+                        alert('Selected chapter not found.');
+                        return;
+                    }
+
+                    const chapterText = 'Chapter ' + (selectedChapterIndex + 1) + ':' + chapters[selectedChapterIndex];
+
+                    const originalText = this.innerHTML;
+                    this.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Generating Audio...';
+                    this.disabled = true;
+
+                    try {
+                        const response = await axios.post('/api/audio/generate', {
+                            text: chapterText,
+                            voice: voice,
+                            speed: speed
+                        });
+
+                        if (response.data.success) {
+                            const audioResult = document.getElementById('audio-result');
+                            const generatedAudio = document.getElementById('generated-audio');
+                            const audioSource = document.getElementById('audio-source');
+                            const audioStatus = document.getElementById('audio-status');
+
+                            // Convert base64 to blob URL for audio playback
+                            const audioBlob = new Blob([
+                                new Uint8Array(
+                                    atob(response.data.audio_data)
+                                        .split('')
+                                        .map(char => char.charCodeAt(0))
+                                )
+                            ], { type: 'audio/mpeg' });
+                            
+                            const audioUrl = URL.createObjectURL(audioBlob);
+                            audioSource.src = audioUrl;
+                            generatedAudio.load();
+                            
+                            audioStatus.textContent = \`Audio generated with \${response.data.voice_used} voice\`;
+                            audioResult.style.display = 'block';
+                        } else {
+                            if (response.data.demo_mode) {
+                                alert('Demo Mode: ' + response.data.message);
+                            } else {
+                                alert('Failed to generate audio: ' + (response.data.error || 'Unknown error'));
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Audio generation error:', error);
+                        alert('Failed to generate audio. Please try again.');
+                    } finally {
+                        this.innerHTML = originalText;
+                        this.disabled = false;
+                    }
+                });
+            }
+
+            // Populate chapter selector when story is generated
+            function populateChapterSelector(storyText) {
+                const chapterSelect = document.getElementById('chapter-select');
+                if (!chapterSelect || !storyText) return;
+
+                chapterSelect.innerHTML = '<option value="">Select chapter...</option>';
+                
+                // Extract chapter titles from the story
+                const chapterMatches = storyText.match(/Chapter \\d+: [^\\n]+/g);
+                if (chapterMatches) {
+                    chapterMatches.forEach((match, index) => {
+                        const option = document.createElement('option');
+                        option.value = index + 1;
+                        option.textContent = match;
+                        chapterSelect.appendChild(option);
+                    });
+                }
+            }
+
+            // Override the original displayStoryContent function to also populate chapter selector
+            const originalDisplayStoryContent = window.displayStoryContent;
+            window.displayStoryContent = function(storyContent) {
+                if (originalDisplayStoryContent) {
+                    originalDisplayStoryContent(storyContent);
+                } else {
+                    // Fallback display logic
+                    const storyContentDiv = document.getElementById('story-content');
+                    const generatedStoryText = document.getElementById('generated-story-text');
+                    
+                    if (storyContentDiv && generatedStoryText) {
+                        generatedStoryText.value = storyContent;
+                        storyContentDiv.innerHTML = \`
+                            <div class="bg-gray-800 rounded-lg p-6 border border-gray-700">
+                                <div class="mb-4">
+                                    <label class="block text-sm font-medium text-cyan-400 mb-2">Generated Story Content</label>
+                                    <textarea id="generated-story-text" class="form-field-glow w-full h-96 rounded px-4 py-3 text-white" readonly>\${storyContent}</textarea>
+                                </div>
+                                <div class="text-right text-sm text-gray-400" id="story-word-count">
+                                    Word count: \${storyContent.split(/\\s+/).filter(word => word.length > 0).length} words
+                                </div>
+                            </div>
+                        \`;
+                    }
+                }
+                
+                // Populate chapter selector after story is displayed
+                populateChapterSelector(storyContent);
+            };
         });
         </script>
     </body>
@@ -1788,13 +2163,14 @@ app.get('/', (c) => {
               <label class="block text-sm font-medium text-cyan-glow mb-2">Word Count Per Chapter</label>
               <select id="word-count" class="form-field-glow w-full rounded px-3 py-2 text-white">
                 <option value="">Select word count...</option>
-                <option value="500">500 words (Short)</option>
+                <option value="200">200 words (Flash Fiction)</option>
+                <option value="400">400 words (Micro)</option>
+                <option value="600">600 words (Short)</option>
+                <option value="800">800 words (Compact)</option>
                 <option value="1000">1,000 words (Standard)</option>
-                <option value="1500">1,500 words (Medium)</option>
-                <option value="2000">2,000 words (Long)</option>
-                <option value="2500">2,500 words (Extended)</option>
-                <option value="3000">3,000 words (Epic)</option>
-                <option value="custom">Custom Length</option>
+                <option value="1200">1,200 words (Extended)</option>
+                <option value="1500">1,500 words (Long)</option>
+                <option value="2000">2,000 words (Epic)</option>
               </select>
             </div>
             
@@ -1891,6 +2267,69 @@ app.get('/', (c) => {
           <!-- AI-generated story content will appear here -->
         </div>
         
+        <!-- Enhanced Features Section -->
+        <div class="grid md:grid-cols-2 gap-6 mt-8 pt-6 border-t border-gray-700">
+          <!-- Book Cover Generator -->
+          <div class="bg-gray-900 rounded-lg border border-cyan-500/30 p-6">
+            <h4 class="text-xl font-bold mb-4 text-cyan-glow">
+              <i class="fas fa-image mr-2"></i>Generate Book Cover
+            </h4>
+            <div class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-cyan-glow mb-2">Cover Description (Optional)</label>
+                <textarea id="cover-description" class="form-field-glow w-full rounded px-3 py-2 text-white h-20" placeholder="Describe the cover style, mood, or specific elements you want..."></textarea>
+              </div>
+              <button id="generate-cover" class="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white px-4 py-3 rounded-lg font-semibold transition-all">
+                <i class="fas fa-palette mr-2"></i>Generate AI Cover
+              </button>
+              <div id="cover-result" class="mt-4" style="display: none;">
+                <img id="generated-cover" src="" alt="Generated Cover" class="w-full max-w-xs mx-auto rounded-lg shadow-lg">
+                <p id="cover-status" class="text-sm text-center mt-2 text-gray-300"></p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Chapter Audio Generator -->
+          <div class="bg-gray-900 rounded-lg border border-cyan-500/30 p-6">
+            <h4 class="text-xl font-bold mb-4 text-cyan-glow">
+              <i class="fas fa-microphone mr-2"></i>Generate Chapter Audio
+            </h4>
+            <div class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-cyan-glow mb-2">Voice Selection</label>
+                <select id="tts-voice" class="form-field-glow w-full rounded px-3 py-2 text-white">
+                  <option value="alloy">Alloy - Neutral, Professional</option>
+                  <option value="echo">Echo - Male, Authoritative</option>
+                  <option value="fable">Fable - Female, Narrative</option>
+                  <option value="onyx">Onyx - Male, Deep & Rich</option>
+                  <option value="nova">Nova - Female, Energetic</option>
+                  <option value="shimmer">Shimmer - Female, Elegant</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-cyan-glow mb-2">Speed: <span id="speed-value">1.0x</span></label>
+                <input type="range" id="tts-speed" class="w-full accent-cyan-500" min="0.25" max="4.0" step="0.25" value="1.0">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-cyan-glow mb-2">Chapter to Convert</label>
+                <select id="chapter-select" class="form-field-glow w-full rounded px-3 py-2 text-white">
+                  <option value="">Select chapter...</option>
+                </select>
+              </div>
+              <button id="generate-audio" class="w-full bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-500 hover:to-blue-500 text-white px-4 py-3 rounded-lg font-semibold transition-all">
+                <i class="fas fa-volume-up mr-2"></i>Generate Audio
+              </button>
+              <div id="audio-result" class="mt-4" style="display: none;">
+                <audio id="generated-audio" controls class="w-full">
+                  <source id="audio-source" src="" type="audio/mpeg">
+                  Your browser does not support the audio element.
+                </audio>
+                <p id="audio-status" class="text-sm text-center mt-2 text-gray-300"></p>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div class="flex gap-4 mt-6">
           <button id="regenerate-story" class="bg-orange-600 hover:bg-orange-500 text-white px-6 py-3 rounded-lg font-semibold transition-all">
             <i class="fas fa-refresh mr-2"></i>Regenerate Story
