@@ -3,6 +3,9 @@ import { cors } from 'hono/cors'
 import { serveStatic } from 'hono/cloudflare-workers'
 import OpenAI from 'openai'
 
+// Load environment variables for local development
+// Note: In Cloudflare Workers, use .dev.vars file instead
+
 // OpenAI configuration - Set OPENAI_API_KEY environment variable
 // In Cloudflare Workers, environment variables come from the context
 // For local development, set in .env: OPENAI_API_KEY=your_actual_api_key_here
@@ -10,13 +13,33 @@ const DEMO_OPENAI_API_KEY = 'YOUR_ACTUAL_OPENAI_API_KEY_HERE'
 
 // Helper function to get OpenAI client based on environment
 function getOpenAIClient(env?: any) {
-  // Try to get API key from environment or return null
-  const apiKey = env?.OPENAI_API_KEY || DEMO_OPENAI_API_KEY
+  // Try to get API key from multiple sources:
+  // 1. Cloudflare Workers env (for production)
+  // 2. Process env (for local development with PM2)  
+  // 3. Demo fallback (placeholder)
+  const apiKey = env?.OPENAI_API_KEY || process.env.OPENAI_API_KEY || DEMO_OPENAI_API_KEY
   
-  if (!apiKey || apiKey.includes('YOUR_ACTUAL_OPENAI_API_KEY_HERE')) {
+  console.log('API Key check:', apiKey ? `Found key starting with: ${apiKey.substring(0, 8)}...` : 'No key found')
+  
+  // Check if it's a placeholder key
+  if (!apiKey || apiKey === 'YOUR_OPENAI_API_KEY_GOES_HERE' || apiKey === 'YOUR_ACTUAL_OPENAI_API_KEY_HERE') {
+    console.log('No valid OpenAI API key configured - running in demo mode')
     return null // No valid API key
   }
   
+  // Check if it's a valid OpenAI API key format
+  if (!apiKey.startsWith('sk-')) {
+    console.log('Invalid OpenAI API key format - must start with "sk-"')
+    return null
+  }
+  
+  // Additional validation: check minimum key length (OpenAI keys are typically 48+ characters)
+  if (apiKey.length < 20) {
+    console.log('API key too short - invalid format')
+    return null
+  }
+  
+  console.log('OpenAI client initialized successfully')
   return new OpenAI({
     apiKey: apiKey
   })
@@ -24,8 +47,12 @@ function getOpenAIClient(env?: any) {
 
 // Helper function to check if OpenAI is configured
 function isOpenAIConfigured(env?: any) {
-  const apiKey = env?.OPENAI_API_KEY || DEMO_OPENAI_API_KEY
-  return apiKey && !apiKey.includes('YOUR_ACTUAL_OPENAI_API_KEY_HERE') && apiKey.startsWith('sk-')
+  const apiKey = env?.OPENAI_API_KEY || process.env.OPENAI_API_KEY || DEMO_OPENAI_API_KEY
+  return apiKey && 
+         apiKey !== 'YOUR_OPENAI_API_KEY_GOES_HERE' && 
+         apiKey !== 'YOUR_ACTUAL_OPENAI_API_KEY_HERE' && 
+         apiKey.startsWith('sk-') &&
+         apiKey.length >= 20
 }
 
 const app = new Hono()
@@ -33,8 +60,8 @@ const app = new Hono()
 // Enable CORS for frontend-backend communication
 app.use('/api/*', cors())
 
-// Serve static files from dist directory (built files)
-app.use('/static/*', serveStatic({ root: './dist' }))
+// Serve static files from public directory
+app.use('/static/*', serveStatic({ root: './public' }))
 
 // API routes
 app.get('/api/hello', (c) => {
@@ -93,38 +120,22 @@ app.post('/api/chapter/create', async (c) => {
     
     const openai = getOpenAIClient(c.env)
     if (!openai) {
+      // Generate demo chapters based on form inputs
+      const demoChapters = []
+      for (let i = 1; i <= numChapters; i++) {
+        demoChapters.push({
+          id: i,
+          title: `${bookTitle}: Chapter ${i}`,
+          outline: `Chapter ${i} of "${bookTitle}" - A ${genre} story with ${toneVoice} tone in ${narrativePerspective} perspective. This chapter will be approximately ${wordCount} words and advances the plot while developing characters. (Demo Mode - Configure OpenAI API key for AI-generated content)`
+        })
+      }
+      
       return c.json({
-        success: false,
-        error: 'OpenAI API key not configured',
-        demo_response: {
-          chapters: [
-            {
-              id: 1,
-              title: 'The Beginning',
-              outline: 'Introduce the main character and establish the world. Set up the initial conflict that will drive the story forward.'
-            },
-            {
-              id: 2,
-              title: 'The Challenge',
-              outline: 'Present the first major obstacle. Show character growth and introduce supporting characters.'
-            },
-            {
-              id: 3,
-              title: 'Rising Action',
-              outline: 'Escalate the conflict. Develop relationships and reveal important plot elements.'
-            },
-            {
-              id: 4,
-              title: 'The Climax',
-              outline: 'The turning point of the story. Major confrontation and character decision.'
-            },
-            {
-              id: 5,
-              title: 'Resolution',
-              outline: 'Resolve the main conflict. Show character transformation and tie up loose ends.'
-            }
-          ]
-        }
+        success: true,
+        demo_mode: true,
+        chapters: demoChapters,
+        message: 'Demo chapters generated. Configure OpenAI API key for AI-powered chapter creation.',
+        usage: { demo: true }
       })
     }
     
@@ -255,32 +266,123 @@ app.post('/api/story/generate', async (c) => {
     
     const openai = getOpenAIClient(c.env)
     if (!openai) {
-      return c.json({
-        success: false,
-        error: 'OpenAI API key not configured',
-        demo_response: {
-          story: `**Demo Mode - Configure OpenAI API Key for Real Story Generation**\n\nThis would generate a complete story based on your chapter outlines. The AI would create engaging prose that follows your specified tone, narrative perspective, and genre conventions.\n\nEach chapter would be fully written with:\n• Compelling character dialogue\n• Rich descriptive passages\n• Proper pacing and tension\n• Consistent tone and style\n• Genre-appropriate elements\n\nThe generated story would be ready for editing in the Workspace.`
+      // Generate demo story content with proper word count
+      const wordsPerChapter = parseInt(wordCount) || 1000
+      const chaptersCount = chapters.length
+      let demoStory = `**${bookTitle}** - Demo Story (Configure OpenAI API Key for AI-Generated Content)\n\n`
+      
+      chapters.forEach((chapter, index) => {
+        demoStory += `**Chapter ${chapter.id}: ${chapter.title}**\n\n`
+        
+        // Generate placeholder content that approximates the requested word count
+        const sampleSentences = [
+          `The ${genre} tale unfolds with ${toneVoice} atmosphere as our story begins.`,
+          `In this ${narrativePerspective} narrative, the characters come to life with vivid detail and compelling dialogue.`,
+          `The plot develops through carefully crafted scenes that maintain reader engagement.`,
+          `Rich descriptions paint a picture of the world our characters inhabit.`,
+          `Tension builds naturally as conflicts emerge and relationships develop.`,
+          `Each scene flows seamlessly into the next, creating a cohesive narrative experience.`,
+          `The author's voice shines through with distinctive style and compelling prose.`,
+          `Character development occurs organically through action and dialogue.`,
+          `The pacing maintains perfect balance between action and reflection.`,
+          `Themes emerge naturally through the story's progression.`
+        ]
+        
+        let chapterText = ''
+        const targetWords = wordsPerChapter
+        let currentWords = 0
+        
+        while (currentWords < targetWords) {
+          const sentence = sampleSentences[Math.floor(Math.random() * sampleSentences.length)]
+          chapterText += sentence + ' '
+          currentWords += sentence.split(' ').length
         }
+        
+        demoStory += chapterText.trim() + '\n\n'
+        demoStory += `[Chapter ${chapter.id} complete - approximately ${wordsPerChapter} words]\n\n`
+      })
+      
+      demoStory += `**Story Complete**\nTotal Chapters: ${chaptersCount}\nTarget Words per Chapter: ${wordsPerChapter}\nApproximate Total Words: ${chaptersCount * wordsPerChapter}\n\n*This is demo content. Configure your OpenAI API key to generate real AI-powered stories.*`
+      
+      return c.json({
+        success: true,
+        demo_mode: true,
+        story: demoStory,
+        message: 'Demo story generated. Configure OpenAI API key for AI-powered story generation.',
+        usage: { demo: true, estimated_words: chaptersCount * wordsPerChapter }
       })
     }
     
-    const completion = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
-      messages: [{
-        role: "system",
-        content: `You are a professional ${genre} writer. Write engaging stories with ${toneVoice} tone in ${narrativePerspective} perspective.`
-      }, {
-        role: "user",
-        content: `Write a complete story for "${bookTitle}" based on these chapter outlines:\n\n${chapters.map(ch => `Chapter ${ch.id}: ${ch.title}\n${ch.outline}`).join('\n\n')}\n\nWrite the full story with rich descriptions, dialogue, and narrative flow. Make it engaging and true to the ${genre} genre. Each chapter should be approximately ${wordCount || '1000'} words. Create a cohesive narrative that flows smoothly from chapter to chapter.`
-      }],
-      max_tokens: 3000,
-      temperature: 0.8
-    })
+    // Calculate appropriate token limit based on word count requirements
+    const chaptersCount = chapters.length
+    const wordsPerChapter = parseInt(wordCount) || 1000
+    const totalTargetWords = chaptersCount * wordsPerChapter
+    // Estimate tokens: roughly 1.3-1.5 tokens per word, add 20% buffer for safety
+    const estimatedTokens = Math.min(Math.max(totalTargetWords * 1.5 * 1.2, 4000), 16000)
+    
+    console.log(`Generating story: ${chaptersCount} chapters × ${wordsPerChapter} words = ${totalTargetWords} target words, using ${estimatedTokens} max tokens`)
+    
+    // Enhanced approach: Generate each chapter individually for better word count accuracy
+    let fullStory = ''
+    let totalActualWords = 0
+    
+    for (let i = 0; i < chapters.length; i++) {
+      const chapter = chapters[i]
+      console.log(`Generating Chapter ${chapter.id}: ${chapter.title} (Target: ${wordsPerChapter} words)`)
+      
+      const chapterCompletion = await openai.chat.completions.create({
+        model: "gpt-3.5-turbo", // Use standard model for individual chapters
+        messages: [{
+          role: "system",
+          content: `You are a professional ${genre} writer. Your task is to write exactly ONE chapter with EXACTLY ${wordsPerChapter} words. Count every single word carefully. The chapter must be exactly ${wordsPerChapter} words - no more, no less.`
+        }, {
+          role: "user",
+          content: `Write Chapter ${chapter.id} of "${bookTitle}" with EXACTLY ${wordsPerChapter} words.
+
+Chapter Title: ${chapter.title}
+Chapter Outline: ${chapter.outline}
+
+Requirements:
+- Genre: ${genre}
+- Tone: ${toneVoice} 
+- Perspective: ${narrativePerspective}
+- Word Count: EXACTLY ${wordsPerChapter} words (count carefully!)
+- Include rich descriptions, dialogue, and narrative flow
+- Make it engaging and true to the ${genre} genre
+
+Start with "Chapter ${chapter.id}: ${chapter.title}" as the heading.
+
+CRITICAL: The chapter must be exactly ${wordsPerChapter} words. Count each word carefully and ensure you meet this exact requirement.`
+        }],
+        max_tokens: Math.min(Math.floor(wordsPerChapter * 2), 4000), // Conservative token limit per chapter
+        temperature: 0.7
+      })
+      
+      const chapterContent = chapterCompletion.choices[0].message.content
+      const chapterWords = chapterContent.trim().split(/\s+/).filter(word => word.length > 0).length
+      
+      console.log(`Chapter ${chapter.id} generated: ${chapterWords} words (target: ${wordsPerChapter})`)
+      
+      fullStory += chapterContent + '\n\n'
+      totalActualWords += chapterWords
+      
+      // Small delay to avoid rate limiting
+      if (i < chapters.length - 1) {
+        await new Promise(resolve => setTimeout(resolve, 500))
+      }
+    }
+    
+    console.log(`Story generation complete: ${totalActualWords} total words (target: ${totalTargetWords})`)
     
     return c.json({
       success: true,
-      story: completion.choices[0].message.content,
-      usage: completion.usage
+      story: fullStory,
+      usage: {
+        total_words: totalActualWords,
+        target_words: totalTargetWords,
+        chapters_generated: chapters.length,
+        words_per_chapter: wordsPerChapter
+      }
     })
     
   } catch (error) {
@@ -738,12 +840,224 @@ function getPageLayout(title: string, content: string, activePage: string = '') 
         <title>${title}</title>
         <script src="https://cdn.tailwindcss.com"></script>
         <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
-        <link href="/static/styles.css" rel="stylesheet">
         <style>
+            /* Authorr AI Brand Colors and Essential Styles */
+            :root {
+              --brand-cyan: #78e3fe;
+              --brand-cyan-hover: #5dd8fc;
+              --brand-silver: #C0C0C0;
+              --brand-silver-glow: 0 0 10px rgba(192, 192, 192, 0.8), 0 0 20px rgba(192, 192, 192, 0.4);
+              --brand-cyan-glow: 0 0 15px rgba(120, 227, 254, 0.6), 0 0 30px rgba(120, 227, 254, 0.3);
+              --brand-cyan-gradient: linear-gradient(135deg, #78e3fe, #5dd8fc);
+            }
+            
+            /* Light Theme */
+            .light-theme {
+              --bg-primary: #ffffff;
+              --bg-secondary: #f8fafc;
+              --bg-tertiary: #f1f5f9;
+              --text-primary: #78e3fe;
+              --text-secondary: #4a5568;
+              --border-color: #e2e8f0;
+              background-color: #ffffff !important;
+              color: #78e3fe !important;
+            }
+            
+            /* Dark Theme */
+            .dark-theme {
+              --bg-primary: #1a1a1a;
+              --bg-secondary: #2d2d2d;
+              --bg-tertiary: #374151;
+              --text-primary: #ffffff;
+              --text-secondary: #d1d5db;
+              --border-color: #4b5563;
+              background-color: #1a1a1a !important;
+              color: #ffffff !important;
+            }
+            
+            /* Logo Styles */
+            .logo-image {
+              width: 6rem;
+              height: 6rem;
+              filter: drop-shadow(0 0 15px rgba(120, 227, 254, 0.6));
+              transition: all 0.3s ease;
+              animation: logoPulse 2s ease-in-out infinite alternate;
+            }
+            
+            @keyframes logoPulse {
+              0% { filter: drop-shadow(0 0 15px rgba(120, 227, 254, 0.6)); }
+              100% { filter: drop-shadow(0 0 25px rgba(120, 227, 254, 0.9)); }
+            }
+            
+            /* Brand Text */
+            .authorr-brand-text {
+              background: var(--brand-cyan-gradient);
+              -webkit-background-clip: text;
+              -webkit-text-fill-color: transparent;
+              background-clip: text;
+              text-shadow: var(--brand-cyan-glow);
+            }
+            
+            .iridescent-gold {
+              background: linear-gradient(45deg, #ffd700, #ffed4e, #ffc107, #ff8f00, #ffd700);
+              background-size: 400% 400%;
+              -webkit-background-clip: text;
+              -webkit-text-fill-color: transparent;
+              background-clip: text;
+              animation: iridescent-shift 3s ease-in-out infinite;
+            }
+            
+            @keyframes iridescent-shift {
+              0%, 100% { background-position: 0% 50%; }
+              50% { background-position: 100% 50%; }
+            }
+            
+            /* Navigation Styles */
+            .nav-link {
+              color: #ffffff !important;
+              text-decoration: none;
+              padding: 0.5rem 1rem;
+              border-radius: 0.375rem;
+              transition: all 0.3s ease;
+              border: 2px solid var(--brand-cyan);
+              background: rgba(0, 0, 0, 0.3);
+              font-weight: 600;
+            }
+            
+            .light-theme .nav-link {
+              color: #78e3fe !important;
+              background: rgba(120, 227, 254, 0.1) !important;
+              border-color: #78e3fe !important;
+            }
+            
+            .nav-link:hover {
+              background: rgba(120, 227, 254, 0.2);
+              box-shadow: var(--brand-cyan-glow);
+            }
+            
+            .nav-link.active {
+              background: rgba(120, 227, 254, 0.3);
+              box-shadow: var(--brand-cyan-glow);
+            }
+            
+            /* Theme Toggle */
+            .theme-toggle {
+              position: relative;
+              display: inline-block;
+              width: 60px;
+              height: 30px;
+              background: linear-gradient(135deg, #4a5568, #2d3748);
+              border-radius: 15px;
+              border: 2px solid var(--brand-silver);
+              cursor: pointer;
+              transition: all 0.3s ease;
+              box-shadow: var(--brand-silver-glow);
+            }
+            
+            .theme-toggle-slider {
+              position: absolute;
+              top: 2px;
+              left: 2px;
+              width: 24px;
+              height: 24px;
+              background: var(--brand-cyan-gradient);
+              border-radius: 50%;
+              transition: all 0.3s ease;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: 12px;
+            }
+            
+            .theme-toggle.light .theme-toggle-slider {
+              transform: translateX(30px);
+              background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            }
+            
+            /* Header Styles */
+            .authorr-header {
+              background: linear-gradient(135deg, #1a1a1a, #000000);
+              border-bottom: 2px solid rgba(120, 227, 254, 0.4);
+            }
+            
+            .light-theme .authorr-header {
+              background: linear-gradient(135deg, #e5e7eb, #f3f4f6) !important;
+              border-bottom-color: rgba(120, 227, 254, 0.3) !important;
+            }
+            
+            /* Card Styles */
+            .card-glow {
+              box-shadow: 0 0 15px rgba(120, 227, 254, 0.15), 0 4px 20px -5px rgba(0, 0, 0, 0.2);
+              border: 1px solid rgba(120, 227, 254, 0.25);
+              transition: all 0.3s ease;
+            }
+            
+            .light-theme .card-glow {
+              background: #e5e7eb !important;
+              border-color: rgba(120, 227, 254, 0.2) !important;
+              box-shadow: 0 0 10px rgba(120, 227, 254, 0.08), 0 2px 15px -3px rgba(120, 227, 254, 0.06) !important;
+            }
+            
+            /* Text Colors */
+            .text-cyan-glow {
+              color: var(--brand-cyan) !important;
+              text-shadow: var(--brand-cyan-glow);
+            }
+            
+            h1, h2, h3, h4, h5, h6, .font-bold {
+              color: var(--brand-cyan) !important;
+              text-shadow: var(--brand-silver-glow);
+            }
+            
+            .light-theme h1, .light-theme h2, .light-theme h3, .light-theme h4, 
+            .light-theme h5, .light-theme h6, .light-theme .font-bold {
+              color: #78e3fe !important;
+              text-shadow: 0 0 10px rgba(120, 227, 254, 0.3);
+            }
+            
+            /* Light mode text colors */
+            .light-theme .text-white {
+              color: #78e3fe !important;
+            }
+            
+            .light-theme .text-gray-300 {
+              color: #4a5568 !important;
+            }
+            
+            .light-theme .text-gray-400 {
+              color: #6b7280 !important;
+            }
+            
+            .light-theme .bg-gray-800 {
+              background-color: #e5e7eb !important;
+              border-color: #d1d5db !important;
+            }
+            
+            .light-theme .bg-gray-700 {
+              background-color: #f3f4f6 !important;
+              border-color: #d1d5db !important;
+            }
+            
+            .light-theme .border-gray-600,
+            .light-theme .border-gray-700 {
+              border-color: #e2e8f0 !important;
+            }
+            
+            /* Button Styles */
+            .btn-glow {
+              box-shadow: 0 0 20px rgba(120, 227, 254, 0.4);
+              transition: all 0.3s ease;
+            }
+            
+            .btn-glow:hover {
+              box-shadow: 0 0 30px rgba(120, 227, 254, 0.6);
+              transform: translateY(-1px);
+            }
+            
             /* Critical Form Field Styles - Inline to ensure visibility */
             .form-field-glow {
-                border: 2px solid rgba(192, 192, 192, 0.3) !important;
-                box-shadow: 0 0 10px rgba(192, 192, 192, 0.8), 0 0 20px rgba(192, 192, 192, 0.4) !important;
+                border: 2px solid rgba(192, 192, 192, 0.2) !important;
+                box-shadow: 0 0 6px rgba(192, 192, 192, 0.4), 0 0 12px rgba(192, 192, 192, 0.2) !important;
                 transition: all 0.3s ease !important;
                 background: #4a5568 !important;
                 color: #ffffff !important;
@@ -751,14 +1065,14 @@ function getPageLayout(title: string, content: string, activePage: string = '') 
             
             .form-field-glow:focus {
                 border-color: #78e3fe !important;
-                box-shadow: 0 0 15px rgba(120, 227, 254, 0.6), 0 0 30px rgba(120, 227, 254, 0.3), 0 0 10px rgba(192, 192, 192, 0.8) !important;
+                box-shadow: 0 0 8px rgba(120, 227, 254, 0.4), 0 0 16px rgba(120, 227, 254, 0.2), 0 0 6px rgba(192, 192, 192, 0.4) !important;
                 background: #4a5568 !important;
                 color: #ffffff !important;
             }
             
             .form-field-glow:hover {
-                border-color: rgba(192, 192, 192, 0.6) !important;
-                box-shadow: 0 0 15px rgba(192, 192, 192, 0.6), 0 0 25px rgba(192, 192, 192, 0.3) !important;
+                border-color: rgba(192, 192, 192, 0.4) !important;
+                box-shadow: 0 0 8px rgba(192, 192, 192, 0.4), 0 0 16px rgba(192, 192, 192, 0.2) !important;
                 background: #4a5568 !important;
                 color: #ffffff !important;
             }
@@ -778,15 +1092,32 @@ function getPageLayout(title: string, content: string, activePage: string = '') 
             }
             
             /* Override any theme-based coloring */
-            .light-theme .form-field-glow,
             .dark-theme .form-field-glow {
                 background: #4a5568 !important;
                 color: #ffffff !important;
             }
             
-            .light-theme .form-field-glow::placeholder,
             .dark-theme .form-field-glow::placeholder {
                 color: #cbd5e0 !important;
+            }
+            
+            /* Light Mode Form Field Overrides */
+            .light-theme .form-field-glow {
+                background: #ffffff !important;
+                color: #78e3fe !important;
+                border-color: rgba(120, 227, 254, 0.3) !important;
+                box-shadow: 0 0 10px rgba(120, 227, 254, 0.2) !important;
+            }
+            
+            .light-theme .form-field-glow:focus {
+                background: #ffffff !important;
+                color: #78e3fe !important;
+                border-color: #78e3fe !important;
+                box-shadow: 0 0 15px rgba(120, 227, 254, 0.4), 0 0 30px rgba(120, 227, 254, 0.1) !important;
+            }
+            
+            .light-theme .form-field-glow::placeholder {
+                color: rgba(120, 227, 254, 0.6) !important;
             }
         </style>
     </head>
@@ -856,6 +1187,24 @@ function getPageLayout(title: string, content: string, activePage: string = '') 
             // Setup theme toggle
             const themeToggle = document.getElementById('theme-toggle');
             if (themeToggle) {
+                // Update toggle appearance based on current theme
+                function updateToggleAppearance() {
+                    const isLight = document.body.classList.contains('light-theme');
+                    const slider = themeToggle.querySelector('.theme-toggle-slider');
+                    const icon = slider.querySelector('i');
+                    
+                    if (isLight) {
+                        themeToggle.classList.add('light');
+                        icon.className = 'fas fa-sun';
+                    } else {
+                        themeToggle.classList.remove('light');
+                        icon.className = 'fas fa-moon';
+                    }
+                }
+                
+                // Initialize toggle appearance
+                updateToggleAppearance();
+                
                 themeToggle.addEventListener('click', function() {
                     const body = document.body;
                     const isDark = body.classList.contains('dark-theme');
@@ -868,6 +1217,7 @@ function getPageLayout(title: string, content: string, activePage: string = '') 
                         body.classList.add('dark-theme');
                         localStorage.setItem('theme', 'dark');
                     }
+                    updateToggleAppearance();
                 });
             }
             
@@ -914,10 +1264,19 @@ function getPageLayout(title: string, content: string, activePage: string = '') 
                         if (response.data.success) {
                             const chapters = response.data.chapters;
                             displayChapterPlan(chapters);
+                            
+                            // Show demo mode message if applicable
+                            if (response.data.demo_mode) {
+                                const demoAlert = document.createElement('div');
+                                demoAlert.className = 'bg-orange-100 border border-orange-400 text-orange-700 px-4 py-3 rounded mb-4';
+                                demoAlert.innerHTML = '<strong>Demo Mode:</strong> ' + response.data.message;
+                                document.getElementById('chapter-planning').insertBefore(demoAlert, document.getElementById('chapter-outlines'));
+                            }
+                            
                             document.getElementById('chapter-planning').style.display = 'block';
                             document.getElementById('chapter-planning').scrollIntoView({ behavior: 'smooth' });
                         } else {
-                            alert('Failed to create chapters: ' + response.data.error);
+                            alert('Failed to create chapters: ' + (response.data.error || 'Unknown error'));
                         }
                     } catch (error) {
                         console.error('Chapter creation error:', error);
@@ -1022,10 +1381,19 @@ function getPageLayout(title: string, content: string, activePage: string = '') 
                         
                         if (response.data.success) {
                             displayStoryContent(response.data.story);
+                            
+                            // Show demo mode message if applicable
+                            if (response.data.demo_mode) {
+                                const demoAlert = document.createElement('div');
+                                demoAlert.className = 'bg-orange-100 border border-orange-400 text-orange-700 px-4 py-3 rounded mb-4';
+                                demoAlert.innerHTML = '<strong>Demo Mode:</strong> ' + response.data.message;
+                                document.getElementById('story-generation').insertBefore(demoAlert, document.getElementById('story-content'));
+                            }
+                            
                             document.getElementById('story-generation').style.display = 'block';
                             document.getElementById('story-generation').scrollIntoView({ behavior: 'smooth' });
                         } else {
-                            alert('Failed to create story: ' + response.data.error);
+                            alert('Failed to create story: ' + (response.data.error || 'Unknown error'));
                         }
                     } catch (error) {
                         console.error('Story creation error:', error);
@@ -1082,8 +1450,19 @@ function getPageLayout(title: string, content: string, activePage: string = '') 
                         
                         if (response.data.success) {
                             displayStoryContent(response.data.story);
+                            
+                            // Show demo mode message if applicable
+                            if (response.data.demo_mode) {
+                                const existingAlert = document.querySelector('#story-generation .bg-orange-100');
+                                if (!existingAlert) {
+                                    const demoAlert = document.createElement('div');
+                                    demoAlert.className = 'bg-orange-100 border border-orange-400 text-orange-700 px-4 py-3 rounded mb-4';
+                                    demoAlert.innerHTML = '<strong>Demo Mode:</strong> ' + response.data.message;
+                                    document.getElementById('story-generation').insertBefore(demoAlert, document.getElementById('story-content'));
+                                }
+                            }
                         } else {
-                            alert('Failed to regenerate story: ' + response.data.error);
+                            alert('Failed to regenerate story: ' + (response.data.error || 'Unknown error'));
                         }
                     } catch (error) {
                         console.error('Story regeneration error:', error);
