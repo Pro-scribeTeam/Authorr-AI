@@ -3,18 +3,43 @@ import { cors } from 'hono/cors'
 import { serveStatic } from 'hono/cloudflare-workers'
 import OpenAI from 'openai'
 
-// OpenAI configuration - Replace with your actual API key
+// Load environment variables for local development
+// Note: In Cloudflare Workers, use .dev.vars file instead
+
+// OpenAI configuration - Set OPENAI_API_KEY environment variable
 // In Cloudflare Workers, environment variables come from the context
+// For local development, set in .env: OPENAI_API_KEY=your_actual_api_key_here
 const DEMO_OPENAI_API_KEY = 'YOUR_ACTUAL_OPENAI_API_KEY_HERE'
 
 // Helper function to get OpenAI client based on environment
 function getOpenAIClient(env?: any) {
-  const apiKey = env?.OPENAI_API_KEY || DEMO_OPENAI_API_KEY
+  // Try to get API key from multiple sources:
+  // 1. Cloudflare Workers env (for production)
+  // 2. Process env (for local development with PM2)  
+  // 3. Demo fallback (placeholder)
+  const apiKey = env?.OPENAI_API_KEY || process.env.OPENAI_API_KEY || DEMO_OPENAI_API_KEY
   
-  if (!apiKey || apiKey.includes('YOUR_ACTUAL_OPENAI_API_KEY_HERE')) {
+  console.log('API Key check:', apiKey ? `Found key starting with: ${apiKey.substring(0, 8)}...` : 'No key found')
+  
+  // Check if it's a placeholder key
+  if (!apiKey || apiKey === 'YOUR_OPENAI_API_KEY_GOES_HERE' || apiKey === 'YOUR_ACTUAL_OPENAI_API_KEY_HERE') {
+    console.log('No valid OpenAI API key configured - running in demo mode')
     return null // No valid API key
   }
   
+  // Check if it's a valid OpenAI API key format
+  if (!apiKey.startsWith('sk-')) {
+    console.log('Invalid OpenAI API key format - must start with "sk-"')
+    return null
+  }
+  
+  // Additional validation: check minimum key length (OpenAI keys are typically 48+ characters)
+  if (apiKey.length < 20) {
+    console.log('API key too short - invalid format')
+    return null
+  }
+  
+  console.log('OpenAI client initialized successfully')
   return new OpenAI({
     apiKey: apiKey
   })
@@ -22,8 +47,12 @@ function getOpenAIClient(env?: any) {
 
 // Helper function to check if OpenAI is configured
 function isOpenAIConfigured(env?: any) {
-  const apiKey = env?.OPENAI_API_KEY || DEMO_OPENAI_API_KEY
-  return apiKey && !apiKey.includes('YOUR_ACTUAL_OPENAI_API_KEY_HERE') && apiKey.startsWith('sk-')
+  const apiKey = env?.OPENAI_API_KEY || process.env.OPENAI_API_KEY || DEMO_OPENAI_API_KEY
+  return apiKey && 
+         apiKey !== 'YOUR_OPENAI_API_KEY_GOES_HERE' && 
+         apiKey !== 'YOUR_ACTUAL_OPENAI_API_KEY_HERE' && 
+         apiKey.startsWith('sk-') &&
+         apiKey.length >= 20
 }
 
 const app = new Hono()
@@ -31,8 +60,8 @@ const app = new Hono()
 // Enable CORS for frontend-backend communication
 app.use('/api/*', cors())
 
-// Serve static files from dist directory (built files)
-app.use('/static/*', serveStatic({ root: './dist' }))
+// Serve static files from public directory
+app.use('/static/*', serveStatic({ root: './public' }))
 
 // API routes
 app.get('/api/hello', (c) => {
@@ -85,42 +114,28 @@ app.post('/api/voice-clone', async (c) => {
 // Chapter Planning Endpoints
 app.post('/api/chapter/create', async (c) => {
   try {
-    const { bookTitle, authorName, genre, targetAudience, toneVoice, narrativePerspective, bookDescription } = await c.req.json()
+    const { bookTitle, authorName, genre, targetAudience, chapterSelection, wordCount, toneVoice, narrativePerspective, bookDescription } = await c.req.json()
+    
+    const numChapters = parseInt(chapterSelection) || 8
     
     const openai = getOpenAIClient(c.env)
     if (!openai) {
+      // Generate demo chapters based on form inputs
+      const demoChapters = []
+      for (let i = 1; i <= numChapters; i++) {
+        demoChapters.push({
+          id: i,
+          title: `${bookTitle}: Chapter ${i}`,
+          outline: `Chapter ${i} of "${bookTitle}" - A ${genre} story with ${toneVoice} tone in ${narrativePerspective} perspective. This chapter will be approximately ${wordCount} words and advances the plot while developing characters. (Demo Mode - Configure OpenAI API key for AI-generated content)`
+        })
+      }
+      
       return c.json({
-        success: false,
-        error: 'OpenAI API key not configured',
-        demo_response: {
-          chapters: [
-            {
-              id: 1,
-              title: 'The Beginning',
-              outline: 'Introduce the main character and establish the world. Set up the initial conflict that will drive the story forward.'
-            },
-            {
-              id: 2,
-              title: 'The Challenge',
-              outline: 'Present the first major obstacle. Show character growth and introduce supporting characters.'
-            },
-            {
-              id: 3,
-              title: 'Rising Action',
-              outline: 'Escalate the conflict. Develop relationships and reveal important plot elements.'
-            },
-            {
-              id: 4,
-              title: 'The Climax',
-              outline: 'The turning point of the story. Major confrontation and character decision.'
-            },
-            {
-              id: 5,
-              title: 'Resolution',
-              outline: 'Resolve the main conflict. Show character transformation and tie up loose ends.'
-            }
-          ]
-        }
+        success: true,
+        demo_mode: true,
+        chapters: demoChapters,
+        message: 'Demo chapters generated. Configure OpenAI API key for AI-powered chapter creation.',
+        usage: { demo: true }
       })
     }
     
@@ -135,12 +150,15 @@ app.post('/api/chapter/create', async (c) => {
 
 Book Description: ${bookDescription}
 Target Audience: ${targetAudience}
+Chapters Requested: ${numChapters}
+Words per Chapter: ${wordCount} words
 Tone: ${toneVoice}
 Narrative: ${narrativePerspective}
 
-Provide 5-8 chapters. For each chapter, provide:
+Provide exactly ${numChapters} chapters. For each chapter, provide:
 1. A compelling chapter title
 2. A detailed outline (2-3 sentences describing the main events, character development, and plot progression)
+3. Consider that each chapter should be approximately ${wordCount} words when written
 
 Format your response as:
 Chapter 1: [Title]
@@ -149,7 +167,7 @@ Chapter 1: [Title]
 Chapter 2: [Title] 
 [Detailed outline describing what happens in this chapter]
 
-[Continue for all chapters]`
+[Continue for all ${numChapters} chapters]`
       }],
       max_tokens: 1500,
       temperature: 0.8
@@ -244,36 +262,127 @@ Chapter 2: [Title]
 
 app.post('/api/story/generate', async (c) => {
   try {
-    const { chapters, bookTitle, genre, toneVoice, narrativePerspective } = await c.req.json()
+    const { chapters, bookTitle, genre, wordCount, toneVoice, narrativePerspective } = await c.req.json()
     
     const openai = getOpenAIClient(c.env)
     if (!openai) {
-      return c.json({
-        success: false,
-        error: 'OpenAI API key not configured',
-        demo_response: {
-          story: `**Demo Mode - Configure OpenAI API Key for Real Story Generation**\n\nThis would generate a complete story based on your chapter outlines. The AI would create engaging prose that follows your specified tone, narrative perspective, and genre conventions.\n\nEach chapter would be fully written with:\n• Compelling character dialogue\n• Rich descriptive passages\n• Proper pacing and tension\n• Consistent tone and style\n• Genre-appropriate elements\n\nThe generated story would be ready for editing in the Workspace.`
+      // Generate demo story content with proper word count
+      const wordsPerChapter = parseInt(wordCount) || 1000
+      const chaptersCount = chapters.length
+      let demoStory = `**${bookTitle}** - Demo Story (Configure OpenAI API Key for AI-Generated Content)\n\n`
+      
+      chapters.forEach((chapter, index) => {
+        demoStory += `**Chapter ${chapter.id}: ${chapter.title}**\n\n`
+        
+        // Generate placeholder content that approximates the requested word count
+        const sampleSentences = [
+          `The ${genre} tale unfolds with ${toneVoice} atmosphere as our story begins.`,
+          `In this ${narrativePerspective} narrative, the characters come to life with vivid detail and compelling dialogue.`,
+          `The plot develops through carefully crafted scenes that maintain reader engagement.`,
+          `Rich descriptions paint a picture of the world our characters inhabit.`,
+          `Tension builds naturally as conflicts emerge and relationships develop.`,
+          `Each scene flows seamlessly into the next, creating a cohesive narrative experience.`,
+          `The author's voice shines through with distinctive style and compelling prose.`,
+          `Character development occurs organically through action and dialogue.`,
+          `The pacing maintains perfect balance between action and reflection.`,
+          `Themes emerge naturally through the story's progression.`
+        ]
+        
+        let chapterText = ''
+        const targetWords = wordsPerChapter
+        let currentWords = 0
+        
+        while (currentWords < targetWords) {
+          const sentence = sampleSentences[Math.floor(Math.random() * sampleSentences.length)]
+          chapterText += sentence + ' '
+          currentWords += sentence.split(' ').length
         }
+        
+        demoStory += chapterText.trim() + '\n\n'
+        demoStory += `[Chapter ${chapter.id} complete - approximately ${wordsPerChapter} words]\n\n`
+      })
+      
+      demoStory += `**Story Complete**\nTotal Chapters: ${chaptersCount}\nTarget Words per Chapter: ${wordsPerChapter}\nApproximate Total Words: ${chaptersCount * wordsPerChapter}\n\n*This is demo content. Configure your OpenAI API key to generate real AI-powered stories.*`
+      
+      return c.json({
+        success: true,
+        demo_mode: true,
+        story: demoStory,
+        message: 'Demo story generated. Configure OpenAI API key for AI-powered story generation.',
+        usage: { demo: true, estimated_words: chaptersCount * wordsPerChapter }
       })
     }
     
-    const completion = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
-      messages: [{
-        role: "system",
-        content: `You are a professional ${genre} writer. Write engaging stories with ${toneVoice} tone in ${narrativePerspective} perspective.`
-      }, {
-        role: "user",
-        content: `Write a complete story for "${bookTitle}" based on these chapter outlines:\n\n${chapters.map(ch => `Chapter ${ch.id}: ${ch.title}\n${ch.outline}`).join('\n\n')}\n\nWrite the full story with rich descriptions, dialogue, and narrative flow. Make it engaging and true to the ${genre} genre.`
-      }],
-      max_tokens: 3000,
-      temperature: 0.8
-    })
+    // Calculate appropriate token limit based on word count requirements
+    const chaptersCount = chapters.length
+    const wordsPerChapter = parseInt(wordCount) || 1000
+    const totalTargetWords = chaptersCount * wordsPerChapter
+    // Estimate tokens: roughly 1.3-1.5 tokens per word, add 20% buffer for safety
+    const estimatedTokens = Math.min(Math.max(totalTargetWords * 1.5 * 1.2, 4000), 16000)
+    
+    console.log(`Generating story: ${chaptersCount} chapters × ${wordsPerChapter} words = ${totalTargetWords} target words, using ${estimatedTokens} max tokens`)
+    
+    // Enhanced approach: Generate each chapter individually for better word count accuracy
+    let fullStory = ''
+    let totalActualWords = 0
+    
+    for (let i = 0; i < chapters.length; i++) {
+      const chapter = chapters[i]
+      console.log(`Generating Chapter ${chapter.id}: ${chapter.title} (Target: ${wordsPerChapter} words)`)
+      
+      const chapterCompletion = await openai.chat.completions.create({
+        model: "gpt-3.5-turbo", // Use standard model for individual chapters
+        messages: [{
+          role: "system",
+          content: `You are a professional ${genre} writer. Your task is to write exactly ONE chapter with EXACTLY ${wordsPerChapter} words. Count every single word carefully. The chapter must be exactly ${wordsPerChapter} words - no more, no less.`
+        }, {
+          role: "user",
+          content: `Write Chapter ${chapter.id} of "${bookTitle}" with EXACTLY ${wordsPerChapter} words.
+
+Chapter Title: ${chapter.title}
+Chapter Outline: ${chapter.outline}
+
+Requirements:
+- Genre: ${genre}
+- Tone: ${toneVoice} 
+- Perspective: ${narrativePerspective}
+- Word Count: EXACTLY ${wordsPerChapter} words (count carefully!)
+- Include rich descriptions, dialogue, and narrative flow
+- Make it engaging and true to the ${genre} genre
+
+Start with "Chapter ${chapter.id}: ${chapter.title}" as the heading.
+
+CRITICAL: The chapter must be exactly ${wordsPerChapter} words. Count each word carefully and ensure you meet this exact requirement.`
+        }],
+        max_tokens: Math.min(Math.floor(wordsPerChapter * 2), 4000), // Conservative token limit per chapter
+        temperature: 0.7
+      })
+      
+      const chapterContent = chapterCompletion.choices[0].message.content
+      const chapterWords = chapterContent.trim().split(/\s+/).filter(word => word.length > 0).length
+      
+      console.log(`Chapter ${chapter.id} generated: ${chapterWords} words (target: ${wordsPerChapter})`)
+      
+      fullStory += chapterContent + '\n\n'
+      totalActualWords += chapterWords
+      
+      // Small delay to avoid rate limiting
+      if (i < chapters.length - 1) {
+        await new Promise(resolve => setTimeout(resolve, 500))
+      }
+    }
+    
+    console.log(`Story generation complete: ${totalActualWords} total words (target: ${totalTargetWords})`)
     
     return c.json({
       success: true,
-      story: completion.choices[0].message.content,
-      usage: completion.usage
+      story: fullStory,
+      usage: {
+        total_words: totalActualWords,
+        target_words: totalTargetWords,
+        chapters_generated: chapters.length,
+        words_per_chapter: wordsPerChapter
+      }
     })
     
   } catch (error) {
@@ -731,7 +840,306 @@ function getPageLayout(title: string, content: string, activePage: string = '') 
         <title>${title}</title>
         <script src="https://cdn.tailwindcss.com"></script>
         <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
-        <link href="/static/styles.css" rel="stylesheet">
+        <style>
+            /* Authorr AI Brand Colors and Essential Styles */
+            :root {
+              --brand-cyan: #78e3fe;
+              --brand-cyan-hover: #5dd8fc;
+              --brand-silver: #C0C0C0;
+              --brand-silver-glow: 0 0 10px rgba(192, 192, 192, 0.8), 0 0 20px rgba(192, 192, 192, 0.4);
+              --brand-cyan-glow: 0 0 15px rgba(120, 227, 254, 0.6), 0 0 30px rgba(120, 227, 254, 0.3);
+              --brand-cyan-gradient: linear-gradient(135deg, #78e3fe, #5dd8fc);
+            }
+            
+            /* Light Theme */
+            .light-theme {
+              --bg-primary: #ffffff;
+              --bg-secondary: #f8fafc;
+              --bg-tertiary: #f1f5f9;
+              --text-primary: #78e3fe;
+              --text-secondary: #4a5568;
+              --border-color: #e2e8f0;
+              background-color: #ffffff !important;
+              color: #78e3fe !important;
+            }
+            
+            /* Dark Theme */
+            .dark-theme {
+              --bg-primary: #1a1a1a;
+              --bg-secondary: #2d2d2d;
+              --bg-tertiary: #374151;
+              --text-primary: #ffffff;
+              --text-secondary: #d1d5db;
+              --border-color: #4b5563;
+              background-color: #1a1a1a !important;
+              color: #ffffff !important;
+            }
+            
+            /* Logo Styles */
+            .logo-image {
+              width: 6rem;
+              height: 6rem;
+              filter: drop-shadow(0 0 15px rgba(120, 227, 254, 0.6));
+              transition: all 0.3s ease;
+              animation: logoPulse 2s ease-in-out infinite alternate;
+            }
+            
+            @keyframes logoPulse {
+              0% { filter: drop-shadow(0 0 15px rgba(120, 227, 254, 0.6)); }
+              100% { filter: drop-shadow(0 0 25px rgba(120, 227, 254, 0.9)); }
+            }
+            
+            /* Brand Text */
+            .authorr-brand-text {
+              background: var(--brand-cyan-gradient);
+              -webkit-background-clip: text;
+              -webkit-text-fill-color: transparent;
+              background-clip: text;
+              text-shadow: var(--brand-cyan-glow);
+            }
+            
+            .iridescent-gold {
+              background: linear-gradient(45deg, #ffd700, #ffed4e, #ffc107, #ff8f00, #ffd700);
+              background-size: 400% 400%;
+              -webkit-background-clip: text;
+              -webkit-text-fill-color: transparent;
+              background-clip: text;
+              animation: iridescent-shift 3s ease-in-out infinite;
+            }
+            
+            @keyframes iridescent-shift {
+              0%, 100% { background-position: 0% 50%; }
+              50% { background-position: 100% 50%; }
+            }
+            
+            /* AI Writing Tools Buttons - Black background, white text, gold glow */
+            .ai-writing-tool-btn {
+              background: #000000 !important;
+              color: #ffffff !important;
+              border: 2px solid #ffd700;
+              box-shadow: 0 0 10px rgba(255, 215, 0, 0.5), 0 0 20px rgba(255, 215, 0, 0.3);
+              font-weight: 600;
+            }
+            
+            .ai-writing-tool-btn:hover {
+              background: #1a1a1a !important;
+              box-shadow: 0 0 15px rgba(255, 215, 0, 0.7), 0 0 30px rgba(255, 215, 0, 0.4);
+              transform: translateY(-1px);
+            }
+            
+            .ai-writing-tool-btn:active {
+              transform: translateY(0);
+              box-shadow: 0 0 8px rgba(255, 215, 0, 0.6), 0 0 16px rgba(255, 215, 0, 0.3);
+            }
+            
+            /* Navigation Styles */
+            .nav-link {
+              color: #ffffff !important;
+              text-decoration: none;
+              padding: 0.5rem 1rem;
+              border-radius: 0.375rem;
+              transition: all 0.3s ease;
+              border: 2px solid var(--brand-cyan);
+              background: rgba(0, 0, 0, 0.3);
+              font-weight: 600;
+            }
+            
+            .light-theme .nav-link {
+              color: #78e3fe !important;
+              background: rgba(120, 227, 254, 0.1) !important;
+              border-color: #78e3fe !important;
+            }
+            
+            .nav-link:hover {
+              background: rgba(120, 227, 254, 0.2);
+              box-shadow: var(--brand-cyan-glow);
+            }
+            
+            .nav-link.active {
+              background: rgba(120, 227, 254, 0.3);
+              box-shadow: var(--brand-cyan-glow);
+            }
+            
+            /* Theme Toggle */
+            .theme-toggle {
+              position: relative;
+              display: inline-block;
+              width: 60px;
+              height: 30px;
+              background: linear-gradient(135deg, #4a5568, #2d3748);
+              border-radius: 15px;
+              border: 2px solid var(--brand-silver);
+              cursor: pointer;
+              transition: all 0.3s ease;
+              box-shadow: var(--brand-silver-glow);
+            }
+            
+            .theme-toggle-slider {
+              position: absolute;
+              top: 2px;
+              left: 2px;
+              width: 24px;
+              height: 24px;
+              background: var(--brand-cyan-gradient);
+              border-radius: 50%;
+              transition: all 0.3s ease;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: 12px;
+            }
+            
+            .theme-toggle.light .theme-toggle-slider {
+              transform: translateX(30px);
+              background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            }
+            
+            /* Header Styles */
+            .authorr-header {
+              background: linear-gradient(135deg, #1a1a1a, #000000);
+              border-bottom: 2px solid rgba(120, 227, 254, 0.4);
+            }
+            
+            .light-theme .authorr-header {
+              background: linear-gradient(135deg, #e5e7eb, #f3f4f6) !important;
+              border-bottom-color: rgba(120, 227, 254, 0.3) !important;
+            }
+            
+            /* Card Styles */
+            .card-glow {
+              box-shadow: 0 0 15px rgba(120, 227, 254, 0.15), 0 4px 20px -5px rgba(0, 0, 0, 0.2);
+              border: 1px solid rgba(120, 227, 254, 0.25);
+              transition: all 0.3s ease;
+            }
+            
+            .light-theme .card-glow {
+              background: #e5e7eb !important;
+              border-color: rgba(120, 227, 254, 0.2) !important;
+              box-shadow: 0 0 10px rgba(120, 227, 254, 0.08), 0 2px 15px -3px rgba(120, 227, 254, 0.06) !important;
+            }
+            
+            /* Text Colors */
+            .text-cyan-glow {
+              color: var(--brand-cyan) !important;
+              text-shadow: var(--brand-cyan-glow);
+            }
+            
+            h1, h2, h3, h4, h5, h6, .font-bold {
+              color: var(--brand-cyan) !important;
+              text-shadow: var(--brand-silver-glow);
+            }
+            
+            .light-theme h1, .light-theme h2, .light-theme h3, .light-theme h4, 
+            .light-theme h5, .light-theme h6, .light-theme .font-bold {
+              color: #78e3fe !important;
+              text-shadow: 0 0 10px rgba(120, 227, 254, 0.3);
+            }
+            
+            /* Light mode text colors */
+            .light-theme .text-white {
+              color: #78e3fe !important;
+            }
+            
+            .light-theme .text-gray-300 {
+              color: #4a5568 !important;
+            }
+            
+            .light-theme .text-gray-400 {
+              color: #6b7280 !important;
+            }
+            
+            .light-theme .bg-gray-800 {
+              background-color: #e5e7eb !important;
+              border-color: #d1d5db !important;
+            }
+            
+            .light-theme .bg-gray-700 {
+              background-color: #f3f4f6 !important;
+              border-color: #d1d5db !important;
+            }
+            
+            .light-theme .border-gray-600,
+            .light-theme .border-gray-700 {
+              border-color: #e2e8f0 !important;
+            }
+            
+            /* Button Styles */
+            .btn-glow {
+              box-shadow: 0 0 20px rgba(120, 227, 254, 0.4);
+              transition: all 0.3s ease;
+            }
+            
+            .btn-glow:hover {
+              box-shadow: 0 0 30px rgba(120, 227, 254, 0.6);
+              transform: translateY(-1px);
+            }
+            
+            /* Critical Form Field Styles - Inline to ensure visibility */
+            .form-field-glow {
+                border: 2px solid rgba(192, 192, 192, 0.2) !important;
+                box-shadow: 0 0 6px rgba(192, 192, 192, 0.4), 0 0 12px rgba(192, 192, 192, 0.2) !important;
+                transition: all 0.3s ease !important;
+                background: #4a5568 !important;
+                color: #ffffff !important;
+            }
+            
+            .form-field-glow:focus {
+                border-color: #78e3fe !important;
+                box-shadow: 0 0 8px rgba(120, 227, 254, 0.4), 0 0 16px rgba(120, 227, 254, 0.2), 0 0 6px rgba(192, 192, 192, 0.4) !important;
+                background: #4a5568 !important;
+                color: #ffffff !important;
+            }
+            
+            .form-field-glow:hover {
+                border-color: rgba(192, 192, 192, 0.4) !important;
+                box-shadow: 0 0 8px rgba(192, 192, 192, 0.4), 0 0 16px rgba(192, 192, 192, 0.2) !important;
+                background: #4a5568 !important;
+                color: #ffffff !important;
+            }
+            
+            /* Force all form fields to have white text on dark gray background */
+            input.form-field-glow,
+            select.form-field-glow, 
+            textarea.form-field-glow {
+                background: #4a5568 !important;
+                color: #ffffff !important;
+            }
+            
+            /* Form field placeholders */
+            .form-field-glow::placeholder {
+                color: #cbd5e0 !important;
+                opacity: 0.7 !important;
+            }
+            
+            /* Override any theme-based coloring */
+            .dark-theme .form-field-glow {
+                background: #4a5568 !important;
+                color: #ffffff !important;
+            }
+            
+            .dark-theme .form-field-glow::placeholder {
+                color: #cbd5e0 !important;
+            }
+            
+            /* Light Mode Form Field Overrides */
+            .light-theme .form-field-glow {
+                background: #ffffff !important;
+                color: #78e3fe !important;
+                border-color: rgba(120, 227, 254, 0.3) !important;
+                box-shadow: 0 0 10px rgba(120, 227, 254, 0.2) !important;
+            }
+            
+            .light-theme .form-field-glow:focus {
+                background: #ffffff !important;
+                color: #78e3fe !important;
+                border-color: #78e3fe !important;
+                box-shadow: 0 0 15px rgba(120, 227, 254, 0.4), 0 0 30px rgba(120, 227, 254, 0.1) !important;
+            }
+            
+            .light-theme .form-field-glow::placeholder {
+                color: rgba(120, 227, 254, 0.6) !important;
+            }
+        </style>
     </head>
     <body class="bg-gray-900 text-white min-h-screen">
         <!-- Header -->
@@ -745,7 +1153,7 @@ function getPageLayout(title: string, content: string, activePage: string = '') 
                     </div>
                     <div class="brand-text">
                         <h1 class="text-3xl font-bold authorr-brand-text">AUTHORR AI</h1>
-                        <p class="text-xs text-teal-300 font-medium">ADVANCED NARRATION PLATFORM</p>
+                        <p class="text-xs font-bold iridescent-gold">ADVANCED NARRATION PLATFORM</p>
                     </div>
                 </div>
                 <div class="flex items-center space-x-6">
@@ -799,6 +1207,24 @@ function getPageLayout(title: string, content: string, activePage: string = '') 
             // Setup theme toggle
             const themeToggle = document.getElementById('theme-toggle');
             if (themeToggle) {
+                // Update toggle appearance based on current theme
+                function updateToggleAppearance() {
+                    const isLight = document.body.classList.contains('light-theme');
+                    const slider = themeToggle.querySelector('.theme-toggle-slider');
+                    const icon = slider.querySelector('i');
+                    
+                    if (isLight) {
+                        themeToggle.classList.add('light');
+                        icon.className = 'fas fa-sun';
+                    } else {
+                        themeToggle.classList.remove('light');
+                        icon.className = 'fas fa-moon';
+                    }
+                }
+                
+                // Initialize toggle appearance
+                updateToggleAppearance();
+                
                 themeToggle.addEventListener('click', function() {
                     const body = document.body;
                     const isDark = body.classList.contains('dark-theme');
@@ -811,6 +1237,7 @@ function getPageLayout(title: string, content: string, activePage: string = '') 
                         body.classList.add('dark-theme');
                         localStorage.setItem('theme', 'dark');
                     }
+                    updateToggleAppearance();
                 });
             }
             
@@ -826,6 +1253,8 @@ function getPageLayout(title: string, content: string, activePage: string = '') 
                         authorName: document.getElementById('author-name')?.value || '',
                         genre: document.getElementById('genre')?.value || '',
                         targetAudience: document.getElementById('target-audience')?.value || '',
+                        chapterSelection: document.getElementById('chapter-selection')?.value || '8',
+                        wordCount: document.getElementById('word-count')?.value || '1000',
                         toneVoice: document.getElementById('tone-voice')?.value || '',
                         narrativePerspective: document.getElementById('narrative-perspective')?.value || '',
                         bookDescription: document.getElementById('book-description')?.value || ''
@@ -855,10 +1284,19 @@ function getPageLayout(title: string, content: string, activePage: string = '') 
                         if (response.data.success) {
                             const chapters = response.data.chapters;
                             displayChapterPlan(chapters);
+                            
+                            // Show demo mode message if applicable
+                            if (response.data.demo_mode) {
+                                const demoAlert = document.createElement('div');
+                                demoAlert.className = 'bg-orange-100 border border-orange-400 text-orange-700 px-4 py-3 rounded mb-4';
+                                demoAlert.innerHTML = '<strong>Demo Mode:</strong> ' + response.data.message;
+                                document.getElementById('chapter-planning').insertBefore(demoAlert, document.getElementById('chapter-outlines'));
+                            }
+                            
                             document.getElementById('chapter-planning').style.display = 'block';
                             document.getElementById('chapter-planning').scrollIntoView({ behavior: 'smooth' });
                         } else {
-                            alert('Failed to create chapters: ' + response.data.error);
+                            alert('Failed to create chapters: ' + (response.data.error || 'Unknown error'));
                         }
                     } catch (error) {
                         console.error('Chapter creation error:', error);
@@ -867,6 +1305,221 @@ function getPageLayout(title: string, content: string, activePage: string = '') 
                         createBtn.textContent = 'Create Chapter';
                         createBtn.disabled = false;
                     }
+                });
+            }
+            
+            // Setup regenerate chapters button
+            const regenerateBtn = document.getElementById('regenerate-chapters');
+            if (regenerateBtn) {
+                regenerateBtn.addEventListener('click', async function() {
+                    console.log('Regenerate chapters clicked');
+                    
+                    // Get current form data
+                    const formData = {
+                        bookTitle: document.getElementById('book-title')?.value || '',
+                        authorName: document.getElementById('author-name')?.value || '',
+                        genre: document.getElementById('genre')?.value || '',
+                        targetAudience: document.getElementById('target-audience')?.value || '',
+                        chapterSelection: document.getElementById('chapter-selection')?.value || '8',
+                        wordCount: document.getElementById('word-count')?.value || '1000',
+                        toneVoice: document.getElementById('tone-voice')?.value || '',
+                        narrativePerspective: document.getElementById('narrative-perspective')?.value || '',
+                        bookDescription: document.getElementById('book-description')?.value || ''
+                    };
+                    
+                    if (!formData.bookTitle.trim() || !formData.bookDescription.trim()) {
+                        alert('Please fill in the book title and description first.');
+                        return;
+                    }
+                    
+                    regenerateBtn.textContent = 'Regenerating...';
+                    regenerateBtn.disabled = true;
+                    
+                    try {
+                        const response = await axios.post('/api/chapter/create', formData);
+                        console.log('Regenerate response:', response.data);
+                        
+                        if (response.data.success) {
+                            const chapters = response.data.chapters;
+                            displayChapterPlan(chapters);
+                        } else {
+                            alert('Failed to regenerate chapters: ' + response.data.error);
+                        }
+                    } catch (error) {
+                        console.error('Chapter regeneration error:', error);
+                        alert('Failed to regenerate chapters. Please try again.');
+                    } finally {
+                        regenerateBtn.textContent = 'Regenerate Chapters';
+                        regenerateBtn.disabled = false;
+                    }
+                });
+            }
+            
+            // Setup create story button
+            const createStoryBtn = document.getElementById('create-story-btn');
+            if (createStoryBtn) {
+                createStoryBtn.addEventListener('click', async function() {
+                    console.log('Create story clicked');
+                    
+                    // Get all chapter data
+                    const chapterElements = document.querySelectorAll('.chapter-outline-item');
+                    if (chapterElements.length === 0) {
+                        alert('Please create chapters first.');
+                        return;
+                    }
+                    
+                    const chapters = [];
+                    chapterElements.forEach((element, index) => {
+                        const titleInput = element.querySelector('input[data-field="title"]');
+                        const outlineTextarea = element.querySelector('textarea[data-field="outline"]');
+                        
+                        if (titleInput && outlineTextarea) {
+                            chapters.push({
+                                id: index + 1,
+                                title: titleInput.value,
+                                outline: outlineTextarea.value
+                            });
+                        }
+                    });
+                    
+                    createStoryBtn.textContent = 'Creating Story...';
+                    createStoryBtn.disabled = true;
+                    
+                    // Get form data for story generation context
+                    const storyData = {
+                        chapters: chapters,
+                        bookTitle: document.getElementById('book-title')?.value || 'Untitled Book',
+                        genre: document.getElementById('genre')?.value || 'fiction',
+                        wordCount: document.getElementById('word-count')?.value || '1000',
+                        toneVoice: document.getElementById('tone-voice')?.value || 'engaging',
+                        narrativePerspective: document.getElementById('narrative-perspective')?.value || 'third-person'
+                    };
+                    
+                    try {
+                        const response = await axios.post('/api/story/generate', storyData);
+                        console.log('Story response:', response.data);
+                        
+                        if (response.data.success) {
+                            displayStoryContent(response.data.story);
+                            
+                            // Show demo mode message if applicable
+                            if (response.data.demo_mode) {
+                                const demoAlert = document.createElement('div');
+                                demoAlert.className = 'bg-orange-100 border border-orange-400 text-orange-700 px-4 py-3 rounded mb-4';
+                                demoAlert.innerHTML = '<strong>Demo Mode:</strong> ' + response.data.message;
+                                document.getElementById('story-generation').insertBefore(demoAlert, document.getElementById('story-content'));
+                            }
+                            
+                            document.getElementById('story-generation').style.display = 'block';
+                            document.getElementById('story-generation').scrollIntoView({ behavior: 'smooth' });
+                        } else {
+                            alert('Failed to create story: ' + (response.data.error || 'Unknown error'));
+                        }
+                    } catch (error) {
+                        console.error('Story creation error:', error);
+                        alert('Failed to create story. Please try again.');
+                    } finally {
+                        createStoryBtn.textContent = 'Create Story';
+                        createStoryBtn.disabled = false;
+                    }
+                });
+            }
+            
+            // Setup regenerate story button
+            const regenerateStoryBtn = document.getElementById('regenerate-story');
+            if (regenerateStoryBtn) {
+                regenerateStoryBtn.addEventListener('click', async function() {
+                    console.log('Regenerate story clicked');
+                    
+                    // Get all chapter data again
+                    const chapterElements = document.querySelectorAll('.chapter-outline-item');
+                    if (chapterElements.length === 0) {
+                        alert('No chapters available for story regeneration.');
+                        return;
+                    }
+                    
+                    const chapters = [];
+                    chapterElements.forEach((element, index) => {
+                        const titleInput = element.querySelector('input[data-field="title"]');
+                        const outlineTextarea = element.querySelector('textarea[data-field="outline"]');
+                        
+                        if (titleInput && outlineTextarea) {
+                            chapters.push({
+                                id: index + 1,
+                                title: titleInput.value,
+                                outline: outlineTextarea.value
+                            });
+                        }
+                    });
+                    
+                    regenerateStoryBtn.textContent = 'Regenerating...';
+                    regenerateStoryBtn.disabled = true;
+                    
+                    // Get form data for story regeneration context
+                    const storyData = {
+                        chapters: chapters,
+                        bookTitle: document.getElementById('book-title')?.value || 'Untitled Book',
+                        genre: document.getElementById('genre')?.value || 'fiction',
+                        toneVoice: document.getElementById('tone-voice')?.value || 'engaging',
+                        narrativePerspective: document.getElementById('narrative-perspective')?.value || 'third-person'
+                    };
+                    
+                    try {
+                        const response = await axios.post('/api/story/generate', storyData);
+                        console.log('Regenerate story response:', response.data);
+                        
+                        if (response.data.success) {
+                            displayStoryContent(response.data.story);
+                            
+                            // Show demo mode message if applicable
+                            if (response.data.demo_mode) {
+                                const existingAlert = document.querySelector('#story-generation .bg-orange-100');
+                                if (!existingAlert) {
+                                    const demoAlert = document.createElement('div');
+                                    demoAlert.className = 'bg-orange-100 border border-orange-400 text-orange-700 px-4 py-3 rounded mb-4';
+                                    demoAlert.innerHTML = '<strong>Demo Mode:</strong> ' + response.data.message;
+                                    document.getElementById('story-generation').insertBefore(demoAlert, document.getElementById('story-content'));
+                                }
+                            }
+                        } else {
+                            alert('Failed to regenerate story: ' + (response.data.error || 'Unknown error'));
+                        }
+                    } catch (error) {
+                        console.error('Story regeneration error:', error);
+                        alert('Failed to regenerate story. Please try again.');
+                    } finally {
+                        regenerateStoryBtn.textContent = 'Regenerate Story';
+                        regenerateStoryBtn.disabled = false;
+                    }
+                });
+            }
+            
+            // Setup continue to workspace button
+            const continueToWorkspaceBtn = document.getElementById('continue-to-workspace');
+            if (continueToWorkspaceBtn) {
+                continueToWorkspaceBtn.addEventListener('click', function() {
+                    console.log('Continue to workspace clicked');
+                    
+                    // Get the generated story content
+                    const storyTextarea = document.getElementById('generated-story-text');
+                    if (!storyTextarea || !storyTextarea.value.trim()) {
+                        alert('No story content available to continue with.');
+                        return;
+                    }
+                    
+                    // Store story content in localStorage for workspace
+                    const storyData = {
+                        content: storyTextarea.value,
+                        bookTitle: document.getElementById('book-title')?.value || 'Untitled Book',
+                        author: document.getElementById('author-name')?.value || 'Unknown Author',
+                        genre: document.getElementById('genre')?.value || 'fiction',
+                        timestamp: new Date().toISOString()
+                    };
+                    
+                    localStorage.setItem('workspace-story', JSON.stringify(storyData));
+                    
+                    // Redirect to workspace
+                    window.location.href = '/workspace';
                 });
             }
             
@@ -900,6 +1553,515 @@ function getPageLayout(title: string, content: string, activePage: string = '') 
                     container.appendChild(chapterElement);
                 });
             }
+            
+            function displayStoryContent(story) {
+                const container = document.getElementById('story-content');
+                if (!container) return;
+                
+                // Calculate initial word count
+                const wordCount = countWords(story);
+                
+                container.innerHTML = \`
+                    <div class="bg-gray-700 p-6 rounded-lg border border-gray-600">
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-cyan-400 mb-2">
+                                <i class="fas fa-edit mr-2"></i>Generated Story (Editable)
+                            </label>
+                            <textarea id="generated-story-text" 
+                                      class="form-field-glow w-full rounded px-4 py-3 h-96 resize-vertical font-mono text-sm leading-relaxed" 
+                                      style="background: #4a5568 !important; color: #ffffff !important;" 
+                                      placeholder="Your AI-generated story will appear here...">\${story}</textarea>
+                        </div>
+                        <div class="text-sm text-gray-400 mb-4">
+                            <i class="fas fa-info-circle mr-1"></i>
+                            You can edit the generated story above. Use the buttons below to regenerate or continue to workspace.
+                        </div>
+                        <div class="flex justify-between items-center text-sm">
+                            <div class="text-gray-400">
+                                <i class="fas fa-chart-bar mr-1"></i>Story Statistics
+                            </div>
+                            <div class="flex space-x-4">
+                                <span class="text-cyan-400 font-semibold">
+                                    <i class="fas fa-file-word mr-1"></i>
+                                    <span id="story-word-count">\${wordCount}</span> words
+                                </span>
+                                <span class="text-gray-500">
+                                    <i class="fas fa-font mr-1"></i>
+                                    <span id="story-char-count">\${story.length}</span> characters
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                \`;
+                
+                // Add real-time word count updating
+                const textarea = document.getElementById('generated-story-text');
+                if (textarea) {
+                    textarea.addEventListener('input', function() {
+                        const text = this.value;
+                        const words = countWords(text);
+                        const chars = text.length;
+                        
+                        document.getElementById('story-word-count').textContent = words;
+                        document.getElementById('story-char-count').textContent = chars;
+                    });
+                }
+            }
+            
+            // Helper function to accurately count words
+            function countWords(text) {
+                if (!text || text.trim() === '') return 0;
+                
+                // Remove extra whitespace and split by whitespace
+                const words = text.trim().split(/\s+/);
+                
+                // Filter out empty strings and count actual words
+                return words.filter(word => word.length > 0).length;
+            }
+            
+            // Workspace-specific functionality
+            if (window.location.pathname === '/workspace') {
+                console.log('Workspace page loaded, checking for story data...');
+                
+                // Load story content from localStorage into manuscript editor
+                const storyData = localStorage.getItem('workspace-story');
+                if (storyData) {
+                    try {
+                        const parsedData = JSON.parse(storyData);
+                        console.log('Story data found:', parsedData);
+                        
+                        // Populate manuscript editor with story content
+                        const manuscriptEditor = document.getElementById('manuscript-editor');
+                        const chapterTitle = document.getElementById('chapter-title');
+                        
+                        if (manuscriptEditor && parsedData.content) {
+                            manuscriptEditor.value = parsedData.content;
+                            console.log('Story content loaded into manuscript editor');
+                        }
+                        
+                        if (chapterTitle && parsedData.bookTitle) {
+                            chapterTitle.value = parsedData.bookTitle;
+                            console.log('Book title loaded into chapter title field');
+                        }
+                        
+                        // Add visual feedback that content was loaded
+                        const saveButton = document.getElementById('save-story-btn');
+                        if (saveButton) {
+                            saveButton.innerHTML = '<i class="fas fa-check mr-1"></i>Story Loaded';
+                            saveButton.classList.add('bg-green-600', 'hover:bg-green-500');
+                            setTimeout(() => {
+                                saveButton.innerHTML = '<i class="fas fa-save mr-1"></i>Save Story';
+                                saveButton.classList.remove('bg-green-600', 'hover:bg-green-500');
+                            }, 3000);
+                        }
+                        
+                        // Optional: Clear the localStorage after loading to prevent re-loading
+                        // localStorage.removeItem('workspace-story');
+                        
+                    } catch (error) {
+                        console.error('Error parsing story data:', error);
+                    }
+                } else {
+                    console.log('No story data found in localStorage');
+                }
+                
+                // Add save functionality for manuscript editor
+                const saveBtn = document.getElementById('save-story-btn');
+                if (saveBtn) {
+                    saveBtn.addEventListener('click', function() {
+                        const manuscriptEditor = document.getElementById('manuscript-editor');
+                        const chapterTitle = document.getElementById('chapter-title');
+                        
+                        if (manuscriptEditor) {
+                            const savedStory = {
+                                content: manuscriptEditor.value,
+                                title: chapterTitle?.value || 'Untitled Story',
+                                timestamp: new Date().toISOString(),
+                                wordCount: countWords(manuscriptEditor.value)
+                            };
+                            
+                            localStorage.setItem('saved-manuscript', JSON.stringify(savedStory));
+                            
+                            // Visual feedback
+                            this.innerHTML = '<i class="fas fa-check mr-1"></i>Saved!';
+                            this.classList.add('bg-green-600', 'hover:bg-green-500');
+                            setTimeout(() => {
+                                this.innerHTML = '<i class="fas fa-save mr-1"></i>Save Story';
+                                this.classList.remove('bg-green-600', 'hover:bg-green-500');
+                            }, 2000);
+                        }
+                    });
+                }
+            }
+
+            // Workspace functionality for editor controls
+            if (window.location.pathname === '/workspace') {
+                // Undo/Redo functionality with history
+                const undoStack = [];
+                const redoStack = [];
+                const maxHistorySize = 50;
+
+                // Get editor elements
+                const manuscriptEditor = document.getElementById('manuscript-editor');
+                const chapterTitle = document.getElementById('chapter-title');
+                const saveBtn = document.getElementById('save-btn');
+                const undoBtn = document.getElementById('undo-btn');
+                const redoBtn = document.getElementById('redo-btn');
+                const continueToNarrationBtn = document.getElementById('continue-to-narration-btn');
+
+                // Word count and statistics update
+                function updateWordCount() {
+                    if (!manuscriptEditor) return;
+                    
+                    const text = manuscriptEditor.value;
+                    const words = text.trim() ? text.trim().split(/\\s+/).filter(word => word.length > 0).length : 0;
+                    const characters = text.length;
+                    const paragraphs = text.trim() ? text.split(/\\n\\s*\\n/).filter(p => p.trim()).length : 0;
+                    const readingTime = Math.ceil(words / 200); // Average reading speed
+
+                    const wordCountEl = document.getElementById('word-count');
+                    const charCountEl = document.getElementById('char-count');
+                    const paraCountEl = document.getElementById('para-count');
+                    const readingTimeEl = document.getElementById('reading-time');
+
+                    if (wordCountEl) wordCountEl.textContent = words.toLocaleString();
+                    if (charCountEl) charCountEl.textContent = characters.toLocaleString();
+                    if (paraCountEl) paraCountEl.textContent = paragraphs.toLocaleString();
+                    if (readingTimeEl) readingTimeEl.textContent = readingTime + ' min';
+                }
+
+                // Save current state to history
+                function saveToHistory() {
+                    if (!manuscriptEditor) return;
+                    
+                    const currentState = {
+                        content: manuscriptEditor.value,
+                        title: chapterTitle?.value || '',
+                        timestamp: Date.now()
+                    };
+                    
+                    undoStack.push(currentState);
+                    if (undoStack.length > maxHistorySize) {
+                        undoStack.shift();
+                    }
+                    
+                    // Clear redo stack when new changes are made
+                    redoStack.length = 0;
+                    updateHistoryButtons();
+                }
+
+                // Update undo/redo button states
+                function updateHistoryButtons() {
+                    if (undoBtn) {
+                        undoBtn.disabled = undoStack.length === 0;
+                        undoBtn.style.opacity = undoStack.length === 0 ? '0.5' : '1';
+                    }
+                    if (redoBtn) {
+                        redoBtn.disabled = redoStack.length === 0;
+                        redoBtn.style.opacity = redoStack.length === 0 ? '0.5' : '1';
+                    }
+                }
+
+                // Set up event listeners
+                if (manuscriptEditor) {
+                    let timeout;
+                    manuscriptEditor.addEventListener('input', function() {
+                        updateWordCount();
+                        
+                        // Debounce history saving
+                        clearTimeout(timeout);
+                        timeout = setTimeout(saveToHistory, 1000);
+                    });
+
+                    // Initial word count and save initial state
+                    updateWordCount();
+                    saveToHistory();
+                }
+
+                // Save button functionality
+                if (saveBtn) {
+                    saveBtn.addEventListener('click', function() {
+                        if (!manuscriptEditor) return;
+                        
+                        const storyData = {
+                            content: manuscriptEditor.value,
+                            bookTitle: chapterTitle?.value || 'Untitled Story',
+                            timestamp: new Date().toISOString(),
+                            wordCount: manuscriptEditor.value.trim().split(/\\s+/).filter(word => word.length > 0).length
+                        };
+                        
+                        localStorage.setItem('workspace-story', JSON.stringify(storyData));
+                        
+                        // Visual feedback
+                        const originalText = this.innerHTML;
+                        this.innerHTML = '<i class="fas fa-check mr-1"></i>Saved!';
+                        this.style.background = '#10b981';
+                        
+                        setTimeout(() => {
+                            this.innerHTML = originalText;
+                            this.style.background = '';
+                        }, 2000);
+                    });
+                }
+
+                // Undo functionality
+                if (undoBtn) {
+                    undoBtn.addEventListener('click', function() {
+                        if (undoStack.length === 0 || !manuscriptEditor) return;
+                        
+                        // Save current state to redo stack
+                        const currentState = {
+                            content: manuscriptEditor.value,
+                            title: chapterTitle?.value || '',
+                            timestamp: Date.now()
+                        };
+                        redoStack.push(currentState);
+                        
+                        // Restore previous state
+                        const prevState = undoStack.pop();
+                        manuscriptEditor.value = prevState.content;
+                        if (chapterTitle) chapterTitle.value = prevState.title;
+                        
+                        updateWordCount();
+                        updateHistoryButtons();
+                    });
+                }
+
+                // Redo functionality
+                if (redoBtn) {
+                    redoBtn.addEventListener('click', function() {
+                        if (redoStack.length === 0 || !manuscriptEditor) return;
+                        
+                        // Save current state to undo stack
+                        const currentState = {
+                            content: manuscriptEditor.value,
+                            title: chapterTitle?.value || '',
+                            timestamp: Date.now()
+                        };
+                        undoStack.push(currentState);
+                        
+                        // Restore next state
+                        const nextState = redoStack.pop();
+                        manuscriptEditor.value = nextState.content;
+                        if (chapterTitle) chapterTitle.value = nextState.title;
+                        
+                        updateWordCount();
+                        updateHistoryButtons();
+                    });
+                }
+
+                // Continue to Narration functionality
+                if (continueToNarrationBtn) {
+                    continueToNarrationBtn.addEventListener('click', function() {
+                        if (!manuscriptEditor || !manuscriptEditor.value.trim()) {
+                            alert('Please write some content before continuing to narration.');
+                            return;
+                        }
+
+                        // Save story data for narration page
+                        const storyData = {
+                            content: manuscriptEditor.value,
+                            bookTitle: chapterTitle?.value || 'Untitled Story',
+                            author: 'Author',
+                            timestamp: new Date().toISOString(),
+                            wordCount: manuscriptEditor.value.trim().split(/\\s+/).filter(word => word.length > 0).length
+                        };
+
+                        localStorage.setItem('narration-story', JSON.stringify(storyData));
+                        
+                        // Visual feedback
+                        const originalText = this.innerHTML;
+                        this.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Transferring...';
+                        
+                        setTimeout(() => {
+                            window.location.href = '/narration';
+                        }, 500);
+                    });
+                }
+
+                // AI Writing Tools functionality
+                const aiButtons = {
+                    'ai-generate-ideas': 'Generate creative writing ideas and inspiration',
+                    'ai-create-outline': 'Create a structured outline for your story',
+                    'ai-expand-text': 'Expand and elaborate on selected text',
+                    'ai-summarize': 'Summarize and condense your content',
+                    'ai-rewrite': 'Rewrite and improve selected text',
+                    'ai-character-builder': 'Build detailed character profiles and development'
+                };
+
+                Object.keys(aiButtons).forEach(buttonId => {
+                    const button = document.getElementById(buttonId);
+                    if (button) {
+                        button.addEventListener('click', function() {
+                            const action = aiButtons[buttonId];
+                            
+                            // Visual feedback
+                            const originalText = this.innerHTML;
+                            this.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Processing...';
+                            this.disabled = true;
+
+                            // Simulate AI processing (replace with actual API call)
+                            setTimeout(() => {
+                                this.innerHTML = originalText;
+                                this.disabled = false;
+                                
+                                alert('AI Tool: ' + action + '\\n\\n(Ready for OpenAI API integration)');
+                            }, 2000);
+                        });
+                    }
+                });
+
+                // Initialize history buttons
+                updateHistoryButtons();
+            }
+
+            // Narration page functionality
+            if (window.location.pathname === '/narration') {
+                // Populate OpenAI voices
+                const voiceSelect = document.getElementById('voice-select');
+                if (voiceSelect) {
+                    voiceSelect.innerHTML = `
+                        <option value="">Select a voice...</option>
+                        <option value="alloy">Alloy - Neutral, Professional</option>
+                        <option value="echo">Echo - Male, Authoritative</option>
+                        <option value="fable">Fable - Female, Narrative</option>
+                        <option value="onyx">Onyx - Male, Deep & Rich</option>
+                        <option value="nova">Nova - Female, Energetic</option>
+                        <option value="shimmer">Shimmer - Female, Elegant</option>
+                    `;
+                }
+
+                // Voice preview functionality
+                const voicePreviewBtn = document.getElementById('voice-preview-btn');
+                if (voicePreviewBtn) {
+                    voicePreviewBtn.addEventListener('click', async function() {
+                        const selectedVoice = voiceSelect?.value;
+                        if (!selectedVoice) {
+                            alert('Please select a voice first.');
+                            return;
+                        }
+
+                        const originalText = this.innerHTML;
+                        this.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Generating Preview...';
+                        this.disabled = true;
+
+                        try {
+                            const previewText = `Hello, this is a preview of the ${selectedVoice} voice. This voice will be used to narrate your audiobook.`;
+                            
+                            const response = await fetch('/api/audio/generate', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    text: previewText,
+                                    voice: selectedVoice,
+                                    speed: 1.0
+                                })
+                            });
+
+                            const data = await response.json();
+
+                            if (data.success) {
+                                // Create and play audio preview
+                                const audioBlob = new Blob([
+                                    new Uint8Array(
+                                        atob(data.audio_data)
+                                            .split('')
+                                            .map(char => char.charCodeAt(0))
+                                    )
+                                ], { type: 'audio/mpeg' });
+                                
+                                const audioUrl = URL.createObjectURL(audioBlob);
+                                const audio = new Audio(audioUrl);
+                                audio.play();
+                                audio.addEventListener('ended', () => URL.revokeObjectURL(audioUrl));
+                            } else {
+                                alert('Voice preview failed: ' + (data.error || 'Unknown error'));
+                            }
+                        } catch (error) {
+                            console.error('Voice preview error:', error);
+                            alert('Failed to generate voice preview. Please try again.');
+                        } finally {
+                            this.innerHTML = originalText;
+                            this.disabled = false;
+                        }
+                    });
+                }
+
+                // Voice review button functionality
+                const voiceReviewBtn = document.getElementById('voice-review-btn');
+                if (voiceReviewBtn) {
+                    voiceReviewBtn.addEventListener('click', function() {
+                        const selectedVoice = voiceSelect?.value;
+                        if (!selectedVoice) {
+                            alert('Please select a voice first.');
+                            return;
+                        }
+                        
+                        // Show voice configuration summary
+                        alert(`✅ Voice Configuration Confirmed\\n\\nSelected Voice: ${selectedVoice}\\n\\nThis voice is now configured for narration generation. You can proceed with text-to-speech conversion using this voice.`);
+                    });
+                }
+
+                // Import story from workspace
+                const textInput = document.getElementById('text-input');
+                if (textInput && localStorage.getItem('narration-story')) {
+                    try {
+                        const storyData = JSON.parse(localStorage.getItem('narration-story'));
+                        if (storyData.content) {
+                            textInput.value = storyData.content;
+                            
+                            // Update character count and duration estimate
+                            updateNarrationStats();
+                            
+                            // Show import notification
+                            const notification = document.createElement('div');
+                            notification.className = 'bg-green-100 dark:bg-green-900 border border-green-400 text-green-700 dark:text-green-300 px-4 py-3 rounded mb-4';
+                            notification.innerHTML = '<strong>✅ Story Imported:</strong> "' + (storyData.bookTitle || 'Untitled Story') + '" has been loaded for narration (' + storyData.wordCount + ' words).';
+                            
+                            // Insert at top of page
+                            const narrationContent = document.querySelector('.space-y-12');
+                            if (narrationContent) {
+                                narrationContent.insertBefore(notification, narrationContent.firstChild);
+                                
+                                // Auto-remove after 7 seconds
+                                setTimeout(() => {
+                                    notification.style.transition = 'opacity 0.5s';
+                                    notification.style.opacity = '0';
+                                    setTimeout(() => notification.remove(), 500);
+                                }, 7000);
+                            }
+                        }
+                    } catch (error) {
+                        console.log('No story data to import');
+                    }
+                }
+
+                // Update narration statistics
+                function updateNarrationStats() {
+                    if (!textInput) return;
+                    
+                    const text = textInput.value;
+                    const charCount = text.length;
+                    const wordCount = text.trim() ? text.trim().split(/\\s+/).filter(word => word.length > 0).length : 0;
+                    const durationSeconds = Math.ceil((wordCount / 150) * 60); // ~150 words per minute
+
+                    const charCountEl = document.getElementById('char-count');
+                    const durationEl = document.getElementById('duration-est');
+                    
+                    if (charCountEl) charCountEl.textContent = charCount.toLocaleString();
+                    if (durationEl) {
+                        const minutes = Math.floor(durationSeconds / 60);
+                        const seconds = durationSeconds % 60;
+                        durationEl.textContent = minutes > 0 ? minutes + 'm ' + seconds + 's' : seconds + 's';
+                    }
+                }
+
+                // Add event listener for text changes
+                if (textInput) {
+                    textInput.addEventListener('input', updateNarrationStats);
+                    updateNarrationStats(); // Initial update
+                }
+            }
         });
         </script>
     </body>
@@ -915,7 +2077,7 @@ app.get('/', (c) => {
       <div class="text-center mb-8">
         <h2 class="text-4xl font-bold mb-4" style="color: #78e3fe !important; text-shadow: 0 0 15px rgba(120, 227, 254, 0.6), 0 0 10px rgba(192, 192, 192, 0.8) !important;">Transform Text into Premium Audiobooks</h2>
         <p class="text-xl max-w-3xl mx-auto" style="color: #78e3fe !important; text-shadow: 0 0 10px rgba(192, 192, 192, 0.8) !important;">
-          Create professional audiobooks with AI-powered writing assistance, advanced narration, and voice cloning technology
+          <span class="text-white">Create professional audiobooks with AI-powered writing assistance, advanced narration, and voice cloning technology</span>
         </p>
       </div>
 
@@ -951,32 +2113,116 @@ app.get('/', (c) => {
             </div>
             
             <div>
+              <label class="block text-sm font-medium text-cyan-glow mb-2">Chapter Selection</label>
+              <select id="chapter-selection" class="form-field-glow w-full rounded px-3 py-2 text-white">
+                <option value="">Select chapters...</option>
+                <option value="3">3 Chapters</option>
+                <option value="5">5 Chapters</option>
+                <option value="8">8 Chapters (Recommended)</option>
+                <option value="10">10 Chapters</option>
+                <option value="12">12 Chapters</option>
+                <option value="15">15 Chapters</option>
+                <option value="20">20 Chapters</option>
+                <option value="25">25 Chapters</option>
+              </select>
+            </div>
+            
+            <div>
               <label class="block text-sm font-medium text-cyan-glow mb-2">Genre</label>
               <select id="genre" class="form-field-glow w-full rounded px-3 py-2 text-white">
                 <option value="">Select genre...</option>
-                <option value="fiction">Fiction</option>
-                <option value="non-fiction">Non-Fiction</option>
-                <option value="mystery">Mystery & Thriller</option>
-                <option value="romance">Romance</option>
-                <option value="fantasy">Fantasy</option>
-                <option value="sci-fi">Science Fiction</option>
-                <option value="biography">Biography</option>
-                <option value="self-help">Self Help</option>
+                <optgroup label="Fiction">
+                  <option value="literary-fiction">Literary Fiction</option>
+                  <option value="contemporary-fiction">Contemporary Fiction</option>
+                  <option value="historical-fiction">Historical Fiction</option>
+                </optgroup>
+                <optgroup label="Romance">
+                  <option value="contemporary-romance">Contemporary Romance</option>
+                  <option value="historical-romance">Historical Romance</option>
+                  <option value="paranormal-romance">Paranormal Romance</option>
+                  <option value="romantic-suspense">Romantic Suspense</option>
+                </optgroup>
+                <optgroup label="Mystery & Thriller">
+                  <option value="cozy-mystery">Cozy Mystery</option>
+                  <option value="police-procedural">Police Procedural</option>
+                  <option value="psychological-thriller">Psychological Thriller</option>
+                  <option value="crime-thriller">Crime Thriller</option>
+                </optgroup>
+                <optgroup label="Fantasy">
+                  <option value="epic-fantasy">Epic Fantasy</option>
+                  <option value="urban-fantasy">Urban Fantasy</option>
+                  <option value="dark-fantasy">Dark Fantasy</option>
+                  <option value="paranormal-fantasy">Paranormal Fantasy</option>
+                </optgroup>
+                <optgroup label="Science Fiction">
+                  <option value="hard-sci-fi">Hard Science Fiction</option>
+                  <option value="space-opera">Space Opera</option>
+                  <option value="cyberpunk">Cyberpunk</option>
+                  <option value="dystopian">Dystopian</option>
+                </optgroup>
+                <optgroup label="Non-Fiction">
+                  <option value="biography">Biography</option>
+                  <option value="memoir">Memoir</option>
+                  <option value="self-help">Self Help</option>
+                  <option value="business">Business</option>
+                  <option value="health-fitness">Health & Fitness</option>
+                  <option value="history">History</option>
+                </optgroup>
               </select>
             </div>
           </div>
           
           <div class="space-y-4">
             <div>
+              <label class="block text-sm font-medium text-cyan-glow mb-2">Word Count Per Chapter</label>
+              <select id="word-count" class="form-field-glow w-full rounded px-3 py-2 text-white">
+                <option value="">Select word count...</option>
+                <option value="500">500 words (Short)</option>
+                <option value="1000">1,000 words (Standard)</option>
+                <option value="1500">1,500 words (Medium)</option>
+                <option value="2000">2,000 words (Long)</option>
+                <option value="2500">2,500 words (Extended)</option>
+                <option value="3000">3,000 words (Epic)</option>
+                <option value="custom">Custom Length</option>
+              </select>
+            </div>
+            
+            <div>
               <label class="block text-sm font-medium text-cyan-glow mb-2">Tone/Voice</label>
               <select id="tone-voice" class="form-field-glow w-full rounded px-3 py-2 text-white">
                 <option value="">Select tone...</option>
-                <option value="professional">Professional</option>
-                <option value="conversational">Conversational</option>
-                <option value="formal">Formal</option>
-                <option value="humorous">Humorous</option>
-                <option value="dramatic">Dramatic</option>
-                <option value="educational">Educational</option>
+                <optgroup label="Professional">
+                  <option value="professional">Professional</option>
+                  <option value="academic">Academic</option>
+                  <option value="business">Business</option>
+                  <option value="authoritative">Authoritative</option>
+                </optgroup>
+                <optgroup label="Conversational">
+                  <option value="conversational">Conversational</option>
+                  <option value="friendly">Friendly</option>
+                  <option value="casual">Casual</option>
+                  <option value="approachable">Approachable</option>
+                </optgroup>
+                <optgroup label="Creative">
+                  <option value="dramatic">Dramatic</option>
+                  <option value="humorous">Humorous</option>
+                  <option value="whimsical">Whimsical</option>
+                  <option value="poetic">Poetic</option>
+                  <option value="mysterious">Mysterious</option>
+                </optgroup>
+                <optgroup label="Emotional">
+                  <option value="heartwarming">Heartwarming</option>
+                  <option value="inspirational">Inspirational</option>
+                  <option value="melancholic">Melancholic</option>
+                  <option value="intense">Intense</option>
+                  <option value="uplifting">Uplifting</option>
+                </optgroup>
+                <optgroup label="Educational">
+                  <option value="educational">Educational</option>
+                  <option value="informative">Informative</option>
+                  <option value="instructional">Instructional</option>
+                  <option value="explanatory">Explanatory</option>
+                </optgroup>
               </select>
             </div>
             
@@ -1078,22 +2324,22 @@ app.get('/workspace', (c) => {
             </h3>
             
             <div class="space-y-3">
-              <button class="w-full bg-purple-600 hover:bg-purple-500 text-white py-2 px-4 rounded transition-all text-left">
+              <button id="ai-generate-ideas" class="ai-writing-tool-btn w-full py-2 px-4 rounded transition-all text-left">
                 <i class="fas fa-lightbulb mr-2"></i>Generate Ideas
               </button>
-              <button class="w-full bg-blue-600 hover:bg-blue-500 text-white py-2 px-4 rounded transition-all text-left">
+              <button id="ai-create-outline" class="ai-writing-tool-btn w-full py-2 px-4 rounded transition-all text-left">
                 <i class="fas fa-list mr-2"></i>Create Outline
               </button>
-              <button class="w-full bg-green-600 hover:bg-green-500 text-white py-2 px-4 rounded transition-all text-left">
+              <button id="ai-expand-text" class="ai-writing-tool-btn w-full py-2 px-4 rounded transition-all text-left">
                 <i class="fas fa-expand mr-2"></i>Expand Text
               </button>
-              <button class="w-full bg-orange-600 hover:bg-orange-500 text-white py-2 px-4 rounded transition-all text-left">
+              <button id="ai-summarize" class="ai-writing-tool-btn w-full py-2 px-4 rounded transition-all text-left">
                 <i class="fas fa-compress mr-2"></i>Summarize
               </button>
-              <button class="w-full bg-red-600 hover:bg-red-500 text-white py-2 px-4 rounded transition-all text-left">
+              <button id="ai-rewrite" class="ai-writing-tool-btn w-full py-2 px-4 rounded transition-all text-left">
                 <i class="fas fa-edit mr-2"></i>Rewrite
               </button>
-              <button class="w-full bg-teal-600 hover:bg-teal-500 text-white py-2 px-4 rounded transition-all text-left">
+              <button id="ai-character-builder" class="ai-writing-tool-btn w-full py-2 px-4 rounded transition-all text-left">
                 <i class="fas fa-users mr-2"></i>Character Builder
               </button>
             </div>
@@ -1133,13 +2379,13 @@ app.get('/workspace', (c) => {
                 <i class="fas fa-pen mr-2"></i>Manuscript Editor
               </h3>
               <div class="flex space-x-2">
-                <button class="bg-gray-700 hover:bg-gray-600 text-white px-3 py-1 rounded text-sm transition-all">
+                <button id="save-btn" class="bg-gray-700 hover:bg-gray-600 text-white px-3 py-1 rounded text-sm transition-all">
                   <i class="fas fa-save mr-1"></i>Save
                 </button>
-                <button class="bg-gray-700 hover:bg-gray-600 text-white px-3 py-1 rounded text-sm transition-all">
+                <button id="undo-btn" class="bg-gray-700 hover:bg-gray-600 text-white px-3 py-1 rounded text-sm transition-all">
                   <i class="fas fa-undo mr-1"></i>Undo
                 </button>
-                <button class="bg-gray-700 hover:bg-gray-600 text-white px-3 py-1 rounded text-sm transition-all">
+                <button id="redo-btn" class="bg-gray-700 hover:bg-gray-600 text-white px-3 py-1 rounded text-sm transition-all">
                   <i class="fas fa-redo mr-1"></i>Redo
                 </button>
               </div>
@@ -1162,7 +2408,7 @@ app.get('/workspace', (c) => {
                 <button id="save-story-btn" class="btn btn-primary">
                   <i class="fas fa-save mr-1"></i>Save Story
                 </button>
-                <button class="bg-cyan-600 hover:bg-cyan-500 text-white px-4 py-2 rounded transition-all">
+                <button id="continue-to-narration-btn" class="bg-cyan-600 hover:bg-cyan-500 text-white px-4 py-2 rounded transition-all">
                   <i class="fas fa-arrow-right mr-1"></i>Continue to Narration
                 </button>
               </div>
