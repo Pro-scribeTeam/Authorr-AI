@@ -1,540 +1,79 @@
- 1	<!DOCTYPE html>
-     2	<html lang="en">
-     3	<head>
-     4	    <meta charset="UTF-8">
-     5	    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-     6	    <title>AUTHORR AI - Dashboard</title>
-     7	    <script src="https://cdn.tailwindcss.com"></script>
-     8	    <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
-     9	    <style>
-    10	        /* AUTHORR AI Brand Colors - Enhanced Dark Blue Theme */
-    11	        :root {
-    12	          --bg-primary: #0f1419;
-    13	          --bg-secondary: #1a2332;
-    14	          --bg-tertiary: #243447;
-    15	          --text-primary: #ffffff;
-    16	          --text-secondary: #b8c5d6;
-    17	          --accent-primary: #4fb3d9;
-    18	          --accent-secondary: #2d8aa8;
-    19	          --border-color: #2d3748;
-    20	          --success: #48bb78;
-    21	          --warning: #ed8936;
-    22	          --error: #f56565;
-    23	        }
-    24	
-    25	        body {
-    26	          background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
-    27	          color: var(--text-primary);
-    28	          font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    29	          min-height: 100vh;
-    30	        }
-    31	
-    32	        .page {
-    33	          display: block;
-    34	        }
-    35	        .page.hidden {
-    36	          display: none;
-    37	        }
-    38	
-    39	        /* Navigation Styles */
-    40	        .nav-container {
-    41	          background: rgba(15, 20, 25, 0.95);
-    42	          backdrop-filter: blur(10px);
-    43	          border-bottom: 1px solid var(--border-color);
-    44	        }
-    45	
-    46	        .nav-item {
-    47	          display: flex;
-    48	          align-items: center;
-    49	          gap: 0.5rem;
-    50	          padding: 0.75rem 1rem;
-    51	          border-radius: 0.5rem;
-    52	          background: transparent;
-    53	          border: 1px solid transparent;
-    54	          color: var(--text-secondary);
-    55	          text-decoration: none;
-    56	          transition: all 0.3s ease;
-    57	          cursor: pointer;
-    58	        }
-    59	
-    60	        .nav-item:hover {
-    61	          background: rgba(79, 179, 217, 0.1);
-    62	          border-color: var(--accent-primary);
-    63	          color: var(--text-primary);
-    64	        }
-    65	
-    66	        .nav-item.active {
-    67	          background: var(--accent-primary);
-    68	          color: white;
-    69	          border-color: var(--accent-primary);
-    70	        }
-    71	
-    72	        /* Form Styles */
-    73	        .form-section {
-    74	          background: var(--bg-secondary);
-    75	          border: 1px solid var(--border-color);
-    76	          border-radius: 1rem;
-    77	          padding: 2rem;
-    78	          margin-bottom: 2rem;
-    79	        }
-    80	
-    81	        .form-input, .form-select, .form-textarea {
-    82	          background: var(--bg-tertiary);
-    83	          border: 1px solid var(--border-color);
-    84	          color: var(--text-primary);
-    85	          border-radius: 0.5rem;
-    86	          padding: 0.75rem 1rem;
-    87	          width: 100%;
-    88	          transition: border-color 0.3s ease;
-    89	        }
-    90	
-    91	        .form-input:focus, .form-select:focus, .form-textarea:focus {
-    92	          outline: none;
-    93	          border-color: var(--accent-primary);
-    94	          box-shadow: 0 0 0 3px rgba(79, 179, 217, 0.1);
-    95	        }
-    96	
-    97	        .form-label {
-    98	          color: var(--text-primary);
-    99	          font-weight: 600;
-   100	          margin-bottom: 0.5rem;
-   101	          display: block;
-   102	        }
-   103	
-   104	        /* Button Styles */
-   105	        .btn-primary {
-   106	          background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-   107	          color: white;
-   108	          border: none;
-   109	          border-radius: 0.5rem;
-   110	          padding: 0.75rem 2rem;
-   111	          font-weight: 600;
-   112	          cursor: pointer;
-   113	          transition: all 0.3s ease;
-   114	          display: inline-flex;
-   115	          align-items: center;
-   116	          gap: 0.5rem;
-   117	        }
-   118	
-   119	        .btn-primary:hover {
-   120	          transform: translateY(-2px);
-   121	          box-shadow: 0 10px 25px rgba(79, 179, 217, 0.3);
-   122	        }
-   123	
-   124	        .btn-secondary {
-   125	          background: transparent;
-   126	          color: var(--accent-primary);
-   127	          border: 1px solid var(--accent-primary);
-   128	          border-radius: 0.5rem;
-   129	          padding: 0.75rem 2rem;
-   130	          font-weight: 600;
-   131	          cursor: pointer;
-   132	          transition: all 0.3s ease;
-   133	        }
-   134	
-   135	        .btn-secondary:hover {
-   136	          background: var(--accent-primary);
-   137	          color: white;
-   138	        }
-   139	
-   140	        /* Card Styles */
-   141	        .card {
-   142	          background: var(--bg-secondary);
-   143	          border: 1px solid var(--border-color);
-   144	          border-radius: 1rem;
-   145	          padding: 1.5rem;
-   146	          transition: transform 0.3s ease;
-   147	        }
-   148	
-   149	        .card:hover {
-   150	          transform: translateY(-4px);
-   151	          border-color: var(--accent-primary);
-   152	        }
-   153	
-   154	        /* Logo Animation */
-   155	        .logo-glow {
-   156	          filter: drop-shadow(0 0 15px rgba(79, 179, 217, 0.6));
-   157	          animation: logoGlow 2s ease-in-out infinite alternate;
-   158	        }
-   159	
-   160	        @keyframes logoGlow {
-   161	          from { filter: drop-shadow(0 0 15px rgba(79, 179, 217, 0.6)); }
-   162	          to { filter: drop-shadow(0 0 25px rgba(79, 179, 217, 0.9)); }
-   163	        }
-   164	
-   165	        /* Responsive */
-   166	        @media (max-width: 768px) {
-   167	          .nav-desktop { display: none; }
-   168	          .mobile-menu { display: block; }
-   169	        }
-   170	    </style>
-   171	</head>
-   172	<body>
-   173	    <!-- Navigation -->
-   174	    <nav class="nav-container sticky top-0 z-50">
-   175	        <div class="max-w-7xl mx-auto px-4">
-   176	            <div class="flex items-center justify-between py-4">
-   177	                <!-- Logo -->
-   178	                <div class="flex items-center space-x-3">
-   179	                    <div class="logo-glow">
-   180	                        <i class="fas fa-robot text-3xl text-blue-400"></i>
-   181	                    </div>
-   182	                    <div>
-   183	                        <h1 class="text-2xl font-bold text-white">AUTHORR AI</h1>
-   184	                        <p class="text-xs text-gray-400">Professional Audiobook Creation</p>
-   185	                    </div>
-   186	                </div>
-   187	
-   188	                <!-- Desktop Navigation -->
-   189	                <div class="nav-desktop flex items-center space-x-2">
-   190	                    <button onclick="showPage('dashboard')" class="nav-item active">
-   191	                        <i class="fas fa-tachometer-alt"></i>
-   192	                        Dashboard
-   193	                    </button>
-   194	                    <button onclick="showPage('workspace')" class="nav-item">
-   195	                        <i class="fas fa-edit"></i>
-   196	                        Workspace
-   197	                    </button>
-   198	                    <button onclick="showPage('narration')" class="nav-item">
-   199	                        <i class="fas fa-microphone"></i>
-   200	                        Narration
-   201	                    </button>
-   202	                    <button onclick="showPage('export')" class="nav-item">
-   203	                        <i class="fas fa-download"></i>
-   204	                        Export
-   205	                    </button>
-   206	                    <button onclick="showPage('config')" class="nav-item">
-   207	                        <i class="fas fa-cog"></i>
-   208	                        Config
-   209	                    </button>
-   210	                </div>
-   211	
-   212	                <!-- User Menu -->
-   213	                <div class="flex items-center space-x-4">
-   214	                    <button class="text-gray-400 hover:text-white">
-   215	                        <i class="fas fa-bell"></i>
-   216	                    </button>
-   217	                    <button class="text-gray-400 hover:text-white">
-   218	                        <i class="fas fa-user"></i>
-   219	                    </button>
-   220	                </div>
-   221	            </div>
-   222	        </div>
-   223	    </nav>
-   224	
-   225	    <!-- Dashboard Page -->
-   226	    <div id="dashboard" class="page">
-   227	        <div class="max-w-7xl mx-auto px-4 py-8">
-   228	            <!-- Header -->
-   229	            <div class="text-center mb-12">
-   230	                <h1 class="text-4xl font-bold text-white mb-4">
-   231	                    Transform Text into Premium Audiobooks
-   232	                </h1>
-   233	                <p class="text-xl text-gray-300 max-w-3xl mx-auto">
-   234	                    Create professional audiobooks with AI-powered writing assistance, 
-   235	                    advanced narration, and voice cloning technology
-   236	                </p>
-   237	            </div>
-   238	
-   239	            <!-- Project Creation Form -->
-   240	            <div class="grid lg:grid-cols-2 gap-8 mb-12">
-   241	                <!-- Basic Information -->
-   242	                <div class="form-section">
-   243	                    <div class="flex items-center mb-6">
-   244	                        <i class="fas fa-info-circle text-blue-400 text-xl mr-3"></i>
-   245	                        <h2 class="text-xl font-bold">Basic Information</h2>
-   246	                    </div>
-   247	                    
-   248	                    <div class="space-y-4">
-   249	                        <div>
-   250	                            <label class="form-label">
-   251	                                <i class="fas fa-book mr-2"></i>Book Title
-   252	                            </label>
-   253	                            <input type="text" class="form-input" placeholder="Enter your book title" id="bookTitle">
-   254	                        </div>
-   255	                        
-   256	                        <div>
-   257	                            <label class="form-label">
-   258	                                <i class="fas fa-user mr-2"></i>Author Name
-   259	                            </label>
-   260	                            <input type="text" class="form-input" placeholder="Your name" id="authorName">
-   261	                        </div>
-   262	                        
-   263	                        <div>
-   264	                            <label class="form-label">
-   265	                                <i class="fas fa-lightbulb mr-2"></i>Core Concept/Theme
-   266	                            </label>
-   267	                            <textarea class="form-textarea" rows="3" placeholder="Describe the main theme or concept of your book" id="coreTheme"></textarea>
-   268	                        </div>
-   269	                    </div>
-   270	                </div>
-   271	
-   272	                <!-- Creative Direction -->
-   273	                <div class="form-section">
-   274	                    <div class="flex items-center mb-6">
-   275	                        <i class="fas fa-palette text-blue-400 text-xl mr-3"></i>
-   276	                        <h2 class="text-xl font-bold">Creative Direction</h2>
-   277	                    </div>
-   278	                    
-   279	                    <div class="space-y-4">
-   280	                        <div>
-   281	                            <label class="form-label">
-   282	                                <i class="fas fa-tags mr-2"></i>Genre & Category
-   283	                            </label>
-   284	                            <select class="form-select" id="genre">
-   285	                                <option>Action/Adventure</option>
-   286	                                <option>Romance</option>
-   287	                                <option>Mystery/Thriller</option>
-   288	                                <option>Science Fiction</option>
-   289	                                <option>Fantasy</option>
-   290	                                <option>Horror</option>
-   291	                                <option>Literary Fiction</option>
-   292	                                <option>Non-Fiction</option>
-   293	                            </select>
-   294	                        </div>
-   295	                        
-   296	                        <div>
-   297	                            <label class="form-label">
-   298	                                <i class="fas fa-volume-up mr-2"></i>Tone & Style
-   299	                            </label>
-   300	                            <select class="form-select" id="tone">
-   301	                                <option>Cinematic</option>
-   302	                                <option>Conversational</option>
-   303	                                <option>Dramatic</option>
-   304	                                <option>Humorous</option>
-   305	                                <option>Professional</option>
-   306	                                <option>Emotional</option>
-   307	                            </select>
-   308	                        </div>
-   309	                        
-   310	                        <div class="grid grid-cols-2 gap-4">
-   311	                            <div>
-   312	                                <label class="form-label">
-   313	                                    <i class="fas fa-list-ol mr-2"></i>Target Chapter Count
-   314	                                </label>
-   315	                                <select class="form-select" id="chapterCount">
-   316	                                    <option>3 Chapters (Short Story)</option>
-   317	                                    <option>5 Chapters</option>
-   318	                                    <option>10 Chapters</option>
-   319	                                    <option>15 Chapters</option>
-   320	                                    <option>20 Chapters</option>
-   321	                                </select>
-   322	                            </div>
-   323	                            
-   324	                            <div>
-   325	                                <label class="form-label">
-   326	                                    <i class="fas fa-file-word mr-2"></i>Words per Chapter
-   327	                                </label>
-   328	                                <select class="form-select" id="wordsPerChapter">
-   329	                                    <option>~1,000 words</option>
-   330	                                    <option>~2,000 words</option>
-   331	                                    <option>~3,000 words</option>
-   332	                                    <option>~4,000 words</option>
-   333	                                    <option>~5,000 words</option>
-   334	                                </select>
-   335	                            </div>
-   336	                        </div>
-   337	                    </div>
-   338	                </div>
-   339	            </div>
-   340	
-   341	            <!-- Action Button -->
-   342	            <div class="text-center mb-12">
-   343	                <button onclick="createStoryOutline()" class="btn-primary text-lg px-8 py-4">
-   344	                    <i class="fas fa-magic"></i>
-   345	                    Create Story Outline with GPT-4o Mini
-   346	                </button>
-   347	            </div>
-   348	
-   349	            <!-- Recent Projects -->
-   350	            <div class="form-section">
-   351	                <div class="flex items-center justify-between mb-6">
-   352	                    <h2 class="text-xl font-bold flex items-center">
-   353	                        <i class="fas fa-history text-blue-400 text-xl mr-3"></i>
-   354	                        Recent Projects
-   355	                    </h2>
-   356	                    <button class="btn-secondary">
-   357	                        <i class="fas fa-plus mr-2"></i>New Project
-   358	                    </button>
-   359	                </div>
-   360	                
-   361	                <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-   362	                    <div class="card">
-   363	                        <h3 class="font-semibold mb-2">Sample Project</h3>
-   364	                        <p class="text-gray-400 text-sm mb-3">Action/Adventure • 5 Chapters</p>
-   365	                        <div class="flex justify-between items-center">
-   366	                            <span class="text-xs text-gray-500">2 hours ago</span>
-   367	                            <button class="text-blue-400 hover:text-white">
-   368	                                <i class="fas fa-arrow-right"></i>
-   369	                            </button>
-   370	                        </div>
-   371	                    </div>
-   372	                </div>
-   373	            </div>
-   374	        </div>
-   375	    </div>
-   376	
-   377	    <!-- Workspace Page -->
-   378	    <div id="workspace" class="page hidden">
-   379	        <div class="max-w-7xl mx-auto px-4 py-8">
-   380	            <h1 class="text-3xl font-bold mb-8 flex items-center">
-   381	                <i class="fas fa-edit text-blue-400 mr-4"></i>
-   382	                Workspace
-   383	            </h1>
-   384	            <div class="form-section">
-   385	                <p class="text-lg">Enhanced chapter generation and story editing workspace.</p>
-   386	                <p class="text-gray-400 mt-4">This page will contain the full story editor with enhanced features.</p>
-   387	            </div>
-   388	        </div>
-   389	    </div>
-   390	
-   391	    <!-- Narration Page -->
-   392	    <div id="narration" class="page hidden">
-   393	        <div class="max-w-7xl mx-auto px-4 py-8">
-   394	            <h1 class="text-3xl font-bold mb-8 flex items-center">
-   395	                <i class="fas fa-microphone text-blue-400 mr-4"></i>
-   396	                Narration Studio
-   397	            </h1>
-   398	            <div class="form-section">
-   399	                <p class="text-lg">Professional AI voice narration with 6 OpenAI voices available.</p>
-   400	                <p class="text-gray-400 mt-4">Convert your story to high-quality audio with advanced TTS technology.</p>
-   401	            </div>
-   402	        </div>
-   403	    </div>
-   404	
-   405	    <!-- Export Page -->
-   406	    <div id="export" class="page hidden">
-   407	        <div class="max-w-7xl mx-auto px-4 py-8">
-   408	            <h1 class="text-3xl font-bold mb-8 flex items-center">
-   409	                <i class="fas fa-download text-blue-400 mr-4"></i>
-   410	                Export & Publish
-   411	            </h1>
-   412	            <div class="form-section">
-   413	                <p class="text-lg">Export your audiobook in multiple formats for various platforms.</p>
-   414	                <p class="text-gray-400 mt-4">Ready for Audible, Spotify, Apple Podcasts, and more.</p>
-   415	            </div>
-   416	        </div>
-   417	    </div>
-   418	
-   419	    <!-- Config Page -->
-   420	    <div id="config" class="page hidden">
-   421	        <div class="max-w-7xl mx-auto px-4 py-8">
-   422	            <h1 class="text-3xl font-bold mb-8 flex items-center">
-   423	                <i class="fas fa-cog text-blue-400 mr-4"></i>
-   424	                Configuration
-   425	            </h1>
-   426	            <div class="form-section">
-   427	                <p class="text-lg">Configure your AI settings, API keys, and platform preferences.</p>
-   428	                <p class="text-gray-400 mt-4">OpenAI integration and advanced settings.</p>
-   429	            </div>
-   430	        </div>
-   431	    </div>
-   432	
-   433	    <script>
-   434	        // Global state
-   435	        let currentPage = 'dashboard';
-   436	
-   437	        // Hash-based navigation for GitHub Pages
-   438	        function showPage(pageId) {
-   439	            // Update URL hash
-   440	            window.location.hash = pageId;
-   441	            
-   442	            // Hide all pages
-   443	            document.querySelectorAll('.page').forEach(page => {
-   444	                page.classList.add('hidden');
-   445	            });
-   446	            
-   447	            // Show target page
-   448	            const targetPage = document.getElementById(pageId);
-   449	            if (targetPage) {
-   450	                targetPage.classList.remove('hidden');
-   451	            }
-   452	            
-   453	            // Update navigation
-   454	            document.querySelectorAll('.nav-item').forEach(item => {
-   455	                item.classList.remove('active');
-   456	            });
-   457	            
-   458	            // Find and activate current nav item
-   459	            const activeNav = document.querySelector(`[onclick*="${pageId}"]`);
-   460	            if (activeNav) {
-   461	                activeNav.classList.add('active');
-   462	            }
-   463	            
-   464	            currentPage = pageId;
-   465	        }
-   466	
-   467	        // Handle hash changes (browser back/forward)
-   468	        function handleHashChange() {
-   469	            const hash = window.location.hash.substring(1);
-   470	            const validPages = ['dashboard', 'workspace', 'narration', 'export', 'config'];
-   471	            
-   472	            if (hash && validPages.includes(hash)) {
-   473	                showPageDirect(hash);
-   474	            } else {
-   475	                showPageDirect('dashboard');
-   476	                if (!window.location.hash) {
-   477	                    window.location.hash = 'dashboard';
-   478	                }
-   479	            }
-   480	        }
-   481	
-   482	        // Direct page show without hash update
-   483	        function showPageDirect(pageId) {
-   484	            document.querySelectorAll('.page').forEach(page => {
-   485	                page.classList.add('hidden');
-   486	            });
-   487	            
-   488	            const targetPage = document.getElementById(pageId);
-   489	            if (targetPage) {
-   490	                targetPage.classList.remove('hidden');
-   491	            }
-   492	            
-   493	            document.querySelectorAll('.nav-item').forEach(item => {
-   494	                item.classList.remove('active');
-   495	            });
-   496	            
-   497	            const activeNav = document.querySelector(`[onclick*="${pageId}"]`);
-   498	            if (activeNav) {
-   499	                activeNav.classList.add('active');
-   500	            }
-   501	            
-   502	            currentPage = pageId;
-   503	        }
-   504	
-   505	        // Story creation function
-   506	        function createStoryOutline() {
-   507	            const title = document.getElementById('bookTitle').value;
-   508	            const author = document.getElementById('authorName').value;
-   509	            
-   510	            if (!title.trim()) {
-   511	                alert('Please enter a book title to continue.');
-   512	                return;
-   513	            }
-   514	            
-   515	            // Show loading state
-   516	            const button = event.target;
-   517	            const originalText = button.innerHTML;
-   518	            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
-   519	            button.disabled = true;
-   520	            
-   521	            // Simulate API call
-   522	            setTimeout(() => {
-   523	                button.innerHTML = originalText;
-   524	                button.disabled = false;
-   525	                alert(`Story outline created for "${title}"! Navigate to Workspace to continue editing.`);
-   526	                showPage('workspace');
-   527	            }, 2000);
-   528	        }
-   529	
-   530	        // Initialize
-   531	        window.addEventListener('hashchange', handleHashChange);
-   532	        window.addEventListener('load', handleHashChange);
-   533	        
-   534	        // Initialize on page load
-   535	        document.addEventListener('DOMContentLoaded', function() {
-   536	            handleHashChange();
-   537	        });
-   538	    </script>
-   539	</body>
-   540	</html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AUTHORR AI - Test</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background: #0f1419;
+            color: white;
+            font-family: system-ui, sans-serif;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .page { display: block; }
+        .page.hidden { display: none; }
+        .nav-item {
+            background: #1a2332;
+            border: 1px solid #2d3748;
+            color: #b8c5d6;
+            padding: 12px 16px;
+            margin: 8px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: inline-block;
+        }
+        .nav-item:hover, .nav-item.active {
+            background: #4fb3d9;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <h1>AUTHORR AI - Navigation Test</h1>
+    
+    <div>
+        <button onclick="showPage('dashboard')" class="nav-item active">Dashboard</button>
+        <button onclick="showPage('workspace')" class="nav-item">Workspace</button>
+        <button onclick="showPage('narration')" class="nav-item">Narration</button>
+    </div>
+
+    <div id="dashboard" class="page">
+        <h2>Dashboard Page</h2>
+        <p>This is the dashboard. Navigation working!</p>
+    </div>
+
+    <div id="workspace" class="page hidden">
+        <h2>Workspace Page</h2>
+        <p>This is the workspace. Navigation working!</p>
+    </div>
+
+    <div id="narration" class="page hidden">
+        <h2>Narration Page</h2>
+        <p>This is narration. Navigation working!</p>
+    </div>
+
+    <script>
+        function showPage(pageId) {
+            // Hide all pages
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.add('hidden');
+            });
+            
+            // Show target page
+            const targetPage = document.getElementById(pageId);
+            if (targetPage) {
+                targetPage.classList.remove('hidden');
+            }
+            
+            // Update nav
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            event.target.classList.add('active');
+        }
+    </script>
+</body>
+</html>
