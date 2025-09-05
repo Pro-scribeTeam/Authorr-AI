@@ -1,1 +1,79 @@
-  
+ <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AUTHORR AI - Test</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background: #0f1419;
+            color: white;
+            font-family: system-ui, sans-serif;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .page { display: block; }
+        .page.hidden { display: none; }
+        .nav-item {
+            background: #1a2332;
+            border: 1px solid #2d3748;
+            color: #b8c5d6;
+            padding: 12px 16px;
+            margin: 8px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: inline-block;
+        }
+        .nav-item:hover, .nav-item.active {
+            background: #4fb3d9;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <h1>AUTHORR AI - Navigation Test</h1>
+    
+    <div>
+        <button onclick="showPage('dashboard')" class="nav-item active">Dashboard</button>
+        <button onclick="showPage('workspace')" class="nav-item">Workspace</button>
+        <button onclick="showPage('narration')" class="nav-item">Narration</button>
+    </div>
+
+    <div id="dashboard" class="page">
+        <h2>Dashboard Page</h2>
+        <p>This is the dashboard. Navigation working!</p>
+    </div>
+
+    <div id="workspace" class="page hidden">
+        <h2>Workspace Page</h2>
+        <p>This is the workspace. Navigation working!</p>
+    </div>
+
+    <div id="narration" class="page hidden">
+        <h2>Narration Page</h2>
+        <p>This is narration. Navigation working!</p>
+    </div>
+
+    <script>
+        function showPage(pageId) {
+            // Hide all pages
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.add('hidden');
+            });
+            
+            // Show target page
+            const targetPage = document.getElementById(pageId);
+            if (targetPage) {
+                targetPage.classList.remove('hidden');
+            }
+            
+            // Update nav
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            event.target.classList.add('active');
+        }
+    </script>
+</body>
+</html> 
