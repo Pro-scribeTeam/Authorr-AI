@@ -197,11 +197,83 @@
         .success-border { border-color: #10b981 !important; }
         .success-text { color: #10b981; }
         
+        /* Sound Wave Animation */
+        .sound-wave-container {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          padding: 20px;
+          background: linear-gradient(135deg, rgba(6, 182, 212, 0.1), rgba(34, 197, 94, 0.1));
+          border-radius: 12px;
+          border: 1px solid rgba(6, 182, 212, 0.3);
+        }
+        
+        .sound-wave {
+          display: flex;
+          align-items: center;
+          gap: 4px;
+        }
+        
+        .wave-bar {
+          width: 8px;
+          height: 20px;
+          background: linear-gradient(to top, #06b6d4, #10b981);
+          border-radius: 4px;
+          animation: wave 1.5s ease-in-out infinite;
+        }
+        
+        .wave-bar:nth-child(1) { animation-delay: 0s; }
+        .wave-bar:nth-child(2) { animation-delay: 0.1s; }
+        .wave-bar:nth-child(3) { animation-delay: 0.2s; }
+        .wave-bar:nth-child(4) { animation-delay: 0.3s; }
+        .wave-bar:nth-child(5) { animation-delay: 0.4s; }
+        .wave-bar:nth-child(6) { animation-delay: 0.3s; }
+        .wave-bar:nth-child(7) { animation-delay: 0.2s; }
+        .wave-bar:nth-child(8) { animation-delay: 0.1s; }
+        
+        @keyframes wave {
+          0%, 100% { 
+            height: 20px;
+            background: linear-gradient(to top, #06b6d4, #10b981);
+          }
+          50% { 
+            height: 60px;
+            background: linear-gradient(to top, #0891b2, #059669, #10b981);
+            box-shadow: 0 0 20px rgba(6, 182, 212, 0.5);
+          }
+        }
+        
+        /* Cloning Station Effects */
+        .cloning-station {
+          position: relative;
+          overflow: hidden;
+        }
+        
+        .cloning-station::before {
+          content: '';
+          position: absolute;
+          top: -2px;
+          left: -2px;
+          right: -2px;
+          bottom: -2px;
+          background: linear-gradient(45deg, transparent, rgba(6, 182, 212, 0.3), transparent, rgba(16, 185, 129, 0.3), transparent);
+          border-radius: 14px;
+          animation: borderGlow 3s linear infinite;
+          z-index: -1;
+        }
+        
+        @keyframes borderGlow {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+
         /* Responsive Design */
         @media (max-width: 768px) {
           .mobile-stack { flex-direction: column; }
           .mobile-full { width: 100%; }
           .mobile-text-sm { font-size: 14px; }
+          .sound-wave-container { padding: 15px; }
+          .wave-bar { width: 6px; height: 16px; }
         }
     </style>
 </head>
@@ -390,13 +462,15 @@
                             <div>
                                 <label class="block text-sm font-semibold mb-2">Words per Chapter</label>
                                 <select id="wordsPerChapter" class="w-full px-4 py-2 rounded-lg form-field bg-theme-primary text-theme-primary">
-                                    <option value="500">500 words</option>
-                                    <option value="750">750 words</option>
-                                    <option value="1000" selected>1000 words</option>
-                                    <option value="1500">1500 words</option>
-                                    <option value="2000">2000 words</option>
-                                    <option value="2500">2500 words</option>
-                                    <option value="3000">3000 words</option>
+                                    <option value="250">250 words (~1 min audio)</option>
+                                    <option value="500">500 words (~2 min audio)</option>
+                                    <option value="750">750 words (~3 min audio)</option>
+                                    <option value="1000" selected>1000 words (~4 min audio)</option>
+                                    <option value="1250">1250 words (~5 min audio)</option>
+                                    <option value="1500">1500 words (~6 min audio)</option>
+                                    <option value="2000">2000 words (~8 min audio)</option>
+                                    <option value="2500">2500 words (~10 min audio)</option>
+                                    <option value="3000">3000 words (~12 min audio)</option>
                                 </select>
                             </div>
                         </div>
@@ -437,8 +511,13 @@
                         
                         <div>
                             <label class="block text-sm font-semibold mb-2">Story Outline</label>
-                            <textarea id="storyOutline" placeholder="Describe your story concept, main characters, and plot outline..." 
-                                      class="w-full px-4 py-2 rounded-lg form-field bg-theme-primary text-theme-primary h-24 resize-none"></textarea>
+                            <div class="relative">
+                                <textarea id="storyOutline" placeholder="Describe your story concept, main characters, and plot outline..." 
+                                          class="w-full px-4 py-2 rounded-lg form-field bg-theme-primary text-theme-primary h-24 resize-none"></textarea>
+                                <div class="absolute bottom-2 right-3 text-xs text-cyan-400 bg-black bg-opacity-50 px-2 py-1 rounded">
+                                    <span id="outlineWordCount">0 words</span>
+                                </div>
+                            </div>
                         </div>
                         
                         <button onclick="generateChapterPlan()" class="btn-primary w-full py-3 rounded-lg font-semibold">
@@ -532,6 +611,20 @@
                 </button>
             </div>
 
+            <!-- Animated Sound Wave -->
+            <div class="sound-wave-container mb-8">
+                <div class="sound-wave">
+                    <div class="wave-bar"></div>
+                    <div class="wave-bar"></div>
+                    <div class="wave-bar"></div>
+                    <div class="wave-bar"></div>
+                    <div class="wave-bar"></div>
+                    <div class="wave-bar"></div>
+                    <div class="wave-bar"></div>
+                    <div class="wave-bar"></div>
+                </div>
+            </div>
+
             <div class="grid lg:grid-cols-2 gap-8">
                 <!-- Voice Selection & Controls -->
                 <div class="bg-theme-secondary p-6 rounded-xl border-2 border-theme">
@@ -592,48 +685,60 @@
                     </div>
                 </div>
                 
-                <!-- Book Cover Generation -->
-                <div class="bg-theme-secondary p-6 rounded-xl border-2 border-theme">
+                <!-- High-Tech Voice Cloning Station -->
+                <div class="bg-theme-secondary p-6 rounded-xl border-2 border-theme cloning-station">
                     <h2 class="text-xl font-bold mb-4">
-                        <i class="fas fa-image text-cyan-400 mr-2"></i>
-                        Book Cover Generator
+                        <i class="fas fa-dna text-cyan-400 mr-2 animate-pulse"></i>
+                        Voice Cloning Station
                     </h2>
                     
                     <div class="space-y-4">
-                        <div>
-                            <label class="block text-sm font-semibold mb-2">Cover Style</label>
-                            <select id="coverStyle" class="w-full px-4 py-2 rounded-lg form-field bg-theme-primary text-theme-primary">
-                                <option value="modern">Modern & Clean</option>
-                                <option value="classic">Classic Literature</option>
-                                <option value="mysterious">Dark & Mysterious</option>
-                                <option value="romantic">Romantic & Elegant</option>
-                                <option value="fantasy">Fantasy Adventure</option>
-                                <option value="scifi">Sci-Fi Futuristic</option>
-                                <option value="horror">Horror & Thriller</option>
-                                <option value="children">Children's Colorful</option>
+                        <div class="bg-theme-primary p-4 rounded-lg border border-cyan-500">
+                            <div class="flex items-center mb-2">
+                                <div class="w-3 h-3 rounded-full bg-green-400 mr-2 animate-pulse"></div>
+                                <span class="text-sm font-semibold text-cyan-400">Neural Voice Matrix</span>
+                            </div>
+                            <p class="text-xs text-theme-secondary mb-3">Upload voice samples to create custom AI narrator profiles</p>
+                            
+                            <div class="border-dashed border-2 border-cyan-500 p-4 rounded-lg text-center hover:border-cyan-300 transition-colors cursor-pointer" 
+                                 ondrop="handleVoiceDrop(event)" ondragover="allowDrop(event)" onclick="document.getElementById('voiceUpload').click()">
+                                <i class="fas fa-microphone text-cyan-400 text-2xl mb-2"></i>
+                                <p class="text-sm text-cyan-300">Drag & drop audio files or click to browse</p>
+                                <input type="file" id="voiceUpload" accept=".mp3,.wav,.m4a" multiple class="hidden">
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center">
+                                <span class="text-sm font-semibold">Clone Quality</span>
+                                <div class="flex space-x-1">
+                                    <div class="w-2 h-4 bg-green-400 rounded animate-pulse"></div>
+                                    <div class="w-2 h-4 bg-green-400 rounded animate-pulse" style="animation-delay: 0.1s"></div>
+                                    <div class="w-2 h-4 bg-yellow-400 rounded animate-pulse" style="animation-delay: 0.2s"></div>
+                                    <div class="w-2 h-4 bg-gray-600 rounded"></div>
+                                    <div class="w-2 h-4 bg-gray-600 rounded"></div>
+                                </div>
+                            </div>
+                            
+                            <select id="cloneModel" class="w-full px-4 py-2 rounded-lg form-field bg-theme-primary text-theme-primary">
+                                <option value="enhanced">Enhanced Neural Model</option>
+                                <option value="standard">Standard Clone</option>
+                                <option value="premium">Premium Voice Synthesis</option>
                             </select>
                         </div>
                         
-                        <div>
-                            <label class="block text-sm font-semibold mb-2">Cover Description</label>
-                            <textarea id="coverDescription" placeholder="Describe the visual elements, mood, and style for your book cover..." 
-                                      class="w-full px-4 py-2 rounded-lg form-field bg-theme-primary text-theme-primary h-24 resize-none"></textarea>
-                        </div>
-                        
-                        <button onclick="generateCover()" class="btn-primary w-full py-3 rounded-lg font-semibold">
-                            <i class="fas fa-palette mr-2"></i>Generate Book Cover
+                        <button onclick="initiateVoiceClone()" class="btn-primary w-full py-3 rounded-lg font-semibold bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500">
+                            <i class="fas fa-flask mr-2"></i>Initialize Voice Clone
                         </button>
                         
-                        <div id="coverPreview" class="hidden mt-4">
-                            <div class="border-2 border-theme rounded-lg p-4 bg-theme-primary">
-                                <img id="generatedCover" src="" alt="Generated Book Cover" class="w-full max-w-xs mx-auto rounded-lg shadow-lg">
-                                <div class="mt-3 text-center">
-                                    <button onclick="regenerateCover()" class="btn-secondary px-4 py-2 rounded text-sm mr-2">
-                                        <i class="fas fa-sync mr-1"></i>Regenerate
-                                    </button>
-                                    <button onclick="downloadCover()" class="btn-primary px-4 py-2 rounded text-sm">
-                                        <i class="fas fa-download mr-1"></i>Download
-                                    </button>
+                        <div id="cloningProgress" class="hidden mt-4">
+                            <div class="bg-theme-primary p-3 rounded-lg">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-sm font-semibold text-cyan-400">Neural Processing...</span>
+                                    <span class="text-xs text-theme-secondary" id="cloningPercent">0%</span>
+                                </div>
+                                <div class="w-full bg-gray-700 rounded-full h-2">
+                                    <div id="cloningBar" class="bg-gradient-to-r from-cyan-500 to-blue-500 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
                                 </div>
                             </div>
                         </div>
@@ -2077,6 +2182,94 @@
                     }
                 }
             }, 100);
+        });
+
+        // Real-time Word Count functionality
+        function setupWordCount() {
+            const storyOutline = document.getElementById('storyOutline');
+            const wordCountDisplay = document.getElementById('outlineWordCount');
+            
+            if (storyOutline && wordCountDisplay) {
+                storyOutline.addEventListener('input', function() {
+                    const text = this.value.trim();
+                    const wordCount = text === '' ? 0 : text.split(/\s+/).length;
+                    wordCountDisplay.textContent = `${wordCount} words`;
+                });
+            }
+        }
+
+        // Voice Cloning Station Functions
+        function handleVoiceDrop(event) {
+            event.preventDefault();
+            const files = event.dataTransfer.files;
+            handleVoiceFiles(files);
+        }
+        
+        function allowDrop(event) {
+            event.preventDefault();
+        }
+        
+        function handleVoiceFiles(files) {
+            const validTypes = ['audio/mp3', 'audio/wav', 'audio/m4a'];
+            const validFiles = Array.from(files).filter(file => 
+                validTypes.includes(file.type) || 
+                validTypes.some(type => file.name.toLowerCase().endsWith(type.split('/')[1]))
+            );
+            
+            if (validFiles.length > 0) {
+                console.log('Voice files selected:', validFiles.map(f => f.name));
+                showNotification(`${validFiles.length} voice sample(s) selected for cloning`, 'success');
+            } else {
+                showNotification('Please select valid audio files (.mp3, .wav, .m4a)', 'error');
+            }
+        }
+        
+        function initiateVoiceClone() {
+            const uploadInput = document.getElementById('voiceUpload');
+            const files = uploadInput.files;
+            
+            if (files.length === 0) {
+                showNotification('Please select voice samples first', 'error');
+                return;
+            }
+            
+            // Show progress animation
+            const progressDiv = document.getElementById('cloningProgress');
+            const progressBar = document.getElementById('cloningBar');
+            const progressPercent = document.getElementById('cloningPercent');
+            
+            progressDiv.classList.remove('hidden');
+            
+            // Simulate cloning progress
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += Math.random() * 15;
+                if (progress > 100) progress = 100;
+                
+                progressBar.style.width = `${progress}%`;
+                progressPercent.textContent = `${Math.round(progress)}%`;
+                
+                if (progress >= 100) {
+                    clearInterval(interval);
+                    setTimeout(() => {
+                        progressDiv.classList.add('hidden');
+                        showNotification('Voice clone created successfully!', 'success');
+                    }, 1000);
+                }
+            }, 500);
+        }
+        
+        // Setup word count monitoring on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const voiceUpload = document.getElementById('voiceUpload');
+            if (voiceUpload) {
+                voiceUpload.addEventListener('change', function() {
+                    handleVoiceFiles(this.files);
+                });
+            }
+            
+            // Setup word count monitoring
+            setupWordCount();
         });
     </script>
 </body>
