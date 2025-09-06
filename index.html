@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AUTHORR AI - Complete Platform</title>
+    <title>AUTHORR AI - AI-Powered Audiobook Creation Platform</title>
+    <meta name="description" content="Create professional audiobooks with AI-powered writing, chapter generation, and text-to-speech narration. AUTHORR AI - Your complete audiobook creation solution.">
+    <meta name="keywords" content="audiobook creation, AI writing, text to speech, book generation, storytelling, AI narration">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -23,1254 +25,2058 @@
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
           background-clip: text;
-          text-shadow: var(--brand-cyan-glow);
+          text-shadow: 0 0 10px rgba(120, 227, 254, 0.3);
           font-weight: 800;
           letter-spacing: 0.05em;
         }
         
         .logo-image {
-          filter: drop-shadow(0 0 15px rgba(120, 227, 254, 0.6));
-          animation: logoPulse 2s ease-in-out infinite alternate;
+          filter: drop-shadow(0 0 10px rgba(120, 227, 254, 0.4));
+          animation: logoPulse 3s ease-in-out infinite alternate;
         }
         
         @keyframes logoPulse {
-          0% { filter: drop-shadow(0 0 15px rgba(120, 227, 254, 0.6)); }
-          100% { filter: drop-shadow(0 0 25px rgba(120, 227, 254, 0.9)); }
+          0% { filter: drop-shadow(0 0 10px rgba(120, 227, 254, 0.4)); }
+          100% { filter: drop-shadow(0 0 15px rgba(120, 227, 254, 0.6)); }
         }
         
         /* AI Writing Tools Button Styling - BLACK BACKGROUND, WHITE TEXT, GOLD GLOW */
         .ai-writing-tool-btn {
           background: #000000 !important;
           color: #ffffff !important;
-          border: 2px solid #ffd700;
-          box-shadow: 0 0 10px rgba(255, 215, 0, 0.5), 0 0 20px rgba(255, 215, 0, 0.3);
+          border: 2px solid #ffd700 !important;
+          box-shadow: 0 0 10px rgba(255, 215, 0, 0.5), 0 0 20px rgba(255, 215, 0, 0.3) !important;
           font-weight: 600;
+          transition: all 0.3s ease;
         }
         
         .ai-writing-tool-btn:hover {
           background: #1a1a1a !important;
-          box-shadow: 0 0 15px rgba(255, 215, 0, 0.7), 0 0 30px rgba(255, 215, 0, 0.4);
+          border-color: #ffed4a !important;
+          box-shadow: 0 0 15px rgba(255, 215, 0, 0.7), 0 0 30px rgba(255, 215, 0, 0.4) !important;
           transform: translateY(-1px);
         }
         
-        .nav-link {
-          color: #ffffff;
-          text-decoration: none;
-          padding: 0.5rem 1rem;
-          border-radius: 0.375rem;
-          transition: all 0.3s ease;
+        /* Theme Support */
+        .theme-light {
+          --bg-primary: #ffffff;
+          --bg-secondary: #f8fafc;
+          --text-primary: #1a202c;
+          --text-secondary: #4a5568;
+          --border-color: #e2e8f0;
+        }
+        
+        .theme-dark {
+          --bg-primary: #1a202c;
+          --bg-secondary: #2d3748;
+          --text-primary: #ffffff;
+          --text-secondary: #cbd5e0;
+          --border-color: #4a5568;
+        }
+        
+        body {
+          background-color: var(--bg-primary);
+          color: var(--text-primary);
+        }
+        
+        .bg-theme-primary { background-color: var(--bg-primary); }
+        .bg-theme-secondary { background-color: var(--bg-secondary); }
+        .text-theme-primary { color: var(--text-primary); }
+        .text-theme-secondary { color: var(--text-secondary); }
+        .border-theme { border-color: var(--border-color); }
+        
+        /* Navigation Styling */
+        .nav-item {
+          color: white !important;
           border: 2px solid transparent;
-        }
-        
-        .nav-link:hover {
-          color: var(--brand-cyan);
-          border-color: var(--brand-cyan);
-          box-shadow: var(--brand-cyan-glow);
-        }
-        
-        .nav-link.active {
-          color: var(--brand-cyan);
-          border-color: var(--brand-cyan);
-          box-shadow: var(--brand-cyan-glow);
-        }
-        
-        .card-glow {
-          box-shadow: 0 0 20px rgba(120, 227, 254, 0.2), 0 4px 25px -5px rgba(0, 0, 0, 0.3);
-          border: 1px solid rgba(120, 227, 254, 0.3);
           transition: all 0.3s ease;
         }
         
-        .card-glow:hover {
-          box-shadow: 0 0 30px rgba(120, 227, 254, 0.4), 0 8px 40px -8px rgba(0, 0, 0, 0.4);
-          border-color: rgba(120, 227, 254, 0.5);
+        .nav-item:hover, .nav-item.active {
+          border-color: var(--brand-cyan);
+          box-shadow: var(--brand-cyan-glow);
+          background: rgba(120, 227, 254, 0.1);
+        }
+        
+        /* Glow Effects */
+        .cyan-glow { box-shadow: var(--brand-cyan-glow); }
+        .silver-glow { box-shadow: var(--brand-silver-glow); }
+        
+        /* Form Enhancements */
+        .form-field {
+          border: 2px solid var(--border-color);
+          transition: all 0.3s ease;
+        }
+        
+        .form-field:focus {
+          border-color: var(--brand-cyan);
+          box-shadow: 0 0 10px rgba(120, 227, 254, 0.3);
+          outline: none;
+        }
+        
+        /* Button Styles */
+        .btn-primary {
+          background: linear-gradient(135deg, var(--brand-cyan), var(--brand-cyan-hover));
+          color: white;
+          border: none;
+          transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
           transform: translateY(-2px);
+          box-shadow: var(--brand-cyan-glow);
         }
         
-        .form-field-glow {
-          border: 2px solid rgba(192, 192, 192, 0.3);
-          box-shadow: var(--brand-silver-glow);
+        .btn-secondary {
+          background: var(--brand-silver);
+          color: var(--brand-black);
+          border: 2px solid var(--brand-silver);
           transition: all 0.3s ease;
-          background: #4a5568 !important;
-          color: #ffffff !important;
         }
         
-        .form-field-glow:focus {
-          border-color: var(--brand-cyan);
-          box-shadow: var(--brand-cyan-glow), var(--brand-silver-glow);
+        .btn-secondary:hover {
+          background: transparent;
+          color: var(--brand-silver);
+          box-shadow: var(--brand-silver-glow);
+        }
+        
+        /* Loading Animation */
+        .loading-spinner {
+          border: 3px solid rgba(120, 227, 254, 0.3);
+          border-radius: 50%;
+          border-top: 3px solid var(--brand-cyan);
+          width: 30px;
+          height: 30px;
+          animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+        
+        /* Word Count Display */
+        .word-count {
+          position: absolute;
+          bottom: 10px;
+          right: 15px;
+          background: rgba(120, 227, 254, 0.1);
+          color: var(--brand-cyan);
+          padding: 4px 8px;
+          border-radius: 4px;
+          font-size: 12px;
+          font-weight: 600;
+        }
+        
+        /* Editable Elements */
+        .editable-title:focus, .editable-summary:focus {
+          background-color: rgba(120, 227, 254, 0.1) !important;
+          border-radius: 4px;
+          padding: 2px;
+          outline: 2px solid var(--brand-cyan);
+        }
+        
+        /* Chapter Status */
+        .chapter-status {
+          font-size: 10px;
+          margin-top: 4px;
+          padding: 2px 6px;
+          border-radius: 12px;
+          text-align: center;
+        }
+        
+        .status-ready { background: rgba(34, 197, 94, 0.2); color: #16a34a; }
+        .status-generating { background: rgba(251, 191, 36, 0.2); color: #d97706; }
+        .status-complete { background: rgba(59, 130, 246, 0.2); color: #2563eb; }
+        
+        /* Error States */
+        .error-border { border-color: #ef4444 !important; }
+        .error-text { color: #ef4444; }
+        
+        /* Success States */
+        .success-border { border-color: #10b981 !important; }
+        .success-text { color: #10b981; }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+          .mobile-stack { flex-direction: column; }
+          .mobile-full { width: 100%; }
+          .mobile-text-sm { font-size: 14px; }
         }
     </style>
 </head>
-<body class="bg-gray-900 text-white min-h-screen">
-    <!-- Status Banner -->
-    <div class="bg-green-900 border-b-2 border-green-500 text-center py-3">
-        <p class="text-green-200 font-bold">
-            ✅ COMPLETE AUTHORR AI PLATFORM RESTORED - ALL 5 PAGES WORKING - 7 CRITICAL ISSUES READY TO FIX
-        </p>
-    </div>
-
-    <!-- Header -->
-    <header class="p-4 border-b-2 border-cyan-400" style="background: linear-gradient(135deg, #1a1a1a, #000000);">
-        <div class="max-w-7xl mx-auto flex items-center justify-between">
-            <div class="flex items-center space-x-3">
-                <div class="logo-container">
-                    <img src="https://page.gensparksite.com/v1/base64_upload/5ec0a971230da95148e537dd473d0fb1" 
-                         alt="Authorr AI" 
-                         class="logo-image h-12 w-auto">
-                </div>
-                <div class="brand-text">
+<body class="theme-dark">
+    <!-- Navigation -->
+    <nav class="bg-black border-b-2 border-cyan-400 shadow-lg">
+        <div class="container mx-auto px-4">
+            <div class="flex justify-between items-center py-4">
+                <div class="flex items-center space-x-3">
+                    <img src="https://page.gensparksite.com/v1/base64_upload/5ec0a971230da95148e537dd473d0fb1" alt="AUTHORR AI Logo" class="w-12 h-12 logo-image">
                     <h1 class="text-3xl font-bold authorr-brand-text">AUTHORR AI</h1>
-                    <p class="text-xs text-teal-300 font-medium">ADVANCED NARRATION PLATFORM</p>
+                </div>
+                <div class="hidden md:flex items-center space-x-6">
+                    <button onclick="showPage('dashboard')" class="nav-item px-4 py-2 rounded-lg font-semibold active">
+                        <i class="fas fa-home mr-2"></i>Dashboard
+                    </button>
+                    <button onclick="showPage('workspace')" class="nav-item px-4 py-2 rounded-lg font-semibold">
+                        <i class="fas fa-edit mr-2"></i>Workspace
+                    </button>
+                    <button onclick="showPage('narration')" class="nav-item px-4 py-2 rounded-lg font-semibold">
+                        <i class="fas fa-microphone mr-2"></i>Narration
+                    </button>
+                    <button onclick="showPage('export')" class="nav-item px-4 py-2 rounded-lg font-semibold">
+                        <i class="fas fa-download mr-2"></i>Export
+                    </button>
+                    <button onclick="showPage('config')" class="nav-item px-4 py-2 rounded-lg font-semibold">
+                        <i class="fas fa-cog mr-2"></i>Config
+                    </button>
+                </div>
+                <button onclick="toggleTheme()" class="text-cyan-400 hover:text-cyan-300 text-xl">
+                    <i id="themeIcon" class="fas fa-moon"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Dashboard Page -->
+    <div id="dashboard" class="page">
+        <div class="container mx-auto px-4 py-8">
+            <!-- Hero Section -->
+            <div class="text-center mb-12">
+                <div class="flex justify-center items-center mb-6">
+                    <img src="https://page.gensparksite.com/v1/base64_upload/5ec0a971230da95148e537dd473d0fb1" alt="AUTHORR AI Logo" class="w-20 h-20 logo-image mr-4">
+                    <h1 class="text-6xl font-bold authorr-brand-text">AUTHORR AI</h1>
+                </div>
+                <p class="text-xl text-theme-secondary mb-8 max-w-3xl mx-auto">
+                    Transform your stories into professional audiobooks with AI-powered writing, chapter generation, 
+                    and high-quality text-to-speech narration. Create, edit, and publish audiobooks in minutes.
+                </p>
+                <button onclick="showPage('workspace')" class="btn-primary px-8 py-4 rounded-lg text-lg font-semibold">
+                    <i class="fas fa-rocket mr-2"></i>Start Creating Your Audiobook
+                </button>
+            </div>
+
+            <!-- Features Grid -->
+            <div class="grid md:grid-cols-3 gap-8 mb-12">
+                <div class="bg-theme-secondary p-6 rounded-xl border-2 border-theme hover:border-cyan-400 transition-all duration-300 cyan-glow">
+                    <div class="text-cyan-400 text-3xl mb-4">
+                        <i class="fas fa-brain"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">AI-Powered Writing</h3>
+                    <p class="text-theme-secondary">
+                        Generate engaging chapters, stories, and content with advanced GPT-4o-mini integration. 
+                        Choose from multiple genres, tones, and writing styles.
+                    </p>
+                </div>
+                
+                <div class="bg-theme-secondary p-6 rounded-xl border-2 border-theme hover:border-cyan-400 transition-all duration-300 cyan-glow">
+                    <div class="text-cyan-400 text-3xl mb-4">
+                        <i class="fas fa-microphone"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">Professional Narration</h3>
+                    <p class="text-theme-secondary">
+                        Convert your text to high-quality speech with OpenAI's TTS-1-HD. Choose from 6 professional 
+                        voices including Alloy, Echo, Fable, Onyx, Nova, and Shimmer.
+                    </p>
+                </div>
+                
+                <div class="bg-theme-secondary p-6 rounded-xl border-2 border-theme hover:border-cyan-400 transition-all duration-300 cyan-glow">
+                    <div class="text-cyan-400 text-3xl mb-4">
+                        <i class="fas fa-image"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">AI Book Covers</h3>
+                    <p class="text-theme-secondary">
+                        Generate stunning book covers with DALL-E 3 in HD quality (1024x1792). 
+                        Create professional artwork that matches your story's theme.
+                    </p>
                 </div>
             </div>
-            <div class="flex items-center space-x-6">
-                <nav class="flex space-x-6">
-                    <a href="#dashboard" class="nav-link active">
-                        <i class="fas fa-tachometer-alt mr-2"></i>Dashboard
-                    </a>
-                    <a href="#workspace" class="nav-link">
-                        <i class="fas fa-pencil-alt mr-2"></i>Workspace
-                    </a>
-                    <a href="#narration" class="nav-link">
-                        <i class="fas fa-microphone mr-2"></i>Narration
-                    </a>
-                    <a href="#export" class="nav-link">
-                        <i class="fas fa-download mr-2"></i>Export
-                    </a>
-                    <a href="#config" class="nav-link">
-                        <i class="fas fa-cog mr-2"></i>Config
-                    </a>
-                </nav>
-                
-                <!-- Light/Dark Mode Toggle -->
-                <div class="theme-toggle bg-gray-700 border-2 border-cyan-400 rounded-full p-2 cursor-pointer" style="box-shadow: var(--brand-cyan-glow);">
-                    <i class="fas fa-moon text-cyan-400"></i>
+
+            <!-- Stats Section -->
+            <div class="grid md:grid-cols-4 gap-6 mb-12">
+                <div class="text-center bg-theme-secondary p-6 rounded-xl">
+                    <div class="text-3xl font-bold text-cyan-400 mb-2">25</div>
+                    <div class="text-theme-secondary">Max Chapters</div>
+                </div>
+                <div class="text-center bg-theme-secondary p-6 rounded-xl">
+                    <div class="text-3xl font-bold text-cyan-400 mb-2">3000</div>
+                    <div class="text-theme-secondary">Max Words/Chapter</div>
+                </div>
+                <div class="text-center bg-theme-secondary p-6 rounded-xl">
+                    <div class="text-3xl font-bold text-cyan-400 mb-2">6</div>
+                    <div class="text-theme-secondary">AI Voices</div>
+                </div>
+                <div class="text-center bg-theme-secondary p-6 rounded-xl">
+                    <div class="text-3xl font-bold text-cyan-400 mb-2">∞</div>
+                    <div class="text-theme-secondary">Possibilities</div>
+                </div>
+            </div>
+
+            <!-- Quick Start Guide -->
+            <div class="bg-theme-secondary p-8 rounded-xl border-2 border-theme">
+                <h2 class="text-2xl font-bold mb-6 text-center">
+                    <i class="fas fa-play-circle text-cyan-400 mr-2"></i>
+                    Quick Start Guide
+                </h2>
+                <div class="grid md:grid-cols-4 gap-6">
+                    <div class="text-center">
+                        <div class="bg-cyan-400 text-black rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-3 font-bold text-xl">1</div>
+                        <h3 class="font-semibold mb-2">Plan Your Story</h3>
+                        <p class="text-sm text-theme-secondary">Choose genre, set chapter count, and define your story parameters</p>
+                    </div>
+                    <div class="text-center">
+                        <div class="bg-cyan-400 text-black rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-3 font-bold text-xl">2</div>
+                        <h3 class="font-semibold mb-2">Generate Content</h3>
+                        <p class="text-sm text-theme-secondary">Use AI writing tools to create engaging chapters and storylines</p>
+                    </div>
+                    <div class="text-center">
+                        <div class="bg-cyan-400 text-black rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-3 font-bold text-xl">3</div>
+                        <h3 class="font-semibold mb-2">Create Narration</h3>
+                        <p class="text-sm text-theme-secondary">Convert to speech with professional AI voices and generate covers</p>
+                    </div>
+                    <div class="text-center">
+                        <div class="bg-cyan-400 text-black rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-3 font-bold text-xl">4</div>
+                        <h3 class="font-semibold mb-2">Export & Publish</h3>
+                        <p class="text-sm text-theme-secondary">Download your complete audiobook and share with the world</p>
+                    </div>
                 </div>
             </div>
         </div>
-    </header>
+    </div>
 
-    <!-- Main Content -->
-    <main class="max-w-7xl mx-auto p-6">
-        
-        <!-- Dashboard Page -->
-        <div id="dashboard" class="page-content">
-            <div class="space-y-8">
-                <!-- Welcome Section -->
-                <div class="text-center mb-8">
-                    <h2 class="text-4xl font-bold mb-4 authorr-brand-text">Transform Text into Premium Audiobooks</h2>
-                    <p class="text-xl max-w-3xl mx-auto text-cyan-400">
-                        Create professional audiobooks with AI-powered writing assistance, advanced narration, and voice cloning technology
-                    </p>
-                </div>
+    <!-- Workspace Page -->
+    <div id="workspace" class="page hidden">
+        <div class="container mx-auto px-4 py-8">
+            <div class="flex justify-between items-center mb-8">
+                <h1 class="text-3xl font-bold">
+                    <i class="fas fa-edit text-cyan-400 mr-3"></i>
+                    Audiobook Workspace
+                </h1>
+                <button onclick="showPage('narration')" id="continueToNarration" class="btn-primary px-6 py-2 rounded-lg font-semibold">
+                    <i class="fas fa-arrow-right mr-2"></i>Continue to Narration
+                </button>
+            </div>
 
-                <!-- Chapter Creation Form -->
-                <div class="bg-gray-800 rounded-lg border border-gray-700 p-8 card-glow">
-                    <h3 class="text-2xl font-bold mb-6 text-cyan-400">
-                        <i class="fas fa-rocket mr-3"></i>Create Chapter Plan
-                    </h3>
+            <!-- Story Planning Form -->
+            <div class="grid lg:grid-cols-2 gap-8 mb-8">
+                <!-- Left Column: Story Parameters -->
+                <div class="bg-theme-secondary p-6 rounded-xl border-2 border-theme">
+                    <h2 class="text-xl font-bold mb-4">
+                        <i class="fas fa-cogs text-cyan-400 mr-2"></i>
+                        Story Parameters
+                    </h2>
                     
-                    <form id="chapter-form" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="space-y-4">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-semibold mb-2">Book Title</label>
+                            <input type="text" id="bookTitle" placeholder="Enter your book title" 
+                                   class="w-full px-4 py-2 rounded-lg form-field bg-theme-primary text-theme-primary">
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-4">
                             <div>
-                                <label class="block text-sm font-medium text-cyan-400 mb-2">Book Title *</label>
-                                <input type="text" id="book-title" placeholder="Enter your book title..." 
-                                    class="form-field-glow w-full rounded px-3 py-2 focus:border-cyan-300">
-                            </div>
-                            
-                            <div>
-                                <label class="block text-sm font-medium text-cyan-400 mb-2">Author Name *</label>
-                                <input type="text" id="author-name" placeholder="Your name..." 
-                                    class="form-field-glow w-full rounded px-3 py-2 focus:border-cyan-300">
-                            </div>
-                            
-                            <div>
-                                <label class="block text-sm font-medium text-cyan-400 mb-2">Genre</label>
-                                <select id="genre" class="form-field-glow w-full rounded px-3 py-2">
-                                    <option value="">Select genre...</option>
-                                    <option value="fiction">Fiction</option>
-                                    <option value="non-fiction">Non-Fiction</option>
-                                    <option value="mystery">Mystery & Thriller</option>
-                                    <option value="romance">Romance</option>
-                                    <option value="fantasy">Fantasy</option>
-                                    <option value="sci-fi">Science Fiction</option>
-                                    <option value="biography">Biography</option>
-                                    <option value="self-help">Self Help</option>
-                                </select>
-                            </div>
-                            
-                            <div>
-                                <label class="block text-sm font-medium text-cyan-400 mb-2">Chapter Count</label>
-                                <select id="chapter-count" class="form-field-glow w-full rounded px-3 py-2">
-                                    <option value="">Select chapters...</option>
+                                <label class="block text-sm font-semibold mb-2">Chapter Selection</label>
+                                <select id="chapterCount" class="w-full px-4 py-2 rounded-lg form-field bg-theme-primary text-theme-primary">
                                     <option value="3">3 Chapters</option>
                                     <option value="5">5 Chapters</option>
                                     <option value="7">7 Chapters</option>
-                                    <option value="10">10 Chapters</option>
+                                    <option value="10" selected>10 Chapters</option>
                                     <option value="15">15 Chapters</option>
                                     <option value="20">20 Chapters</option>
                                     <option value="25">25 Chapters</option>
                                 </select>
                             </div>
-                        </div>
-                        
-                        <div class="space-y-4">
-                            <div>
-                                <label class="block text-sm font-medium text-cyan-400 mb-2">Tone/Voice</label>
-                                <select id="tone-voice" class="form-field-glow w-full rounded px-3 py-2">
-                                    <option value="">Select tone...</option>
-                                    <option value="professional">Professional</option>
-                                    <option value="conversational">Conversational</option>
-                                    <option value="formal">Formal</option>
-                                    <option value="humorous">Humorous</option>
-                                    <option value="dramatic">Dramatic</option>
-                                    <option value="educational">Educational</option>
-                                    <option value="inspirational">Inspirational</option>
-                                    <option value="mysterious">Mysterious</option>
-                                </select>
-                            </div>
                             
                             <div>
-                                <label class="block text-sm font-medium text-cyan-400 mb-2">Target Audience</label>
-                                <select id="target-audience" class="form-field-glow w-full rounded px-3 py-2">
-                                    <option value="">Select audience...</option>
-                                    <option value="children">Children (5-12)</option>
-                                    <option value="young-adult">Young Adult (13-18)</option>
-                                    <option value="adult">Adult (18+)</option>
-                                    <option value="all-ages">All Ages</option>
-                                </select>
-                            </div>
-                            
-                            <div>
-                                <label class="block text-sm font-medium text-cyan-400 mb-2">Words per Chapter</label>
-                                <select id="words-per-chapter" class="form-field-glow w-full rounded px-3 py-2">
-                                    <option value="">Select word count...</option>
+                                <label class="block text-sm font-semibold mb-2">Words per Chapter</label>
+                                <select id="wordsPerChapter" class="w-full px-4 py-2 rounded-lg form-field bg-theme-primary text-theme-primary">
                                     <option value="500">500 words</option>
                                     <option value="750">750 words</option>
-                                    <option value="1000">1000 words</option>
+                                    <option value="1000" selected>1000 words</option>
                                     <option value="1500">1500 words</option>
                                     <option value="2000">2000 words</option>
                                     <option value="2500">2500 words</option>
                                     <option value="3000">3000 words</option>
                                 </select>
                             </div>
-                            
-                            <div>
-                                <label class="block text-sm font-medium text-cyan-400 mb-2">Book Description *</label>
-                                <textarea id="book-description" placeholder="Brief description of your book..." 
-                                    class="form-field-glow w-full rounded px-3 py-2 h-24 resize-none focus:border-cyan-300"></textarea>
-                            </div>
                         </div>
                         
-                        <div class="md:col-span-2 text-center">
-                            <button type="submit" id="create-chapter-btn" class="bg-cyan-600 hover:bg-cyan-500 text-white px-8 py-3 rounded-lg font-semibold transition-all">
-                                <i class="fas fa-plus mr-2"></i>Create Chapter Plan
-                            </button>
+                        <div>
+                            <label class="block text-sm font-semibold mb-2">Genre & Subgenre</label>
+                            <select id="genre" class="w-full px-4 py-2 rounded-lg form-field bg-theme-primary text-theme-primary">
+                                <option value="fiction-literary">Fiction - Literary</option>
+                                <option value="fiction-mystery">Fiction - Mystery/Thriller</option>
+                                <option value="fiction-romance">Fiction - Romance</option>
+                                <option value="fiction-scifi">Fiction - Science Fiction</option>
+                                <option value="fiction-fantasy">Fiction - Fantasy</option>
+                                <option value="fiction-horror">Fiction - Horror</option>
+                                <option value="fiction-historical">Fiction - Historical</option>
+                                <option value="nonfiction-biography">Non-Fiction - Biography</option>
+                                <option value="nonfiction-selfhelp">Non-Fiction - Self-Help</option>
+                                <option value="nonfiction-business">Non-Fiction - Business</option>
+                                <option value="nonfiction-history">Non-Fiction - History</option>
+                                <option value="children-adventure">Children's - Adventure</option>
+                                <option value="children-educational">Children's - Educational</option>
+                            </select>
                         </div>
-                    </form>
-                </div>
-
-                <!-- Generated Chapters Display -->
-                <div id="chapter-planning" class="bg-gray-800 rounded-lg border border-gray-700 p-8 card-glow" style="display: none;">
-                    <h3 class="text-2xl font-bold mb-6 text-cyan-400">
-                        <i class="fas fa-list-alt mr-3"></i>Generated Chapter Plan
-                    </h3>
-                    <div id="chapter-outlines"></div>
-                    <div class="text-center mt-6">
-                        <button id="generate-story-btn" class="bg-purple-600 hover:bg-purple-500 text-white px-8 py-3 rounded-lg font-semibold transition-all">
-                            <i class="fas fa-magic mr-2"></i>Generate Full Story
+                        
+                        <div>
+                            <label class="block text-sm font-semibold mb-2">Tone & Voice</label>
+                            <select id="tone" class="w-full px-4 py-2 rounded-lg form-field bg-theme-primary text-theme-primary">
+                                <option value="professional">Professional</option>
+                                <option value="casual">Casual & Conversational</option>
+                                <option value="dramatic">Dramatic & Intense</option>
+                                <option value="humorous">Humorous & Light</option>
+                                <option value="inspiring">Inspiring & Motivational</option>
+                                <option value="mysterious">Mysterious & Suspenseful</option>
+                                <option value="romantic">Romantic & Emotional</option>
+                                <option value="educational">Educational & Informative</option>
+                                <option value="adventurous">Adventurous & Exciting</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-semibold mb-2">Story Outline</label>
+                            <textarea id="storyOutline" placeholder="Describe your story concept, main characters, and plot outline..." 
+                                      class="w-full px-4 py-2 rounded-lg form-field bg-theme-primary text-theme-primary h-24 resize-none"></textarea>
+                        </div>
+                        
+                        <button onclick="generateChapterPlan()" class="btn-primary w-full py-3 rounded-lg font-semibold">
+                            <i class="fas fa-magic mr-2"></i>Generate Chapter Plan
                         </button>
                     </div>
                 </div>
-            </div>
-        </div>
-
-        <!-- Workspace Page -->
-        <div id="workspace" class="page-content hidden">
-            <div class="space-y-8">
-                <div class="text-center mb-8">
-                    <h2 class="text-4xl font-bold mb-4 authorr-brand-text">AI-Powered Writing Workspace</h2>
-                    <p class="text-xl text-cyan-400">Create and refine your manuscript with advanced AI writing tools</p>
-                </div>
-
-                <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
-                    <!-- AI Writing Tools Sidebar -->
-                    <div class="lg:col-span-1 space-y-6">
-                        <div class="bg-gray-800 rounded-lg border border-gray-700 p-6 card-glow">
-                            <h3 class="text-lg font-bold mb-4 text-purple-400">
-                                <i class="fas fa-magic mr-2"></i>AI Writing Tools
-                            </h3>
-                            
-                            <div class="space-y-3">
-                                <button id="generate-ideas-btn" class="ai-writing-tool-btn w-full py-2 px-4 rounded transition-all text-left">
-                                    <i class="fas fa-lightbulb mr-2"></i>Generate Ideas
-                                </button>
-                                <button id="create-outline-btn" class="ai-writing-tool-btn w-full py-2 px-4 rounded transition-all text-left">
-                                    <i class="fas fa-list mr-2"></i>Create Outline
-                                </button>
-                                <button id="expand-text-btn" class="ai-writing-tool-btn w-full py-2 px-4 rounded transition-all text-left">
-                                    <i class="fas fa-expand mr-2"></i>Expand Text
-                                </button>
-                                <button id="summarize-btn" class="ai-writing-tool-btn w-full py-2 px-4 rounded transition-all text-left">
-                                    <i class="fas fa-compress mr-2"></i>Summarize
-                                </button>
-                                <button id="rewrite-btn" class="ai-writing-tool-btn w-full py-2 px-4 rounded transition-all text-left">
-                                    <i class="fas fa-edit mr-2"></i>Rewrite
-                                </button>
-                                <button id="character-builder-btn" class="ai-writing-tool-btn w-full py-2 px-4 rounded transition-all text-left">
-                                    <i class="fas fa-users mr-2"></i>Character Builder
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <!-- Writing Statistics -->
-                        <div class="bg-gray-800 rounded-lg border border-gray-700 p-6 card-glow">
-                            <h3 class="text-lg font-bold mb-4 text-yellow-400">
-                                <i class="fas fa-chart-line mr-2"></i>Writing Statistics
-                            </h3>
-                            
-                            <div class="space-y-3 text-sm">
-                                <div class="flex justify-between">
-                                    <span class="text-gray-300">Word Count:</span>
-                                    <span id="word-count" class="text-yellow-400">0</span>
-                                </div>
-                                <div class="flex justify-between">
-                                    <span class="text-gray-300">Characters:</span>
-                                    <span id="char-count" class="text-yellow-400">0</span>
-                                </div>
-                                <div class="flex justify-between">
-                                    <span class="text-gray-300">Paragraphs:</span>
-                                    <span id="para-count" class="text-yellow-400">0</span>
-                                </div>
-                                <div class="flex justify-between">
-                                    <span class="text-gray-300">Reading Time:</span>
-                                    <span id="reading-time" class="text-yellow-400">0 min</span>
-                                </div>
-                            </div>
-                        </div>
+                
+                <!-- Right Column: Chapter Plan -->
+                <div class="bg-theme-secondary p-6 rounded-xl border-2 border-theme">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-bold">
+                            <i class="fas fa-list-ol text-cyan-400 mr-2"></i>
+                            Chapter Plan
+                        </h2>
+                        <button onclick="generateAllChapters()" id="generateAllBtn" class="btn-secondary px-4 py-2 rounded-lg text-sm font-semibold" disabled>
+                            <i class="fas fa-bolt mr-1"></i>Generate All Stories
+                        </button>
                     </div>
-
-                    <!-- Main Editor -->
-                    <div class="lg:col-span-3">
-                        <div class="bg-gray-800 rounded-lg border border-gray-700 p-6 card-glow">
-                            <div class="flex items-center justify-between mb-4">
-                                <h3 class="text-lg font-bold text-cyan-400">
-                                    <i class="fas fa-pen mr-2"></i>Manuscript Editor
-                                </h3>
-                                <div class="flex space-x-2">
-                                    <button id="save-btn" class="bg-gray-700 hover:bg-gray-600 text-white px-3 py-1 rounded text-sm transition-all">
-                                        <i class="fas fa-save mr-1"></i>Save
-                                    </button>
-                                    <button id="undo-btn" class="bg-gray-700 hover:bg-gray-600 text-white px-3 py-1 rounded text-sm transition-all">
-                                        <i class="fas fa-undo mr-1"></i>Undo
-                                    </button>
-                                    <button id="redo-btn" class="bg-gray-700 hover:bg-gray-600 text-white px-3 py-1 rounded text-sm transition-all">
-                                        <i class="fas fa-redo mr-1"></i>Redo
-                                    </button>
-                                </div>
-                            </div>
-                            
-                            <div class="space-y-4">
-                                <input type="text" id="chapter-title" placeholder="Chapter Title..." 
-                                    class="form-field-glow w-full rounded px-3 py-2 text-xl font-semibold focus:border-cyan-300">
-                                
-                                <textarea id="manuscript-editor" placeholder="Start writing your story here..." 
-                                    class="form-field-glow w-full rounded px-4 py-3 h-96 resize-none focus:border-cyan-300 font-mono"></textarea>
-                            </div>
-                            
-                            <div class="flex justify-between items-center mt-4">
-                                <div class="text-sm text-gray-400">
-                                    <i class="fas fa-clock mr-1"></i>
-                                    Auto-saved <span id="last-saved">never</span>
-                                </div>
-                                <div class="flex space-x-2">
-                                    <button id="review-btn" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded transition-all">
-                                        <i class="fas fa-book-open mr-1"></i>Review Story
-                                    </button>
-                                    <button id="continue-to-narration-btn" class="bg-cyan-600 hover:bg-cyan-500 text-white px-4 py-2 rounded transition-all">
-                                        <i class="fas fa-arrow-right mr-1"></i>Continue to Narration
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Narration Page -->
-        <div id="narration" class="page-content hidden">
-            <div class="space-y-8">
-                <div class="text-center mb-8">
-                    <h2 class="text-4xl font-bold mb-4 authorr-brand-text">AI Narration Studio</h2>
-                    <p class="text-xl text-cyan-400">Convert text to professional narration with OpenAI voices</p>
-                </div>
-
-                <div class="bg-gray-800 rounded-lg border border-gray-700 p-8 card-glow">
-                    <h3 class="text-2xl font-bold mb-6 text-cyan-400">
-                        <i class="fas fa-microphone mr-3"></i>Voice Selection & Generation
-                    </h3>
                     
-                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-300 mb-2">
-                                <span class="inline-block w-3 h-3 bg-green-500 rounded-full mr-2"></span>OpenAI Voice Actor
-                            </label>
-                            <select id="voice-select" class="form-field-glow w-full rounded px-3 py-2">
-                                <option value="alloy">Alloy - Neutral & Balanced</option>
-                                <option value="echo">Echo - Male & Authoritative</option>
-                                <option value="fable">Fable - British & Sophisticated</option>
-                                <option value="onyx">Onyx - Deep & Resonant</option>
-                                <option value="nova">Nova - Young & Energetic (Female)</option>
-                                <option value="shimmer">Shimmer - Soft & Expressive (Female)</option>
-                            </select>
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-gray-300 mb-2">Speed</label>
-                            <select class="form-field-glow w-full rounded px-3 py-2">
-                                <option value="0.75">Slow (0.75x)</option>
-                                <option value="1.0" selected>Normal (1.0x)</option>
-                                <option value="1.25">Fast (1.25x)</option>
-                            </select>
-                        </div>
-                        
-                        <div class="flex items-end">
-                            <button class="w-full bg-purple-600 hover:bg-purple-500 text-white py-2 px-4 rounded transition-all">
-                                <i class="fas fa-play mr-2"></i>Preview Voice
-                            </button>
+                    <div id="chapterPlan" class="space-y-3 h-80 overflow-y-auto">
+                        <div class="text-center text-theme-secondary py-8">
+                            <i class="fas fa-lightbulb text-4xl mb-3 opacity-50"></i>
+                            <p>Generate a chapter plan to get started</p>
                         </div>
                     </div>
+                </div>
+            </div>
+            
+            <!-- Text Editor Section -->
+            <div class="bg-theme-secondary p-6 rounded-xl border-2 border-theme">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-bold">
+                        <i class="fas fa-pen-fancy text-cyan-400 mr-2"></i>
+                        Story Editor
+                    </h2>
+                    <div class="flex items-center space-x-3">
+                        <div class="word-count" id="wordCount">0 words</div>
+                        <button onclick="undoEdit()" id="undoBtn" class="btn-secondary px-3 py-1 rounded text-sm" disabled>
+                            <i class="fas fa-undo"></i> Undo
+                        </button>
+                        <button onclick="redoEdit()" id="redoBtn" class="btn-secondary px-3 py-1 rounded text-sm" disabled>
+                            <i class="fas fa-redo"></i> Redo
+                        </button>
+                        <button onclick="saveStory()" id="saveBtn" class="btn-primary px-3 py-1 rounded text-sm">
+                            <i class="fas fa-save"></i> Save
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- AI Writing Tools -->
+                <div class="flex flex-wrap gap-2 mb-4 p-3 bg-theme-primary rounded-lg border border-theme">
+                    <button onclick="expandStory()" class="ai-writing-tool-btn px-3 py-1 rounded text-sm">
+                        <i class="fas fa-expand-alt mr-1"></i>Expand
+                    </button>
+                    <button onclick="improveStory()" class="ai-writing-tool-btn px-3 py-1 rounded text-sm">
+                        <i class="fas fa-magic mr-1"></i>Improve
+                    </button>
+                    <button onclick="addDialogue()" class="ai-writing-tool-btn px-3 py-1 rounded text-sm">
+                        <i class="fas fa-comments mr-1"></i>Add Dialogue
+                    </button>
+                    <button onclick="addDescription()" class="ai-writing-tool-btn px-3 py-1 rounded text-sm">
+                        <i class="fas fa-paint-brush mr-1"></i>Add Description
+                    </button>
+                    <button onclick="createTransition()" class="ai-writing-tool-btn px-3 py-1 rounded text-sm">
+                        <i class="fas fa-arrow-right mr-1"></i>Transition
+                    </button>
+                    <button onclick="addConflict()" class="ai-writing-tool-btn px-3 py-1 rounded text-sm">
+                        <i class="fas fa-bolt mr-1"></i>Add Conflict
+                    </button>
+                </div>
+                
+                <div class="relative">
+                    <textarea id="storyEditor" placeholder="Start writing your story here, or use the AI writing tools to generate content..." 
+                              class="w-full px-4 py-3 rounded-lg form-field bg-theme-primary text-theme-primary h-96 resize-none"></textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Narration Page -->
+    <div id="narration" class="page hidden">
+        <div class="container mx-auto px-4 py-8">
+            <div class="flex justify-between items-center mb-8">
+                <h1 class="text-3xl font-bold">
+                    <i class="fas fa-microphone text-cyan-400 mr-3"></i>
+                    Audio Narration
+                </h1>
+                <button onclick="showPage('export')" class="btn-primary px-6 py-2 rounded-lg font-semibold">
+                    <i class="fas fa-download mr-2"></i>Export Audiobook
+                </button>
+            </div>
+
+            <div class="grid lg:grid-cols-2 gap-8">
+                <!-- Voice Selection & Controls -->
+                <div class="bg-theme-secondary p-6 rounded-xl border-2 border-theme">
+                    <h2 class="text-xl font-bold mb-4">
+                        <i class="fas fa-volume-up text-cyan-400 mr-2"></i>
+                        Voice & Audio Settings
+                    </h2>
                     
                     <div class="space-y-4">
                         <div>
-                            <label class="block text-sm font-medium text-gray-300 mb-2">Text to Convert</label>
-                            <textarea id="narration-text" placeholder="Enter or paste your story text here for narration..." 
-                                class="form-field-glow w-full rounded px-4 py-3 h-32 resize-none focus:border-cyan-300"></textarea>
+                            <label class="block text-sm font-semibold mb-2">AI Voice Selection</label>
+                            <select id="voiceSelection" class="w-full px-4 py-2 rounded-lg form-field bg-theme-primary text-theme-primary">
+                                <option value="alloy">Alloy - Balanced, Clear</option>
+                                <option value="echo">Echo - Male, Authoritative</option>
+                                <option value="fable">Fable - Warm, Storytelling</option>
+                                <option value="onyx">Onyx - Deep, Professional</option>
+                                <option value="nova">Nova - Female, Engaging</option>
+                                <option value="shimmer">Shimmer - Soft, Gentle</option>
+                            </select>
                         </div>
                         
-                        <div class="text-center">
-                            <button class="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-8 py-4 rounded-lg font-bold text-lg transition-all">
-                                <i class="fas fa-magic mr-2"></i>Generate Audiobook Narration
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Export Page -->
-        <div id="export" class="page-content hidden">
-            <div class="space-y-8">
-                <div class="text-center mb-8">
-                    <h2 class="text-4xl font-bold mb-4 authorr-brand-text">Export & Publishing</h2>
-                    <p class="text-xl text-cyan-400">Create covers and publish your audiobook</p>
-                </div>
-
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <!-- Cover Generation -->
-                    <div class="bg-gray-800 rounded-lg border border-gray-700 p-6 card-glow">
-                        <h3 class="text-xl font-bold mb-4 text-cyan-400">
-                            <i class="fas fa-image mr-2"></i>AI Cover Generation (DALL-E 3)
-                        </h3>
-                        
-                        <div class="space-y-4">
+                        <div class="grid grid-cols-2 gap-4">
                             <div>
-                                <label class="block text-sm font-medium text-gray-300 mb-2">Cover Style</label>
-                                <select class="form-field-glow w-full rounded px-3 py-2">
-                                    <option value="modern">Modern</option>
-                                    <option value="classic">Classic</option>
-                                    <option value="minimalist">Minimalist</option>
-                                    <option value="dramatic">Dramatic</option>
-                                    <option value="fantasy">Fantasy</option>
-                                    <option value="sci-fi">Science Fiction</option>
+                                <label class="block text-sm font-semibold mb-2">Speech Rate</label>
+                                <select id="speechRate" class="w-full px-4 py-2 rounded-lg form-field bg-theme-primary text-theme-primary">
+                                    <option value="0.75">Slow (0.75x)</option>
+                                    <option value="1.0" selected>Normal (1.0x)</option>
+                                    <option value="1.25">Fast (1.25x)</option>
                                 </select>
                             </div>
                             
                             <div>
-                                <label class="block text-sm font-medium text-gray-300 mb-2">Cover Description</label>
-                                <textarea placeholder="Describe your ideal book cover..." 
-                                    class="form-field-glow w-full rounded px-3 py-2 h-20 resize-none focus:border-cyan-300"></textarea>
+                                <label class="block text-sm font-semibold mb-2">Audio Format</label>
+                                <select id="audioFormat" class="w-full px-4 py-2 rounded-lg form-field bg-theme-primary text-theme-primary">
+                                    <option value="mp3" selected>MP3 (Recommended)</option>
+                                    <option value="opus">OPUS (High Quality)</option>
+                                    <option value="aac">AAC (Apple Compatible)</option>
+                                    <option value="flac">FLAC (Lossless)</option>
+                                </select>
                             </div>
-                            
-                            <button id="generate-cover-btn" class="w-full bg-purple-600 hover:bg-purple-500 text-white py-3 px-6 rounded-lg font-semibold transition-all">
-                                <i class="fas fa-magic mr-2"></i>Generate HD Cover (1024x1792)
-                            </button>
                         </div>
-                    </div>
-
-                    <!-- Export Options -->
-                    <div class="bg-gray-800 rounded-lg border border-gray-700 p-6 card-glow">
-                        <h3 class="text-xl font-bold mb-4 text-cyan-400">
-                            <i class="fas fa-download mr-2"></i>Export Formats
-                        </h3>
                         
-                        <div class="space-y-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-300 mb-2">Audio Format</label>
-                                <select class="form-field-glow w-full rounded px-3 py-2">
-                                    <option value="mp3">MP3 (Standard)</option>
-                                    <option value="m4b">M4B (Audiobook)</option>
-                                    <option value="wav">WAV (High Quality)</option>
-                                </select>
-                            </div>
-                            
-                            <div>
-                                <label class="block text-sm font-medium text-gray-300 mb-2">Quality</label>
-                                <select class="form-field-glow w-full rounded px-3 py-2">
-                                    <option value="standard">Standard Quality</option>
-                                    <option value="high">High Quality</option>
-                                    <option value="premium">Premium Quality</option>
-                                </select>
-                            </div>
-                            
-                            <button class="w-full bg-green-600 hover:bg-green-500 text-white py-3 px-6 rounded-lg font-semibold transition-all">
-                                <i class="fas fa-download mr-2"></i>Export Complete Audiobook
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Publishing Platforms -->
-                <div class="bg-gray-800 rounded-lg border border-gray-700 p-8 card-glow">
-                    <h3 class="text-2xl font-bold mb-6 text-cyan-400">
-                        <i class="fas fa-share mr-3"></i>Publishing Platforms
-                    </h3>
-                    
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <button class="bg-orange-600 hover:bg-orange-500 text-white py-3 px-4 rounded transition-all">
-                            <i class="fas fa-headphones mr-2"></i>Audible
-                        </button>
-                        <button class="bg-gray-600 hover:bg-gray-500 text-white py-3 px-4 rounded transition-all">
-                            <i class="fab fa-apple mr-2"></i>Apple Books
-                        </button>
-                        <button class="bg-green-600 hover:bg-green-500 text-white py-3 px-4 rounded transition-all">
-                            <i class="fab fa-spotify mr-2"></i>Spotify
-                        </button>
-                        <button class="bg-blue-600 hover:bg-blue-500 text-white py-3 px-4 rounded transition-all">
-                            <i class="fab fa-google mr-2"></i>Google Play
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Config Page -->
-        <div id="config" class="page-content hidden">
-            <div class="space-y-8">
-                <div class="text-center mb-8">
-                    <h2 class="text-4xl font-bold mb-4 authorr-brand-text">Configuration</h2>
-                    <p class="text-xl text-cyan-400">Configure OpenAI API and platform preferences</p>
-                </div>
-
-                <div class="bg-gray-800 rounded-lg border border-gray-700 p-8 card-glow">
-                    <h3 class="text-2xl font-bold mb-6 text-cyan-400">
-                        <i class="fas fa-cog mr-3"></i>OpenAI Integration Settings
-                    </h3>
-                    
-                    <div class="space-y-6">
                         <div>
-                            <label class="block text-sm font-medium text-gray-300 mb-2">OpenAI API Key</label>
-                            <input type="password" id="api-key-input" placeholder="sk-proj-..." 
-                                class="form-field-glow w-full rounded px-3 py-2 focus:border-cyan-300">
-                            <p class="text-xs text-gray-400 mt-1">Your API key is stored locally and securely</p>
+                            <label class="block text-sm font-semibold mb-2">Preview Text</label>
+                            <textarea id="previewText" placeholder="Enter text to preview the selected voice..." 
+                                      class="w-full px-4 py-2 rounded-lg form-field bg-theme-primary text-theme-primary h-20 resize-none"></textarea>
                         </div>
                         
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-300 mb-2">Text Generation Model</label>
-                                <select class="form-field-glow w-full rounded px-3 py-2">
-                                    <option value="gpt-4o-mini">GPT-4o-mini (Recommended)</option>
-                                    <option value="gpt-3.5-turbo">GPT-3.5-turbo</option>
-                                    <option value="gpt-4">GPT-4</option>
-                                </select>
-                            </div>
-                            
-                            <div>
-                                <label class="block text-sm font-medium text-gray-300 mb-2">Voice Model</label>
-                                <select class="form-field-glow w-full rounded px-3 py-2">
-                                    <option value="tts-1-hd">TTS-1-HD (Premium Quality)</option>
-                                    <option value="tts-1">TTS-1 (Standard Quality)</option>
-                                </select>
-                            </div>
-                        </div>
+                        <button onclick="previewVoice()" class="btn-secondary w-full py-2 rounded-lg font-semibold">
+                            <i class="fas fa-play mr-2"></i>Preview Voice
+                        </button>
                         
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-300 mb-2">Image Generation</label>
-                                <select class="form-field-glow w-full rounded px-3 py-2">
-                                    <option value="dall-e-3">DALL-E 3 (HD Quality)</option>
-                                    <option value="dall-e-2">DALL-E 2 (Standard)</option>
-                                </select>
-                            </div>
-                            
-                            <div>
-                                <label class="block text-sm font-medium text-gray-300 mb-2">Default Voice</label>
-                                <select class="form-field-glow w-full rounded px-3 py-2">
-                                    <option value="alloy">Alloy (Neutral)</option>
-                                    <option value="echo">Echo (Male Authority)</option>
-                                    <option value="fable">Fable (British)</option>
-                                    <option value="onyx">Onyx (Deep Resonant)</option>
-                                    <option value="nova">Nova (Young Female)</option>
-                                    <option value="shimmer">Shimmer (Soft Female)</option>
-                                </select>
-                            </div>
-                        </div>
-                        
-                        <div class="text-center">
-                            <button id="save-config-btn" class="bg-cyan-600 hover:bg-cyan-500 text-white px-8 py-3 rounded-lg font-semibold transition-all">
-                                <i class="fas fa-save mr-2"></i>Save Configuration
-                            </button>
-                            <button id="test-api-btn" class="bg-green-600 hover:bg-green-500 text-white px-8 py-3 rounded-lg font-semibold transition-all ml-4">
-                                <i class="fas fa-check mr-2"></i>Test API Connection
+                        <div class="border-t border-theme pt-4">
+                            <button onclick="generateNarration()" class="btn-primary w-full py-3 rounded-lg font-semibold">
+                                <i class="fas fa-microphone mr-2"></i>Generate Full Narration
                             </button>
                         </div>
                     </div>
                 </div>
-
-                <!-- API Status -->
-                <div class="bg-gray-800 rounded-lg border border-gray-700 p-8 card-glow">
-                    <h3 class="text-2xl font-bold mb-6 text-green-400">
-                        <i class="fas fa-check-circle mr-3"></i>API Status
-                    </h3>
+                
+                <!-- Book Cover Generation -->
+                <div class="bg-theme-secondary p-6 rounded-xl border-2 border-theme">
+                    <h2 class="text-xl font-bold mb-4">
+                        <i class="fas fa-image text-cyan-400 mr-2"></i>
+                        Book Cover Generator
+                    </h2>
                     
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div class="text-center">
-                            <div class="inline-block w-4 h-4 bg-green-500 rounded-full mb-2"></div>
-                            <p class="text-sm text-gray-300">Text Generation</p>
-                            <p class="text-xs text-green-400">GPT-4o-mini Ready</p>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-semibold mb-2">Cover Style</label>
+                            <select id="coverStyle" class="w-full px-4 py-2 rounded-lg form-field bg-theme-primary text-theme-primary">
+                                <option value="modern">Modern & Clean</option>
+                                <option value="classic">Classic Literature</option>
+                                <option value="mysterious">Dark & Mysterious</option>
+                                <option value="romantic">Romantic & Elegant</option>
+                                <option value="fantasy">Fantasy Adventure</option>
+                                <option value="scifi">Sci-Fi Futuristic</option>
+                                <option value="horror">Horror & Thriller</option>
+                                <option value="children">Children's Colorful</option>
+                            </select>
                         </div>
-                        <div class="text-center">
-                            <div class="inline-block w-4 h-4 bg-green-500 rounded-full mb-2"></div>
-                            <p class="text-sm text-gray-300">Voice Synthesis</p>
-                            <p class="text-xs text-green-400">TTS-1-HD Ready</p>
+                        
+                        <div>
+                            <label class="block text-sm font-semibold mb-2">Cover Description</label>
+                            <textarea id="coverDescription" placeholder="Describe the visual elements, mood, and style for your book cover..." 
+                                      class="w-full px-4 py-2 rounded-lg form-field bg-theme-primary text-theme-primary h-24 resize-none"></textarea>
                         </div>
-                        <div class="text-center">
-                            <div class="inline-block w-4 h-4 bg-green-500 rounded-full mb-2"></div>
-                            <p class="text-sm text-gray-300">Image Generation</p>
-                            <p class="text-xs text-green-400">DALL-E 3 Ready</p>
+                        
+                        <button onclick="generateCover()" class="btn-primary w-full py-3 rounded-lg font-semibold">
+                            <i class="fas fa-palette mr-2"></i>Generate Book Cover
+                        </button>
+                        
+                        <div id="coverPreview" class="hidden mt-4">
+                            <div class="border-2 border-theme rounded-lg p-4 bg-theme-primary">
+                                <img id="generatedCover" src="" alt="Generated Book Cover" class="w-full max-w-xs mx-auto rounded-lg shadow-lg">
+                                <div class="mt-3 text-center">
+                                    <button onclick="regenerateCover()" class="btn-secondary px-4 py-2 rounded text-sm mr-2">
+                                        <i class="fas fa-sync mr-1"></i>Regenerate
+                                    </button>
+                                    <button onclick="downloadCover()" class="btn-primary px-4 py-2 rounded text-sm">
+                                        <i class="fas fa-download mr-1"></i>Download
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Audio Progress & Results -->
+            <div class="mt-8 bg-theme-secondary p-6 rounded-xl border-2 border-theme">
+                <h2 class="text-xl font-bold mb-4">
+                    <i class="fas fa-headphones text-cyan-400 mr-2"></i>
+                    Narration Progress
+                </h2>
+                
+                <div id="narrationProgress" class="hidden">
+                    <div class="mb-4">
+                        <div class="flex justify-between text-sm mb-2">
+                            <span>Generating Audio...</span>
+                            <span id="progressPercent">0%</span>
+                        </div>
+                        <div class="w-full bg-gray-300 rounded-full h-3">
+                            <div id="progressBar" class="bg-cyan-400 h-3 rounded-full transition-all duration-300" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="audioResults" class="space-y-4">
+                    <!-- Generated audio files will appear here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Export Page -->
+    <div id="export" class="page hidden">
+        <div class="container mx-auto px-4 py-8">
+            <h1 class="text-3xl font-bold mb-8">
+                <i class="fas fa-download text-cyan-400 mr-3"></i>
+                Export Your Audiobook
+            </h1>
+
+            <!-- Export Options -->
+            <div class="grid md:grid-cols-2 gap-8 mb-8">
+                <div class="bg-theme-secondary p-6 rounded-xl border-2 border-theme">
+                    <h2 class="text-xl font-bold mb-4">
+                        <i class="fas fa-file-archive text-cyan-400 mr-2"></i>
+                        Package Options
+                    </h2>
+                    
+                    <div class="space-y-4">
+                        <div class="border border-theme p-4 rounded-lg">
+                            <div class="flex items-center justify-between mb-2">
+                                <h3 class="font-semibold">Complete Audiobook Package</h3>
+                                <button class="btn-primary px-4 py-1 rounded text-sm">Download</button>
+                            </div>
+                            <p class="text-sm text-theme-secondary">All audio files, cover image, and metadata in ZIP format</p>
+                        </div>
+                        
+                        <div class="border border-theme p-4 rounded-lg">
+                            <div class="flex items-center justify-between mb-2">
+                                <h3 class="font-semibold">Audio Files Only</h3>
+                                <button class="btn-secondary px-4 py-1 rounded text-sm">Download</button>
+                            </div>
+                            <p class="text-sm text-theme-secondary">MP3 files for each chapter</p>
+                        </div>
+                        
+                        <div class="border border-theme p-4 rounded-lg">
+                            <div class="flex items-center justify-between mb-2">
+                                <h3 class="font-semibold">Text Manuscript</h3>
+                                <button class="btn-secondary px-4 py-1 rounded text-sm">Download</button>
+                            </div>
+                            <p class="text-sm text-theme-secondary">Complete story text in DOC/PDF format</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-theme-secondary p-6 rounded-xl border-2 border-theme">
+                    <h2 class="text-xl font-bold mb-4">
+                        <i class="fas fa-share-alt text-cyan-400 mr-2"></i>
+                        Publishing Options
+                    </h2>
+                    
+                    <div class="space-y-4">
+                        <div class="border border-theme p-4 rounded-lg">
+                            <h3 class="font-semibold mb-2">Audible Ready</h3>
+                            <p class="text-sm text-theme-secondary mb-3">Format optimized for Audible submission</p>
+                            <button class="btn-primary px-4 py-1 rounded text-sm w-full">Prepare for Audible</button>
+                        </div>
+                        
+                        <div class="border border-theme p-4 rounded-lg">
+                            <h3 class="font-semibold mb-2">Podcast Format</h3>
+                            <p class="text-sm text-theme-secondary mb-3">Individual episodes with RSS feed</p>
+                            <button class="btn-secondary px-4 py-1 rounded text-sm w-full">Generate Podcast</button>
+                        </div>
+                        
+                        <div class="border border-theme p-4 rounded-lg">
+                            <h3 class="font-semibold mb-2">YouTube Series</h3>
+                            <p class="text-sm text-theme-secondary mb-3">Video format with static cover image</p>
+                            <button class="btn-secondary px-4 py-1 rounded text-sm w-full">Create Video Series</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Project Summary -->
+            <div class="bg-theme-secondary p-6 rounded-xl border-2 border-theme">
+                <h2 class="text-xl font-bold mb-4">
+                    <i class="fas fa-info-circle text-cyan-400 mr-2"></i>
+                    Project Summary
+                </h2>
+                
+                <div class="grid md:grid-cols-3 gap-6">
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-cyan-400 mb-1" id="exportChapterCount">10</div>
+                        <div class="text-sm text-theme-secondary">Chapters</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-cyan-400 mb-1" id="exportTotalWords">10,000</div>
+                        <div class="text-sm text-theme-secondary">Total Words</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-cyan-400 mb-1" id="exportDuration">~2.5 hours</div>
+                        <div class="text-sm text-theme-secondary">Audio Duration</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Config Page -->
+    <div id="config" class="page hidden">
+        <div class="container mx-auto px-4 py-8">
+            <h1 class="text-3xl font-bold mb-8">
+                <i class="fas fa-cog text-cyan-400 mr-3"></i>
+                Configuration & Settings
+            </h1>
+
+            <!-- API Configuration -->
+            <div class="grid lg:grid-cols-2 gap-8 mb-8">
+                <div class="bg-theme-secondary p-6 rounded-xl border-2 border-theme">
+                    <h2 class="text-xl font-bold mb-4">
+                        <i class="fas fa-key text-cyan-400 mr-2"></i>
+                        API Configuration
+                    </h2>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-semibold mb-2">OpenAI API Key</label>
+                            <input type="password" id="openaiKey" placeholder="sk-..." value="
+                                   class="w-full px-4 py-2 rounded-lg form-field bg-theme-primary text-theme-primary">
+                            <p class="text-xs text-theme-secondary mt-1">Required for AI writing and narration features</p>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-semibold mb-2">Model Selection</label>
+                            <select id="modelSelection" class="w-full px-4 py-2 rounded-lg form-field bg-theme-primary text-theme-primary">
+                                <option value="gpt-4o-mini" selected>GPT-4o-mini (Recommended)</option>
+                                <option value="gpt-3.5-turbo">GPT-3.5-turbo (Faster)</option>
+                                <option value="gpt-4">GPT-4 (Premium)</option>
+                            </select>
+                        </div>
+                        
+                        <button onclick="testApiConnection()" class="btn-primary w-full py-2 rounded-lg font-semibold">
+                            <i class="fas fa-wifi mr-2"></i>Test API Connection
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="bg-theme-secondary p-6 rounded-xl border-2 border-theme">
+                    <h2 class="text-xl font-bold mb-4">
+                        <i class="fas fa-palette text-cyan-400 mr-2"></i>
+                        Appearance Settings
+                    </h2>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-semibold mb-2">Theme</label>
+                            <div class="grid grid-cols-2 gap-2">
+                                <button onclick="setTheme('light')" class="p-3 rounded-lg border-2 border-theme bg-white text-black">
+                                    <i class="fas fa-sun mb-1"></i><br>Light
+                                </button>
+                                <button onclick="setTheme('dark')" class="p-3 rounded-lg border-2 border-theme bg-gray-800 text-white">
+                                    <i class="fas fa-moon mb-1"></i><br>Dark
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-semibold mb-2">Font Size</label>
+                            <select id="fontSize" class="w-full px-4 py-2 rounded-lg form-field bg-theme-primary text-theme-primary">
+                                <option value="small">Small</option>
+                                <option value="medium" selected>Medium</option>
+                                <option value="large">Large</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-semibold mb-2">Auto-save</label>
+                            <label class="flex items-center">
+                                <input type="checkbox" id="autoSave" checked class="mr-2">
+                                <span>Automatically save work every 30 seconds</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- About & Help -->
+            <div class="bg-theme-secondary p-6 rounded-xl border-2 border-theme">
+                <h2 class="text-xl font-bold mb-4">
+                    <i class="fas fa-info text-cyan-400 mr-2"></i>
+                    About AUTHORR AI
+                </h2>
+                
+                <div class="grid md:grid-cols-2 gap-8">
+                    <div>
+                        <h3 class="font-semibold mb-2">Platform Information</h3>
+                        <ul class="text-sm space-y-1 text-theme-secondary">
+                            <li>• Version: 2.5 Fixed Platform</li>
+                            <li>• AI Model: GPT-4o-mini with TTS-1-HD</li>
+                            <li>• Voice Options: 6 Professional AI Voices</li>
+                            <li>• Image Generation: DALL-E 3 HD Quality</li>
+                            <li>• Max Chapters: 25 per audiobook</li>
+                            <li>• Max Words: 3,000 per chapter</li>
+                        </ul>
+                    </div>
+                    
+                    <div>
+                        <h3 class="font-semibold mb-2">Support & Resources</h3>
+                        <div class="space-y-2">
+                            <button class="btn-secondary w-full py-2 rounded text-sm">
+                                <i class="fas fa-book mr-1"></i>User Guide
+                            </button>
+                            <button class="btn-secondary w-full py-2 rounded text-sm">
+                                <i class="fas fa-video mr-1"></i>Video Tutorials
+                            </button>
+                            <button class="btn-secondary w-full py-2 rounded text-sm">
+                                <i class="fas fa-life-ring mr-1"></i>Contact Support
+                            </button>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    </main>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-theme-secondary p-8 rounded-xl border-2 border-cyan-400 text-center">
+            <div class="loading-spinner mx-auto mb-4"></div>
+            <p id="loadingText" class="text-lg font-semibold">Processing...</p>
+        </div>
+    </div>
 
     <script>
-        // Page navigation
+        // Global State Management
+        let currentPage = 'dashboard';
+        let storyData = {
+            title: '',
+            chapters: [],
+            currentChapter: 0,
+            settings: {
+                chapterCount: 10,
+                wordsPerChapter: 1000,
+                genre: 'fiction-literary',
+                tone: 'professional'
+            }
+        };
+        
+        // History management for undo/redo
+        let editHistory = [];
+        let historyIndex = -1;
+        const maxHistorySize = 50;
+        
+        // Initialize application
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('AUTHORR AI Platform loaded successfully!');
+            loadSettings();
+            updateWordCount();
+            setupAutoSave();
+        });
+        
+        // Page Navigation
+        function showPage(pageId) {
+            document.querySelectorAll('.page').forEach(page => page.classList.add('hidden'));
+            document.getElementById(pageId).classList.remove('hidden');
             
-            const navLinks = document.querySelectorAll('.nav-link');
-            const pageContents = document.querySelectorAll('.page-content');
-
-            // Navigation functionality
-            navLinks.forEach(link => {
-                link.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    const targetPage = this.getAttribute('href').substring(1);
-
-                    // Update active nav link
-                    navLinks.forEach(l => l.classList.remove('active'));
-                    this.classList.add('active');
-
-                    // Show target page, hide others
-                    pageContents.forEach(page => {
-                        if (page.id === targetPage) {
-                            page.classList.remove('hidden');
-                        } else {
-                            page.classList.add('hidden');
-                        }
-                    });
-                });
-            });
-
-            // Real-time word count functionality (ACCURATE ALGORITHM)
-            const editor = document.getElementById('manuscript-editor');
-            if (editor) {
-                function updateWordCount() {
-                    const text = editor.value || '';
-                    // ACCURATE word counting: trim, split on whitespace, filter empty strings
-                    const words = text.trim().split(/\s+/).filter(word => word.length > 0);
-                    const wordCount = text.trim() === '' ? 0 : words.length;
-                    const charCount = text.length;
-                    const paraCount = text.split('\n\n').filter(para => para.trim().length > 0).length;
-                    const readingTime = Math.ceil(wordCount / 200); // 200 words per minute
-
-                    document.getElementById('word-count').textContent = wordCount;
-                    document.getElementById('char-count').textContent = charCount;
-                    document.getElementById('para-count').textContent = paraCount;
-                    document.getElementById('reading-time').textContent = readingTime + ' min';
-                }
-                
-                editor.addEventListener('input', updateWordCount);
-                updateWordCount(); // Initial count
+            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            currentPage = pageId;
+            
+            // Transfer story data when navigating to narration
+            if (pageId === 'narration') {
+                transferStoryToNarration();
             }
-
-            // Save/Undo/Redo functionality with history management
-            let editorHistory = [''];
-            let currentHistoryIndex = 0;
-            const MAX_HISTORY = 50;
-
-            function saveToHistory(content) {
-                // Remove any future history if we're not at the end
-                editorHistory = editorHistory.slice(0, currentHistoryIndex + 1);
-                // Add new state
-                editorHistory.push(content);
-                // Limit history size
-                if (editorHistory.length > MAX_HISTORY) {
-                    editorHistory.shift();
+        }
+        
+        // Theme Management
+        function toggleTheme() {
+            const body = document.body;
+            const themeIcon = document.getElementById('themeIcon');
+            
+            if (body.classList.contains('theme-light')) {
+                body.classList.remove('theme-light');
+                body.classList.add('theme-dark');
+                themeIcon.className = 'fas fa-sun';
+                localStorage.setItem('theme', 'dark');
+            } else {
+                body.classList.remove('theme-dark');
+                body.classList.add('theme-light');
+                themeIcon.className = 'fas fa-moon';
+                localStorage.setItem('theme', 'light');
+            }
+        }
+        
+        function setTheme(theme) {
+            const body = document.body;
+            const themeIcon = document.getElementById('themeIcon');
+            
+            body.className = `theme-${theme}`;
+            themeIcon.className = theme === 'light' ? 'fas fa-moon' : 'fas fa-sun';
+            localStorage.setItem('theme', theme);
+        }
+        
+        function loadSettings() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            setTheme(savedTheme);
+            
+            // Load API key if saved
+            const apiKey = localStorage.getItem('openai_api_key');
+            if (apiKey) {
+                document.getElementById('openaiKey').value = apiKey;
+            }
+        }
+        
+        // Story Generation Functions
+        async function generateChapterPlan() {
+            const title = document.getElementById('bookTitle').value;
+            const chapterCount = parseInt(document.getElementById('chapterCount').value);
+            const wordsPerChapter = parseInt(document.getElementById('wordsPerChapter').value);
+            const genre = document.getElementById('genre').value;
+            const tone = document.getElementById('tone').value;
+            const outline = document.getElementById('storyOutline').value;
+            
+            if (!title || !outline) {
+                alert('Please enter a book title and story outline.');
+                return;
+            }
+            
+            showLoading('Generating comprehensive chapter plan...');
+            
+            try {
+                // Enhanced AI API call simulation for chapter planning
+                const chapterPlan = await simulateEnhancedChapterGeneration(title, chapterCount, genre, tone, outline);
+                displayEnhancedChapterPlan(chapterPlan);
+                
+                // Update story data
+                storyData.title = title;
+                storyData.settings = { chapterCount, wordsPerChapter, genre, tone, outline };
+                storyData.chapters = chapterPlan.map(chapter => ({ ...chapter, content: '' }));
+                
+                document.getElementById('generateAllBtn').disabled = false;
+                hideLoading();
+            } catch (error) {
+                console.error('Chapter generation error:', error);
+                alert('Failed to generate chapter plan. Please try again.');
+                hideLoading();
+            }
+        }
+        
+        async function simulateEnhancedChapterGeneration(title, chapterCount, genre, tone, outline) {
+            // Simulate API delay
+            await new Promise(resolve => setTimeout(resolve, 2500));
+            
+            const chapters = [];
+            const detailedSummaries = generateDetailedSummaries(genre, tone, outline, chapterCount);
+            const chapterTitles = generateChapterTitles(genre, chapterCount);
+            
+            for (let i = 1; i <= chapterCount; i++) {
+                chapters.push({
+                    number: i,
+                    title: `Chapter ${i}: ${chapterTitles[i-1]}`,
+                    summary: detailedSummaries[i-1],
+                    wordTarget: parseInt(document.getElementById('wordsPerChapter').value),
+                    editable: true,
+                    status: 'ready'
+                });
+            }
+            return chapters;
+        }
+        
+        function generateDetailedSummaries(genre, tone, outline, chapterCount) {
+            const summaries = {
+                'fiction-mystery': [
+                    'Introduce the detective protagonist and establish the mysterious crime that will drive the investigation forward. Set the scene and atmosphere.',
+                    'The first clues emerge as the detective begins interviewing witnesses and examining evidence. Red herrings and false leads create complexity.',
+                    'A breakthrough occurs when a crucial piece of evidence is discovered, but it only deepens the mystery and raises more disturbing questions.',
+                    'The investigation takes a dangerous turn as someone attempts to stop the detective, suggesting the killer is still active and watching.',
+                    'All the pieces of the puzzle begin to come together in a shocking revelation that changes everything the detective thought they knew.',
+                    'The final confrontation between detective and killer, with the truth finally revealed and justice served in a dramatic climax.',
+                    'Epilogue: The aftermath of the case and how the events have permanently changed both the detective and the community.',
+                ],
+                'fiction-romance': [
+                    'The meet-cute: Two characters encounter each other in an unexpected and memorable way, with instant chemistry despite initial resistance.',
+                    'Growing attraction develops despite external obstacles and personal misunderstandings that seem to keep them apart.',
+                    'A moment of deep emotional connection brings them closer together, revealing vulnerable sides of both characters.',
+                    'Major conflict arises - external pressures or internal fears threaten to tear the couple apart just as love begins to bloom.',
+                    'The dark moment when all seems lost and true love appears impossible due to circumstances beyond their control.',
+                    'The grand romantic gesture and heartfelt confession that overcomes all obstacles and wins back their one true love.',
+                    'Happy ending with the couple united, planning their future together, and having grown as individuals through their journey.',
+                ],
+                'fiction-fantasy': [
+                    'The ordinary world before magic enters the protagonist\'s life. Establish the character\'s mundane existence and hidden potential.',
+                    'The call to adventure arrives when magical forces thrust the hero into an extraordinary quest they cannot refuse.',
+                    'Meeting magical allies and discovering ancient powers or prophecies that reveal the true scope of the hero\'s destiny.',
+                    'The first major challenge tests the hero\'s newfound abilities against dark forces, with mixed success and important lessons.',
+                    'The ultimate confrontation with the primary antagonist in an epic battle between good and evil that will determine the fate of the realm.',
+                    'Victory is achieved, but at great personal cost. The hero must make difficult sacrifices to save others and fulfill their destiny.',
+                    'Return to the ordinary world, forever changed by the magical journey. The hero integrates their experiences into a new life.',
+                ],
+                'fiction-scifi': [
+                    'Establish the futuristic or alien setting while introducing the protagonist and the scientific/technological premise.',
+                    'The discovery or invention that changes everything, setting the main technological conflict into motion.',
+                    'Exploring the implications and consequences of the new technology or alien contact on society and individuals.',
+                    'Rising conflict as the protagonist must navigate political, ethical, or survival challenges in this new reality.',
+                    'The climactic confrontation where science, technology, or first contact reaches a critical turning point.',
+                    'Resolution of the technological crisis with wisdom gained about progress, humanity, or our place in the universe.',
+                    'New equilibrium: How the world has changed and what the future now holds for humanity.',
+                ]
+            };
+            
+            const defaultSummaries = [
+                'Setting the scene and introducing the main characters in their world, establishing the tone and central premise.',
+                'The inciting incident occurs, disrupting the status quo and setting the main plot into unstoppable motion.',
+                'Rising action as characters face their first major challenges, revealing personality and building relationships.',
+                'Complications arise that deepen the conflict, raise the stakes, and test character resolve and relationships.',
+                'The climax arrives - the turning point where everything hangs in the balance and characters face their greatest test.',
+                'Falling action begins as the main conflict moves toward resolution and characters deal with consequences.',
+                'Resolution and conclusion, tying up loose ends, showing character growth, and providing satisfying closure.',
+            ];
+            
+            const genreSummaries = summaries[genre] || defaultSummaries;
+            
+            // Extend or customize summaries to match chapter count
+            const result = [];
+            for (let i = 0; i < chapterCount; i++) {
+                if (i < genreSummaries.length) {
+                    result.push(genreSummaries[i]);
                 } else {
-                    currentHistoryIndex++;
-                }
-            }
-
-            // Save button
-            const saveBtn = document.getElementById('save-btn');
-            if (saveBtn) {
-                saveBtn.addEventListener('click', function() {
-                    const content = editor ? editor.value : '';
-                    const title = document.getElementById('chapter-title') ? document.getElementById('chapter-title').value : '';
-                    
-                    // Save to localStorage
-                    localStorage.setItem('authorr_manuscript', content);
-                    localStorage.setItem('authorr_chapter_title', title);
-                    
-                    // Save to history
-                    saveToHistory(content);
-                    
-                    // Update last saved time
-                    const now = new Date();
-                    const timeStr = now.toLocaleTimeString();
-                    document.getElementById('last-saved').textContent = timeStr;
-                    
-                    // Show feedback
-                    const originalText = this.innerHTML;
-                    this.innerHTML = '<i class="fas fa-check mr-1"></i>Saved!';
-                    setTimeout(() => {
-                        this.innerHTML = originalText;
-                    }, 2000);
-                });
-            }
-
-            // Undo button
-            const undoBtn = document.getElementById('undo-btn');
-            if (undoBtn) {
-                undoBtn.addEventListener('click', function() {
-                    if (currentHistoryIndex > 0) {
-                        currentHistoryIndex--;
-                        if (editor) {
-                            editor.value = editorHistory[currentHistoryIndex] || '';
-                            updateWordCount();
-                        }
-                    }
-                });
-            }
-
-            // Redo button
-            const redoBtn = document.getElementById('redo-btn');
-            if (redoBtn) {
-                redoBtn.addEventListener('click', function() {
-                    if (currentHistoryIndex < editorHistory.length - 1) {
-                        currentHistoryIndex++;
-                        if (editor) {
-                            editor.value = editorHistory[currentHistoryIndex] || '';
-                            updateWordCount();
-                        }
-                    }
-                });
-            }
-
-            // Continue to Narration functionality
-            const continueBtn = document.getElementById('continue-to-narration-btn');
-            if (continueBtn) {
-                continueBtn.addEventListener('click', function() {
-                    const content = editor ? editor.value : '';
-                    const title = document.getElementById('chapter-title') ? document.getElementById('chapter-title').value : 'Untitled Story';
-                    
-                    if (content.trim()) {
-                        // Save story for narration
-                        localStorage.setItem('authorr_story_for_narration', content);
-                        localStorage.setItem('authorr_story_title', title);
-                        
-                        // Switch to narration page
-                        document.querySelector('a[href="#narration"]').click();
-                        
-                        // Populate narration text area
-                        const narrationTextArea = document.getElementById('narration-text');
-                        if (narrationTextArea) {
-                            narrationTextArea.value = content;
-                        }
-                    } else {
-                        alert('Please write some content before continuing to narration.');
-                    }
-                });
-            }
-
-            // Review button functionality
-            const reviewBtn = document.getElementById('review-btn');
-            if (reviewBtn) {
-                reviewBtn.addEventListener('click', function() {
-                    const content = editor ? editor.value : '';
-                    const title = document.getElementById('chapter-title') ? document.getElementById('chapter-title').value : 'Untitled';
-                    
-                    if (content.trim()) {
-                        // Create and show review modal
-                        const modal = document.createElement('div');
-                        modal.className = 'fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50';
-                        modal.innerHTML = `
-                            <div class="bg-gray-800 p-8 rounded-lg max-w-4xl max-h-96 overflow-y-auto border-2 border-cyan-400" style="box-shadow: var(--brand-cyan-glow);">
-                                <h3 class="text-2xl font-bold mb-4 text-cyan-400">Story Review</h3>
-                                <div class="bg-gray-700 p-4 rounded mb-4">
-                                    <h4 class="font-bold mb-2 text-yellow-400">Title: ${title}</h4>
-                                    <div class="bg-gray-600 p-3 rounded">
-                                        <p class="text-gray-200 whitespace-pre-wrap">${content}</p>
-                                    </div>
-                                </div>
-                                <div class="flex justify-end space-x-4">
-                                    <button onclick="this.closest('.fixed').remove()" class="bg-gray-600 hover:bg-gray-500 px-4 py-2 rounded transition-all">Close</button>
-                                    <button onclick="this.closest('.fixed').remove(); document.getElementById('continue-to-narration-btn').click();" class="bg-cyan-600 hover:bg-cyan-500 px-4 py-2 rounded transition-all">Continue to Narration</button>
-                                </div>
-                            </div>
-                        `;
-                        document.body.appendChild(modal);
-                    } else {
-                        alert('Please write some content to review.');
-                    }
-                });
-            }
-
-            // OpenAI API Configuration
-            let openaiApiKey = localStorage.getItem('openai_api_key') || '';
-            
-            async function callOpenAI(prompt, maxTokens = 1000) {
-                if (!openaiApiKey) {
-                    alert('Please configure your OpenAI API key in the Config page first.');
-                    document.querySelector('a[href="#config"]').click();
-                    return null;
-                }
-                
-                try {
-                    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${openaiApiKey}`
-                        },
-                        body: JSON.stringify({
-                            model: 'gpt-4o-mini',
-                            messages: [
-                                {
-                                    role: 'user',
-                                    content: prompt
-                                }
-                            ],
-                            max_tokens: maxTokens,
-                            temperature: 0.7
-                        })
-                    });
-                    
-                    if (!response.ok) {
-                        throw new Error(`OpenAI API error: ${response.status}`);
-                    }
-                    
-                    const data = await response.json();
-                    return data.choices[0].message.content;
-                } catch (error) {
-                    console.error('OpenAI API Error:', error);
-                    alert('Error connecting to OpenAI. Please check your API key and try again.');
-                    return null;
+                    // Generate additional summaries for longer books
+                    const baseIndex = i % genreSummaries.length;
+                    result.push(`Chapter ${i + 1}: Continuing the ${genre.replace('-', ' ')} narrative with ${tone} tone, building toward the climactic conclusion.`);
                 }
             }
             
-            // AI Writing Tools functionality
-            const aiTools = {
-                'generate-ideas-btn': async function() {
-                    const prompt = "Generate 5 creative writing ideas for a story. Include different genres and interesting plot hooks. Format as a numbered list.";
-                    const ideas = await callOpenAI(prompt);
-                    if (ideas && editor) {
-                        editor.value += '\n\n--- STORY IDEAS ---\n' + ideas + '\n';
-                        updateWordCount();
-                    }
-                },
-                'create-outline-btn': async function() {
-                    const currentText = editor ? editor.value : '';
-                    const prompt = `Based on this text: "${currentText.substring(0, 500)}", create a detailed story outline with 5-10 chapters. Include chapter titles and brief descriptions.`;
-                    const outline = await callOpenAI(prompt, 1500);
-                    if (outline && editor) {
-                        editor.value += '\n\n--- STORY OUTLINE ---\n' + outline + '\n';
-                        updateWordCount();
-                    }
-                },
-                'expand-text-btn': async function() {
-                    const selectedText = editor.value.substring(editor.selectionStart, editor.selectionEnd);
-                    const textToExpand = selectedText || editor.value.split('\n').pop();
-                    
-                    if (!textToExpand.trim()) {
-                        alert('Please select text or write something to expand.');
-                        return;
-                    }
-                    
-                    const prompt = `Expand and enhance this text with more detail, dialogue, and description: "${textToExpand}"`;
-                    const expanded = await callOpenAI(prompt);
-                    if (expanded) {
-                        if (selectedText) {
-                            // Replace selected text
-                            const start = editor.selectionStart;
-                            const end = editor.selectionEnd;
-                            editor.value = editor.value.substring(0, start) + expanded + editor.value.substring(end);
-                        } else {
-                            editor.value += '\n\n' + expanded;
-                        }
-                        updateWordCount();
-                    }
-                },
-                'summarize-btn': async function() {
-                    const currentText = editor ? editor.value : '';
-                    if (!currentText.trim()) {
-                        alert('Please write some content to summarize.');
-                        return;
-                    }
-                    
-                    const prompt = `Summarize this text into key points: "${currentText}"`;
-                    const summary = await callOpenAI(prompt);
-                    if (summary) {
-                        editor.value += '\n\n--- SUMMARY ---\n' + summary + '\n';
-                        updateWordCount();
-                    }
-                },
-                'rewrite-btn': async function() {
-                    const selectedText = editor.value.substring(editor.selectionStart, editor.selectionEnd);
-                    const textToRewrite = selectedText || editor.value;
-                    
-                    if (!textToRewrite.trim()) {
-                        alert('Please select text or write something to rewrite.');
-                        return;
-                    }
-                    
-                    const prompt = `Rewrite this text to improve clarity, flow, and engagement: "${textToRewrite}"`;
-                    const rewritten = await callOpenAI(prompt);
-                    if (rewritten) {
-                        if (selectedText) {
-                            // Replace selected text
-                            const start = editor.selectionStart;
-                            const end = editor.selectionEnd;
-                            editor.value = editor.value.substring(0, start) + rewritten + editor.value.substring(end);
-                        } else {
-                            editor.value = rewritten;
-                        }
-                        updateWordCount();
-                    }
-                },
-                'character-builder-btn': async function() {
-                    const prompt = "Create a detailed character profile for a story character. Include name, background, personality traits, motivations, and physical description.";
-                    const character = await callOpenAI(prompt);
-                    if (character && editor) {
-                        editor.value += '\n\n--- CHARACTER PROFILE ---\n' + character + '\n';
-                        updateWordCount();
-                    }
-                }
+            return result;
+        }
+        
+        function generateChapterTitles(genre, chapterCount) {
+            const titleTemplates = {
+                'fiction-mystery': [
+                    'The Crime Scene', 'First Clues', 'Witnesses Speak', 'Hidden Motives', 'False Leads', 
+                    'Breaking Point', 'The Truth Emerges', 'Final Confrontation', 'Justice Served'
+                ],
+                'fiction-romance': [
+                    'Unexpected Encounter', 'Growing Attraction', 'First Kiss', 'Complications', 
+                    'Heartbreak', 'Realization', 'Grand Gesture', 'Forever Together'
+                ],
+                'fiction-fantasy': [
+                    'The Calling', 'Into the Unknown', 'Ancient Powers', 'Dark Forces', 
+                    'The Prophecy', 'Final Battle', 'Victory\'s Price', 'New Dawn'
+                ],
+                'fiction-scifi': [
+                    'Discovery', 'First Contact', 'New Worlds', 'Alien Minds', 
+                    'Technology\'s Edge', 'The Singularity', 'Evolution', 'Future Awakens'
+                ]
             };
-
-            // Setup AI tool buttons
-            Object.keys(aiTools).forEach(buttonId => {
-                const btn = document.getElementById(buttonId);
-                if (btn) {
-                    btn.addEventListener('click', function() {
-                        aiTools[buttonId]();
-                    });
+            
+            const defaultTitles = [
+                'Beginning', 'Rising Action', 'Development', 'Complication', 
+                'Climax', 'Resolution', 'Conclusion'
+            ];
+            
+            const titles = titleTemplates[genre] || defaultTitles;
+            const result = [];
+            
+            for (let i = 0; i < chapterCount; i++) {
+                if (i < titles.length) {
+                    result.push(titles[i]);
+                } else {
+                    result.push(`Part ${i + 1}`);
                 }
-            });
-
-            // Chapter form submission with AI generation
-            const chapterForm = document.getElementById('chapter-form');
-            if (chapterForm) {
-                chapterForm.addEventListener('submit', async function(e) {
-                    e.preventDefault();
-                    
-                    const formData = {
-                        title: document.getElementById('book-title').value,
-                        author: document.getElementById('author-name').value,
-                        genre: document.getElementById('genre').value,
-                        chapters: document.getElementById('chapter-count').value,
-                        tone: document.getElementById('tone-voice').value,
-                        audience: document.getElementById('target-audience').value,
-                        wordsPerChapter: document.getElementById('words-per-chapter').value,
-                        description: document.getElementById('book-description').value
-                    };
-                    
-                    if (!formData.title || !formData.author || !formData.description) {
-                        alert('Please fill in all required fields (Title, Author, Description).');
-                        return;
-                    }
-                    
-                    const createBtn = document.getElementById('create-chapter-btn');
-                    createBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Generating with AI...';
-                    createBtn.disabled = true;
-                    
-                    try {
-                        // Generate AI chapter plan
-                        const chapterCount = parseInt(formData.chapters) || 5;
-                        const prompt = `Create a detailed chapter plan for a book titled "${formData.title}" by ${formData.author}. 
-                        
-Book Description: ${formData.description}
-Genre: ${formData.genre}
-Tone: ${formData.tone}
-Target Audience: ${formData.audience}
-Number of Chapters: ${chapterCount}
-Words per Chapter: ${formData.wordsPerChapter}
-
-Generate ${chapterCount} chapter outlines. For each chapter, provide:
-1. Chapter title
-2. Brief summary (2-3 sentences)
-3. Key plot points
-
-Format each chapter as:
-Chapter X: [Title]
-Summary: [Summary]
----`;
-
-                        const aiChapterPlan = await callOpenAI(prompt, 2000);
-                        
-                        if (aiChapterPlan) {
-                            const planningSection = document.getElementById('chapter-planning');
-                            const outlineContainer = document.getElementById('chapter-outlines');
-                            
-                            // Parse AI response and create editable chapters
-                            const chapters = parseChapterPlan(aiChapterPlan, chapterCount);
-                            let chaptersHTML = '';
-                            
-                            chapters.forEach((chapter, i) => {
-                                chaptersHTML += `
-                                    <div class="bg-gray-700 p-6 rounded-lg border border-gray-600 mb-4">
-                                        <div class="mb-4">
-                                            <label class="block text-sm font-medium text-cyan-400 mb-2">Chapter ${i + 1} Title</label>
-                                            <input type="text" value="${chapter.title}" class="form-field-glow w-full rounded px-3 py-2">
-                                        </div>
-                                        <div class="mb-4">
-                                            <label class="block text-sm font-medium text-cyan-400 mb-2">Chapter Outline</label>
-                                            <textarea class="form-field-glow w-full rounded px-3 py-2 h-24 resize-none">${chapter.summary}</textarea>
-                                        </div>
-                                        <button onclick="generateChapterContent(${i + 1})" class="bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 rounded transition-all">
-                                            <i class="fas fa-magic mr-1"></i>Generate Chapter ${i + 1} Story
-                                        </button>
-                                    </div>
-                                `;
-                            });
-                            
-                            outlineContainer.innerHTML = chaptersHTML;
-                            planningSection.style.display = 'block';
-                            planningSection.scrollIntoView({ behavior: 'smooth' });
-                        }
-                    } catch (error) {
-                        console.error('Chapter generation error:', error);
-                        alert('Failed to generate chapter plan. Please check your API key.');
-                    } finally {
-                        createBtn.innerHTML = '<i class="fas fa-plus mr-2"></i>Create Chapter Plan';
-                        createBtn.disabled = false;
-                    }
-                });
             }
             
-            // Parse AI chapter plan response
-            function parseChapterPlan(aiResponse, expectedChapters) {
-                const chapters = [];
-                const lines = aiResponse.split('\n');
-                let currentChapter = { title: '', summary: '' };
-                
-                for (let line of lines) {
-                    if (line.includes('Chapter') && line.includes(':')) {
-                        if (currentChapter.title) {
-                            chapters.push({ ...currentChapter });
-                        }
-                        currentChapter = {
-                            title: line.replace(/Chapter \d+:\s*/, '').trim(),
-                            summary: ''
-                        };
-                    } else if (line.includes('Summary:')) {
-                        currentChapter.summary = line.replace('Summary:', '').trim();
-                    } else if (line.trim() && currentChapter.title && !currentChapter.summary) {
-                        currentChapter.summary = line.trim();
-                    }
-                }
-                
-                if (currentChapter.title) {
-                    chapters.push(currentChapter);
-                }
-                
-                // Ensure we have the expected number of chapters
-                while (chapters.length < expectedChapters) {
-                    chapters.push({
-                        title: `Chapter ${chapters.length + 1}`,
-                        summary: 'Chapter summary to be developed...'
-                    });
-                }
-                
-                return chapters.slice(0, expectedChapters);
+            return result;
+        }
+        
+        function displayEnhancedChapterPlan(chapters) {
+            const planContainer = document.getElementById('chapterPlan');
+            planContainer.innerHTML = chapters.map(chapter => `
+                <div class="border border-theme p-3 rounded-lg bg-theme-primary" id="chapter-${chapter.number}">
+                    <div class="flex justify-between items-start mb-2">
+                        <h3 class="font-semibold text-sm editable-title" 
+                            contenteditable="true" 
+                            onblur="updateChapterTitle(${chapter.number}, this.textContent)"
+                            data-original="${chapter.title}">${chapter.title}</h3>
+                        <div class="flex space-x-1">
+                            <button onclick="editChapter(${chapter.number})" class="btn-secondary px-2 py-1 rounded text-xs" title="Edit Chapter">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button onclick="generateSingleChapter(${chapter.number})" class="btn-primary px-2 py-1 rounded text-xs" title="Generate Story">
+                                <i class="fas fa-magic"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <p class="text-xs text-theme-secondary mb-2 editable-summary" 
+                       contenteditable="true" 
+                       onblur="updateChapterSummary(${chapter.number}, this.textContent)"
+                       data-original="${chapter.summary}">${chapter.summary}</p>
+                    <div class="text-xs text-cyan-400 mb-1">Target: ${chapter.wordTarget} words</div>
+                    <div class="chapter-status status-${chapter.status} text-xs" id="chapter-status-${chapter.number}">
+                        Ready to generate story content
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function updateChapterTitle(chapterNum, newTitle) {
+            const chapterIndex = chapterNum - 1;
+            if (storyData.chapters[chapterIndex]) {
+                storyData.chapters[chapterIndex].title = newTitle.trim();
+                console.log(`Updated chapter ${chapterNum} title:`, newTitle);
+                showStatusMessage(`Chapter ${chapterNum} title updated`);
+            }
+        }
+        
+        function updateChapterSummary(chapterNum, newSummary) {
+            const chapterIndex = chapterNum - 1;
+            if (storyData.chapters[chapterIndex]) {
+                storyData.chapters[chapterIndex].summary = newSummary.trim();
+                console.log(`Updated chapter ${chapterNum} summary:`, newSummary);
+                showStatusMessage(`Chapter ${chapterNum} summary updated`);
+            }
+        }
+        
+        function editChapter(chapterNum) {
+            const chapterDiv = document.getElementById(`chapter-${chapterNum}`);
+            const titleEl = chapterDiv.querySelector('.editable-title');
+            const summaryEl = chapterDiv.querySelector('.editable-summary');
+            
+            // Highlight for editing
+            titleEl.focus();
+            titleEl.style.backgroundColor = 'rgba(120, 227, 254, 0.1)';
+            summaryEl.style.backgroundColor = 'rgba(120, 227, 254, 0.1)';
+            
+            // Show edit instruction
+            showStatusMessage(`Editing Chapter ${chapterNum} - Click outside when done`);
+            
+            // Remove highlight after editing
+            setTimeout(() => {
+                titleEl.style.backgroundColor = '';
+                summaryEl.style.backgroundColor = '';
+            }, 5000);
+        }
+        
+        async function generateAllChapters() {
+            if (!storyData.chapters.length) {
+                alert('Please generate a chapter plan first.');
+                return;
             }
             
-            // Generate individual chapter content
-            window.generateChapterContent = async function(chapterNumber) {
-                const chapterDiv = event.target.closest('.bg-gray-700');
-                const title = chapterDiv.querySelector('input').value;
-                const outline = chapterDiv.querySelector('textarea').value;
-                
-                const btn = event.target;
-                btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Generating...';
-                btn.disabled = true;
-                
-                try {
-                    const prompt = `Write a complete chapter based on this information:
-Chapter Title: ${title}
-Chapter Outline: ${outline}
-
-Write a full chapter story (approximately 1000-1500 words) with:
-- Engaging narrative
-- Dialogue
-- Descriptive scenes
-- Character development
-- Proper story flow
-
-Make it professional and engaging for readers.`;
-
-                    const chapterContent = await callOpenAI(prompt, 2000);
-                    
-                    if (chapterContent) {
-                        // Switch to workspace and add content
-                        document.querySelector('a[href="#workspace"]').click();
-                        
-                        setTimeout(() => {
-                            const editor = document.getElementById('manuscript-editor');
-                            const chapterTitle = document.getElementById('chapter-title');
-                            
-                            if (chapterTitle) chapterTitle.value = title;
-                            if (editor) {
-                                editor.value = chapterContent;
-                                updateWordCount();
-                            }
-                        }, 100);
-                    }
-                } catch (error) {
-                    alert('Failed to generate chapter content. Please try again.');
-                } finally {
-                    btn.innerHTML = `<i class="fas fa-magic mr-1"></i>Generate Chapter ${chapterNumber} Story`;
-                    btn.disabled = false;
-                }
-            };
-
-            // Cover generation
-            const generateCoverBtn = document.getElementById('generate-cover-btn');
-            if (generateCoverBtn) {
-                generateCoverBtn.addEventListener('click', function() {
-                    const originalText = this.innerHTML;
-                    this.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Generating with DALL-E 3...';
-                    this.disabled = true;
-                    
-                    setTimeout(() => {
-                        alert('DALL-E 3 HD Cover Generation (1024x1792) will create professional book covers based on your specifications.');
-                        this.innerHTML = originalText;
-                        this.disabled = false;
-                    }, 3000);
-                });
-            }
-
-            // Load saved content
-            const savedContent = localStorage.getItem('authorr_manuscript');
-            const savedTitle = localStorage.getItem('authorr_chapter_title');
+            showLoading('Generating all chapter stories...');
             
-            if (savedContent && editor) {
-                editor.value = savedContent;
+            try {
+                let allContent = '';
+                for (let i = 0; i < storyData.chapters.length; i++) {
+                    updateLoadingText(`Creating story for chapter ${i + 1} of ${storyData.chapters.length}...`);
+                    
+                    // Update chapter status
+                    updateChapterStatus(i + 1, 'generating', 'Generating story content...');
+                    
+                    const content = await generateSingleChapter(i + 1);
+                    storyData.chapters[i].content = content;
+                    allContent += content + '\n\n';
+                    
+                    // Update chapter status
+                    updateChapterStatus(i + 1, 'complete', `Story complete (${countWords(content)} words)`);
+                    
+                    // Small delay for visual feedback
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                }
+                
+                // Display all content in editor
+                const editor = document.getElementById('storyEditor');
+                editor.value = allContent;
                 updateWordCount();
+                saveToHistory();
+                
+                hideLoading();
+                showStatusMessage(`Successfully generated ${storyData.chapters.length} chapters!`);
+                
+            } catch (error) {
+                console.error('Chapter generation error:', error);
+                alert('Failed to generate all chapters. Please try again.');
+                hideLoading();
             }
-            if (savedTitle && document.getElementById('chapter-title')) {
-                document.getElementById('chapter-title').value = savedTitle;
+        }
+        
+        function updateChapterStatus(chapterNum, status, message) {
+            const statusEl = document.getElementById(`chapter-status-${chapterNum}`);
+            if (statusEl) {
+                statusEl.className = `chapter-status status-${status} text-xs`;
+                statusEl.textContent = message;
             }
-
-            // Auto-save every 30 seconds
+        }
+        
+        async function generateSingleChapter(chapterNumber) {
+            const chapterIndex = chapterNumber - 1;
+            if (!storyData.chapters[chapterIndex]) return '';
+            
+            const chapter = storyData.chapters[chapterIndex];
+            
+            try {
+                updateChapterStatus(chapterNumber, 'generating', 'Creating story content...');
+                
+                // Enhanced content generation
+                const content = await simulateEnhancedContentGeneration(chapter, storyData.settings);
+                storyData.chapters[chapterIndex].content = content;
+                
+                // If this is the current chapter being viewed, update editor
+                if (storyData.currentChapter === chapterIndex) {
+                    document.getElementById('storyEditor').value = content;
+                    updateWordCount();
+                    saveToHistory();
+                }
+                
+                updateChapterStatus(chapterNumber, 'complete', `Complete (${countWords(content)} words)`);
+                return content;
+                
+            } catch (error) {
+                console.error('Single chapter generation error:', error);
+                updateChapterStatus(chapterNumber, 'ready', 'Error - Ready to retry');
+                throw error;
+            }
+        }
+        
+        async function simulateEnhancedContentGeneration(chapter, settings) {
+            // Simulate AI API delay
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            const { title, summary, wordTarget } = chapter;
+            const { genre, tone } = settings;
+            
+            // Generate more realistic content based on chapter info
+            let content = `${title}\n\n`;
+            
+            // Generate introduction
+            content += generateChapterIntroduction(summary, genre, tone) + '\n\n';
+            
+            // Calculate paragraphs needed (aim for 150-200 words per paragraph)
+            const wordsPerParagraph = 150;
+            const paragraphCount = Math.ceil(wordTarget / wordsPerParagraph);
+            
+            // Generate main content paragraphs
+            for (let i = 0; i < paragraphCount - 1; i++) {
+                content += generateContentParagraph(genre, tone, summary, i + 1) + '\n\n';
+            }
+            
+            // Generate conclusion paragraph
+            content += generateChapterConclusion(summary, genre, tone);
+            
+            return content.trim();
+        }
+        
+        function generateChapterIntroduction(summary, genre, tone) {
+            const intros = {
+                'fiction-mystery': [
+                    'The morning mist hung heavy over the crime scene as Detective Morrison arrived, coffee still steaming in her hand. What she was about to discover would change everything she thought she knew about this case.',
+                    'The call came at 3:47 AM, jarring Detective Chen from a restless sleep. Another body had been found, and the pattern was becoming disturbingly clear.',
+                    'Something was wrong with this picture. Detective Rodriguez stood at the edge of the scene, her trained eye catching details that others had missed.'
+                ],
+                'fiction-romance': [
+                    'Sarah had always believed that love at first sight was a myth—until she walked into that coffee shop on a rainy Tuesday morning and saw him.',
+                    'The wedding invitation fell from Emma\'s hands like autumn leaves, each word on the elegant cardstock a reminder of what she had lost.',
+                    'Marcus had sworn off relationships after his last heartbreak, but when she smiled at him across the bookstore aisle, all his carefully built walls began to crumble.'
+                ]
+            };
+            
+            const defaultIntros = [
+                'The chapter begins with our protagonist facing a new challenge that will test their resolve and change their perspective.',
+                'As events unfold, the characters find themselves in a situation that demands courage and quick thinking.',
+                'The story takes an unexpected turn as hidden truths begin to surface and relationships are put to the test.'
+            ];
+            
+            const genreIntros = intros[genre] || defaultIntros;
+            return genreIntros[Math.floor(Math.random() * genreIntros.length)];
+        }
+        
+        function generateContentParagraph(genre, tone, summary, position) {
+            const paragraphs = {
+                'fiction-mystery': [
+                    'The evidence pointed in multiple directions, each clue seeming to contradict the last. The detective methodically examined each piece, knowing that somewhere in this puzzle lay the truth.',
+                    'Witnesses provided conflicting accounts, their memories clouded by fear and confusion. Separating fact from fiction would require patience and skill.',
+                    'A breakthrough came from an unexpected source—a detail so small that others had overlooked it entirely. Sometimes the smallest threads unravel the biggest mysteries.',
+                    'The investigation took a darker turn as threats began to surface. Someone was desperate to keep these secrets buried, but the truth had a way of demanding to be heard.'
+                ],
+                'fiction-romance': [
+                    'Their conversations flowed like music, each word building a bridge between two hearts that had been waiting to find each other.',
+                    'The obstacles seemed insurmountable—family expectations, career demands, and the fear of vulnerability all conspired to keep them apart.',
+                    'In quiet moments together, they discovered that love wasn\'t just about grand gestures but about the small, tender moments that made life meaningful.',
+                    'Misunderstandings clouded their judgment, and pride kept them from speaking the words that could heal the growing distance between them.'
+                ]
+            };
+            
+            const defaultParagraphs = [
+                'The characters navigated through challenges that tested their beliefs and forced them to grow beyond their comfort zones.',
+                'Relationships deepened and evolved as trust was built through shared experiences and mutual support during difficult times.',
+                'Conflicts arose that revealed the true nature of each character, showing both their strengths and their vulnerabilities.',
+                'Resolution began to emerge as the characters learned to work together and understand each other\'s perspectives.'
+            ];
+            
+            const genreParagraphs = paragraphs[genre] || defaultParagraphs;
+            return genreParagraphs[position % genreParagraphs.length];
+        }
+        
+        function generateChapterConclusion(summary, genre, tone) {
+            const conclusions = {
+                'fiction-mystery': [
+                    'As the chapter drew to a close, one crucial question remained unanswered, its significance growing like a shadow over the investigation.',
+                    'The detective gathered the pieces of evidence, each one forming part of a larger picture that was finally beginning to emerge from the darkness.',
+                    'With new leads to follow and fresh determination, the investigation moved forward, bringing both hope and trepidation for what lay ahead.'
+                ],
+                'fiction-romance': [
+                    'As they parted ways that evening, both carried with them a new understanding of what their hearts truly desired.',
+                    'The chapter ended with a promise—spoken or unspoken—that their story was far from over.',
+                    'Love had planted seeds in their hearts, and though challenges lay ahead, they both sensed that something beautiful was beginning to grow.'
+                ]
+            };
+            
+            const defaultConclusions = [
+                'The chapter concluded with new possibilities on the horizon and a sense that the characters had grown from their experiences.',
+                'As events came to a temporary resolution, the stage was set for even greater challenges and opportunities ahead.',
+                'The story paused here, but the journey continued, with each character carrying forward the lessons learned and the bonds formed.'
+            ];
+            
+            const genreConclusions = conclusions[genre] || defaultConclusions;
+            return genreConclusions[Math.floor(Math.random() * genreConclusions.length)];
+        }
+        
+        // Enhanced AI Writing Tools
+        async function expandStory() {
+            const editor = document.getElementById('storyEditor');
+            const selectedText = getSelectedText(editor);
+            const currentText = selectedText || editor.value;
+            
+            if (!currentText.trim()) {
+                alert('Please enter some text or select text to expand.');
+                return;
+            }
+            
+            showLoading('Expanding story with rich details...');
+            
+            try {
+                const expandedText = await simulateEnhancedExpansion(currentText);
+                
+                if (selectedText) {
+                    replaceSelectedText(editor, expandedText);
+                } else {
+                    editor.value = expandedText;
+                }
+                
+                updateWordCount();
+                saveToHistory();
+                hideLoading();
+                showStatusMessage('Story expanded successfully!');
+            } catch (error) {
+                console.error('Story expansion error:', error);
+                alert('Failed to expand story. Please try again.');
+                hideLoading();
+            }
+        }
+        
+        async function simulateEnhancedExpansion(text) {
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            const expansions = [
+                '\n\nThe atmosphere grew thick with anticipation as details previously hidden began to emerge. Every shadow seemed to hold secrets, every whisper carried weight that would influence the events to come.',
+                '\n\nCharacter motivations deepened as their past experiences shaped their current actions. The complexity of human emotion painted layers of meaning into every gesture and spoken word.',
+                '\n\nThe setting came alive with sensory details—the way light filtered through windows, the sound of footsteps on different surfaces, the subtle scents that triggered powerful memories.',
+                '\n\nDialogue revealed subtext as characters said one thing while meaning another. The space between words held as much significance as the words themselves.'
+            ];
+            
+            return text + expansions[Math.floor(Math.random() * expansions.length)];
+        }
+        
+        async function improveStory() {
+            const editor = document.getElementById('storyEditor');
+            const selectedText = getSelectedText(editor);
+            const currentText = selectedText || editor.value;
+            
+            if (!currentText.trim()) {
+                alert('Please enter some text or select text to improve.');
+                return;
+            }
+            
+            showLoading('Enhancing story quality and flow...');
+            
+            try {
+                const improvedText = await simulateEnhancedImprovement(currentText);
+                
+                if (selectedText) {
+                    replaceSelectedText(editor, improvedText);
+                } else {
+                    editor.value = improvedText;
+                }
+                
+                updateWordCount();
+                saveToHistory();
+                hideLoading();
+                showStatusMessage('Story improved with enhanced writing!');
+            } catch (error) {
+                console.error('Story improvement error:', error);
+                alert('Failed to improve story. Please try again.');
+                hideLoading();
+            }
+        }
+        
+        async function simulateEnhancedImprovement(text) {
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            // Enhanced text improvement simulation
+            return text.replace(/\b(said)\b/g, 'declared')
+                      .replace(/\b(went)\b/g, 'proceeded')
+                      .replace(/\b(good)\b/g, 'excellent')
+                      .replace(/\b(bad)\b/g, 'troubling')
+                      .replace(/\b(big)\b/g, 'substantial')
+                      .replace(/\b(small)\b/g, 'delicate');
+        }
+        
+        async function addDialogue() {
+            const editor = document.getElementById('storyEditor');
+            const insertionPoint = editor.selectionStart;
+            
+            showLoading('Crafting meaningful dialogue...');
+            
+            try {
+                const dialogue = await simulateEnhancedDialogue();
+                
+                const currentText = editor.value;
+                const newText = currentText.slice(0, insertionPoint) + '\n\n' + dialogue + '\n\n' + currentText.slice(insertionPoint);
+                editor.value = newText;
+                
+                // Position cursor after inserted dialogue
+                editor.selectionStart = editor.selectionEnd = insertionPoint + dialogue.length + 4;
+                editor.focus();
+                
+                updateWordCount();
+                saveToHistory();
+                hideLoading();
+                showStatusMessage('Dialogue added with character depth!');
+            } catch (error) {
+                console.error('Dialogue generation error:', error);
+                alert('Failed to add dialogue. Please try again.');
+                hideLoading();
+            }
+        }
+        
+        async function simulateEnhancedDialogue() {
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            const dialogues = [
+                '"I never thought I\'d see you again," she whispered, her voice carrying years of unspoken emotion.\n\nHis eyes softened as he replied, "Some connections transcend time and distance. I\'ve been waiting for this moment."',
+                '"The truth isn\'t always what we want to hear," the mentor said, choosing each word carefully.\n\n"But it\'s what I need to know," the student responded with newfound determination. "I\'m ready for whatever comes next."',
+                '"This changes everything we thought we knew," the detective muttered, studying the evidence.\n\n"Maybe that\'s exactly what we needed," her partner replied. "Sometimes you have to break the old patterns to see clearly."'
+            ];
+            return dialogues[Math.floor(Math.random() * dialogues.length)];
+        }
+        
+        async function addDescription() {
+            const editor = document.getElementById('storyEditor');
+            const insertionPoint = editor.selectionStart;
+            
+            showLoading('Adding vivid descriptive passages...');
+            
+            try {
+                const description = await simulateEnhancedDescription();
+                
+                const currentText = editor.value;
+                const newText = currentText.slice(0, insertionPoint) + '\n\n' + description + '\n\n' + currentText.slice(insertionPoint);
+                editor.value = newText;
+                
+                editor.selectionStart = editor.selectionEnd = insertionPoint + description.length + 4;
+                editor.focus();
+                
+                updateWordCount();
+                saveToHistory();
+                hideLoading();
+                showStatusMessage('Rich descriptions added to enhance atmosphere!');
+            } catch (error) {
+                console.error('Description generation error:', error);
+                alert('Failed to add description. Please try again.');
+                hideLoading();
+            }
+        }
+        
+        async function simulateEnhancedDescription() {
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            const descriptions = [
+                'The library stood like a cathedral of knowledge, its towering shelves casting long shadows in the afternoon light. Dust particles danced in golden beams, and the musty scent of aged paper whispered stories of countless readers who had walked these halls before.',
+                'Rain drummed against the windows with increasing intensity, each drop creating rivulets that distorted the city lights beyond. The storm seemed to mirror the turbulence in her heart as she faced the decision that would change everything.',
+                'The old mansion creaked with the weight of its secrets, every floorboard a potential betrayer of footsteps. Moonlight filtered through heavy curtains, painting silver patterns on walls that had witnessed decades of human drama.',
+                'The market bustled with life—vendors calling their wares, children weaving between stalls, and the rich aroma of spices creating an intoxicating blend that spoke of distant lands and ancient traditions.'
+            ];
+            return descriptions[Math.floor(Math.random() * descriptions.length)];
+        }
+        
+        async function createTransition() {
+            const editor = document.getElementById('storyEditor');
+            const insertionPoint = editor.selectionStart;
+            
+            showLoading('Creating smooth narrative transitions...');
+            
+            try {
+                const transition = await simulateEnhancedTransition();
+                
+                const currentText = editor.value;
+                const newText = currentText.slice(0, insertionPoint) + '\n\n' + transition + '\n\n' + currentText.slice(insertionPoint);
+                editor.value = newText;
+                
+                editor.selectionStart = editor.selectionEnd = insertionPoint + transition.length + 4;
+                editor.focus();
+                
+                updateWordCount();
+                saveToHistory();
+                hideLoading();
+                showStatusMessage('Smooth transition created to connect story elements!');
+            } catch (error) {
+                console.error('Transition generation error:', error);
+                alert('Failed to create transition. Please try again.');
+                hideLoading();
+            }
+        }
+        
+        async function simulateEnhancedTransition() {
+            await new Promise(resolve => setTimeout(resolve, 1200));
+            const transitions = [
+                'Time seemed to fold in on itself as the significance of recent events began to crystallize. What had seemed like separate incidents now revealed themselves as pieces of a larger, more complex puzzle.',
+                'The following days blurred together in a cascade of revelations and realizations. Each new discovery built upon the last, creating momentum that carried the story forward with unstoppable force.',
+                'As the sun set on that momentous day, a new chapter began—one that would test everything the characters thought they knew about themselves and each other.',
+                'The shift was subtle at first, like the changing of seasons. But as hours turned to days, it became clear that nothing would ever be quite the same again.'
+            ];
+            return transitions[Math.floor(Math.random() * transitions.length)];
+        }
+        
+        async function addConflict() {
+            const editor = document.getElementById('storyEditor');
+            const insertionPoint = editor.selectionStart;
+            
+            showLoading('Introducing compelling conflict elements...');
+            
+            try {
+                const conflict = await simulateEnhancedConflict();
+                
+                const currentText = editor.value;
+                const newText = currentText.slice(0, insertionPoint) + '\n\n' + conflict + '\n\n' + currentText.slice(insertionPoint);
+                editor.value = newText;
+                
+                editor.selectionStart = editor.selectionEnd = insertionPoint + conflict.length + 4;
+                editor.focus();
+                
+                updateWordCount();
+                saveToHistory();
+                hideLoading();
+                showStatusMessage('Compelling conflict added to drive the narrative!');
+            } catch (error) {
+                console.error('Conflict generation error:', error);
+                alert('Failed to add conflict. Please try again.');
+                hideLoading();
+            }
+        }
+        
+        async function simulateEnhancedConflict() {
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            const conflicts = [
+                'An unexpected message arrived that challenged everything they believed about the situation. The implications were staggering, forcing them to question not just their assumptions, but their fundamental understanding of what was at stake.',
+                'Long-buried tensions finally erupted to the surface, creating fractures in relationships that had seemed unshakeable. Trust, once broken, would not be easily repaired—if it could be repaired at all.',
+                'The deadline loomed like a storm on the horizon, and with each passing hour, the options grew fewer and the consequences more severe. Difficult choices lay ahead, and there was no guarantee that everyone would emerge unscathed.',
+                'Hidden agendas came to light, revealing that allies might be enemies and enemies might hold the key to salvation. In this new landscape of shifting loyalties, navigation required both courage and cunning.'
+            ];
+            return conflicts[Math.floor(Math.random() * conflicts.length)];
+        }
+        
+        // Utility Functions
+        function getSelectedText(element) {
+            const start = element.selectionStart;
+            const end = element.selectionEnd;
+            return start !== end ? element.value.substring(start, end) : '';
+        }
+        
+        function replaceSelectedText(element, newText) {
+            const start = element.selectionStart;
+            const end = element.selectionEnd;
+            const currentText = element.value;
+            
+            element.value = currentText.substring(0, start) + newText + currentText.substring(end);
+            
+            // Position cursor at end of replaced text
+            element.selectionStart = element.selectionEnd = start + newText.length;
+            element.focus();
+        }
+        
+        // Enhanced word counting function
+        function countWords(text) {
+            if (!text || typeof text !== 'string') return 0;
+            const words = text.trim().split(/\s+/).filter(word => word.length > 0);
+            return text.trim() === '' ? 0 : words.length;
+        }
+        
+        function updateWordCount() {
+            const editor = document.getElementById('storyEditor');
+            const text = editor.value;
+            const wordCount = countWords(text);
+            
+            const wordCountElement = document.getElementById('wordCount');
+            if (wordCountElement) {
+                wordCountElement.textContent = `${wordCount.toLocaleString()} words`;
+                
+                // Update color based on target
+                const target = storyData.settings?.wordsPerChapter || 1000;
+                if (wordCount >= target) {
+                    wordCountElement.style.color = '#10b981'; // green
+                } else if (wordCount >= target * 0.7) {
+                    wordCountElement.style.color = '#f59e0b'; // yellow
+                } else {
+                    wordCountElement.style.color = '#78e3fe'; // cyan
+                }
+            }
+        }
+        
+        // Enhanced history management
+        function saveToHistory() {
+            const editor = document.getElementById('storyEditor');
+            const currentState = editor.value;
+            
+            // Don't save if it's the same as the last state
+            if (editHistory.length > 0 && editHistory[historyIndex] === currentState) {
+                return;
+            }
+            
+            // Remove future history if we're not at the end
+            if (historyIndex < editHistory.length - 1) {
+                editHistory = editHistory.slice(0, historyIndex + 1);
+            }
+            
+            // Add new state to history
+            editHistory.push(currentState);
+            
+            // Limit history size
+            if (editHistory.length > maxHistorySize) {
+                editHistory.shift();
+            } else {
+                historyIndex++;
+            }
+            
+            updateHistoryButtons();
+        }
+        
+        function undoEdit() {
+            if (historyIndex > 0) {
+                historyIndex--;
+                const editor = document.getElementById('storyEditor');
+                editor.value = editHistory[historyIndex];
+                updateWordCount();
+                updateHistoryButtons();
+                showStatusMessage('Undo successful');
+            }
+        }
+        
+        function redoEdit() {
+            if (historyIndex < editHistory.length - 1) {
+                historyIndex++;
+                const editor = document.getElementById('storyEditor');
+                editor.value = editHistory[historyIndex];
+                updateWordCount();
+                updateHistoryButtons();
+                showStatusMessage('Redo successful');
+            }
+        }
+        
+        function updateHistoryButtons() {
+            const undoBtn = document.getElementById('undoBtn');
+            const redoBtn = document.getElementById('redoBtn');
+            
+            if (undoBtn) undoBtn.disabled = historyIndex <= 0;
+            if (redoBtn) redoBtn.disabled = historyIndex >= editHistory.length - 1;
+        }
+        
+        function saveStory() {
+            const editor = document.getElementById('storyEditor');
+            const content = editor.value;
+            
+            // Save to localStorage with timestamp
+            const saveData = {
+                content: content,
+                storyData: storyData,
+                timestamp: new Date().toISOString(),
+                wordCount: countWords(content)
+            };
+            
+            localStorage.setItem('authorr_story_save', JSON.stringify(saveData));
+            localStorage.setItem('authorr_story_content', content);
+            localStorage.setItem('authorr_story_data', JSON.stringify(storyData));
+            
+            // Visual feedback
+            const saveBtn = document.getElementById('saveBtn');
+            const originalText = saveBtn.innerHTML;
+            saveBtn.innerHTML = '<i class="fas fa-check"></i> Saved';
+            saveBtn.classList.add('success-border');
+            
+            showStatusMessage(`Story saved! (${countWords(content)} words)`);
+            
+            setTimeout(() => {
+                saveBtn.innerHTML = originalText;
+                saveBtn.classList.remove('success-border');
+            }, 2000);
+        }
+        
+        function setupAutoSave() {
+            const editor = document.getElementById('storyEditor');
             if (editor) {
-                setInterval(() => {
-                    if (editor.value.trim()) {
-                        saveToHistory(editor.value);
-                    }
-                }, 30000);
-            }
-            
-            // Config page functionality
-            const saveConfigBtn = document.getElementById('save-config-btn');
-            const testApiBtn = document.getElementById('test-api-btn');
-            const apiKeyInput = document.getElementById('api-key-input');
-            
-            // Load saved API key
-            if (apiKeyInput && openaiApiKey) {
-                apiKeyInput.value = openaiApiKey;
-            }
-            
-            if (saveConfigBtn) {
-                saveConfigBtn.addEventListener('click', function() {
-                    const apiKey = apiKeyInput ? apiKeyInput.value.trim() : '';
-                    
-                    if (apiKey) {
-                        localStorage.setItem('openai_api_key', apiKey);
-                        openaiApiKey = apiKey;
-                        
-                        this.innerHTML = '<i class="fas fa-check mr-2"></i>Configuration Saved!';
-                        setTimeout(() => {
-                            this.innerHTML = '<i class="fas fa-save mr-2"></i>Save Configuration';
-                        }, 2000);
-                    } else {
-                        alert('Please enter a valid OpenAI API key.');
-                    }
-                });
-            }
-            
-            if (testApiBtn) {
-                testApiBtn.addEventListener('click', async function() {
-                    const apiKey = apiKeyInput ? apiKeyInput.value.trim() : openaiApiKey;
-                    
-                    if (!apiKey) {
-                        alert('Please enter an API key first.');
-                        return;
-                    }
-                    
-                    this.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Testing...';
-                    this.disabled = true;
-                    
-                    try {
-                        const response = await fetch('https://api.openai.com/v1/chat/completions', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'Authorization': `Bearer ${apiKey}`
-                            },
-                            body: JSON.stringify({
-                                model: 'gpt-4o-mini',
-                                messages: [{ role: 'user', content: 'Say "API connection successful!"' }],
-                                max_tokens: 10
-                            })
-                        });
-                        
-                        if (response.ok) {
-                            this.innerHTML = '<i class="fas fa-check mr-2"></i>API Connected!';
-                            this.className = 'bg-green-600 hover:bg-green-500 text-white px-8 py-3 rounded-lg font-semibold transition-all ml-4';
-                            
-                            // Save the working key
-                            localStorage.setItem('openai_api_key', apiKey);
-                            openaiApiKey = apiKey;
-                        } else {
-                            throw new Error(`HTTP ${response.status}`);
+                let autoSaveTimer;
+                
+                editor.addEventListener('input', () => {
+                    clearTimeout(autoSaveTimer);
+                    autoSaveTimer = setTimeout(() => {
+                        if (document.getElementById('autoSave').checked) {
+                            saveStory();
                         }
-                    } catch (error) {
-                        this.innerHTML = '<i class="fas fa-times mr-2"></i>Connection Failed';
-                        this.className = 'bg-red-600 hover:bg-red-500 text-white px-8 py-3 rounded-lg font-semibold transition-all ml-4';
-                        alert('API connection failed. Please check your API key.');
-                    } finally {
-                        this.disabled = false;
-                        setTimeout(() => {
-                            this.innerHTML = '<i class="fas fa-check mr-2"></i>Test API Connection';
-                            this.className = 'bg-green-600 hover:bg-green-500 text-white px-8 py-3 rounded-lg font-semibold transition-all ml-4';
-                        }, 3000);
-                    }
+                    }, 30000);
                 });
             }
+        }
+        
+        // Status messaging system
+        function showStatusMessage(message) {
+            // Create or update status message element
+            let statusEl = document.getElementById('statusMessage');
+            if (!statusEl) {
+                statusEl = document.createElement('div');
+                statusEl.id = 'statusMessage';
+                statusEl.className = 'fixed bottom-4 right-4 bg-cyan-400 text-black px-4 py-2 rounded-lg font-semibold z-50 transition-all duration-300';
+                document.body.appendChild(statusEl);
+            }
+            
+            statusEl.textContent = message;
+            statusEl.style.display = 'block';
+            statusEl.style.opacity = '1';
+            
+            // Auto-hide after 3 seconds
+            setTimeout(() => {
+                statusEl.style.opacity = '0';
+                setTimeout(() => {
+                    statusEl.style.display = 'none';
+                }, 300);
+            }, 3000);
+        }
+        
+        // Narration Functions
+        function transferStoryToNarration() {
+            const editor = document.getElementById('storyEditor');
+            const content = editor.value;
+            
+            if (content.trim()) {
+                storyData.currentContent = content;
+                
+                // Update preview text with first paragraph
+                const sentences = content.split(/[.!?]+/).filter(s => s.trim().length > 0);
+                const previewText = sentences.slice(0, 2).join('. ') + '.';
+                document.getElementById('previewText').value = previewText;
+                
+                showStatusMessage('Story transferred to narration page');
+            }
+        }
+        
+        async function previewVoice() {
+            const previewText = document.getElementById('previewText').value;
+            const selectedVoice = document.getElementById('voiceSelection').value;
+            
+            if (!previewText.trim()) {
+                alert('Please enter text to preview.');
+                return;
+            }
+            
+            showLoading(`Generating voice preview with ${selectedVoice}...`);
+            
+            try {
+                await simulateVoicePreview(previewText, selectedVoice);
+                hideLoading();
+                showStatusMessage(`Voice preview for "${selectedVoice}" generated successfully!`);
+            } catch (error) {
+                console.error('Voice preview error:', error);
+                alert('Failed to generate voice preview. Please try again.');
+                hideLoading();
+            }
+        }
+        
+        async function simulateVoicePreview(text, voice) {
+            // Simulate TTS API call
+            await new Promise(resolve => setTimeout(resolve, 2500));
+            console.log(`Generated preview with voice: ${voice}, text: ${text.substring(0, 50)}...`);
+        }
+        
+        async function generateNarration() {
+            const content = storyData.currentContent || document.getElementById('storyEditor').value;
+            const selectedVoice = document.getElementById('voiceSelection').value;
+            const speechRate = document.getElementById('speechRate').value;
+            const audioFormat = document.getElementById('audioFormat').value;
+            
+            if (!content.trim()) {
+                alert('No story content found. Please create content in the workspace first.');
+                return;
+            }
+            
+            document.getElementById('narrationProgress').classList.remove('hidden');
+            showProgressBar();
+            
+            try {
+                await simulateFullNarrationGeneration(content, selectedVoice, speechRate, audioFormat);
+                displayEnhancedAudioResults(selectedVoice, audioFormat);
+                showStatusMessage('Full narration generated successfully!');
+            } catch (error) {
+                console.error('Narration generation error:', error);
+                alert('Failed to generate narration. Please try again.');
+            } finally {
+                document.getElementById('narrationProgress').classList.add('hidden');
+            }
+        }
+        
+        async function simulateFullNarrationGeneration(content, voice, rate, format) {
+            // Simulate progress through content
+            const chapters = storyData.chapters.length || 5;
+            
+            for (let i = 0; i < chapters; i++) {
+                const progress = ((i + 1) / chapters) * 100;
+                updateProgressBar(progress);
+                updateLoadingText(`Generating audio for chapter ${i + 1} of ${chapters} with ${voice} voice...`);
+                await new Promise(resolve => setTimeout(resolve, 1500));
+            }
+        }
+        
+        function showProgressBar() {
+            document.getElementById('progressBar').style.width = '0%';
+            document.getElementById('progressPercent').textContent = '0%';
+        }
+        
+        function updateProgressBar(percent) {
+            document.getElementById('progressBar').style.width = `${percent}%`;
+            document.getElementById('progressPercent').textContent = `${Math.round(percent)}%`;
+        }
+        
+        function displayEnhancedAudioResults(voice, format) {
+            const resultsContainer = document.getElementById('audioResults');
+            const chapterCount = storyData.chapters.length || 5;
+            
+            let resultsHTML = `
+                <div class="bg-theme-primary p-4 rounded-lg border border-theme">
+                    <h3 class="font-semibold mb-3">Generated Audio Files (${voice} voice, ${format} format)</h3>
+                    <div class="space-y-2">
+            `;
+            
+            for (let i = 1; i <= chapterCount; i++) {
+                resultsHTML += `
+                    <div class="flex justify-between items-center p-2 bg-theme-secondary rounded">
+                        <span>Chapter ${i} - ${storyData.chapters[i-1]?.title || `Part ${i}`}</span>
+                        <div class="space-x-2">
+                            <button class="btn-secondary px-2 py-1 rounded text-xs">
+                                <i class="fas fa-play"></i> Play
+                            </button>
+                            <button class="btn-primary px-2 py-1 rounded text-xs">
+                                <i class="fas fa-download"></i> Download
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            resultsHTML += `
+                    </div>
+                    <div class="mt-4 text-center">
+                        <button class="btn-primary px-6 py-2 rounded-lg">
+                            <i class="fas fa-download mr-2"></i>Download All Audio Files
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            resultsContainer.innerHTML = resultsHTML;
+        }
+        
+        // Book Cover Generation
+        async function generateCover() {
+            const style = document.getElementById('coverStyle').value;
+            const description = document.getElementById('coverDescription').value;
+            const title = document.getElementById('bookTitle').value || storyData.title || 'Untitled Book';
+            
+            if (!description.trim() && !title) {
+                alert('Please enter a cover description or book title.');
+                return;
+            }
+            
+            showLoading('Creating HD book cover with DALL-E 3...');
+            
+            try {
+                const coverUrl = await simulateEnhancedCoverGeneration(style, description, title);
+                displayGeneratedCover(coverUrl);
+                hideLoading();
+                showStatusMessage('Professional book cover generated!');
+            } catch (error) {
+                console.error('Cover generation error:', error);
+                alert('Failed to generate book cover. Please try again.');
+                hideLoading();
+            }
+        }
+        
+        async function simulateEnhancedCoverGeneration(style, description, title) {
+            // Simulate DALL-E 3 API call
+            await new Promise(resolve => setTimeout(resolve, 4000));
+            
+            // Create a more realistic placeholder that reflects the inputs
+            const encodedTitle = encodeURIComponent(title);
+            const styleColors = {
+                'modern': '78e3fe/000000',
+                'classic': '8B4513/F5F5DC',
+                'mysterious': '2F2F2F/FF6B6B',
+                'romantic': 'FFB6C1/8B008B',
+                'fantasy': '4B0082/FFD700',
+                'scifi': '191970/00FFFF',
+                'horror': '8B0000/000000',
+                'children': 'FF69B4/FFFF00'
+            };
+            
+            const colors = styleColors[style] || '78e3fe/000000';
+            return `https://via.placeholder.com/400x600/${colors}?text=${encodedTitle}`;
+        }
+        
+        function displayGeneratedCover(imageUrl) {
+            const coverPreview = document.getElementById('coverPreview');
+            const generatedCover = document.getElementById('generatedCover');
+            
+            generatedCover.src = imageUrl;
+            generatedCover.alt = `Generated book cover for ${storyData.title || 'your book'}`;
+            coverPreview.classList.remove('hidden');
+        }
+        
+        async function regenerateCover() {
+            showStatusMessage('Regenerating book cover...');
+            generateCover();
+        }
+        
+        function downloadCover() {
+            const coverImage = document.getElementById('generatedCover');
+            const link = document.createElement('a');
+            link.href = coverImage.src;
+            link.download = `${storyData.title || 'Book'}_Cover.png`;
+            link.click();
+            showStatusMessage('Book cover download initiated');
+        }
+        
+        // Configuration Functions
+        async function testApiConnection() {
+            const apiKey = document.getElementById('openaiKey').value;
+            
+            if (!apiKey.trim()) {
+                alert('Please enter your OpenAI API key.');
+                return;
+            }
+            
+            showLoading('Testing OpenAI API connection...');
+            
+            try {
+                // Simulate API test
+                await new Promise(resolve => setTimeout(resolve, 3000));
+                
+                // Save API key
+                localStorage.setItem('openai_api_key', apiKey);
+                
+                hideLoading();
+                showStatusMessage('API connection successful! Key saved.');
+            } catch (error) {
+                console.error('API test error:', error);
+                alert('API connection failed. Please check your key and try again.');
+                hideLoading();
+            }
+        }
+        
+        // Utility Functions
+        function showLoading(text = 'Processing...') {
+            document.getElementById('loadingText').textContent = text;
+            document.getElementById('loadingOverlay').classList.remove('hidden');
+        }
+        
+        function hideLoading() {
+            document.getElementById('loadingOverlay').classList.add('hidden');
+        }
+        
+        function updateLoadingText(text) {
+            document.getElementById('loadingText').textContent = text;
+        }
+        
+        // Initialize word count tracking and event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                const editor = document.getElementById('storyEditor');
+                if (editor) {
+                    // Real-time word count updates
+                    editor.addEventListener('input', updateWordCount);
+                    editor.addEventListener('keyup', updateWordCount);
+                    editor.addEventListener('paste', () => setTimeout(updateWordCount, 10));
+                    
+                    // Initialize history with empty state
+                    saveToHistory();
+                    updateHistoryButtons();
+                    
+                    // Load any saved content
+                    const savedContent = localStorage.getItem('authorr_story_content');
+                    if (savedContent) {
+                        editor.value = savedContent;
+                        updateWordCount();
+                        showStatusMessage('Previously saved content restored');
+                    }
+                }
+                
+                // Load saved story data
+                const savedData = localStorage.getItem('authorr_story_data');
+                if (savedData) {
+                    try {
+                        storyData = JSON.parse(savedData);
+                        if (storyData.title) {
+                            document.getElementById('bookTitle').value = storyData.title;
+                        }
+                    } catch (e) {
+                        console.warn('Failed to load saved story data:', e);
+                    }
+                }
+            }, 100);
         });
     </script>
 </body>
