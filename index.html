@@ -570,9 +570,9 @@
                     <div class="space-y-6">
                         <div>
                             <label class="block text-sm font-medium text-gray-300 mb-2">OpenAI API Key</label>
-                            <input type="password" placeholder="sk-proj-..." 
+                            <input type="password" id="api-key-input" placeholder="sk-proj-..." 
                                 class="form-field-glow w-full rounded px-3 py-2 focus:border-cyan-300">
-                            <p class="text-xs text-gray-400 mt-1">Your API key is encrypted and stored securely</p>
+                            <p class="text-xs text-gray-400 mt-1">Your API key is stored locally and securely</p>
                         </div>
                         
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -617,8 +617,11 @@
                         </div>
                         
                         <div class="text-center">
-                            <button class="bg-cyan-600 hover:bg-cyan-500 text-white px-8 py-3 rounded-lg font-semibold transition-all">
+                            <button id="save-config-btn" class="bg-cyan-600 hover:bg-cyan-500 text-white px-8 py-3 rounded-lg font-semibold transition-all">
                                 <i class="fas fa-save mr-2"></i>Save Configuration
+                            </button>
+                            <button id="test-api-btn" class="bg-green-600 hover:bg-green-500 text-white px-8 py-3 rounded-lg font-semibold transition-all ml-4">
+                                <i class="fas fa-check mr-2"></i>Test API Connection
                             </button>
                         </div>
                     </div>
@@ -836,25 +839,135 @@
                 });
             }
 
+            // OpenAI API Configuration
+            let openaiApiKey = localStorage.getItem('openai_api_key') || '';
+            
+            async function callOpenAI(prompt, maxTokens = 1000) {
+                if (!openaiApiKey) {
+                    alert('Please configure your OpenAI API key in the Config page first.');
+                    document.querySelector('a[href="#config"]').click();
+                    return null;
+                }
+                
+                try {
+                    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${openaiApiKey}`
+                        },
+                        body: JSON.stringify({
+                            model: 'gpt-4o-mini',
+                            messages: [
+                                {
+                                    role: 'user',
+                                    content: prompt
+                                }
+                            ],
+                            max_tokens: maxTokens,
+                            temperature: 0.7
+                        })
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`OpenAI API error: ${response.status}`);
+                    }
+                    
+                    const data = await response.json();
+                    return data.choices[0].message.content;
+                } catch (error) {
+                    console.error('OpenAI API Error:', error);
+                    alert('Error connecting to OpenAI. Please check your API key and try again.');
+                    return null;
+                }
+            }
+            
             // AI Writing Tools functionality
             const aiTools = {
-                'generate-ideas-btn': function() {
-                    alert('AI Idea Generation will connect to OpenAI GPT-4o-mini for creative writing prompts.');
+                'generate-ideas-btn': async function() {
+                    const prompt = "Generate 5 creative writing ideas for a story. Include different genres and interesting plot hooks. Format as a numbered list.";
+                    const ideas = await callOpenAI(prompt);
+                    if (ideas && editor) {
+                        editor.value += '\n\n--- STORY IDEAS ---\n' + ideas + '\n';
+                        updateWordCount();
+                    }
                 },
-                'create-outline-btn': function() {
-                    alert('AI Outline Creation will use OpenAI to structure your story chapters.');
+                'create-outline-btn': async function() {
+                    const currentText = editor ? editor.value : '';
+                    const prompt = `Based on this text: "${currentText.substring(0, 500)}", create a detailed story outline with 5-10 chapters. Include chapter titles and brief descriptions.`;
+                    const outline = await callOpenAI(prompt, 1500);
+                    if (outline && editor) {
+                        editor.value += '\n\n--- STORY OUTLINE ---\n' + outline + '\n';
+                        updateWordCount();
+                    }
                 },
-                'expand-text-btn': function() {
-                    alert('AI Text Expansion will enhance selected text with detailed descriptions.');
+                'expand-text-btn': async function() {
+                    const selectedText = editor.value.substring(editor.selectionStart, editor.selectionEnd);
+                    const textToExpand = selectedText || editor.value.split('\n').pop();
+                    
+                    if (!textToExpand.trim()) {
+                        alert('Please select text or write something to expand.');
+                        return;
+                    }
+                    
+                    const prompt = `Expand and enhance this text with more detail, dialogue, and description: "${textToExpand}"`;
+                    const expanded = await callOpenAI(prompt);
+                    if (expanded) {
+                        if (selectedText) {
+                            // Replace selected text
+                            const start = editor.selectionStart;
+                            const end = editor.selectionEnd;
+                            editor.value = editor.value.substring(0, start) + expanded + editor.value.substring(end);
+                        } else {
+                            editor.value += '\n\n' + expanded;
+                        }
+                        updateWordCount();
+                    }
                 },
-                'summarize-btn': function() {
-                    alert('AI Summarization will condense your text while preserving key points.');
+                'summarize-btn': async function() {
+                    const currentText = editor ? editor.value : '';
+                    if (!currentText.trim()) {
+                        alert('Please write some content to summarize.');
+                        return;
+                    }
+                    
+                    const prompt = `Summarize this text into key points: "${currentText}"`;
+                    const summary = await callOpenAI(prompt);
+                    if (summary) {
+                        editor.value += '\n\n--- SUMMARY ---\n' + summary + '\n';
+                        updateWordCount();
+                    }
                 },
-                'rewrite-btn': function() {
-                    alert('AI Rewriting will improve sentence structure and flow.');
+                'rewrite-btn': async function() {
+                    const selectedText = editor.value.substring(editor.selectionStart, editor.selectionEnd);
+                    const textToRewrite = selectedText || editor.value;
+                    
+                    if (!textToRewrite.trim()) {
+                        alert('Please select text or write something to rewrite.');
+                        return;
+                    }
+                    
+                    const prompt = `Rewrite this text to improve clarity, flow, and engagement: "${textToRewrite}"`;
+                    const rewritten = await callOpenAI(prompt);
+                    if (rewritten) {
+                        if (selectedText) {
+                            // Replace selected text
+                            const start = editor.selectionStart;
+                            const end = editor.selectionEnd;
+                            editor.value = editor.value.substring(0, start) + rewritten + editor.value.substring(end);
+                        } else {
+                            editor.value = rewritten;
+                        }
+                        updateWordCount();
+                    }
                 },
-                'character-builder-btn': function() {
-                    alert('AI Character Builder will create detailed character profiles and backgrounds.');
+                'character-builder-btn': async function() {
+                    const prompt = "Create a detailed character profile for a story character. Include name, background, personality traits, motivations, and physical description.";
+                    const character = await callOpenAI(prompt);
+                    if (character && editor) {
+                        editor.value += '\n\n--- CHARACTER PROFILE ---\n' + character + '\n';
+                        updateWordCount();
+                    }
                 }
             };
 
@@ -868,10 +981,10 @@
                 }
             });
 
-            // Chapter form submission
+            // Chapter form submission with AI generation
             const chapterForm = document.getElementById('chapter-form');
             if (chapterForm) {
-                chapterForm.addEventListener('submit', function(e) {
+                chapterForm.addEventListener('submit', async function(e) {
                     e.preventDefault();
                     
                     const formData = {
@@ -890,34 +1003,159 @@
                         return;
                     }
                     
-                    // Show chapter planning section
-                    const planningSection = document.getElementById('chapter-planning');
-                    const outlineContainer = document.getElementById('chapter-outlines');
+                    const createBtn = document.getElementById('create-chapter-btn');
+                    createBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Generating with AI...';
+                    createBtn.disabled = true;
                     
-                    // Generate demo chapters based on form data
-                    const chapterCount = parseInt(formData.chapters) || 5;
-                    let chaptersHTML = '';
-                    
-                    for (let i = 1; i <= chapterCount; i++) {
-                        chaptersHTML += `
-                            <div class="bg-gray-700 p-6 rounded-lg border border-gray-600 mb-4">
-                                <div class="mb-4">
-                                    <label class="block text-sm font-medium text-cyan-400 mb-2">Chapter ${i} Title</label>
-                                    <input type="text" value="Chapter ${i}: The Journey Begins" class="form-field-glow w-full rounded px-3 py-2">
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-cyan-400 mb-2">Chapter Outline</label>
-                                    <textarea class="form-field-glow w-full rounded px-3 py-2 h-24 resize-none">This chapter will introduce key elements of the ${formData.genre} story, targeting ${formData.audience} readers with a ${formData.tone} tone. Approximately ${formData.wordsPerChapter || '1000'} words.</textarea>
-                                </div>
-                            </div>
-                        `;
+                    try {
+                        // Generate AI chapter plan
+                        const chapterCount = parseInt(formData.chapters) || 5;
+                        const prompt = `Create a detailed chapter plan for a book titled "${formData.title}" by ${formData.author}. 
+                        
+Book Description: ${formData.description}
+Genre: ${formData.genre}
+Tone: ${formData.tone}
+Target Audience: ${formData.audience}
+Number of Chapters: ${chapterCount}
+Words per Chapter: ${formData.wordsPerChapter}
+
+Generate ${chapterCount} chapter outlines. For each chapter, provide:
+1. Chapter title
+2. Brief summary (2-3 sentences)
+3. Key plot points
+
+Format each chapter as:
+Chapter X: [Title]
+Summary: [Summary]
+---`;
+
+                        const aiChapterPlan = await callOpenAI(prompt, 2000);
+                        
+                        if (aiChapterPlan) {
+                            const planningSection = document.getElementById('chapter-planning');
+                            const outlineContainer = document.getElementById('chapter-outlines');
+                            
+                            // Parse AI response and create editable chapters
+                            const chapters = parseChapterPlan(aiChapterPlan, chapterCount);
+                            let chaptersHTML = '';
+                            
+                            chapters.forEach((chapter, i) => {
+                                chaptersHTML += `
+                                    <div class="bg-gray-700 p-6 rounded-lg border border-gray-600 mb-4">
+                                        <div class="mb-4">
+                                            <label class="block text-sm font-medium text-cyan-400 mb-2">Chapter ${i + 1} Title</label>
+                                            <input type="text" value="${chapter.title}" class="form-field-glow w-full rounded px-3 py-2">
+                                        </div>
+                                        <div class="mb-4">
+                                            <label class="block text-sm font-medium text-cyan-400 mb-2">Chapter Outline</label>
+                                            <textarea class="form-field-glow w-full rounded px-3 py-2 h-24 resize-none">${chapter.summary}</textarea>
+                                        </div>
+                                        <button onclick="generateChapterContent(${i + 1})" class="bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 rounded transition-all">
+                                            <i class="fas fa-magic mr-1"></i>Generate Chapter ${i + 1} Story
+                                        </button>
+                                    </div>
+                                `;
+                            });
+                            
+                            outlineContainer.innerHTML = chaptersHTML;
+                            planningSection.style.display = 'block';
+                            planningSection.scrollIntoView({ behavior: 'smooth' });
+                        }
+                    } catch (error) {
+                        console.error('Chapter generation error:', error);
+                        alert('Failed to generate chapter plan. Please check your API key.');
+                    } finally {
+                        createBtn.innerHTML = '<i class="fas fa-plus mr-2"></i>Create Chapter Plan';
+                        createBtn.disabled = false;
                     }
-                    
-                    outlineContainer.innerHTML = chaptersHTML;
-                    planningSection.style.display = 'block';
-                    planningSection.scrollIntoView({ behavior: 'smooth' });
                 });
             }
+            
+            // Parse AI chapter plan response
+            function parseChapterPlan(aiResponse, expectedChapters) {
+                const chapters = [];
+                const lines = aiResponse.split('\n');
+                let currentChapter = { title: '', summary: '' };
+                
+                for (let line of lines) {
+                    if (line.includes('Chapter') && line.includes(':')) {
+                        if (currentChapter.title) {
+                            chapters.push({ ...currentChapter });
+                        }
+                        currentChapter = {
+                            title: line.replace(/Chapter \d+:\s*/, '').trim(),
+                            summary: ''
+                        };
+                    } else if (line.includes('Summary:')) {
+                        currentChapter.summary = line.replace('Summary:', '').trim();
+                    } else if (line.trim() && currentChapter.title && !currentChapter.summary) {
+                        currentChapter.summary = line.trim();
+                    }
+                }
+                
+                if (currentChapter.title) {
+                    chapters.push(currentChapter);
+                }
+                
+                // Ensure we have the expected number of chapters
+                while (chapters.length < expectedChapters) {
+                    chapters.push({
+                        title: `Chapter ${chapters.length + 1}`,
+                        summary: 'Chapter summary to be developed...'
+                    });
+                }
+                
+                return chapters.slice(0, expectedChapters);
+            }
+            
+            // Generate individual chapter content
+            window.generateChapterContent = async function(chapterNumber) {
+                const chapterDiv = event.target.closest('.bg-gray-700');
+                const title = chapterDiv.querySelector('input').value;
+                const outline = chapterDiv.querySelector('textarea').value;
+                
+                const btn = event.target;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Generating...';
+                btn.disabled = true;
+                
+                try {
+                    const prompt = `Write a complete chapter based on this information:
+Chapter Title: ${title}
+Chapter Outline: ${outline}
+
+Write a full chapter story (approximately 1000-1500 words) with:
+- Engaging narrative
+- Dialogue
+- Descriptive scenes
+- Character development
+- Proper story flow
+
+Make it professional and engaging for readers.`;
+
+                    const chapterContent = await callOpenAI(prompt, 2000);
+                    
+                    if (chapterContent) {
+                        // Switch to workspace and add content
+                        document.querySelector('a[href="#workspace"]').click();
+                        
+                        setTimeout(() => {
+                            const editor = document.getElementById('manuscript-editor');
+                            const chapterTitle = document.getElementById('chapter-title');
+                            
+                            if (chapterTitle) chapterTitle.value = title;
+                            if (editor) {
+                                editor.value = chapterContent;
+                                updateWordCount();
+                            }
+                        }, 100);
+                    }
+                } catch (error) {
+                    alert('Failed to generate chapter content. Please try again.');
+                } finally {
+                    btn.innerHTML = `<i class="fas fa-magic mr-1"></i>Generate Chapter ${chapterNumber} Story`;
+                    btn.disabled = false;
+                }
+            };
 
             // Cover generation
             const generateCoverBtn = document.getElementById('generate-cover-btn');
@@ -954,6 +1192,84 @@
                         saveToHistory(editor.value);
                     }
                 }, 30000);
+            }
+            
+            // Config page functionality
+            const saveConfigBtn = document.getElementById('save-config-btn');
+            const testApiBtn = document.getElementById('test-api-btn');
+            const apiKeyInput = document.getElementById('api-key-input');
+            
+            // Load saved API key
+            if (apiKeyInput && openaiApiKey) {
+                apiKeyInput.value = openaiApiKey;
+            }
+            
+            if (saveConfigBtn) {
+                saveConfigBtn.addEventListener('click', function() {
+                    const apiKey = apiKeyInput ? apiKeyInput.value.trim() : '';
+                    
+                    if (apiKey) {
+                        localStorage.setItem('openai_api_key', apiKey);
+                        openaiApiKey = apiKey;
+                        
+                        this.innerHTML = '<i class="fas fa-check mr-2"></i>Configuration Saved!';
+                        setTimeout(() => {
+                            this.innerHTML = '<i class="fas fa-save mr-2"></i>Save Configuration';
+                        }, 2000);
+                    } else {
+                        alert('Please enter a valid OpenAI API key.');
+                    }
+                });
+            }
+            
+            if (testApiBtn) {
+                testApiBtn.addEventListener('click', async function() {
+                    const apiKey = apiKeyInput ? apiKeyInput.value.trim() : openaiApiKey;
+                    
+                    if (!apiKey) {
+                        alert('Please enter an API key first.');
+                        return;
+                    }
+                    
+                    this.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Testing...';
+                    this.disabled = true;
+                    
+                    try {
+                        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${apiKey}`
+                            },
+                            body: JSON.stringify({
+                                model: 'gpt-4o-mini',
+                                messages: [{ role: 'user', content: 'Say "API connection successful!"' }],
+                                max_tokens: 10
+                            })
+                        });
+                        
+                        if (response.ok) {
+                            this.innerHTML = '<i class="fas fa-check mr-2"></i>API Connected!';
+                            this.className = 'bg-green-600 hover:bg-green-500 text-white px-8 py-3 rounded-lg font-semibold transition-all ml-4';
+                            
+                            // Save the working key
+                            localStorage.setItem('openai_api_key', apiKey);
+                            openaiApiKey = apiKey;
+                        } else {
+                            throw new Error(`HTTP ${response.status}`);
+                        }
+                    } catch (error) {
+                        this.innerHTML = '<i class="fas fa-times mr-2"></i>Connection Failed';
+                        this.className = 'bg-red-600 hover:bg-red-500 text-white px-8 py-3 rounded-lg font-semibold transition-all ml-4';
+                        alert('API connection failed. Please check your API key.');
+                    } finally {
+                        this.disabled = false;
+                        setTimeout(() => {
+                            this.innerHTML = '<i class="fas fa-check mr-2"></i>Test API Connection';
+                            this.className = 'bg-green-600 hover:bg-green-500 text-white px-8 py-3 rounded-lg font-semibold transition-all ml-4';
+                        }, 3000);
+                    }
+                });
             }
         });
     </script>
