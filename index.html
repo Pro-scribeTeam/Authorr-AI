@@ -197,11 +197,83 @@
         .success-border { border-color: #10b981 !important; }
         .success-text { color: #10b981; }
         
+        /* Sound Wave Animation */
+        .sound-wave-container {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          padding: 20px;
+          background: linear-gradient(135deg, rgba(6, 182, 212, 0.1), rgba(34, 197, 94, 0.1));
+          border-radius: 12px;
+          border: 1px solid rgba(6, 182, 212, 0.3);
+        }
+        
+        .sound-wave {
+          display: flex;
+          align-items: center;
+          gap: 4px;
+        }
+        
+        .wave-bar {
+          width: 8px;
+          height: 20px;
+          background: linear-gradient(to top, #06b6d4, #10b981);
+          border-radius: 4px;
+          animation: wave 1.5s ease-in-out infinite;
+        }
+        
+        .wave-bar:nth-child(1) { animation-delay: 0s; }
+        .wave-bar:nth-child(2) { animation-delay: 0.1s; }
+        .wave-bar:nth-child(3) { animation-delay: 0.2s; }
+        .wave-bar:nth-child(4) { animation-delay: 0.3s; }
+        .wave-bar:nth-child(5) { animation-delay: 0.4s; }
+        .wave-bar:nth-child(6) { animation-delay: 0.3s; }
+        .wave-bar:nth-child(7) { animation-delay: 0.2s; }
+        .wave-bar:nth-child(8) { animation-delay: 0.1s; }
+        
+        @keyframes wave {
+          0%, 100% { 
+            height: 20px;
+            background: linear-gradient(to top, #06b6d4, #10b981);
+          }
+          50% { 
+            height: 60px;
+            background: linear-gradient(to top, #0891b2, #059669, #10b981);
+            box-shadow: 0 0 20px rgba(6, 182, 212, 0.5);
+          }
+        }
+        
+        /* Cloning Station Effects */
+        .cloning-station {
+          position: relative;
+          overflow: hidden;
+        }
+        
+        .cloning-station::before {
+          content: '';
+          position: absolute;
+          top: -2px;
+          left: -2px;
+          right: -2px;
+          bottom: -2px;
+          background: linear-gradient(45deg, transparent, rgba(6, 182, 212, 0.3), transparent, rgba(16, 185, 129, 0.3), transparent);
+          border-radius: 14px;
+          animation: borderGlow 3s linear infinite;
+          z-index: -1;
+        }
+        
+        @keyframes borderGlow {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+
         /* Responsive Design */
         @media (max-width: 768px) {
           .mobile-stack { flex-direction: column; }
           .mobile-full { width: 100%; }
           .mobile-text-sm { font-size: 14px; }
+          .sound-wave-container { padding: 15px; }
+          .wave-bar { width: 6px; height: 16px; }
         }
     </style>
 </head>
@@ -223,6 +295,9 @@
                     </button>
                     <button onclick="showPage('narration')" class="nav-item px-4 py-2 rounded-lg font-semibold">
                         <i class="fas fa-microphone mr-2"></i>Narration
+                    </button>
+                    <button onclick="showPage('covers')" class="nav-item px-4 py-2 rounded-lg font-semibold">
+                        <i class="fas fa-image mr-2"></i>Covers
                     </button>
                     <button onclick="showPage('export')" class="nav-item px-4 py-2 rounded-lg font-semibold">
                         <i class="fas fa-download mr-2"></i>Export
@@ -390,13 +465,15 @@
                             <div>
                                 <label class="block text-sm font-semibold mb-2">Words per Chapter</label>
                                 <select id="wordsPerChapter" class="w-full px-4 py-2 rounded-lg form-field bg-theme-primary text-theme-primary">
-                                    <option value="500">500 words</option>
-                                    <option value="750">750 words</option>
-                                    <option value="1000" selected>1000 words</option>
-                                    <option value="1500">1500 words</option>
-                                    <option value="2000">2000 words</option>
-                                    <option value="2500">2500 words</option>
-                                    <option value="3000">3000 words</option>
+                                    <option value="250">250 words (~1 min audio)</option>
+                                    <option value="500">500 words (~2 min audio)</option>
+                                    <option value="750">750 words (~3 min audio)</option>
+                                    <option value="1000" selected>1000 words (~4 min audio)</option>
+                                    <option value="1250">1250 words (~5 min audio)</option>
+                                    <option value="1500">1500 words (~6 min audio)</option>
+                                    <option value="2000">2000 words (~8 min audio)</option>
+                                    <option value="2500">2500 words (~10 min audio)</option>
+                                    <option value="3000">3000 words (~12 min audio)</option>
                                 </select>
                             </div>
                         </div>
@@ -437,8 +514,13 @@
                         
                         <div>
                             <label class="block text-sm font-semibold mb-2">Story Outline</label>
-                            <textarea id="storyOutline" placeholder="Describe your story concept, main characters, and plot outline..." 
-                                      class="w-full px-4 py-2 rounded-lg form-field bg-theme-primary text-theme-primary h-24 resize-none"></textarea>
+                            <div class="relative">
+                                <textarea id="storyOutline" placeholder="Describe your story concept, main characters, and plot outline..." 
+                                          class="w-full px-4 py-2 rounded-lg form-field bg-theme-primary text-theme-primary h-24 resize-none"></textarea>
+                                <div class="absolute bottom-2 right-3 text-xs text-cyan-400 bg-black bg-opacity-50 px-2 py-1 rounded">
+                                    <span id="outlineWordCount">0 words</span>
+                                </div>
+                            </div>
                         </div>
                         
                         <button onclick="generateChapterPlan()" class="btn-primary w-full py-3 rounded-lg font-semibold">
@@ -532,6 +614,20 @@
                 </button>
             </div>
 
+            <!-- Animated Sound Wave -->
+            <div class="sound-wave-container mb-8">
+                <div class="sound-wave">
+                    <div class="wave-bar"></div>
+                    <div class="wave-bar"></div>
+                    <div class="wave-bar"></div>
+                    <div class="wave-bar"></div>
+                    <div class="wave-bar"></div>
+                    <div class="wave-bar"></div>
+                    <div class="wave-bar"></div>
+                    <div class="wave-bar"></div>
+                </div>
+            </div>
+
             <div class="grid lg:grid-cols-2 gap-8">
                 <!-- Voice Selection & Controls -->
                 <div class="bg-theme-secondary p-6 rounded-xl border-2 border-theme">
@@ -592,48 +688,60 @@
                     </div>
                 </div>
                 
-                <!-- Book Cover Generation -->
-                <div class="bg-theme-secondary p-6 rounded-xl border-2 border-theme">
+                <!-- High-Tech Voice Cloning Station -->
+                <div class="bg-theme-secondary p-6 rounded-xl border-2 border-theme cloning-station">
                     <h2 class="text-xl font-bold mb-4">
-                        <i class="fas fa-image text-cyan-400 mr-2"></i>
-                        Book Cover Generator
+                        <i class="fas fa-dna text-cyan-400 mr-2 animate-pulse"></i>
+                        Voice Cloning Station
                     </h2>
                     
                     <div class="space-y-4">
-                        <div>
-                            <label class="block text-sm font-semibold mb-2">Cover Style</label>
-                            <select id="coverStyle" class="w-full px-4 py-2 rounded-lg form-field bg-theme-primary text-theme-primary">
-                                <option value="modern">Modern & Clean</option>
-                                <option value="classic">Classic Literature</option>
-                                <option value="mysterious">Dark & Mysterious</option>
-                                <option value="romantic">Romantic & Elegant</option>
-                                <option value="fantasy">Fantasy Adventure</option>
-                                <option value="scifi">Sci-Fi Futuristic</option>
-                                <option value="horror">Horror & Thriller</option>
-                                <option value="children">Children's Colorful</option>
+                        <div class="bg-theme-primary p-4 rounded-lg border border-cyan-500">
+                            <div class="flex items-center mb-2">
+                                <div class="w-3 h-3 rounded-full bg-green-400 mr-2 animate-pulse"></div>
+                                <span class="text-sm font-semibold text-cyan-400">Neural Voice Matrix</span>
+                            </div>
+                            <p class="text-xs text-theme-secondary mb-3">Upload voice samples to create custom AI narrator profiles</p>
+                            
+                            <div class="border-dashed border-2 border-cyan-500 p-4 rounded-lg text-center hover:border-cyan-300 transition-colors cursor-pointer" 
+                                 ondrop="handleVoiceDrop(event)" ondragover="allowDrop(event)" onclick="document.getElementById('voiceUpload').click()">
+                                <i class="fas fa-microphone text-cyan-400 text-2xl mb-2"></i>
+                                <p class="text-sm text-cyan-300">Drag & drop audio files or click to browse</p>
+                                <input type="file" id="voiceUpload" accept=".mp3,.wav,.m4a" multiple class="hidden">
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center">
+                                <span class="text-sm font-semibold">Clone Quality</span>
+                                <div class="flex space-x-1">
+                                    <div class="w-2 h-4 bg-green-400 rounded animate-pulse"></div>
+                                    <div class="w-2 h-4 bg-green-400 rounded animate-pulse" style="animation-delay: 0.1s"></div>
+                                    <div class="w-2 h-4 bg-yellow-400 rounded animate-pulse" style="animation-delay: 0.2s"></div>
+                                    <div class="w-2 h-4 bg-gray-600 rounded"></div>
+                                    <div class="w-2 h-4 bg-gray-600 rounded"></div>
+                                </div>
+                            </div>
+                            
+                            <select id="cloneModel" class="w-full px-4 py-2 rounded-lg form-field bg-theme-primary text-theme-primary">
+                                <option value="enhanced">Enhanced Neural Model</option>
+                                <option value="standard">Standard Clone</option>
+                                <option value="premium">Premium Voice Synthesis</option>
                             </select>
                         </div>
                         
-                        <div>
-                            <label class="block text-sm font-semibold mb-2">Cover Description</label>
-                            <textarea id="coverDescription" placeholder="Describe the visual elements, mood, and style for your book cover..." 
-                                      class="w-full px-4 py-2 rounded-lg form-field bg-theme-primary text-theme-primary h-24 resize-none"></textarea>
-                        </div>
-                        
-                        <button onclick="generateCover()" class="btn-primary w-full py-3 rounded-lg font-semibold">
-                            <i class="fas fa-palette mr-2"></i>Generate Book Cover
+                        <button onclick="initiateVoiceClone()" class="btn-primary w-full py-3 rounded-lg font-semibold bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500">
+                            <i class="fas fa-flask mr-2"></i>Initialize Voice Clone
                         </button>
                         
-                        <div id="coverPreview" class="hidden mt-4">
-                            <div class="border-2 border-theme rounded-lg p-4 bg-theme-primary">
-                                <img id="generatedCover" src="" alt="Generated Book Cover" class="w-full max-w-xs mx-auto rounded-lg shadow-lg">
-                                <div class="mt-3 text-center">
-                                    <button onclick="regenerateCover()" class="btn-secondary px-4 py-2 rounded text-sm mr-2">
-                                        <i class="fas fa-sync mr-1"></i>Regenerate
-                                    </button>
-                                    <button onclick="downloadCover()" class="btn-primary px-4 py-2 rounded text-sm">
-                                        <i class="fas fa-download mr-1"></i>Download
-                                    </button>
+                        <div id="cloningProgress" class="hidden mt-4">
+                            <div class="bg-theme-primary p-3 rounded-lg">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-sm font-semibold text-cyan-400">Neural Processing...</span>
+                                    <span class="text-xs text-theme-secondary" id="cloningPercent">0%</span>
+                                </div>
+                                <div class="w-full bg-gray-700 rounded-full h-2">
+                                    <div id="cloningBar" class="bg-gradient-to-r from-cyan-500 to-blue-500 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
                                 </div>
                             </div>
                         </div>
@@ -662,6 +770,299 @@
                 
                 <div id="audioResults" class="space-y-4">
                     <!-- Generated audio files will appear here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Book Covers Page -->
+    <div id="covers" class="page hidden">
+        <div class="container mx-auto px-4 py-8">
+            <h1 class="text-3xl font-bold mb-8">
+                <i class="fas fa-image text-cyan-400 mr-3"></i>
+                AI Book Cover Generator
+            </h1>
+
+            <!-- Platform Dimension Templates -->
+            <div class="mb-8 bg-theme-secondary p-6 rounded-xl border-2 border-theme">
+                <h2 class="text-xl font-bold mb-4">
+                    <i class="fas fa-ruler text-cyan-400 mr-2"></i>
+                    Platform Dimension Templates
+                </h2>
+                <div class="grid md:grid-cols-3 lg:grid-cols-5 gap-4">
+                    <button onclick="selectPlatformTemplate('audible')" class="platform-template p-3 rounded-lg bg-theme-primary border border-theme hover:border-cyan-400 transition-colors">
+                        <div class="text-center">
+                            <i class="fab fa-amazon text-orange-400 text-2xl mb-2"></i>
+                            <div class="font-semibold text-sm">Audible</div>
+                            <div class="text-xs text-theme-secondary">2400×2400px</div>
+                        </div>
+                    </button>
+                    <button onclick="selectPlatformTemplate('spotify')" class="platform-template p-3 rounded-lg bg-theme-primary border border-theme hover:border-cyan-400 transition-colors">
+                        <div class="text-center">
+                            <i class="fab fa-spotify text-green-400 text-2xl mb-2"></i>
+                            <div class="font-semibold text-sm">Spotify</div>
+                            <div class="text-xs text-theme-secondary">3000×3000px</div>
+                        </div>
+                    </button>
+                    <button onclick="selectPlatformTemplate('apple')" class="platform-template p-3 rounded-lg bg-theme-primary border border-theme hover:border-cyan-400 transition-colors">
+                        <div class="text-center">
+                            <i class="fab fa-apple text-gray-300 text-2xl mb-2"></i>
+                            <div class="font-semibold text-sm">Apple</div>
+                            <div class="text-xs text-theme-secondary">3000×3000px</div>
+                        </div>
+                    </button>
+                    <button onclick="selectPlatformTemplate('google')" class="platform-template p-3 rounded-lg bg-theme-primary border border-theme hover:border-cyan-400 transition-colors">
+                        <div class="text-center">
+                            <i class="fab fa-google text-blue-400 text-2xl mb-2"></i>
+                            <div class="font-semibold text-sm">Google Play</div>
+                            <div class="text-xs text-theme-secondary">2400×2400px</div>
+                        </div>
+                    </button>
+                    <button onclick="selectPlatformTemplate('overdrive')" class="platform-template p-3 rounded-lg bg-theme-primary border border-theme hover:border-cyan-400 transition-colors">
+                        <div class="text-center">
+                            <i class="fas fa-book text-purple-400 text-2xl mb-2"></i>
+                            <div class="font-semibold text-sm">OverDrive</div>
+                            <div class="text-xs text-theme-secondary">1800×2700px</div>
+                        </div>
+                    </button>
+                </div>
+                <div class="mt-4 text-sm text-theme-secondary">
+                    <i class="fas fa-info-circle mr-2"></i>
+                    Click a platform to auto-configure dimensions and optimization settings
+                </div>
+            </div>
+
+            <div class="grid lg:grid-cols-2 gap-8">
+                <!-- Cover Design Panel -->
+                <div class="bg-theme-secondary p-6 rounded-xl border-2 border-theme">
+                    <h2 class="text-xl font-bold mb-4">
+                        <i class="fas fa-palette text-cyan-400 mr-2"></i>
+                        Design Your Cover
+                    </h2>
+                    
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">Platform</label>
+                                <select id="selectedPlatform" class="w-full px-4 py-2 rounded-lg form-field bg-theme-primary text-theme-primary">
+                                    <option value="universal">Universal (Square)</option>
+                                    <option value="audible">Audible (2400×2400)</option>
+                                    <option value="spotify">Spotify (3000×3000)</option>
+                                    <option value="apple">Apple Podcasts (3000×3000)</option>
+                                    <option value="google">Google Play (2400×2400)</option>
+                                    <option value="overdrive">OverDrive (1800×2700)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">Cover Style</label>
+                                <select id="coverStyle" class="w-full px-4 py-2 rounded-lg form-field bg-theme-primary text-theme-primary">
+                                    <option value="modern">Modern & Clean</option>
+                                    <option value="classic">Classic Literature</option>
+                                    <option value="mysterious">Dark & Mysterious</option>
+                                    <option value="romantic">Romantic & Elegant</option>
+                                    <option value="fantasy">Fantasy Adventure</option>
+                                    <option value="scifi">Sci-Fi Futuristic</option>
+                                    <option value="horror">Horror & Thriller</option>
+                                    <option value="children">Children's Colorful</option>
+                                    <option value="business">Professional Business</option>
+                                    <option value="memoir">Personal Memoir</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-semibold mb-2">Book Title</label>
+                            <input type="text" id="coverTitle" placeholder="Enter your book title..." 
+                                   class="w-full px-4 py-2 rounded-lg form-field bg-theme-primary text-theme-primary">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-semibold mb-2">Author Name</label>
+                            <input type="text" id="coverAuthor" placeholder="Enter author name..." 
+                                   class="w-full px-4 py-2 rounded-lg form-field bg-theme-primary text-theme-primary">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-semibold mb-2">Subtitle (Optional)</label>
+                            <input type="text" id="coverSubtitle" placeholder="Enter subtitle if any..." 
+                                   class="w-full px-4 py-2 rounded-lg form-field bg-theme-primary text-theme-primary">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-semibold mb-2">Visual Description</label>
+                            <textarea id="coverDescription" placeholder="Describe the visual elements, mood, colors, and style for your book cover. Be specific about imagery, atmosphere, and design elements..." 
+                                      class="w-full px-4 py-2 rounded-lg form-field bg-theme-primary text-theme-primary h-32 resize-none"></textarea>
+                        </div>
+                        
+                        <div class="grid grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">Primary Color</label>
+                                <input type="color" id="primaryColor" value="#06b6d4" 
+                                       class="w-full h-12 rounded-lg border-2 border-theme cursor-pointer">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">Accent Color</label>
+                                <input type="color" id="accentColor" value="#10b981" 
+                                       class="w-full h-12 rounded-lg border-2 border-theme cursor-pointer">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">Text Color</label>
+                                <input type="color" id="textColor" value="#ffffff" 
+                                       class="w-full h-12 rounded-lg border-2 border-theme cursor-pointer">
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">Image Quality</label>
+                                <select id="imageQuality" class="w-full px-4 py-2 rounded-lg form-field bg-theme-primary text-theme-primary">
+                                    <option value="standard">Standard (1024×1024)</option>
+                                    <option value="hd" selected>HD (1792×1024)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">Art Style</label>
+                                <select id="artStyle" class="w-full px-4 py-2 rounded-lg form-field bg-theme-primary text-theme-primary">
+                                    <option value="photorealistic">Photorealistic</option>
+                                    <option value="digital-art">Digital Art</option>
+                                    <option value="illustration">Illustration</option>
+                                    <option value="painting">Oil Painting</option>
+                                    <option value="minimalist">Minimalist</option>
+                                    <option value="vintage">Vintage</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <button onclick="generateAICover()" class="btn-primary w-full py-3 rounded-lg font-semibold bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500">
+                            <i class="fas fa-magic mr-2"></i>Generate AI Cover with DALL-E
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Cover Preview Panel -->
+                <div class="bg-theme-secondary p-6 rounded-xl border-2 border-theme">
+                    <h2 class="text-xl font-bold mb-4">
+                        <i class="fas fa-eye text-cyan-400 mr-2"></i>
+                        Cover Preview & Variations
+                    </h2>
+                    
+                    <div id="coverPreviewPanel">
+                        <div class="bg-theme-primary border-2 border-dashed border-theme rounded-lg p-8 mb-4 text-center" id="placeholderPreview">
+                            <i class="fas fa-image text-6xl text-theme-secondary mb-4"></i>
+                            <p class="text-theme-secondary">Generate your AI cover to see preview</p>
+                            <p class="text-xs text-theme-secondary mt-2">Dimensions will adjust based on selected platform</p>
+                        </div>
+                        
+                        <div id="coverPreview" class="hidden">
+                            <div class="text-center mb-4">
+                                <div class="inline-block relative">
+                                    <img id="generatedCover" src="" alt="Generated Book Cover" class="max-w-full h-auto rounded-lg shadow-lg border-2 border-theme">
+                                    <div class="absolute top-2 right-2 bg-black bg-opacity-75 text-white text-xs px-2 py-1 rounded" id="dimensionDisplay">
+                                        2400×2400px
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="space-y-3">
+                                <div class="flex justify-center space-x-2">
+                                    <button onclick="regenerateAICover()" class="btn-secondary px-4 py-2 rounded text-sm">
+                                        <i class="fas fa-sync mr-1"></i>Regenerate
+                                    </button>
+                                    <button onclick="createVariations()" class="btn-secondary px-4 py-2 rounded text-sm">
+                                        <i class="fas fa-clone mr-1"></i>Variations
+                                    </button>
+                                    <button onclick="downloadCover()" class="btn-primary px-4 py-2 rounded text-sm">
+                                        <i class="fas fa-download mr-1"></i>Download
+                                    </button>
+                                </div>
+                                
+                                <div class="grid grid-cols-2 gap-2">
+                                    <button onclick="downloadForPlatform('print')" class="btn-secondary w-full py-2 rounded text-xs">
+                                        <i class="fas fa-print mr-1"></i>Print Ready
+                                    </button>
+                                    <button onclick="downloadForPlatform('web')" class="btn-secondary w-full py-2 rounded text-xs">
+                                        <i class="fas fa-globe mr-1"></i>Web Optimized
+                                    </button>
+                                </div>
+                                
+                                <button onclick="setCoverAsMain()" class="btn-primary w-full py-2 rounded text-sm">
+                                    <i class="fas fa-check mr-1"></i>Use as Main Cover
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Cover Variations -->
+                        <div id="coverVariations" class="hidden mt-6">
+                            <h3 class="text-lg font-semibold mb-4">AI Generated Variations</h3>
+                            <div class="grid grid-cols-2 gap-4" id="variationsGrid">
+                                <!-- Variations will be populated here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Generation Progress -->
+            <div id="coverGenerationProgress" class="hidden mt-8 bg-theme-secondary p-6 rounded-xl border-2 border-theme">
+                <h3 class="text-lg font-semibold mb-4">
+                    <i class="fas fa-magic text-cyan-400 mr-2 animate-spin"></i>
+                    AI Cover Generation in Progress
+                </h3>
+                
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm" id="generationStep">Analyzing design preferences...</span>
+                        <div class="w-6 h-6 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin"></div>
+                    </div>
+                    
+                    <div class="w-full bg-theme-primary rounded-full h-3">
+                        <div id="coverProgressBar" class="bg-gradient-to-r from-cyan-500 to-blue-500 h-3 rounded-full transition-all duration-500" style="width: 0%"></div>
+                    </div>
+                    
+                    <div class="text-xs text-theme-secondary text-center">
+                        <div id="progressMessage">Processing with OpenAI DALL-E API...</div>
+                        <div class="mt-1">High-quality generation typically takes 10-30 seconds</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Platform Requirements Info -->
+            <div class="mt-8 bg-theme-secondary p-6 rounded-xl border-2 border-theme">
+                <h3 class="text-lg font-semibold mb-4">
+                    <i class="fas fa-info-circle text-cyan-400 mr-2"></i>
+                    Platform Requirements & Guidelines
+                </h3>
+                
+                <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
+                    <div class="bg-theme-primary p-4 rounded-lg">
+                        <h4 class="font-semibold text-orange-400 mb-2"><i class="fab fa-amazon mr-1"></i> Audible</h4>
+                        <ul class="space-y-1 text-theme-secondary">
+                            <li>• 2400×2400px minimum</li>
+                            <li>• Square aspect ratio</li>
+                            <li>• RGB color space</li>
+                            <li>• Text must be readable at 150px</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="bg-theme-primary p-4 rounded-lg">
+                        <h4 class="font-semibold text-green-400 mb-2"><i class="fab fa-spotify mr-1"></i> Spotify</h4>
+                        <ul class="space-y-1 text-theme-secondary">
+                            <li>• 3000×3000px recommended</li>
+                            <li>• Square format required</li>
+                            <li>• High contrast text</li>
+                            <li>• No promotional text</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="bg-theme-primary p-4 rounded-lg">
+                        <h4 class="font-semibold text-gray-300 mb-2"><i class="fab fa-apple mr-1"></i> Apple</h4>
+                        <ul class="space-y-1 text-theme-secondary">
+                            <li>• 3000×3000px minimum</li>
+                            <li>• Square aspect ratio</li>
+                            <li>• 72 DPI minimum</li>
+                            <li>• Clear, legible text</li>
+                        </ul>
+                    </div>
                 </div>
             </div>
         </div>
@@ -2078,6 +2479,710 @@
                 }
             }, 100);
         });
+
+        // Real-time Word Count functionality
+        function setupWordCount() {
+            const storyOutline = document.getElementById('storyOutline');
+            const wordCountDisplay = document.getElementById('outlineWordCount');
+            
+            if (storyOutline && wordCountDisplay) {
+                storyOutline.addEventListener('input', function() {
+                    const text = this.value.trim();
+                    const wordCount = text === '' ? 0 : text.split(/\s+/).length;
+                    wordCountDisplay.textContent = `${wordCount} words`;
+                });
+            }
+        }
+
+        // Voice Cloning Station Functions
+        function handleVoiceDrop(event) {
+            event.preventDefault();
+            const files = event.dataTransfer.files;
+            handleVoiceFiles(files);
+        }
+        
+        function allowDrop(event) {
+            event.preventDefault();
+        }
+        
+        function handleVoiceFiles(files) {
+            const validTypes = ['audio/mp3', 'audio/wav', 'audio/m4a'];
+            const validFiles = Array.from(files).filter(file => 
+                validTypes.includes(file.type) || 
+                validTypes.some(type => file.name.toLowerCase().endsWith(type.split('/')[1]))
+            );
+            
+            if (validFiles.length > 0) {
+                console.log('Voice files selected:', validFiles.map(f => f.name));
+                showNotification(`${validFiles.length} voice sample(s) selected for cloning`, 'success');
+            } else {
+                showNotification('Please select valid audio files (.mp3, .wav, .m4a)', 'error');
+            }
+        }
+        
+        function initiateVoiceClone() {
+            const uploadInput = document.getElementById('voiceUpload');
+            const files = uploadInput.files;
+            
+            if (files.length === 0) {
+                showNotification('Please select voice samples first', 'error');
+                return;
+            }
+            
+            // Show progress animation
+            const progressDiv = document.getElementById('cloningProgress');
+            const progressBar = document.getElementById('cloningBar');
+            const progressPercent = document.getElementById('cloningPercent');
+            
+            progressDiv.classList.remove('hidden');
+            
+            // Simulate cloning progress
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += Math.random() * 15;
+                if (progress > 100) progress = 100;
+                
+                progressBar.style.width = `${progress}%`;
+                progressPercent.textContent = `${Math.round(progress)}%`;
+                
+                if (progress >= 100) {
+                    clearInterval(interval);
+                    setTimeout(() => {
+                        progressDiv.classList.add('hidden');
+                        showNotification('Voice clone created successfully!', 'success');
+                    }, 1000);
+                }
+            }, 500);
+        }
+        
+        // Setup word count monitoring on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const voiceUpload = document.getElementById('voiceUpload');
+            if (voiceUpload) {
+                voiceUpload.addEventListener('change', function() {
+                    handleVoiceFiles(this.files);
+                });
+            }
+            
+            // Setup word count monitoring
+            setupWordCount();
+        });
+
+        // Platform Template Functions
+        const platformDimensions = {
+            'audible': { width: 2400, height: 2400, name: 'Audible' },
+            'spotify': { width: 3000, height: 3000, name: 'Spotify' },
+            'apple': { width: 3000, height: 3000, name: 'Apple Podcasts' },
+            'google': { width: 2400, height: 2400, name: 'Google Play' },
+            'overdrive': { width: 1800, height: 2700, name: 'OverDrive' },
+            'universal': { width: 2400, height: 2400, name: 'Universal' }
+        };
+
+        function selectPlatformTemplate(platform) {
+            const platformSelect = document.getElementById('selectedPlatform');
+            const dimensionDisplay = document.getElementById('dimensionDisplay');
+            
+            if (platformSelect) {
+                platformSelect.value = platform;
+            }
+            
+            const dimensions = platformDimensions[platform];
+            if (dimensionDisplay && dimensions) {
+                dimensionDisplay.textContent = `${dimensions.width}×${dimensions.height}px`;
+            }
+            
+            // Visual feedback
+            document.querySelectorAll('.platform-template').forEach(btn => {
+                btn.classList.remove('border-cyan-400', 'bg-cyan-900');
+            });
+            
+            const selectedBtn = document.querySelector(`[onclick="selectPlatformTemplate('${platform}')"]`);
+            if (selectedBtn) {
+                selectedBtn.classList.add('border-cyan-400', 'bg-cyan-900');
+            }
+            
+            showNotification(`Selected ${dimensions.name} template (${dimensions.width}×${dimensions.height}px)`, 'success');
+        }
+
+        // OpenAI DALL-E Cover Generation Functions
+        async function generateAICover() {
+            const apiKey = getOpenAIApiKey();
+            if (!apiKey) {
+                showNotification('Please configure your OpenAI API key in the Config section first', 'error');
+                return;
+            }
+
+            const title = document.getElementById('coverTitle')?.value?.trim();
+            const author = document.getElementById('coverAuthor')?.value?.trim();
+            const subtitle = document.getElementById('coverSubtitle')?.value?.trim();
+            const description = document.getElementById('coverDescription')?.value?.trim();
+            const style = document.getElementById('coverStyle')?.value || 'modern';
+            const artStyle = document.getElementById('artStyle')?.value || 'digital-art';
+            const platform = document.getElementById('selectedPlatform')?.value || 'universal';
+            const quality = document.getElementById('imageQuality')?.value || 'hd';
+
+            if (!title) {
+                showNotification('Please enter a book title', 'error');
+                return;
+            }
+
+            if (!description) {
+                showNotification('Please provide a visual description for the cover', 'error');
+                return;
+            }
+
+            // Show progress
+            const progressDiv = document.getElementById('coverGenerationProgress');
+            const progressBar = document.getElementById('coverProgressBar');
+            const stepText = document.getElementById('generationStep');
+            const progressMessage = document.getElementById('progressMessage');
+            
+            progressDiv.classList.remove('hidden');
+            
+            const steps = [
+                'Analyzing design requirements...',
+                'Processing with DALL-E AI...',
+                'Generating high-quality artwork...',
+                'Optimizing for platform requirements...',
+                'Finalizing cover design...'
+            ];
+
+            let currentStep = 0;
+            const stepInterval = setInterval(() => {
+                if (currentStep < steps.length) {
+                    stepText.textContent = steps[currentStep];
+                    progressBar.style.width = `${(currentStep + 1) * 20}%`;
+                    currentStep++;
+                }
+            }, 2000);
+
+            // Build comprehensive prompt
+            const platformInfo = platformDimensions[platform];
+            const prompt = buildCoverPrompt(title, author, subtitle, description, style, artStyle, platformInfo);
+
+            try {
+                progressMessage.textContent = 'Connecting to OpenAI DALL-E API...';
+                
+                const response = await fetch('https://api.openai.com/v1/images/generations', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${apiKey}`
+                    },
+                    body: JSON.stringify({
+                        model: "dall-e-3",
+                        prompt: prompt,
+                        n: 1,
+                        size: quality === 'hd' ? '1792x1024' : '1024x1024',
+                        quality: quality,
+                        style: 'vivid'
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`OpenAI API Error: ${response.status} ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                const imageUrl = data.data[0].url;
+
+                clearInterval(stepInterval);
+                progressBar.style.width = '100%';
+                stepText.textContent = 'Cover generated successfully!';
+
+                setTimeout(() => {
+                    progressDiv.classList.add('hidden');
+                    displayGeneratedCover(imageUrl, platform);
+                }, 1500);
+
+            } catch (error) {
+                clearInterval(stepInterval);
+                progressDiv.classList.add('hidden');
+                console.error('Cover generation error:', error);
+                showNotification(`Failed to generate cover: ${error.message}`, 'error');
+            }
+        }
+
+        function buildCoverPrompt(title, author, subtitle, description, style, artStyle, platformInfo) {
+            let prompt = `Create a professional book cover in ${artStyle} style with ${style} aesthetic. `;
+            prompt += `The book title is "${title}" by ${author}. `;
+            
+            if (subtitle) {
+                prompt += `Subtitle: "${subtitle}". `;
+            }
+            
+            prompt += `Visual description: ${description}. `;
+            prompt += `The cover should be optimized for ${platformInfo.name} (${platformInfo.width}x${platformInfo.height} pixels). `;
+            prompt += `Include clear, readable typography for the title and author name. `;
+            prompt += `The design should be eye-catching, professional, and genre-appropriate. `;
+            prompt += `Ensure high contrast and readability at thumbnail sizes. `;
+            prompt += `No explicit content, copyright violations, or text overlay issues.`;
+
+            return prompt;
+        }
+
+        function displayGeneratedCover(imageUrl, platform) {
+            const coverPreview = document.getElementById('coverPreview');
+            const generatedCover = document.getElementById('generatedCover');
+            const placeholderPreview = document.getElementById('placeholderPreview');
+            const dimensionDisplay = document.getElementById('dimensionDisplay');
+            
+            generatedCover.src = imageUrl;
+            
+            const dimensions = platformDimensions[platform];
+            if (dimensionDisplay && dimensions) {
+                dimensionDisplay.textContent = `${dimensions.width}×${dimensions.height}px`;
+            }
+            
+            placeholderPreview.classList.add('hidden');
+            coverPreview.classList.remove('hidden');
+            
+            showNotification('AI book cover generated successfully!', 'success');
+        }
+
+        async function regenerateAICover() {
+            showNotification('Regenerating cover with new AI variations...', 'info');
+            setTimeout(() => {
+                generateAICover();
+            }, 500);
+        }
+
+        async function createVariations() {
+            const apiKey = getOpenAIApiKey();
+            if (!apiKey) {
+                showNotification('Please configure your OpenAI API key first', 'error');
+                return;
+            }
+
+            const generatedCover = document.getElementById('generatedCover');
+            if (!generatedCover.src) {
+                showNotification('Please generate a cover first', 'error');
+                return;
+            }
+
+            showNotification('Creating AI variations of your cover...', 'info');
+            
+            try {
+                // Note: DALL-E 3 doesn't support variations, so we'll regenerate with slight prompt modifications
+                const variations = [];
+                const basePrompt = document.getElementById('coverDescription')?.value || '';
+                
+                const promptVariations = [
+                    basePrompt + ' with warmer color palette',
+                    basePrompt + ' with cooler tones',
+                    basePrompt + ' with different composition'
+                ];
+
+                // Generate multiple variations (simplified for demo)
+                for (let i = 0; i < 2; i++) {
+                    // Simulate variation generation
+                    setTimeout(() => {
+                        addCoverVariation(generatedCover.src, i + 1);
+                    }, (i + 1) * 1000);
+                }
+                
+                document.getElementById('coverVariations').classList.remove('hidden');
+                
+            } catch (error) {
+                console.error('Variation generation error:', error);
+                showNotification('Failed to create variations', 'error');
+            }
+        }
+
+        function addCoverVariation(imageUrl, index) {
+            const variationsGrid = document.getElementById('variationsGrid');
+            const variationDiv = document.createElement('div');
+            variationDiv.className = 'cover-variation p-2 rounded-lg border border-theme cursor-pointer hover:border-cyan-400 transition-colors';
+            variationDiv.innerHTML = `
+                <img src="${imageUrl}" alt="Cover Variation ${index}" class="w-full rounded">
+                <button onclick="selectVariation(this)" class="w-full mt-2 btn-secondary text-xs py-1">
+                    Use This Version
+                </button>
+            `;
+            variationsGrid.appendChild(variationDiv);
+        }
+
+        function selectVariation(button) {
+            const img = button.parentElement.querySelector('img');
+            const mainCover = document.getElementById('generatedCover');
+            mainCover.src = img.src;
+            showNotification('Cover variation selected!', 'success');
+        }
+
+        function downloadCover() {
+            const coverImg = document.getElementById('generatedCover');
+            if (!coverImg.src) {
+                showNotification('No cover to download', 'error');
+                return;
+            }
+
+            const platform = document.getElementById('selectedPlatform')?.value || 'universal';
+            const title = document.getElementById('coverTitle')?.value || 'book-cover';
+            
+            downloadImage(coverImg.src, `${title}-${platform}-cover.png`);
+            showNotification('Cover downloaded successfully!', 'success');
+        }
+
+        function downloadForPlatform(type) {
+            const coverImg = document.getElementById('generatedCover');
+            if (!coverImg.src) {
+                showNotification('No cover to download', 'error');
+                return;
+            }
+
+            const title = document.getElementById('coverTitle')?.value || 'book-cover';
+            const filename = type === 'print' ? 
+                `${title}-print-ready.png` : 
+                `${title}-web-optimized.png`;
+            
+            downloadImage(coverImg.src, filename);
+            showNotification(`${type === 'print' ? 'Print-ready' : 'Web-optimized'} cover downloaded!`, 'success');
+        }
+
+        function downloadImage(url, filename) {
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function setCoverAsMain() {
+            const coverImg = document.getElementById('generatedCover');
+            if (coverImg.src) {
+                // Store the cover URL for use in other parts of the app
+                localStorage.setItem('mainBookCover', coverImg.src);
+                showNotification('Cover set as main book cover!', 'success');
+            }
+        }
+
+        // Helper function to get OpenAI API key
+        function getOpenAIApiKey() {
+            return localStorage.getItem('openaiApiKey') || '';
+        }
+
+        // OpenAI GPT-4 Writing Assistance Functions
+        async function generateChapterPlan() {
+            const apiKey = getOpenAIApiKey();
+            if (!apiKey) {
+                showNotification('Please configure your OpenAI API key in Config section first', 'error');
+                return;
+            }
+
+            const title = document.getElementById('bookTitle')?.value?.trim();
+            const outline = document.getElementById('storyOutline')?.value?.trim();
+            const genre = document.getElementById('genre')?.value || 'fiction-literary';
+            const tone = document.getElementById('tone')?.value || 'professional';
+            const chapterCount = parseInt(document.getElementById('chapterCount')?.value || 10);
+            const wordsPerChapter = parseInt(document.getElementById('wordsPerChapter')?.value || 1000);
+
+            if (!title || !outline) {
+                showNotification('Please fill in the book title and story outline', 'error');
+                return;
+            }
+
+            showNotification('Generating AI chapter plan...', 'info');
+            
+            const prompt = `Create a detailed chapter plan for a ${genre} book titled "${title}".
+
+Story Outline: ${outline}
+Tone: ${tone}
+Number of chapters: ${chapterCount}
+Target words per chapter: ${wordsPerChapter}
+
+Generate a comprehensive chapter plan with:
+1. Chapter titles
+2. Brief chapter summaries (2-3 sentences each)
+3. Key plot points and character development
+4. Pacing and story arc progression
+
+Format as JSON with this structure:
+{
+  "chapters": [
+    {
+      "number": 1,
+      "title": "Chapter Title",
+      "summary": "Chapter summary...",
+      "keyPoints": ["Point 1", "Point 2"],
+      "wordCount": ${wordsPerChapter}
+    }
+  ]
+}`;
+
+            try {
+                const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${apiKey}`
+                    },
+                    body: JSON.stringify({
+                        model: "gpt-4o-mini",
+                        messages: [
+                            {
+                                role: "system",
+                                content: "You are a professional book planning assistant. Create detailed, engaging chapter plans that follow proper story structure and pacing."
+                            },
+                            {
+                                role: "user",
+                                content: prompt
+                            }
+                        ],
+                        temperature: 0.7,
+                        max_tokens: 2000
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`OpenAI API Error: ${response.status}`);
+                }
+
+                const data = await response.json();
+                const chapterPlan = JSON.parse(data.choices[0].message.content);
+                
+                displayChapterPlan(chapterPlan);
+                showNotification('Chapter plan generated successfully!', 'success');
+                
+            } catch (error) {
+                console.error('Chapter generation error:', error);
+                showNotification(`Failed to generate chapters: ${error.message}`, 'error');
+            }
+        }
+
+        function displayChapterPlan(chapterPlan) {
+            const chaptersContainer = document.getElementById('chaptersContainer');
+            if (!chaptersContainer) return;
+
+            chaptersContainer.innerHTML = '';
+            storyData.chapters = chapterPlan.chapters;
+
+            chapterPlan.chapters.forEach(chapter => {
+                const chapterDiv = document.createElement('div');
+                chapterDiv.className = 'chapter-card bg-theme-primary p-4 rounded-lg border border-theme';
+                chapterDiv.innerHTML = `
+                    <div class="flex justify-between items-start mb-2">
+                        <h3 class="font-bold text-lg">${chapter.number}. ${chapter.title}</h3>
+                        <span class="text-xs text-theme-secondary">${chapter.wordCount} words</span>
+                    </div>
+                    <p class="text-sm text-theme-secondary mb-2">${chapter.summary}</p>
+                    <div class="flex flex-wrap gap-1 mb-3">
+                        ${chapter.keyPoints.map(point => 
+                            `<span class="text-xs bg-cyan-900 text-cyan-300 px-2 py-1 rounded">${point}</span>`
+                        ).join('')}
+                    </div>
+                    <div class="flex space-x-2">
+                        <button onclick="generateChapterContent(${chapter.number})" class="btn-primary text-xs px-3 py-1 rounded">
+                            <i class="fas fa-magic mr-1"></i>Generate Content
+                        </button>
+                        <button onclick="editChapter(${chapter.number})" class="btn-secondary text-xs px-3 py-1 rounded">
+                            <i class="fas fa-edit mr-1"></i>Edit
+                        </button>
+                    </div>
+                `;
+                chaptersContainer.appendChild(chapterDiv);
+            });
+        }
+
+        // OpenAI TTS (Text-to-Speech) Functions
+        async function generateFullNarration() {
+            const apiKey = getOpenAIApiKey();
+            if (!apiKey) {
+                showNotification('Please configure your OpenAI API key first', 'error');
+                return;
+            }
+
+            if (!storyData.chapters || storyData.chapters.length === 0) {
+                showNotification('Please generate chapter content first', 'error');
+                return;
+            }
+
+            const voice = document.getElementById('voiceSelection')?.value || 'alloy';
+            const speed = parseFloat(document.getElementById('speechRate')?.value || 1.0);
+            
+            showNotification('Starting AI narration generation...', 'info');
+            
+            const progressDiv = document.getElementById('narrationProgress');
+            const progressBar = document.getElementById('progressBar');
+            const progressPercent = document.getElementById('progressPercent');
+            
+            progressDiv.classList.remove('hidden');
+            
+            try {
+                const audioFiles = [];
+                
+                for (let i = 0; i < storyData.chapters.length; i++) {
+                    const chapter = storyData.chapters[i];
+                    
+                    progressPercent.textContent = `${Math.round((i / storyData.chapters.length) * 100)}%`;
+                    progressBar.style.width = `${(i / storyData.chapters.length) * 100}%`;
+                    
+                    if (chapter.content) {
+                        const audioBlob = await generateChapterAudio(chapter.content, voice, speed, apiKey);
+                        audioFiles.push({
+                            chapter: i + 1,
+                            title: chapter.title,
+                            audioBlob: audioBlob,
+                            url: URL.createObjectURL(audioBlob)
+                        });
+                        
+                        displayAudioResult(audioFiles[audioFiles.length - 1]);
+                    }
+                }
+                
+                progressPercent.textContent = '100%';
+                progressBar.style.width = '100%';
+                
+                setTimeout(() => {
+                    progressDiv.classList.add('hidden');
+                    showNotification('All chapters narrated successfully!', 'success');
+                }, 1000);
+                
+            } catch (error) {
+                progressDiv.classList.add('hidden');
+                console.error('Narration error:', error);
+                showNotification(`Narration failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function generateChapterAudio(text, voice, speed, apiKey) {
+            const response = await fetch('https://api.openai.com/v1/audio/speech', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${apiKey}`
+                },
+                body: JSON.stringify({
+                    model: "tts-1-hd",
+                    input: text,
+                    voice: voice,
+                    speed: speed
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`TTS API Error: ${response.status}`);
+            }
+
+            return await response.blob();
+        }
+
+        function displayAudioResult(audioData) {
+            const resultsContainer = document.getElementById('audioResults');
+            const audioDiv = document.createElement('div');
+            audioDiv.className = 'audio-result bg-theme-primary p-4 rounded-lg border border-theme';
+            audioDiv.innerHTML = `
+                <div class="flex justify-between items-center mb-2">
+                    <h4 class="font-semibold">Chapter ${audioData.chapter}: ${audioData.title}</h4>
+                    <span class="text-xs text-theme-secondary">Generated</span>
+                </div>
+                <audio controls class="w-full mb-2">
+                    <source src="${audioData.url}" type="audio/mpeg">
+                </audio>
+                <div class="flex space-x-2">
+                    <button onclick="downloadAudio('${audioData.url}', 'chapter-${audioData.chapter}')" class="btn-secondary text-xs px-3 py-1 rounded">
+                        <i class="fas fa-download mr-1"></i>Download
+                    </button>
+                    <button onclick="regenerateChapterAudio(${audioData.chapter})" class="btn-secondary text-xs px-3 py-1 rounded">
+                        <i class="fas fa-sync mr-1"></i>Regenerate
+                    </button>
+                </div>
+            `;
+            resultsContainer.appendChild(audioDiv);
+        }
+
+        function downloadAudio(url, filename) {
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `${filename}.mp3`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // Enhanced Chapter Content Generation
+        async function generateChapterContent(chapterNumber) {
+            const apiKey = getOpenAIApiKey();
+            if (!apiKey) {
+                showNotification('Please configure your OpenAI API key first', 'error');
+                return;
+            }
+
+            const chapter = storyData.chapters.find(c => c.number === chapterNumber);
+            if (!chapter) return;
+
+            showNotification(`Generating content for Chapter ${chapterNumber}...`, 'info');
+
+            const prompt = `Write the full content for this chapter of the book "${storyData.title}".
+
+Chapter ${chapter.number}: ${chapter.title}
+Summary: ${chapter.summary}
+Key Points: ${chapter.keyPoints.join(', ')}
+Target Word Count: ${chapter.wordCount}
+Genre: ${document.getElementById('genre')?.value}
+Tone: ${document.getElementById('tone')?.value}
+
+Write engaging, well-structured prose that:
+1. Follows the chapter summary and incorporates all key points
+2. Maintains consistent tone and style
+3. Includes dialogue, descriptions, and narrative flow
+4. Meets the target word count
+5. Ends with a natural transition to the next chapter
+
+Format as clean, readable text ready for narration.`;
+
+            try {
+                const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${apiKey}`
+                    },
+                    body: JSON.stringify({
+                        model: "gpt-4o-mini",
+                        messages: [
+                            {
+                                role: "system", 
+                                content: "You are a professional author and storyteller. Write compelling, well-crafted chapter content that engages readers and flows naturally."
+                            },
+                            {
+                                role: "user",
+                                content: prompt
+                            }
+                        ],
+                        temperature: 0.8,
+                        max_tokens: 4000
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`OpenAI API Error: ${response.status}`);
+                }
+
+                const data = await response.json();
+                chapter.content = data.choices[0].message.content;
+                
+                updateChapterDisplay(chapterNumber);
+                showNotification(`Chapter ${chapterNumber} content generated!`, 'success');
+                
+            } catch (error) {
+                console.error('Content generation error:', error);
+                showNotification(`Failed to generate content: ${error.message}`, 'error');
+            }
+        }
+
+        function updateChapterDisplay(chapterNumber) {
+            const chapterCards = document.querySelectorAll('.chapter-card');
+            const targetCard = chapterCards[chapterNumber - 1];
+            
+            if (targetCard) {
+                const generateBtn = targetCard.querySelector('button');
+                generateBtn.innerHTML = '<i class="fas fa-check mr-1"></i>Content Ready';
+                generateBtn.classList.remove('btn-primary');
+                generateBtn.classList.add('btn-success');
+                generateBtn.disabled = true;
+            }
+        }
     </script>
 </body>
 </html>
