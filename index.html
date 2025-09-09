@@ -206,6 +206,8 @@
           background: linear-gradient(135deg, rgba(6, 182, 212, 0.1), rgba(34, 197, 94, 0.1));
           border-radius: 12px;
           border: 1px solid rgba(6, 182, 212, 0.3);
+          max-width: 50%;
+          margin: 0 auto;
         }
         
         .sound-wave {
@@ -265,6 +267,49 @@
         @keyframes borderGlow {
           0% { transform: rotate(0deg); }
           100% { transform: rotate(360deg); }
+        }
+        
+        /* Recording Sound Wave Animation */
+        .recording-wave-container {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          padding: 10px;
+          background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(245, 158, 11, 0.1));
+          border-radius: 8px;
+          border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+        
+        .recording-wave {
+          display: flex;
+          align-items: center;
+          gap: 2px;
+        }
+        
+        .recording-bar {
+          width: 4px;
+          height: 10px;
+          background: linear-gradient(to top, #ef4444, #f59e0b);
+          border-radius: 2px;
+          animation: recordingWave 0.8s ease-in-out infinite;
+        }
+        
+        .recording-bar:nth-child(1) { animation-delay: 0s; }
+        .recording-bar:nth-child(2) { animation-delay: 0.1s; }
+        .recording-bar:nth-child(3) { animation-delay: 0.2s; }
+        .recording-bar:nth-child(4) { animation-delay: 0.1s; }
+        .recording-bar:nth-child(5) { animation-delay: 0s; }
+        
+        @keyframes recordingWave {
+          0%, 100% { 
+            height: 10px;
+            background: linear-gradient(to top, #ef4444, #f59e0b);
+          }
+          50% { 
+            height: 25px;
+            background: linear-gradient(to top, #dc2626, #d97706, #f59e0b);
+            box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+          }
         }
 
         /* Responsive Design */
@@ -638,7 +683,7 @@
                     
                     <div class="space-y-4">
                         <div>
-                            <label class="block text-sm font-semibold mb-2">AI Voice Selection</label>
+                            <label class="block text-sm font-semibold mb-2">Voice Actors</label>
                             <select id="voiceSelection" class="w-full px-4 py-2 rounded-lg form-field bg-theme-primary text-theme-primary">
                                 <option value="alloy">Alloy - Balanced, Clear</option>
                                 <option value="echo">Echo - Male, Authoritative</option>
@@ -647,6 +692,14 @@
                                 <option value="nova">Nova - Female, Engaging</option>
                                 <option value="shimmer">Shimmer - Soft, Gentle</option>
                             </select>
+                            <button onclick="previewSelectedVoice()" class="btn-secondary w-full mt-2 py-2 rounded-lg text-sm">
+                                <i class="fas fa-play mr-2"></i>Preview Voice
+                            </button>
+                            <div id="voicePreviewPlayer" class="hidden mt-2">
+                                <audio controls class="w-full">
+                                    <source id="voicePreviewSource" src="" type="audio/mpeg">
+                                </audio>
+                            </div>
                         </div>
                         
                         <div class="grid grid-cols-2 gap-4">
@@ -703,11 +756,69 @@
                             </div>
                             <p class="text-xs text-theme-secondary mb-3">Upload voice samples to create custom AI narrator profiles</p>
                             
+                            <!-- Audio Upload Section -->
                             <div class="border-dashed border-2 border-cyan-500 p-4 rounded-lg text-center hover:border-cyan-300 transition-colors cursor-pointer" 
                                  ondrop="handleVoiceDrop(event)" ondragover="allowDrop(event)" onclick="document.getElementById('voiceUpload').click()">
                                 <i class="fas fa-microphone text-cyan-400 text-2xl mb-2"></i>
                                 <p class="text-sm text-cyan-300">Drag & drop audio files or click to browse</p>
                                 <input type="file" id="voiceUpload" accept=".mp3,.wav,.m4a" multiple class="hidden">
+                            </div>
+                            
+                            <!-- Text Input Section -->
+                            <div class="border-dashed border-2 border-purple-500 p-4 rounded-lg hover:border-purple-300 transition-colors" 
+                                 ondrop="handleTextDrop(event)" ondragover="allowDrop(event)">
+                                <div class="flex items-center mb-2">
+                                    <i class="fas fa-file-text text-purple-400 mr-2"></i>
+                                    <span class="text-sm font-semibold text-purple-400">Text Input & Preview</span>
+                                </div>
+                                <textarea id="cloneTextInput" placeholder="Drag & drop text files here or type/paste your text for voice cloning preview..." 
+                                          class="w-full px-3 py-2 rounded-lg form-field bg-theme-primary text-theme-primary h-20 resize-none text-sm"></textarea>
+                                <div class="flex justify-between items-center mt-2 text-xs text-theme-secondary">
+                                    <span id="textCharCount">0 characters</span>
+                                    <button onclick="previewCloneText()" class="btn-secondary px-3 py-1 rounded text-xs">
+                                        <i class="fas fa-play mr-1"></i>Preview
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Recording Section -->
+                            <div class="border-2 border-red-500 p-4 rounded-lg">
+                                <div class="flex items-center justify-between mb-3">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-record-vinyl text-red-400 mr-2"></i>
+                                        <span class="text-sm font-semibold text-red-400">Live Recording</span>
+                                    </div>
+                                    <div id="recordingIndicator" class="hidden flex items-center">
+                                        <div class="w-2 h-2 bg-red-500 rounded-full animate-pulse mr-1"></div>
+                                        <span class="text-xs text-red-400">Recording...</span>
+                                    </div>
+                                </div>
+                                
+                                <!-- Mini Recording Sound Wave -->
+                                <div id="recordingWave" class="hidden recording-wave-container mb-3">
+                                    <div class="recording-wave">
+                                        <div class="recording-bar"></div>
+                                        <div class="recording-bar"></div>
+                                        <div class="recording-bar"></div>
+                                        <div class="recording-bar"></div>
+                                        <div class="recording-bar"></div>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex space-x-2">
+                                    <button id="recordBtn" onclick="startRecording()" class="btn-primary flex-1 py-2 rounded-lg text-sm">
+                                        <i class="fas fa-microphone mr-1"></i>Record
+                                    </button>
+                                    <button id="stopBtn" onclick="stopRecording()" disabled class="btn-secondary flex-1 py-2 rounded-lg text-sm opacity-50">
+                                        <i class="fas fa-stop mr-1"></i>Stop
+                                    </button>
+                                </div>
+                                
+                                <div id="recordedAudio" class="hidden mt-3">
+                                    <audio controls class="w-full">
+                                        <source id="recordedAudioSource" src="" type="audio/wav">
+                                    </audio>
+                                </div>
                             </div>
                         </div>
                         
@@ -1183,7 +1294,7 @@
                     <div class="space-y-4">
                         <div>
                             <label class="block text-sm font-semibold mb-2">OpenAI API Key</label>
-                            <input type="password" id="openaiKey" placeholder="sk-..." value="
+                            <input type="password" id="openaiKey" placeholder="sk-..." 
                                    class="w-full px-4 py-2 rounded-lg form-field bg-theme-primary text-theme-primary">
                             <p class="text-xs text-theme-secondary mt-1">Required for AI writing and narration features</p>
                         </div>
@@ -1197,9 +1308,14 @@
                             </select>
                         </div>
                         
-                        <button onclick="testApiConnection()" class="btn-primary w-full py-2 rounded-lg font-semibold">
-                            <i class="fas fa-wifi mr-2"></i>Test API Connection
-                        </button>
+                        <div class="space-y-2">
+                            <button onclick="testApiConnection()" class="btn-primary w-full py-2 rounded-lg font-semibold">
+                                <i class="fas fa-wifi mr-2"></i>Test API Connection
+                            </button>
+                            <button onclick="saveSettings()" class="btn-secondary w-full py-2 rounded-lg font-semibold">
+                                <i class="fas fa-save mr-2"></i>Save Settings
+                            </button>
+                        </div>
                     </div>
                 </div>
                 
@@ -3183,6 +3299,276 @@ Format as clean, readable text ready for narration.`;
                 generateBtn.disabled = true;
             }
         }
+
+        // Config Page Functions
+        function saveSettings() {
+            const apiKey = document.getElementById('openaiKey')?.value?.trim();
+            const model = document.getElementById('modelSelection')?.value;
+            const autoSave = document.getElementById('autoSave')?.checked;
+            
+            if (apiKey) {
+                localStorage.setItem('openaiApiKey', apiKey);
+            }
+            if (model) {
+                localStorage.setItem('selectedModel', model);
+            }
+            localStorage.setItem('autoSave', autoSave);
+            
+            showNotification('Settings saved successfully!', 'success');
+            
+            // Mask the API key display for security
+            const keyInput = document.getElementById('openaiKey');
+            if (keyInput && apiKey) {
+                keyInput.value = '••••••••••••••••••••••••••••••••••••••••••••••••••••' + apiKey.slice(-4);
+            }
+        }
+
+        function loadSettings() {
+            const apiKey = localStorage.getItem('openaiApiKey');
+            const model = localStorage.getItem('selectedModel');
+            const autoSave = localStorage.getItem('autoSave');
+            
+            if (apiKey) {
+                const keyInput = document.getElementById('openaiKey');
+                if (keyInput) {
+                    keyInput.value = '••••••••••••••••••••••••••••••••••••••••••••••••••••' + apiKey.slice(-4);
+                }
+            }
+            
+            if (model) {
+                const modelSelect = document.getElementById('modelSelection');
+                if (modelSelect) {
+                    modelSelect.value = model;
+                }
+            }
+            
+            if (autoSave !== null) {
+                const autoSaveCheckbox = document.getElementById('autoSave');
+                if (autoSaveCheckbox) {
+                    autoSaveCheckbox.checked = autoSave === 'true';
+                }
+            }
+        }
+
+        async function testApiConnection() {
+            const apiKey = getOpenAIApiKey();
+            if (!apiKey) {
+                showNotification('Please enter your OpenAI API key first', 'error');
+                return;
+            }
+
+            showNotification('Testing API connection...', 'info');
+
+            try {
+                const response = await fetch('https://api.openai.com/v1/models', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${apiKey}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    showNotification('✅ API connection successful!', 'success');
+                } else {
+                    throw new Error(`API Error: ${response.status} ${response.statusText}`);
+                }
+            } catch (error) {
+                showNotification(`❌ API connection failed: ${error.message}`, 'error');
+            }
+        }
+
+        // Text Drag & Drop Functions
+        function handleTextDrop(event) {
+            event.preventDefault();
+            const files = event.dataTransfer.files;
+            const text = event.dataTransfer.getData('text/plain');
+            
+            if (files.length > 0) {
+                // Handle file drop
+                const file = files[0];
+                if (file.type === 'text/plain' || file.name.endsWith('.txt')) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const textArea = document.getElementById('cloneTextInput');
+                        if (textArea) {
+                            textArea.value = e.target.result;
+                            updateCharCount();
+                        }
+                        showNotification(`Text file "${file.name}" loaded successfully!`, 'success');
+                    };
+                    reader.readAsText(file);
+                } else {
+                    showNotification('Please drop a .txt file', 'error');
+                }
+            } else if (text) {
+                // Handle text drop
+                const textArea = document.getElementById('cloneTextInput');
+                if (textArea) {
+                    textArea.value = text;
+                    updateCharCount();
+                }
+                showNotification('Text added successfully!', 'success');
+            }
+        }
+
+        function updateCharCount() {
+            const textArea = document.getElementById('cloneTextInput');
+            const charCount = document.getElementById('textCharCount');
+            
+            if (textArea && charCount) {
+                const text = textArea.value;
+                charCount.textContent = `${text.length} characters`;
+            }
+        }
+
+        async function previewCloneText() {
+            const text = document.getElementById('cloneTextInput')?.value?.trim();
+            if (!text) {
+                showNotification('Please enter some text to preview', 'error');
+                return;
+            }
+
+            const apiKey = getOpenAIApiKey();
+            if (!apiKey) {
+                showNotification('Please configure your OpenAI API key first', 'error');
+                return;
+            }
+
+            showNotification('Generating voice preview...', 'info');
+
+            try {
+                const voice = document.getElementById('voiceSelection')?.value || 'alloy';
+                const speed = parseFloat(document.getElementById('speechRate')?.value || 1.0);
+                
+                const audioBlob = await generateChapterAudio(text, voice, speed, apiKey);
+                const audioUrl = URL.createObjectURL(audioBlob);
+                
+                // Play the preview
+                const audio = new Audio(audioUrl);
+                audio.play();
+                
+                showNotification('Voice preview generated successfully!', 'success');
+            } catch (error) {
+                showNotification(`Preview failed: ${error.message}`, 'error');
+            }
+        }
+
+        // Voice Preview Functions
+        async function previewSelectedVoice() {
+            const apiKey = getOpenAIApiKey();
+            if (!apiKey) {
+                showNotification('Please configure your OpenAI API key first', 'error');
+                return;
+            }
+
+            const voice = document.getElementById('voiceSelection')?.value || 'alloy';
+            const previewText = `Hello, this is a preview of the ${voice} voice. This voice will be used to narrate your audiobook with professional quality and clarity.`;
+
+            showNotification(`Generating ${voice} voice preview...`, 'info');
+
+            try {
+                const audioBlob = await generateChapterAudio(previewText, voice, 1.0, apiKey);
+                const audioUrl = URL.createObjectURL(audioBlob);
+                
+                const previewPlayer = document.getElementById('voicePreviewPlayer');
+                const audioSource = document.getElementById('voicePreviewSource');
+                
+                audioSource.src = audioUrl;
+                previewPlayer.classList.remove('hidden');
+                
+                // Auto-play the preview
+                const audioElement = previewPlayer.querySelector('audio');
+                audioElement.load();
+                audioElement.play();
+                
+                showNotification(`${voice} voice preview ready!`, 'success');
+            } catch (error) {
+                showNotification(`Voice preview failed: ${error.message}`, 'error');
+            }
+        }
+
+        // Recording Functions
+        let mediaRecorder;
+        let recordedChunks = [];
+
+        async function startRecording() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                
+                mediaRecorder = new MediaRecorder(stream);
+                recordedChunks = [];
+
+                mediaRecorder.ondataavailable = (event) => {
+                    if (event.data.size > 0) {
+                        recordedChunks.push(event.data);
+                    }
+                };
+
+                mediaRecorder.onstop = () => {
+                    const blob = new Blob(recordedChunks, { type: 'audio/wav' });
+                    const audioUrl = URL.createObjectURL(blob);
+                    
+                    const recordedAudio = document.getElementById('recordedAudio');
+                    const audioSource = document.getElementById('recordedAudioSource');
+                    
+                    audioSource.src = audioUrl;
+                    recordedAudio.classList.remove('hidden');
+                    
+                    // Stop all tracks to release the microphone
+                    stream.getTracks().forEach(track => track.stop());
+                    
+                    showNotification('Recording saved successfully!', 'success');
+                };
+
+                mediaRecorder.start();
+                
+                // Update UI
+                document.getElementById('recordBtn').disabled = true;
+                document.getElementById('stopBtn').disabled = false;
+                document.getElementById('recordingIndicator').classList.remove('hidden');
+                document.getElementById('recordingWave').classList.remove('hidden');
+                
+                showNotification('Recording started...', 'info');
+                
+            } catch (error) {
+                showNotification(`Recording failed: ${error.message}`, 'error');
+            }
+        }
+
+        function stopRecording() {
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
+                mediaRecorder.stop();
+                
+                // Update UI
+                document.getElementById('recordBtn').disabled = false;
+                document.getElementById('stopBtn').disabled = true;
+                document.getElementById('recordingIndicator').classList.add('hidden');
+                document.getElementById('recordingWave').classList.add('hidden');
+            }
+        }
+
+        // Enhanced getOpenAIApiKey function
+        function getOpenAIApiKey() {
+            const storedKey = localStorage.getItem('openaiApiKey');
+            if (storedKey && storedKey.startsWith('••••')) {
+                // If the key is masked, we need the user to re-enter it
+                showNotification('Please re-enter your API key in the Config section', 'error');
+                return null;
+            }
+            return storedKey;
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadSettings();
+            
+            // Add text area listener for character count
+            const textArea = document.getElementById('cloneTextInput');
+            if (textArea) {
+                textArea.addEventListener('input', updateCharCount);
+            }
+        });
     </script>
 </body>
 </html>
