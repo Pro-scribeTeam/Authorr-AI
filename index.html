@@ -1769,38 +1769,39 @@
                     showNotification(`Generating Chapter ${chapterNumber} of ${storyData.chapters.length}...`, 'info');
                     
                     try {
-                        // Generate content for this chapter using the chapter number
-                        const content = await generateSingleChapterContent(chapterNumber);
+                        // Generate content for this chapter
+                        await generateChapterContent(chapterNumber);
                         
-                        if (content && content.trim()) {
-                            chapter.content = content;
-                            allContent += `\n\n=== Chapter ${chapterNumber}: ${chapter.title || 'Untitled'} ===\n\n${content}`;
-                            
-                            // Update visual feedback
-                            updateChapterDisplay(chapterNumber);
+                        // Get the generated content from the chapter
+                        const chapterContent = chapter.content || '';
+                        if (chapterContent.trim()) {
+                            allContent += `\n\n=== Chapter ${chapterNumber}: ${chapter.title || 'Untitled'} ===\n\n${chapterContent}`;
                             successCount++;
                             
-                            showNotification(`Chapter ${chapterNumber} generated successfully (${countWords(content)} words)`, 'success');
+                            // Update chapter status with actual word count
+                            updateChapterStatus(chapterNumber, 'complete', `Story complete (${countWords(chapterContent)} words)`);
+                            showNotification(`Chapter ${chapterNumber} generated successfully (${countWords(chapterContent)} words)`, 'success');
                         } else {
-                            console.warn(`Empty content generated for chapter ${chapterNumber}`);
-                            showNotification(`Chapter ${chapterNumber}: Empty content generated`, 'warning');
+                            updateChapterStatus(chapterNumber, 'error', 'Failed to generate');
+                            showNotification(`Chapter ${chapterNumber}: No content generated`, 'warning');
                         }
                     } catch (chapterError) {
                         console.error(`Error generating chapter ${chapterNumber}:`, chapterError);
+                        updateChapterStatus(chapterNumber, 'error', 'Generation failed');
                         showNotification(`Failed to generate Chapter ${chapterNumber}: ${chapterError.message}`, 'error');
                         // Continue with next chapter instead of stopping
                     }
                     
                     // Small delay between chapters to prevent rate limiting
-                    await new Promise(resolve => setTimeout(resolve, 1500));
+                    await new Promise(resolve => setTimeout(resolve, 1000));
                 }
                 
-                // Add all content to Story Editor
+                // Add all content to Story Editor if any was generated
                 if (allContent.trim()) {
                     addToStoryEditor(allContent.trim());
                     showNotification(`Successfully generated ${successCount}/${storyData.chapters.length} chapters! Content added to Story Editor.`, 'success');
                 } else {
-                    throw new Error('No content was generated for any chapters');
+                    showNotification('No content was generated for any chapters. Please check your API key and try again.', 'error');
                 }
                 
             } catch (error) {
@@ -1814,6 +1815,31 @@
             if (statusEl) {
                 statusEl.className = `chapter-status status-${status} text-xs`;
                 statusEl.textContent = message;
+            }
+        }
+        
+        // Add content to Story Editor
+        function addToStoryEditor(content) {
+            const editor = document.getElementById('storyEditor');
+            if (editor) {
+                if (editor.value.trim()) {
+                    editor.value += '\n\n' + content;
+                } else {
+                    editor.value = content;
+                }
+                
+                // Update word count if function exists
+                if (typeof updateWordCount === 'function') {
+                    updateWordCount();
+                }
+                
+                // Switch to workspace to show the editor
+                showPage('workspace');
+                
+                // Scroll to editor
+                setTimeout(() => {
+                    editor.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 500);
             }
         }
         
@@ -3294,138 +3320,74 @@ JSON Structure:
             document.body.removeChild(link);
         }
 
-        // Generate Single Chapter Content (Returns content)
-        async function generateSingleChapterContent(chapterNumber) {
-            console.log(`Generating content for chapter ${chapterNumber}...`);
-            
+        // Enhanced Chapter Content Generation
+        async function generateChapterContent(chapterNumber) {
             const apiKey = getOpenAIApiKey();
             if (!apiKey) {
-                throw new Error('Please configure your OpenAI API key first');
+                showNotification('Please configure your OpenAI API key first', 'error');
+                return;
             }
 
-            const chapter = storyData.chapters.find(c => c.number === chapterNumber) || 
-                           storyData.chapters[chapterNumber - 1]; // Fallback to index-based lookup
-            
-            if (!chapter) {
-                console.error(`Chapter ${chapterNumber} not found. Available chapters:`, storyData.chapters);
-                throw new Error(`Chapter ${chapterNumber} not found`);
-            }
+            const chapter = storyData.chapters.find(c => c.number === chapterNumber);
+            if (!chapter) return;
 
-            console.log(`Found chapter:`, chapter);
+            showNotification(`Generating content for Chapter ${chapterNumber}...`, 'info');
 
-            const bookTitle = storyData.title || document.getElementById('title')?.value || 'Untitled Book';
-            const genre = document.getElementById('genre')?.value || 'Fiction';
-            const tone = document.getElementById('tone')?.value || 'Engaging';
+            const prompt = `Write the full content for this chapter of the book "${storyData.title}".
 
-            const prompt = `Write the full content for this chapter of the book "${bookTitle}".
-
-Chapter ${chapterNumber}: ${chapter.title || 'Untitled Chapter'}
-Summary: ${chapter.summary || 'No summary provided'}
-Key Points: ${Array.isArray(chapter.keyPoints) ? chapter.keyPoints.join(', ') : 'None specified'}
-Target Word Count: ${chapter.wordCount || 2000}
-Genre: ${genre}
-Tone: ${tone}
+Chapter ${chapter.number}: ${chapter.title}
+Summary: ${chapter.summary}
+Key Points: ${chapter.keyPoints.join(', ')}
+Target Word Count: ${chapter.wordCount}
+Genre: ${document.getElementById('genre')?.value}
+Tone: ${document.getElementById('tone')?.value}
 
 Write engaging, well-structured prose that:
 1. Follows the chapter summary and incorporates all key points
 2. Maintains consistent tone and style
 3. Includes dialogue, descriptions, and narrative flow
-4. Meets the target word count (approximately ${chapter.wordCount || 2000} words)
+4. Meets the target word count
 5. Ends with a natural transition to the next chapter
 
-Format as clean, readable text ready for narration. Do not include markdown formatting or chapter headers - just the content.`;
+Format as clean, readable text ready for narration.`;
 
-            console.log('Sending OpenAI API request...');
-
-            const response = await fetch('https://api.openai.com/v1/chat/completions', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${apiKey}`
-                },
-                body: JSON.stringify({
-                    model: "gpt-4o-mini",
-                    messages: [
-                        {
-                            role: "system", 
-                            content: "You are a professional author and storyteller. Write compelling, well-crafted chapter content that engages readers and flows naturally. Return only the chapter content without any markdown formatting or headers."
-                        },
-                        {
-                            role: "user",
-                            content: prompt
-                        }
-                    ],
-                    temperature: 0.8,
-                    max_tokens: 4000
-                })
-            });
-
-            if (!response.ok) {
-                const errorText = await response.text();
-                console.error('OpenAI API error response:', errorText);
-                throw new Error(`OpenAI API Error: ${response.status} - ${errorText}`);
-            }
-
-            const data = await response.json();
-            console.log('OpenAI API response received');
-            
-            if (!data.choices || !data.choices[0] || !data.choices[0].message) {
-                throw new Error('Invalid response format from OpenAI API');
-            }
-
-            const content = data.choices[0].message.content;
-            console.log(`Generated content length: ${content ? content.length : 0} characters`);
-            
-            return content;
-        }
-
-        // Enhanced Chapter Content Generation (Individual)
-        async function generateChapterContent(chapterNumber) {
             try {
-                showNotification(`Generating content for Chapter ${chapterNumber}...`, 'info');
-                
-                const content = await generateSingleChapterContent(chapterNumber);
-                const chapter = storyData.chapters.find(c => c.number === chapterNumber);
-                
-                if (content && chapter) {
-                    chapter.content = content;
-                    
-                    // Add to Story Editor
-                    const chapterText = `=== Chapter ${chapter.number}: ${chapter.title} ===\n\n${content}`;
-                    addToStoryEditor(chapterText);
-                    
-                    updateChapterDisplay(chapterNumber);
-                    showNotification(`Chapter ${chapterNumber} content generated and added to Story Editor!`, 'success');
+                const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${apiKey}`
+                    },
+                    body: JSON.stringify({
+                        model: "gpt-4o-mini",
+                        messages: [
+                            {
+                                role: "system", 
+                                content: "You are a professional author and storyteller. Write compelling, well-crafted chapter content that engages readers and flows naturally."
+                            },
+                            {
+                                role: "user",
+                                content: prompt
+                            }
+                        ],
+                        temperature: 0.8,
+                        max_tokens: 4000
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`OpenAI API Error: ${response.status}`);
                 }
+
+                const data = await response.json();
+                chapter.content = data.choices[0].message.content;
+                
+                updateChapterDisplay(chapterNumber);
+                showNotification(`Chapter ${chapterNumber} content generated!`, 'success');
                 
             } catch (error) {
                 console.error('Content generation error:', error);
                 showNotification(`Failed to generate content: ${error.message}`, 'error');
-            }
-        }
-
-        // Add content to Story Editor
-        function addToStoryEditor(content) {
-            const editor = document.getElementById('storyEditor');
-            if (editor) {
-                if (editor.value.trim()) {
-                    editor.value += '\n\n' + content;
-                } else {
-                    editor.value = content;
-                }
-                
-                // Update word count if function exists
-                if (typeof updateWordCount === 'function') {
-                    updateWordCount();
-                }
-                
-                // Switch to workspace to show the editor
-                showPage('workspace');
-                
-                // Scroll to editor
-                setTimeout(() => {
-                    editor.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }, 500);
             }
         }
 
