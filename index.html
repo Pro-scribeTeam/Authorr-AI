@@ -3014,7 +3014,9 @@ Generate a comprehensive chapter plan with:
 3. Key plot points and character development
 4. Pacing and story arc progression
 
-Format as JSON with this structure:
+IMPORTANT: Respond with ONLY valid JSON, no markdown formatting or explanations.
+
+JSON Structure:
 {
   "chapters": [
     {
@@ -3039,7 +3041,7 @@ Format as JSON with this structure:
                         messages: [
                             {
                                 role: "system",
-                                content: "You are a professional book planning assistant. Create detailed, engaging chapter plans that follow proper story structure and pacing."
+                                content: "You are a professional book planning assistant. Create detailed, engaging chapter plans that follow proper story structure and pacing. Always respond with valid JSON only, no markdown formatting or code blocks."
                             },
                             {
                                 role: "user",
@@ -3056,7 +3058,22 @@ Format as JSON with this structure:
                 }
 
                 const data = await response.json();
-                const chapterPlan = JSON.parse(data.choices[0].message.content);
+                let content = data.choices[0].message.content;
+                
+                // Clean the response - remove markdown formatting
+                content = content.replace(/```json\s*/gi, '').replace(/```\s*/gi, '').trim();
+                
+                // Additional cleaning for common AI response issues
+                content = content.replace(/^Here's.*?:/gi, '').trim();
+                content = content.replace(/^Based on.*?:/gi, '').trim();
+                
+                let chapterPlan;
+                try {
+                    chapterPlan = JSON.parse(content);
+                } catch (parseError) {
+                    console.error('JSON parsing failed, raw content:', content);
+                    throw new Error('Invalid JSON response from AI. Please try again.');
+                }
                 
                 displayChapterPlan(chapterPlan);
                 showNotification('Chapter plan generated successfully!', 'success');
