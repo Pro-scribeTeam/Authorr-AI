@@ -593,7 +593,7 @@
                             Chapter Plan
                         </h2>
                         <button onclick="generateAllChapters()" id="generateAllBtn" class="btn-secondary px-4 py-2 rounded-lg text-sm font-semibold" disabled>
-                            <i class="fas fa-bolt mr-1"></i>Generate All Stories
+                            <i class="fas fa-bolt mr-1"></i>Generate All Chapters
                         </button>
                     </div>
                     
@@ -1709,44 +1709,65 @@
         }
         
         function editChapter(chapterNum) {
-            const chapterDiv = document.getElementById(`chapter-${chapterNum}`);
-            const titleEl = chapterDiv.querySelector('.editable-title');
-            const summaryEl = chapterDiv.querySelector('.editable-summary');
-            
-            // Highlight for editing
-            titleEl.focus();
-            titleEl.style.backgroundColor = 'rgba(120, 227, 254, 0.1)';
-            summaryEl.style.backgroundColor = 'rgba(120, 227, 254, 0.1)';
-            
-            // Show edit instruction
-            showStatusMessage(`Editing Chapter ${chapterNum} - Click outside when done`);
-            
-            // Remove highlight after editing
-            setTimeout(() => {
-                titleEl.style.backgroundColor = '';
-                summaryEl.style.backgroundColor = '';
-            }, 5000);
+            try {
+                const chapterDiv = document.getElementById(`chapter-${chapterNum}`);
+                if (!chapterDiv) {
+                    showNotification(`Chapter ${chapterNum} not found`, 'error');
+                    return;
+                }
+                
+                const titleEl = chapterDiv.querySelector('.editable-title');
+                const summaryEl = chapterDiv.querySelector('.editable-summary');
+                
+                if (!titleEl || !summaryEl) {
+                    showNotification('Chapter elements not found', 'error');
+                    return;
+                }
+                
+                // Highlight for editing
+                titleEl.focus();
+                titleEl.style.backgroundColor = 'rgba(120, 227, 254, 0.1)';
+                summaryEl.style.backgroundColor = 'rgba(120, 227, 254, 0.1)';
+                
+                // Show edit instruction
+                showNotification(`Editing Chapter ${chapterNum} - Click outside when done`, 'info');
+                
+                // Remove highlight after editing
+                setTimeout(() => {
+                    titleEl.style.backgroundColor = '';
+                    summaryEl.style.backgroundColor = '';
+                }, 5000);
+                
+            } catch (error) {
+                console.error('Edit chapter error:', error);
+                showNotification('Failed to edit chapter', 'error');
+            }
         }
         
         async function generateAllChapters() {
-            if (!storyData.chapters.length) {
-                alert('Please generate a chapter plan first.');
+            if (!storyData.chapters || storyData.chapters.length === 0) {
+                showNotification('Please generate a chapter plan first.', 'error');
                 return;
             }
             
-            showLoading('Generating all chapter stories...');
+            const apiKey = getOpenAIApiKey();
+            if (!apiKey) {
+                showNotification('Please configure your OpenAI API key first', 'error');
+                return;
+            }
+            
+            showNotification('Generating all chapter content...', 'info');
             
             try {
-                let allContent = '';
                 for (let i = 0; i < storyData.chapters.length; i++) {
-                    updateLoadingText(`Creating story for chapter ${i + 1} of ${storyData.chapters.length}...`);
+                    const chapter = storyData.chapters[i];
+                    showNotification(`Generating Chapter ${i + 1} of ${storyData.chapters.length}...`, 'info');
                     
-                    // Update chapter status
-                    updateChapterStatus(i + 1, 'generating', 'Generating story content...');
+                    // Generate content for this chapter
+                    await generateChapterContent(chapter.number);
                     
-                    const content = await generateSingleChapter(i + 1);
-                    storyData.chapters[i].content = content;
-                    allContent += content + '\n\n';
+                    // Small delay between chapters to prevent rate limiting
+                    await new Promise(resolve => setTimeout(resolve, 1000));
                     
                     // Update chapter status
                     updateChapterStatus(i + 1, 'complete', `Story complete (${countWords(content)} words)`);
@@ -1755,19 +1776,11 @@
                     await new Promise(resolve => setTimeout(resolve, 500));
                 }
                 
-                // Display all content in editor
-                const editor = document.getElementById('storyEditor');
-                editor.value = allContent;
-                updateWordCount();
-                saveToHistory();
-                
-                hideLoading();
-                showStatusMessage(`Successfully generated ${storyData.chapters.length} chapters!`);
+                showNotification(`Successfully generated all ${storyData.chapters.length} chapters!`, 'success');
                 
             } catch (error) {
                 console.error('Chapter generation error:', error);
-                alert('Failed to generate all chapters. Please try again.');
-                hideLoading();
+                showNotification('Failed to generate all chapters. Please try again.', 'error');
             }
         }
         
@@ -3108,12 +3121,13 @@ JSON Structure:
             chapterPlan.chapters.forEach(chapter => {
                 const chapterDiv = document.createElement('div');
                 chapterDiv.className = 'chapter-card bg-theme-primary p-4 rounded-lg border border-theme';
+                chapterDiv.id = `chapter-${chapter.number}`;
                 chapterDiv.innerHTML = `
                     <div class="flex justify-between items-start mb-2">
-                        <h3 class="font-bold text-lg">${chapter.number}. ${chapter.title}</h3>
+                        <h3 class="font-bold text-lg editable-title" contenteditable="true" data-chapter="${chapter.number}">${chapter.number}. ${chapter.title}</h3>
                         <span class="text-xs text-theme-secondary">${chapter.wordCount} words</span>
                     </div>
-                    <p class="text-sm text-theme-secondary mb-2">${chapter.summary}</p>
+                    <p class="text-sm text-theme-secondary mb-2 editable-summary" contenteditable="true" data-chapter="${chapter.number}">${chapter.summary}</p>
                     <div class="flex flex-wrap gap-1 mb-3">
                         ${chapter.keyPoints.map(point => 
                             `<span class="text-xs bg-cyan-900 text-cyan-300 px-2 py-1 rounded">${point}</span>`
@@ -3121,7 +3135,7 @@ JSON Structure:
                     </div>
                     <div class="flex space-x-2">
                         <button onclick="generateChapterContent(${chapter.number})" class="btn-primary text-xs px-3 py-1 rounded">
-                            <i class="fas fa-magic mr-1"></i>Generate Content
+                            <i class="fas fa-sync mr-1"></i>Regenerate Chapter
                         </button>
                         <button onclick="editChapter(${chapter.number})" class="btn-secondary text-xs px-3 py-1 rounded">
                             <i class="fas fa-edit mr-1"></i>Edit
@@ -3130,6 +3144,13 @@ JSON Structure:
                 `;
                 chaptersContainer.appendChild(chapterDiv);
             });
+            
+            // Enable the Generate All Chapters button
+            const generateAllBtn = document.getElementById('generateAllBtn');
+            if (generateAllBtn) {
+                generateAllBtn.disabled = false;
+                generateAllBtn.classList.remove('opacity-50');
+            }
         }
 
         // OpenAI TTS (Text-to-Speech) Functions
