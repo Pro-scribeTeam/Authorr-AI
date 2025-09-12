@@ -797,13 +797,19 @@
                         <p class="text-sm text-theme-secondary mb-3">Detailed stylistic and forensic breakdown of text for AI authorship likelihood.</p>
                         
                         <div class="flex gap-3">
-                            <button onclick="forensicAIDetection()" class="btn-primary px-4 py-2 rounded font-medium">
-                                <i class="fas fa-search-plus mr-2"></i>Analyze Text
-                            </button>
+                            <div class="relative">
+                                <button onclick="forensicAIDetection()" class="btn-primary px-4 py-2 rounded font-medium">
+                                    <i class="fas fa-search-plus mr-2"></i>Analyze Text
+                                </button>
+                                <i class="fas fa-info-circle tool-info" title="Performs statistical analysis to determine AI likelihood score using perplexity, burstiness, and lexical variance measurements."></i>
+                            </div>
                             
-                            <button onclick="humanizeText()" class="btn-secondary px-4 py-2 rounded font-medium">
-                                <i class="fas fa-user-edit mr-2"></i>Humanization
-                            </button>
+                            <div class="relative">
+                                <button onclick="humanizeText()" class="btn-secondary px-4 py-2 rounded font-medium">
+                                    <i class="fas fa-user-edit mr-2"></i>Humanization
+                                </button>
+                                <i class="fas fa-info-circle tool-info" title="Rewrites text to sound more natural and human-like, reducing AI detection scores while preserving meaning and style."></i>
+                            </div>
                         </div>
                         
                         <!-- Analysis Results Area -->
