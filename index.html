@@ -939,6 +939,40 @@
                             Assign different voices to characters in your story for dynamic narration.
                         </p>
                         
+                        <!-- Content Status Indicator -->
+                        <div id="contentStatusIndicator" class="bg-theme-primary p-3 rounded-lg border border-theme">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-2">
+                                    <div id="contentStatusIcon" class="w-3 h-3 rounded-full bg-gray-400"></div>
+                                    <span class="text-sm font-medium">Story Content Status:</span>
+                                </div>
+                                <button onclick="refreshContentStatus()" class="text-xs text-cyan-400 hover:text-cyan-300">
+                                    <i class="fas fa-sync mr-1"></i>Refresh
+                                </button>
+                            </div>
+                            <div id="contentStatusText" class="text-xs text-theme-secondary mt-1">
+                                Checking for story content...
+                            </div>
+                            <div id="contentPreviewToggle" class="mt-2 hidden">
+                                <button onclick="toggleContentPreview()" class="text-xs text-cyan-400 hover:text-cyan-300">
+                                    <i class="fas fa-eye mr-1"></i>Preview Content
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Content Preview (Hidden by default) -->
+                        <div id="contentPreview" class="hidden bg-theme-primary p-3 rounded-lg border border-theme">
+                            <div class="flex items-center justify-between mb-2">
+                                <h5 class="text-sm font-medium text-cyan-400">Content Preview:</h5>
+                                <button onclick="toggleContentPreview()" class="text-xs text-theme-secondary">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                            <div id="contentPreviewText" class="text-xs text-theme-secondary max-h-32 overflow-y-auto bg-theme-secondary p-2 rounded font-mono">
+                                <!-- Content preview will appear here -->
+                            </div>
+                        </div>
+                        
                         <button onclick="scanForDialogue()" class="btn-secondary w-full py-2 rounded-lg font-semibold">
                             <i class="fas fa-search mr-2"></i>Scan Story for Dialogue
                         </button>
@@ -4732,99 +4766,260 @@ Format as clean, readable text ready for narration.`;
             voiceAssignments: {}
         };
 
+        // Content status functions
+        function refreshContentStatus() {
+            updateContentStatus();
+        }
+        
+        function updateContentStatus() {
+            const statusIcon = document.getElementById('contentStatusIcon');
+            const statusText = document.getElementById('contentStatusText');
+            const previewToggle = document.getElementById('contentPreviewToggle');
+            
+            // Get content from multiple sources
+            const editorContent = document.getElementById('storyEditor')?.value || '';
+            const currentContent = storyData.currentContent || '';
+            const combinedContent = storyData.combinedContent || '';
+            
+            // Determine which content to use (priority: combined > current > editor)
+            let content = combinedContent || currentContent || editorContent;
+            const contentSource = combinedContent ? 'Combined Chapters' : 
+                                 currentContent ? 'Current Story' : 
+                                 editorContent ? 'Story Editor' : 'None';
+            
+            if (!content.trim()) {
+                statusIcon.className = 'w-3 h-3 rounded-full bg-red-400';
+                statusText.textContent = 'No story content found. Please create or combine chapters first.';
+                previewToggle.classList.add('hidden');
+                return;
+            }
+            
+            const wordCount = content.trim().split(/\s+/).length;
+            const charCount = content.length;
+            const hasDialogue = content.includes('"') || content.match(/^[A-Z][a-z]*:/m);
+            
+            statusIcon.className = 'w-3 h-3 rounded-full bg-green-400';
+            statusText.innerHTML = `
+                <div><strong>Source:</strong> ${contentSource}</div>
+                <div><strong>Length:</strong> ${wordCount} words, ${charCount} characters</div>
+                <div><strong>Dialogue:</strong> ${hasDialogue ? '✅ Detected' : '❌ None found'}</div>
+            `;
+            previewToggle.classList.remove('hidden');
+            
+            // Store the content for dialogue scanning
+            storyData.currentContent = content;
+        }
+        
+        function toggleContentPreview() {
+            const preview = document.getElementById('contentPreview');
+            const previewText = document.getElementById('contentPreviewText');
+            
+            if (preview.classList.contains('hidden')) {
+                const content = storyData.currentContent || '';
+                if (content) {
+                    // Show first 1000 characters
+                    const truncated = content.length > 1000 ? content.substring(0, 1000) + '\n\n... [Content truncated. Full content will be used for dialogue scanning.]' : content;
+                    previewText.textContent = truncated;
+                    preview.classList.remove('hidden');
+                }
+            } else {
+                preview.classList.add('hidden');
+            }
+        }
+
         async function scanForDialogue() {
+            // First update content status
+            updateContentStatus();
+            
             const content = storyData.currentContent || document.getElementById('storyEditor')?.value || '';
             
             if (!content.trim()) {
-                showNotification('No story content found. Please create content first.', 'warning');
+                showNotification('No story content found. Please create a story first.', 'warning');
                 return;
             }
 
-            showNotification('Scanning story for dialogue and characters...', 'info');
+            showLoading('Scanning story for dialogue and characters...');
+            
+            // Add detailed debug information
+            console.log('=== DIALOGUE SCANNING DEBUG ===');
+            console.log('Content length:', content.length);
+            console.log('First 500 characters:', content.substring(0, 500));
+            console.log('Has quotes:', content.includes('"'));
+            console.log('Has colons:', content.includes(':'));
 
             try {
-                // Parse dialogue using multiple patterns
-                const dialoguePatterns = [
-                    /"([^"]+)"/g,                          // Standard quotes
-                    /'([^']+)'/g,                          // Single quotes  
-                    /["""]([^"""]+)["""]/g,                // Smart quotes
-                    /^\s*"([^"]+)"/gm,                     // Line-starting quotes
-                    /said\s+"([^"]+)"/gi,                  // "said" dialogue
-                    /\[([^\]]+)\]:\s*"([^"]+)"/g,         // Character tagged: [John]: "..."
-                    /^([A-Z][A-Z\s]+):\s*"([^"]+)"/gm,    // ALL CAPS: JOHN: "..."
-                    /^([A-Z][a-z]+):\s*"([^"]+)"/gm       // Title case: John: "..."
-                ];
-
                 let characters = new Set();
                 let dialogueSections = [];
                 
-                // Extract dialogue with context
-                const lines = content.split('\n');
-                let currentDialogue = [];
+                // Split into lines for processing
+                const lines = content.split('\n').map(line => line.trim()).filter(line => line);
+                console.log('Total lines to process:', lines.length);
                 
-                lines.forEach((line, index) => {
-                    const trimmedLine = line.trim();
+                // Enhanced dialogue detection patterns
+                const patterns = {
+                    // Character: "Dialogue"
+                    characterColon: /^([A-Z][a-zA-Z\s]+?):\s*["""]([^"""]+?)["""](.*)$/,
+                    // [Character]: "Dialogue"  
+                    characterBracket: /^\[([^\]]+)\]:\s*["""]([^"""]+?)["""](.*)$/,
+                    // CAPS: "Dialogue"
+                    characterCaps: /^([A-Z][A-Z\s]{1,20}):\s*["""]([^"""]+?)["""](.*)$/,
+                    // "Dialogue" (standalone)
+                    standaloneQuote: /^["""]([^"""]+?)["""](.*)$/,
+                    // Text with "dialogue" in middle
+                    embeddedQuote: /^(.*?)["""]([^"""]+?)["""](.*)$/
+                };
+                
+                let lineNumber = 0;
+                for (const line of lines) {
+                    lineNumber++;
                     
-                    // Check for character-tagged dialogue
-                    const characterMatch = trimmedLine.match(/^(?:\[([^\]]+)\]|([A-Z][A-Z\s]*[A-Z])|([A-Z][a-z]+)):\s*"([^"]+)"/);
-                    if (characterMatch) {
-                        const character = characterMatch[1] || characterMatch[2] || characterMatch[3];
-                        const dialogue = characterMatch[4];
-                        
-                        characters.add(character);
-                        const lineStart = content.indexOf(line);
-                        const lineEnd = lineStart + line.length;
-                        currentDialogue.push({
-                            character: character,
-                            text: dialogue,
-                            line: index + 1,
-                            type: 'character_tagged',
-                            startIndex: lineStart >= 0 ? lineStart : 0,
-                            endIndex: lineEnd
-                        });
-                    }
-                    // Check for standard quoted dialogue
-                    else if (trimmedLine.includes('"')) {
-                        const quotes = trimmedLine.match(/"([^"]+)"/g);
-                        if (quotes) {
-                            quotes.forEach(quote => {
-                                const dialogueText = quote.replace(/"/g, '');
-                                const quoteIndex = content.indexOf(quote);
-                                currentDialogue.push({
-                                    character: 'Unknown Speaker',
+                    // Try each pattern
+                    for (const [patternName, pattern] of Object.entries(patterns)) {
+                        const match = line.match(pattern);
+                        if (match) {
+                            console.log(`Line ${lineNumber} matched ${patternName}:`, match);
+                            
+                            let character, dialogueText, beforeText, afterText;
+                            
+                            switch(patternName) {
+                                case 'characterColon':
+                                case 'characterBracket':
+                                case 'characterCaps':
+                                    character = match[1].trim();
+                                    dialogueText = match[2].trim();
+                                    afterText = match[3] ? match[3].trim() : '';
+                                    break;
+                                    
+                                case 'standaloneQuote':
+                                    character = 'Unknown Speaker';
+                                    dialogueText = match[1].trim();
+                                    afterText = match[2] ? match[2].trim() : '';
+                                    break;
+                                    
+                                case 'embeddedQuote':
+                                    character = 'Unknown Speaker';
+                                    dialogueText = match[2].trim();
+                                    beforeText = match[1] ? match[1].trim() : '';
+                                    afterText = match[3] ? match[3].trim() : '';
+                                    break;
+                            }
+                            
+                            if (dialogueText && dialogueText.length > 0) {
+                                characters.add(character);
+                                
+                                dialogueSections.push({
+                                    character: character,
                                     text: dialogueText,
-                                    line: index + 1,
-                                    type: 'untagged',
-                                    startIndex: quoteIndex >= 0 ? quoteIndex : 0,
-                                    endIndex: quoteIndex >= 0 ? quoteIndex + quote.length : quote.length
+                                    line: lineNumber,
+                                    type: character === 'Unknown Speaker' ? 'untagged' : 'character_tagged',
+                                    beforeText: beforeText || '',
+                                    afterText: afterText || '',
+                                    fullLine: line,
+                                    startIndex: content.indexOf(line),
+                                    endIndex: content.indexOf(line) + line.length
                                 });
-                            });
+                                
+                                console.log(`Added dialogue: ${character} -> "${dialogueText}"`);
+                            }
+                            break; // Found a match, stop trying other patterns for this line
                         }
                     }
-                });
-
-                // Auto-detect characters from context if not tagged
-                if (characters.size === 0) {
-                    // Use AI to detect character names
-                    const characterAnalysis = await detectCharacters(content);
-                    characterAnalysis.forEach(char => characters.add(char));
                 }
-
+                
+                console.log('Characters found:', Array.from(characters));
+                console.log('Dialogue sections found:', dialogueSections.length);
+                
+                // If no characters found, try AI detection
+                if (characters.size === 0 && dialogueSections.length === 0) {
+                    console.log('No dialogue detected, trying AI character detection...');
+                    try {
+                        const aiCharacters = await detectCharacters(content);
+                        console.log('AI detected characters:', aiCharacters);
+                        aiCharacters.forEach(char => {
+                            if (char && char.trim()) {
+                                characters.add(char.trim());
+                            }
+                        });
+                    } catch (aiError) {
+                        console.log('AI character detection failed:', aiError);
+                    }
+                }
+                
+                // Store results
                 dialogueData.characters = Array.from(characters);
-                dialogueData.dialogueSections = currentDialogue;
-
-                if (dialogueData.characters.length === 0 && currentDialogue.length === 0) {
-                    showNotification('No dialogue or characters found in the story.', 'warning');
+                dialogueData.dialogueSections = dialogueSections;
+                
+                console.log('Final results:');
+                console.log('- Characters:', dialogueData.characters);
+                console.log('- Dialogue sections:', dialogueData.dialogueSections.length);
+                
+                hideLoading();
+                
+                if (dialogueData.characters.length === 0 && dialogueSections.length === 0) {
+                    showNotification(`No dialogue found. Content analysis:\n- Lines processed: ${lines.length}\n- Contains quotes: ${content.includes('"') || content.includes('"')}\n- Contains colons: ${content.includes(':')}`, 'warning');
+                    
+                    // Show debug dialog
+                    showDialogueDebugModal(content, lines);
                     return;
                 }
-
+                
                 displayDialogueResults();
-                showNotification(`Found ${dialogueData.characters.length} characters and ${currentDialogue.length} dialogue sections!`, 'success');
+                showNotification(`✅ Scan complete! Found ${dialogueData.characters.length} characters and ${dialogueSections.length} dialogue sections`, 'success');
 
             } catch (error) {
                 console.error('Dialogue scanning error:', error);
-                showNotification('Failed to scan dialogue. Please try again.', 'error');
+                hideLoading();
+                showNotification(`Failed to scan dialogue: ${error.message}`, 'error');
             }
+        }
+        
+        function showDialogueDebugModal(content, lines) {
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
+            modal.innerHTML = `
+                <div class="bg-theme-secondary rounded-xl max-w-4xl max-h-[80vh] w-full flex flex-col border-2 border-theme">
+                    <div class="flex items-center justify-between p-6 border-b border-theme">
+                        <h3 class="text-xl font-bold text-yellow-400">
+                            <i class="fas fa-bug mr-2"></i>Dialogue Scanning Debug
+                        </h3>
+                        <button onclick="this.closest('.fixed').remove()" class="text-theme-secondary hover:text-theme-primary">
+                            <i class="fas fa-times text-xl"></i>
+                        </button>
+                    </div>
+                    <div class="flex-1 p-6 overflow-y-auto">
+                        <div class="space-y-4">
+                            <div class="bg-theme-primary p-4 rounded-lg border border-theme">
+                                <h4 class="font-medium text-cyan-400 mb-2">Content Statistics:</h4>
+                                <div class="text-sm text-theme-secondary space-y-1">
+                                    <div>Total length: ${content.length} characters</div>
+                                    <div>Total lines: ${lines.length}</div>
+                                    <div>Contains quotes (""): ${content.includes('"') ? 'Yes' : 'No'}</div>
+                                    <div>Contains smart quotes (""): ${content.includes('"') || content.includes('"') ? 'Yes' : 'No'}</div>
+                                    <div>Contains colons (:): ${content.includes(':') ? 'Yes' : 'No'}</div>
+                                </div>
+                            </div>
+                            <div class="bg-theme-primary p-4 rounded-lg border border-theme">
+                                <h4 class="font-medium text-cyan-400 mb-2">Content Preview (First 10 lines):</h4>
+                                <pre class="text-xs text-theme-secondary whitespace-pre-wrap bg-theme-secondary p-2 rounded">${lines.slice(0, 10).join('\n')}</pre>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="p-6 border-t border-theme">
+                        <div class="text-sm text-theme-secondary mb-3">
+                            <strong>Expected dialogue formats:</strong><br>
+                            • Character: "Hello there!"<br>
+                            • [John]: "How are you?"<br>
+                            • MARY: "I'm fine, thanks!"<br>
+                            • "Standalone dialogue"
+                        </div>
+                        <button onclick="this.closest('.fixed').remove()" class="btn-primary px-6 py-2 rounded-lg w-full">
+                            Close Debug Info
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
         }
 
         async function detectCharacters(content) {
@@ -5104,13 +5299,22 @@ Format as clean, readable text ready for narration.`;
                     }
                 }
                 
-                // Generate audio for each segment
-                updateLoadingText(`Generating ${audioSegments.length} audio segments...`);
-                const audioFiles = [];
+                // Show detailed progress
+                console.log('=== MULTI-VOICE GENERATION DEBUG ===');
+                console.log('Audio segments to generate:', audioSegments.length);
+                console.log('Voice assignments:', assignments);
                 
+                updateLoadingText(`Preparing ${audioSegments.length} audio segments...`);
+                const audioFiles = [];
+                const failedSegments = [];
+                
+                // Add progress tracking
                 for (let i = 0; i < audioSegments.length; i++) {
                     const segment = audioSegments[i];
-                    updateLoadingText(`Generating audio ${i + 1}/${audioSegments.length} - ${segment.character}`);
+                    const progress = Math.round(((i + 1) / audioSegments.length) * 100);
+                    
+                    updateLoadingText(`🎙️ Generating ${segment.character} (${i + 1}/${audioSegments.length}) - ${progress}%`);
+                    console.log(`Processing segment ${i + 1}: ${segment.character} - "${segment.text.substring(0, 50)}..."`);
                     
                     try {
                         const audioBlob = await generateSegmentAudio(segment);
@@ -5120,21 +5324,51 @@ Format as clean, readable text ready for narration.`;
                                 segment: segment,
                                 index: i
                             });
+                            console.log(`✅ Success: Generated audio for ${segment.character}`);
+                        } else {
+                            throw new Error('No audio blob returned');
                         }
                     } catch (segmentError) {
-                        console.error(`Failed to generate audio for segment ${i}:`, segmentError);
-                        showNotification(`Warning: Failed to generate audio for ${segment.character}`, 'warning');
+                        console.error(`❌ Failed: Segment ${i} (${segment.character}):`, segmentError);
+                        failedSegments.push({
+                            index: i,
+                            character: segment.character,
+                            error: segmentError.message,
+                            text: segment.text.substring(0, 100)
+                        });
+                        
+                        // Show individual warnings but continue
+                        setTimeout(() => {
+                            showNotification(`⚠️ Failed: ${segment.character} - ${segmentError.message}`, 'warning');
+                        }, 100);
+                    }
+                    
+                    // Small delay to prevent API rate limiting
+                    if (i < audioSegments.length - 1) {
+                        await new Promise(resolve => setTimeout(resolve, 500));
                     }
                 }
                 
+                console.log('=== GENERATION RESULTS ===');
+                console.log(`✅ Successful: ${audioFiles.length}`);
+                console.log(`❌ Failed: ${failedSegments.length}`);
+                console.log('Failed segments:', failedSegments);
+                
                 if (audioFiles.length === 0) {
-                    throw new Error('No audio segments were generated successfully');
+                    const errorDetails = failedSegments.map(f => `${f.character}: ${f.error}`).join(', ');
+                    throw new Error(`No audio segments were generated successfully. Errors: ${errorDetails}`);
                 }
                 
-                // Display results
-                displayMultiVoiceResults(audioFiles, assignments);
+                // Display results with summary
+                displayMultiVoiceResults(audioFiles, assignments, failedSegments);
                 hideLoading();
-                showNotification(`Multi-voice narration generated! ${audioFiles.length} audio segments created.`, 'success');
+                
+                // Show comprehensive results notification
+                if (failedSegments.length === 0) {
+                    showNotification(`✅ Perfect! All ${audioFiles.length} audio segments generated successfully!`, 'success');
+                } else {
+                    showNotification(`⚠️ Partial success: ${audioFiles.length} segments generated, ${failedSegments.length} failed. Check results below.`, 'warning');
+                }
                 
             } catch (error) {
                 console.error('Multi-voice generation error:', error);
@@ -5188,7 +5422,7 @@ Format as clean, readable text ready for narration.`;
             return await response.blob();
         }
 
-        function displayMultiVoiceResults(audioFiles, assignments) {
+        function displayMultiVoiceResults(audioFiles, assignments, failedSegments = []) {
             const narrationResults = document.getElementById('narrationResults');
             if (!narrationResults) return;
 
@@ -5244,7 +5478,29 @@ Format as clean, readable text ready for narration.`;
             
             resultsHTML += `
                     </div>
+            `;
+            
+            // Add failed segments section if any
+            if (failedSegments.length > 0) {
+                resultsHTML += `
+                    <div class="mt-4 bg-red-900 bg-opacity-20 border border-red-600 rounded-lg p-4">
+                        <h4 class="font-medium text-red-400 mb-2">⚠️ Failed Segments (${failedSegments.length}):</h4>
+                        <div class="text-sm text-red-300 space-y-1">
+                `;
+                failedSegments.forEach(failed => {
+                    resultsHTML += `<div>• ${failed.character}: ${failed.error}</div>`;
+                });
+                resultsHTML += `
+                        </div>
+                    </div>
+                `;
+            }
+            
+            resultsHTML += `
                     <div class="mt-4 text-center">
+                        <div class="bg-theme-primary p-3 rounded-lg mb-3 text-sm">
+                            📊 <strong>Generation Summary:</strong> ${audioFiles.length} successful, ${failedSegments.length} failed
+                        </div>
                         <button onclick="downloadAllMultiVoiceAudio()" class="btn-primary px-6 py-2 rounded-lg">
                             <i class="fas fa-download mr-2"></i>Download All Audio Segments
                         </button>
@@ -5482,6 +5738,7 @@ Format as clean, readable text ready for narration.`;
             // Populate voice options when page loads
             setTimeout(() => {
                 populateVoiceOptions();
+                updateContentStatus(); // Check content status on load
             }, 1000);
             
             // Add text area listener for character count
