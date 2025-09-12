@@ -1708,6 +1708,25 @@
             loadSettings();
             updateWordCount();
             setupAutoSave();
+            
+            // Initialize undo/redo system
+            const editor = document.getElementById('storyEditor');
+            if (editor) {
+                // Save initial state
+                saveEditState();
+                
+                // Auto-save on content changes (debounced)
+                let saveTimeout;
+                editor.addEventListener('input', function() {
+                    clearTimeout(saveTimeout);
+                    saveTimeout = setTimeout(() => {
+                        saveEditState();
+                    }, 1000); // Save after 1 second of no typing
+                });
+            }
+            
+            // Initialize button states
+            updateUndoRedoButtons();
         });
         
         // Page Navigation
@@ -3169,6 +3188,43 @@ Provide output in two parts:
             });
         }
 
+        function saveEditState() {
+            const editor = document.getElementById('storyEditor');
+            if (editor && editor.value !== (editHistory[historyIndex] || '')) {
+                // Remove future history if we're not at the end
+                if (historyIndex < editHistory.length - 1) {
+                    editHistory = editHistory.slice(0, historyIndex + 1);
+                }
+                
+                // Add new state
+                editHistory.push(editor.value);
+                historyIndex++;
+                
+                // Limit history size
+                if (editHistory.length > 50) {
+                    editHistory.shift();
+                    historyIndex--;
+                }
+                
+                updateUndoRedoButtons();
+            }
+        }
+
+        function updateUndoRedoButtons() {
+            const undoBtns = document.querySelectorAll('button[onclick="undoEdit()"]');
+            const redoBtns = document.querySelectorAll('button[onclick="redoEdit()"]');
+            
+            undoBtns.forEach(btn => {
+                btn.disabled = historyIndex <= 0;
+                btn.style.opacity = historyIndex <= 0 ? '0.5' : '1';
+            });
+            
+            redoBtns.forEach(btn => {
+                btn.disabled = historyIndex >= editHistory.length - 1;
+                btn.style.opacity = historyIndex >= editHistory.length - 1 ? '0.5' : '1';
+            });
+        }
+
         async function applyToolChanges(title, suggestions, modal) {
             const editor = document.getElementById('storyEditor');
             const selectedText = getSelectedText(editor);
@@ -3181,6 +3237,9 @@ Provide output in two parts:
 
             const confirmed = confirm(`Apply AI suggestions from "${title}" to your text?\n\nThis will modify your content based on the analysis.`);
             if (!confirmed) return;
+
+            // Save current state before making changes
+            saveEditState();
 
             showLoading('Applying AI suggestions to your text...');
             
@@ -3207,8 +3266,9 @@ Provide output in two parts:
                     editor.value = improvedText;
                 }
 
-                // Update word count
+                // Update word count and save new state
                 updateWordCount();
+                saveEditState();
                 
                 hideLoading();
                 modal.remove();
@@ -3301,10 +3361,12 @@ Provide output in two parts:
             if (historyIndex > 0) {
                 historyIndex--;
                 const editor = document.getElementById('storyEditor');
-                editor.value = editHistory[historyIndex];
-                updateWordCount();
-                updateHistoryButtons();
-                showStatusMessage('Undo successful');
+                if (editor) {
+                    editor.value = editHistory[historyIndex] || '';
+                    updateWordCount();
+                }
+                updateUndoRedoButtons();
+                showNotification('⏪ Changes undone', 'info');
             }
         }
         
@@ -3312,19 +3374,13 @@ Provide output in two parts:
             if (historyIndex < editHistory.length - 1) {
                 historyIndex++;
                 const editor = document.getElementById('storyEditor');
-                editor.value = editHistory[historyIndex];
-                updateWordCount();
-                updateHistoryButtons();
-                showStatusMessage('Redo successful');
+                if (editor) {
+                    editor.value = editHistory[historyIndex] || '';
+                    updateWordCount();
+                }
+                updateUndoRedoButtons();
+                showNotification('⏩ Changes redone', 'info');
             }
-        }
-        
-        function updateHistoryButtons() {
-            const undoBtn = document.getElementById('undoBtn');
-            const redoBtn = document.getElementById('redoBtn');
-            
-            if (undoBtn) undoBtn.disabled = historyIndex <= 0;
-            if (redoBtn) redoBtn.disabled = historyIndex >= editHistory.length - 1;
         }
         
         function saveStory() {
