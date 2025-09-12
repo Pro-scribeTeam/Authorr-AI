@@ -796,7 +796,7 @@
                         
                         <p class="text-sm text-theme-secondary mb-3">Detailed stylistic and forensic breakdown of text for AI authorship likelihood.</p>
                         
-                        <div class="flex gap-3">
+                        <div class="flex gap-3 flex-wrap">
                             <div class="relative">
                                 <button onclick="forensicAIDetection()" class="btn-primary px-4 py-2 rounded font-medium">
                                     <i class="fas fa-search-plus mr-2"></i>Analyze Text
@@ -805,10 +805,17 @@
                             </div>
                             
                             <div class="relative">
-                                <button onclick="humanizeText()" class="btn-secondary px-4 py-2 rounded font-medium">
+                                <button onclick="humanizeText()" class="btn-secondary px-4 py-2 rounded font-medium" id="humanizeBtn">
                                     <i class="fas fa-user-edit mr-2"></i>Humanization
                                 </button>
                                 <i class="fas fa-info-circle tool-info" title="Rewrites text to sound more natural and human-like, reducing AI detection scores while preserving meaning and style."></i>
+                            </div>
+                            
+                            <div class="relative">
+                                <button onclick="reanalyzeText()" class="btn-secondary px-4 py-2 rounded font-medium" id="reanalyzeBtn" disabled style="opacity: 0.5;">
+                                    <i class="fas fa-sync mr-2"></i>Reanalyze
+                                </button>
+                                <i class="fas fa-info-circle tool-info" title="Performs a new AI detection analysis on the current text to check improvement after changes."></i>
                             </div>
                         </div>
                         
@@ -3029,16 +3036,18 @@ Follow these steps:
                 ]);
                 
                 hideLoading();
-                showNotification('Forensic AI detection analysis complete!', 'success');
                 
-                const resultsDiv = document.getElementById('forensicResults');
-                const outputDiv = document.getElementById('forensicOutput');
+                // Extract AI likelihood score
+                const scoreMatch = analysis.match(/AI Likelihood Score:\s*(\d+)%/);
+                const aiScore = scoreMatch ? parseInt(scoreMatch[1]) : 50;
                 
-                resultsDiv.classList.remove('hidden');
-                outputDiv.textContent = analysis;
+                // Display enhanced results with score
+                displayForensicResults(analysis, aiScore);
                 
-                // Scroll to results
-                resultsDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                // Enable buttons based on score
+                updateForensicButtons(aiScore);
+                
+                showNotification(`Forensic AI analysis complete! Score: ${aiScore}%`, 'success');
                 
             } catch (error) {
                 console.error('Forensic AI detection error:', error);
@@ -3104,6 +3113,78 @@ Provide output in two parts:
             }
         }
         
+        function displayForensicResults(analysis, aiScore) {
+            const resultsDiv = document.getElementById('forensicResults');
+            
+            // Determine score color and recommendation
+            let scoreColor, recommendation, icon;
+            if (aiScore >= 70) {
+                scoreColor = 'text-red-400';
+                recommendation = 'High AI likelihood - Humanization strongly recommended';
+                icon = '🤖';
+            } else if (aiScore >= 40) {
+                scoreColor = 'text-yellow-400';
+                recommendation = 'Moderate AI likelihood - Consider humanization';
+                icon = '⚠️';
+            } else {
+                scoreColor = 'text-green-400';
+                recommendation = 'Low AI likelihood - Appears human-written';
+                icon = '✅';
+            }
+            
+            resultsDiv.className = 'mt-4';
+            resultsDiv.innerHTML = `
+                <div class="bg-theme-primary p-6 rounded-lg border border-theme">
+                    <div class="flex items-center justify-between mb-4">
+                        <h4 class="text-lg font-semibold text-purple-400">
+                            <i class="fas fa-microscope mr-2"></i>Forensic Analysis Results
+                        </h4>
+                        <div class="text-right">
+                            <div class="text-3xl font-bold ${scoreColor}">${icon} ${aiScore}%</div>
+                            <div class="text-xs text-theme-secondary">AI Likelihood</div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4 p-3 rounded ${aiScore >= 70 ? 'bg-red-900 bg-opacity-20 border border-red-600' : 
+                                                    aiScore >= 40 ? 'bg-yellow-900 bg-opacity-20 border border-yellow-600' : 
+                                                    'bg-green-900 bg-opacity-20 border border-green-600'}">
+                        <div class="font-medium ${scoreColor} mb-1">Assessment:</div>
+                        <div class="text-sm">${recommendation}</div>
+                    </div>
+                    
+                    <div class="bg-theme-secondary p-4 rounded border border-theme">
+                        <pre class="text-sm text-theme-primary whitespace-pre-wrap">${analysis}</pre>
+                    </div>
+                </div>
+            `;
+            
+            // Scroll to results
+            resultsDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        function updateForensicButtons(aiScore) {
+            const humanizeBtn = document.getElementById('humanizeBtn');
+            const reanalyzeBtn = document.getElementById('reanalyzeBtn');
+            
+            // Enable humanization based on AI score
+            if (aiScore >= 30) {
+                humanizeBtn.disabled = false;
+                humanizeBtn.style.opacity = '1';
+            } else {
+                humanizeBtn.disabled = true;
+                humanizeBtn.style.opacity = '0.5';
+            }
+            
+            // Always enable reanalyze after first analysis
+            reanalyzeBtn.disabled = false;
+            reanalyzeBtn.style.opacity = '1';
+        }
+
+        function reanalyzeText() {
+            showNotification('🔄 Performing new analysis on current text...', 'info');
+            forensicAIDetection();
+        }
+
         // ============ UTILITY FUNCTIONS FOR TOOLS ============
         
         async function callOpenAI(messages) {
