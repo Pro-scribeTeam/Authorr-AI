@@ -921,6 +921,50 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Dialogue-Specific Voice Assignment -->
+                <div class="bg-theme-secondary p-6 rounded-xl border-2 border-theme">
+                    <h2 class="text-xl font-bold mb-4">
+                        <i class="fas fa-users text-purple-400 mr-2"></i>
+                        Dialogue Voice Assignment
+                    </h2>
+                    
+                    <div class="space-y-4">
+                        <p class="text-sm text-theme-secondary">
+                            Assign different voices to characters in your story for dynamic narration.
+                        </p>
+                        
+                        <button onclick="scanForDialogue()" class="btn-secondary w-full py-2 rounded-lg font-semibold">
+                            <i class="fas fa-search mr-2"></i>Scan Story for Dialogue
+                        </button>
+                        
+                        <!-- Dialogue Assignment Results -->
+                        <div id="dialogueAssignments" class="hidden">
+                            <div class="bg-theme-primary p-4 rounded-lg border border-theme">
+                                <h4 class="font-semibold mb-3 text-cyan-400">Character Voice Assignments</h4>
+                                <div id="characterVoiceList" class="space-y-3">
+                                    <!-- Characters will be populated here -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Dialogue Preview -->
+                        <div id="dialoguePreview" class="hidden">
+                            <div class="bg-theme-primary p-4 rounded-lg border border-theme max-h-60 overflow-y-auto">
+                                <h4 class="font-semibold mb-3 text-green-400">Found Dialogue Sections</h4>
+                                <div id="dialogueList" class="space-y-2">
+                                    <!-- Dialogue will be populated here -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="border-t border-theme pt-4">
+                            <button onclick="generateMultiVoiceNarration()" id="multiVoiceBtn" class="btn-primary w-full py-3 rounded-lg font-semibold" disabled>
+                                <i class="fas fa-theater-masks mr-2"></i>Generate Multi-Voice Narration
+                            </button>
+                        </div>
+                    </div>
+                </div>
                 
                 <!-- High-Tech Voice Cloning Station -->
                 <div class="bg-theme-secondary p-6 rounded-xl border-2 border-theme cloning-station">
@@ -1479,6 +1523,13 @@
                             <input type="password" id="openaiKey" placeholder="sk-..." 
                                    class="w-full px-4 py-2 rounded-lg form-field bg-theme-primary text-theme-primary">
                             <p class="text-xs text-theme-secondary mt-1">Required for AI writing and narration features</p>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-semibold mb-2">ElevenLabs API Key</label>
+                            <input type="password" id="elevenlabsKey" placeholder="Enter your ElevenLabs API key..." 
+                                   class="w-full px-4 py-2 rounded-lg form-field bg-theme-primary text-theme-primary">
+                            <p class="text-xs text-theme-secondary mt-1">Optional: Enables advanced voice cloning and additional voices</p>
                         </div>
                         
                         <div>
@@ -4246,11 +4297,15 @@ Format as clean, readable text ready for narration.`;
         // Config Page Functions
         function saveSettings() {
             const apiKey = document.getElementById('openaiKey')?.value?.trim();
+            const elevenlabsKey = document.getElementById('elevenlabsKey')?.value?.trim();
             const model = document.getElementById('modelSelection')?.value;
             const autoSave = document.getElementById('autoSave')?.checked;
             
             if (apiKey) {
                 localStorage.setItem('openaiApiKey', apiKey);
+            }
+            if (elevenlabsKey) {
+                localStorage.setItem('elevenlabsApiKey', elevenlabsKey);
             }
             if (model) {
                 localStorage.setItem('selectedModel', model);
@@ -4259,15 +4314,21 @@ Format as clean, readable text ready for narration.`;
             
             showNotification('Settings saved successfully!', 'success');
             
-            // Mask the API key display for security
+            // Mask the API keys display for security
             const keyInput = document.getElementById('openaiKey');
             if (keyInput && apiKey) {
                 keyInput.value = '••••••••••••••••••••••••••••••••••••••••••••••••••••' + apiKey.slice(-4);
+            }
+            
+            const elevenlabsInput = document.getElementById('elevenlabsKey');
+            if (elevenlabsInput && elevenlabsKey) {
+                elevenlabsInput.value = '••••••••••••••••••••••••••••••••••••••••••••••••••••' + elevenlabsKey.slice(-4);
             }
         }
 
         function loadSettings() {
             const apiKey = localStorage.getItem('openaiApiKey');
+            const elevenlabsKey = localStorage.getItem('elevenlabsApiKey');
             const model = localStorage.getItem('selectedModel');
             const autoSave = localStorage.getItem('autoSave');
             
@@ -4275,6 +4336,13 @@ Format as clean, readable text ready for narration.`;
                 const keyInput = document.getElementById('openaiKey');
                 if (keyInput) {
                     keyInput.value = '••••••••••••••••••••••••••••••••••••••••••••••••••••' + apiKey.slice(-4);
+                }
+            }
+            
+            if (elevenlabsKey) {
+                const elevenlabsInput = document.getElementById('elevenlabsKey');
+                if (elevenlabsInput) {
+                    elevenlabsInput.value = '••••••••••••••••••••••••••••••••••••••••••••••••••••' + elevenlabsKey.slice(-4);
                 }
             }
             
@@ -4399,19 +4467,44 @@ Format as clean, readable text ready for narration.`;
 
         // Voice Preview Functions
         async function previewSelectedVoice() {
-            const apiKey = getOpenAIApiKey();
-            if (!apiKey) {
-                showNotification('Please configure your OpenAI API key first', 'error');
+            const voiceSelect = document.getElementById('voiceSelection');
+            const selectedOption = voiceSelect.options[voiceSelect.selectedIndex];
+            
+            if (!selectedOption) {
+                showNotification('Please select a voice first', 'error');
                 return;
             }
 
-            const voice = document.getElementById('voiceSelection')?.value || 'alloy';
-            const previewText = `Hello, this is a preview of the ${voice} voice. This voice will be used to narrate your audiobook with professional quality and clarity.`;
+            const provider = selectedOption.dataset.provider;
+            const voiceId = selectedOption.dataset.voice;
+            const voiceName = selectedOption.textContent;
+            
+            const previewText = `Hello, this is a preview of the ${voiceName} voice. This voice will be used to narrate your audiobook with professional quality and clarity.`;
 
-            showNotification(`Generating ${voice} voice preview...`, 'info');
+            showNotification(`Generating ${voiceName} voice preview...`, 'info');
 
             try {
-                const audioBlob = await generateChapterAudio(previewText, voice, 1.0, apiKey);
+                let audioBlob;
+                
+                if (provider === 'openai') {
+                    const apiKey = getOpenAIApiKey();
+                    if (!apiKey) {
+                        showNotification('Please configure your OpenAI API key first', 'error');
+                        return;
+                    }
+                    audioBlob = await generateChapterAudio(previewText, voiceId, 1.0, apiKey);
+                } else if (provider === 'elevenlabs') {
+                    const apiKey = getElevenLabsApiKey();
+                    if (!apiKey) {
+                        showNotification('Please configure your ElevenLabs API key first', 'error');
+                        return;
+                    }
+                    audioBlob = await generateElevenLabsAudio(previewText, voiceId, apiKey);
+                } else {
+                    showNotification('Unknown voice provider', 'error');
+                    return;
+                }
+
                 const audioUrl = URL.createObjectURL(audioBlob);
                 
                 const previewPlayer = document.getElementById('voicePreviewPlayer');
@@ -4425,7 +4518,7 @@ Format as clean, readable text ready for narration.`;
                 audioElement.load();
                 audioElement.play();
                 
-                showNotification(`${voice} voice preview ready!`, 'success');
+                showNotification(`${voiceName} voice preview ready!`, 'success');
             } catch (error) {
                 showNotification(`Voice preview failed: ${error.message}`, 'error');
             }
@@ -4502,9 +4595,610 @@ Format as clean, readable text ready for narration.`;
             return storedKey;
         }
 
+        // ElevenLabs API key function
+        function getElevenLabsApiKey() {
+            const storedKey = localStorage.getItem('elevenlabsApiKey');
+            if (storedKey && storedKey.startsWith('••••')) {
+                // If the key is masked, we need the user to re-enter it
+                showNotification('Please re-enter your ElevenLabs API key in the Config section', 'error');
+                return null;
+            }
+            return storedKey;
+        }
+
+        // ============ ELEVENLABS API INTEGRATION ============
+
+        async function fetchElevenLabsVoices() {
+            const apiKey = getElevenLabsApiKey();
+            if (!apiKey) {
+                return [];
+            }
+
+            try {
+                const response = await fetch('https://api.elevenlabs.io/v1/voices', {
+                    method: 'GET',
+                    headers: {
+                        'xi-api-key': apiKey,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    console.error('ElevenLabs API error:', response.status);
+                    return [];
+                }
+
+                const data = await response.json();
+                return data.voices || [];
+            } catch (error) {
+                console.error('Failed to fetch ElevenLabs voices:', error);
+                return [];
+            }
+        }
+
+        async function generateElevenLabsAudio(text, voiceId, apiKey) {
+            const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
+                method: 'POST',
+                headers: {
+                    'xi-api-key': apiKey,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    text: text,
+                    model_id: "eleven_monolingual_v1",
+                    voice_settings: {
+                        stability: 0.5,
+                        similarity_boost: 0.75
+                    }
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`ElevenLabs API Error: ${response.status}`);
+            }
+
+            return await response.blob();
+        }
+
+        async function populateVoiceOptions() {
+            const voiceSelect = document.getElementById('voiceSelection');
+            if (!voiceSelect) return;
+
+            // Clear existing options
+            voiceSelect.innerHTML = '';
+
+            // Add OpenAI voices
+            const openaiVoices = [
+                { id: 'openai_alloy', name: 'Alloy - Balanced, Clear', provider: 'openai', voice: 'alloy' },
+                { id: 'openai_echo', name: 'Echo - Male, Authoritative', provider: 'openai', voice: 'echo' },
+                { id: 'openai_fable', name: 'Fable - Warm, Storytelling', provider: 'openai', voice: 'fable' },
+                { id: 'openai_onyx', name: 'Onyx - Deep, Professional', provider: 'openai', voice: 'onyx' },
+                { id: 'openai_nova', name: 'Nova - Female, Engaging', provider: 'openai', voice: 'nova' },
+                { id: 'openai_shimmer', name: 'Shimmer - Soft, Gentle', provider: 'openai', voice: 'shimmer' }
+            ];
+
+            // Add OpenAI section header
+            const openaiOptgroup = document.createElement('optgroup');
+            openaiOptgroup.label = '🤖 OpenAI Voices';
+            voiceSelect.appendChild(openaiOptgroup);
+
+            openaiVoices.forEach(voice => {
+                const option = document.createElement('option');
+                option.value = voice.id;
+                option.textContent = voice.name;
+                option.dataset.provider = voice.provider;
+                option.dataset.voice = voice.voice;
+                openaiOptgroup.appendChild(option);
+            });
+
+            // Add ElevenLabs voices if API key is available
+            const elevenlabsVoices = await fetchElevenLabsVoices();
+            if (elevenlabsVoices.length > 0) {
+                const elevenlabsOptgroup = document.createElement('optgroup');
+                elevenlabsOptgroup.label = '🎭 ElevenLabs Voices';
+                voiceSelect.appendChild(elevenlabsOptgroup);
+
+                elevenlabsVoices.forEach(voice => {
+                    const option = document.createElement('option');
+                    option.value = `elevenlabs_${voice.voice_id}`;
+                    option.textContent = `${voice.name} - ${voice.labels?.accent || 'Professional'}`;
+                    option.dataset.provider = 'elevenlabs';
+                    option.dataset.voice = voice.voice_id;
+                    elevenlabsOptgroup.appendChild(option);
+                });
+            }
+
+            // Select first OpenAI voice by default
+            if (voiceSelect.options.length > 0) {
+                voiceSelect.selectedIndex = 0;
+            }
+        }
+
+        // ============ DIALOGUE-SPECIFIC VOICE ASSIGNMENT ============
+
+        let dialogueData = {
+            characters: [],
+            dialogueSections: [],
+            voiceAssignments: {}
+        };
+
+        async function scanForDialogue() {
+            const content = storyData.currentContent || document.getElementById('storyEditor')?.value || '';
+            
+            if (!content.trim()) {
+                showNotification('No story content found. Please create content first.', 'warning');
+                return;
+            }
+
+            showNotification('Scanning story for dialogue and characters...', 'info');
+
+            try {
+                // Parse dialogue using multiple patterns
+                const dialoguePatterns = [
+                    /"([^"]+)"/g,                          // Standard quotes
+                    /'([^']+)'/g,                          // Single quotes  
+                    /["""]([^"""]+)["""]/g,                // Smart quotes
+                    /^\s*"([^"]+)"/gm,                     // Line-starting quotes
+                    /said\s+"([^"]+)"/gi,                  // "said" dialogue
+                    /\[([^\]]+)\]:\s*"([^"]+)"/g,         // Character tagged: [John]: "..."
+                    /^([A-Z][A-Z\s]+):\s*"([^"]+)"/gm,    // ALL CAPS: JOHN: "..."
+                    /^([A-Z][a-z]+):\s*"([^"]+)"/gm       // Title case: John: "..."
+                ];
+
+                let characters = new Set();
+                let dialogueSections = [];
+                
+                // Extract dialogue with context
+                const lines = content.split('\n');
+                let currentDialogue = [];
+                
+                lines.forEach((line, index) => {
+                    const trimmedLine = line.trim();
+                    
+                    // Check for character-tagged dialogue
+                    const characterMatch = trimmedLine.match(/^(?:\[([^\]]+)\]|([A-Z][A-Z\s]*[A-Z])|([A-Z][a-z]+)):\s*"([^"]+)"/);
+                    if (characterMatch) {
+                        const character = characterMatch[1] || characterMatch[2] || characterMatch[3];
+                        const dialogue = characterMatch[4];
+                        
+                        characters.add(character);
+                        currentDialogue.push({
+                            character: character,
+                            text: dialogue,
+                            line: index + 1,
+                            type: 'character_tagged',
+                            startIndex: content.indexOf(line),
+                            endIndex: content.indexOf(line) + line.length
+                        });
+                    }
+                    // Check for standard quoted dialogue
+                    else if (trimmedLine.includes('"')) {
+                        const quotes = trimmedLine.match(/"([^"]+)"/g);
+                        if (quotes) {
+                            quotes.forEach(quote => {
+                                const dialogueText = quote.replace(/"/g, '');
+                                const quoteIndex = content.indexOf(quote);
+                                currentDialogue.push({
+                                    character: 'Unknown Speaker',
+                                    text: dialogueText,
+                                    line: index + 1,
+                                    type: 'untagged',
+                                    startIndex: quoteIndex,
+                                    endIndex: quoteIndex + quote.length
+                                });
+                            });
+                        }
+                    }
+                });
+
+                // Auto-detect characters from context if not tagged
+                if (characters.size === 0) {
+                    // Use AI to detect character names
+                    const characterAnalysis = await detectCharacters(content);
+                    characterAnalysis.forEach(char => characters.add(char));
+                }
+
+                dialogueData.characters = Array.from(characters);
+                dialogueData.dialogueSections = currentDialogue;
+
+                if (dialogueData.characters.length === 0 && currentDialogue.length === 0) {
+                    showNotification('No dialogue or characters found in the story.', 'warning');
+                    return;
+                }
+
+                displayDialogueResults();
+                showNotification(`Found ${dialogueData.characters.length} characters and ${currentDialogue.length} dialogue sections!`, 'success');
+
+            } catch (error) {
+                console.error('Dialogue scanning error:', error);
+                showNotification('Failed to scan dialogue. Please try again.', 'error');
+            }
+        }
+
+        async function detectCharacters(content) {
+            try {
+                const analysis = await callOpenAI([
+                    {
+                        role: "system",
+                        content: "You are a literary analysis expert. Identify all character names mentioned in the given text. Return only the names as a JSON array, like [\"John\", \"Mary\", \"Dr. Smith\"]. Focus on main speaking characters."
+                    },
+                    {
+                        role: "user",
+                        content: `Analyze this text and identify all character names:\n\n${content.substring(0, 2000)}`
+                    }
+                ]);
+
+                const characters = JSON.parse(analysis);
+                return Array.isArray(characters) ? characters : [];
+            } catch (error) {
+                console.error('Character detection error:', error);
+                return ['Character 1', 'Character 2']; // Fallback
+            }
+        }
+
+        function displayDialogueResults() {
+            const dialogueAssignments = document.getElementById('dialogueAssignments');
+            const dialoguePreview = document.getElementById('dialoguePreview');
+            const characterVoiceList = document.getElementById('characterVoiceList');
+            const dialogueList = document.getElementById('dialogueList');
+
+            // Show the sections
+            dialogueAssignments.classList.remove('hidden');
+            dialoguePreview.classList.remove('hidden');
+
+            // Clear previous results
+            characterVoiceList.innerHTML = '';
+            dialogueList.innerHTML = '';
+
+            // Populate character voice assignments
+            dialogueData.characters.forEach((character, index) => {
+                const characterDiv = document.createElement('div');
+                characterDiv.className = 'flex items-center justify-between p-3 bg-theme-secondary rounded border border-theme';
+                characterDiv.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 bg-cyan-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                            ${character.charAt(0).toUpperCase()}
+                        </div>
+                        <span class="font-medium">${character}</span>
+                    </div>
+                    <div class="flex-1 ml-4">
+                        <select id="voice_${index}" class="w-full px-3 py-2 rounded bg-theme-primary border border-theme text-sm" onchange="updateVoiceAssignment('${character}', this.value)">
+                            <option value="">Select voice...</option>
+                        </select>
+                    </div>
+                `;
+                characterVoiceList.appendChild(characterDiv);
+
+                // Populate voice options for this character
+                setTimeout(() => {
+                    populateCharacterVoiceOptions(`voice_${index}`);
+                }, 100);
+            });
+
+            // Add narrator voice assignment
+            const narratorDiv = document.createElement('div');
+            narratorDiv.className = 'flex items-center justify-between p-3 bg-theme-secondary rounded border border-theme';
+            narratorDiv.innerHTML = `
+                <div class="flex items-center space-x-3">
+                    <div class="w-8 h-8 bg-orange-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                        N
+                    </div>
+                    <span class="font-medium">Narrator</span>
+                </div>
+                <div class="flex-1 ml-4">
+                    <select id="voice_narrator" class="w-full px-3 py-2 rounded bg-theme-primary border border-theme text-sm" onchange="updateVoiceAssignment('Narrator', this.value)">
+                        <option value="">Select voice...</option>
+                    </select>
+                </div>
+            `;
+            characterVoiceList.appendChild(narratorDiv);
+            
+            setTimeout(() => {
+                populateCharacterVoiceOptions('voice_narrator');
+            }, 100);
+
+            // Populate dialogue preview
+            dialogueData.dialogueSections.slice(0, 10).forEach((dialogue, index) => {
+                const dialogueDiv = document.createElement('div');
+                dialogueDiv.className = 'p-2 bg-theme-secondary rounded text-sm border-l-4 border-cyan-500';
+                dialogueDiv.innerHTML = `
+                    <div class="font-medium text-cyan-400">${dialogue.character} (Line ${dialogue.line}):</div>
+                    <div class="text-theme-primary mt-1">"${dialogue.text}"</div>
+                    ${dialogue.type === 'untagged' ? '<div class="text-xs text-yellow-400 mt-1">⚠ Untagged dialogue - may need manual assignment</div>' : ''}
+                `;
+                dialogueList.appendChild(dialogueDiv);
+            });
+
+            if (dialogueData.dialogueSections.length > 10) {
+                const moreDiv = document.createElement('div');
+                moreDiv.className = 'text-center text-sm text-theme-secondary';
+                moreDiv.textContent = `... and ${dialogueData.dialogueSections.length - 10} more dialogue sections`;
+                dialogueList.appendChild(moreDiv);
+            }
+
+            // Enable multi-voice button
+            document.getElementById('multiVoiceBtn').disabled = false;
+        }
+
+        function populateCharacterVoiceOptions(selectId) {
+            const select = document.getElementById(selectId);
+            const mainVoiceSelect = document.getElementById('voiceSelection');
+            
+            if (!select || !mainVoiceSelect) return;
+
+            // Copy options from main voice selector
+            select.innerHTML = '<option value="">Select voice...</option>';
+            
+            Array.from(mainVoiceSelect.children).forEach(child => {
+                if (child.tagName === 'OPTGROUP') {
+                    const optgroup = document.createElement('optgroup');
+                    optgroup.label = child.label;
+                    Array.from(child.children).forEach(option => {
+                        const newOption = document.createElement('option');
+                        newOption.value = option.value;
+                        newOption.textContent = option.textContent;
+                        newOption.dataset.provider = option.dataset.provider;
+                        newOption.dataset.voice = option.dataset.voice;
+                        optgroup.appendChild(newOption);
+                    });
+                    select.appendChild(optgroup);
+                }
+            });
+        }
+
+        function updateVoiceAssignment(character, voiceValue) {
+            if (voiceValue) {
+                dialogueData.voiceAssignments[character] = voiceValue;
+                console.log(`Assigned ${voiceValue} to ${character}`);
+            } else {
+                delete dialogueData.voiceAssignments[character];
+            }
+        }
+
+        async function generateMultiVoiceNarration() {
+            const assignments = dialogueData.voiceAssignments;
+            const characters = dialogueData.characters;
+            
+            if (Object.keys(assignments).length === 0) {
+                showNotification('Please assign voices to characters first.', 'warning');
+                return;
+            }
+
+            if (!assignments['Narrator']) {
+                showNotification('Please assign a narrator voice.', 'warning');
+                return;
+            }
+
+            showLoading('Generating multi-voice narration...');
+            
+            try {
+                const content = storyData.currentContent || document.getElementById('storyEditor')?.value || '';
+                if (!content.trim()) {
+                    throw new Error('No story content to narrate');
+                }
+
+                // Store the plan for actual narration generation
+                storyData.voiceAssignments = assignments;
+                storyData.dialogueSections = dialogueData.dialogueSections;
+                
+                const audioSegments = [];
+                let currentText = content;
+                let processedLength = 0;
+                
+                // Split content into segments based on dialogue
+                for (const dialogue of dialogueData.dialogueSections) {
+                    // Add narrator text before this dialogue
+                    const beforeDialogue = currentText.substring(processedLength, dialogue.startIndex);
+                    if (beforeDialogue.trim()) {
+                        audioSegments.push({
+                            type: 'narrator',
+                            text: beforeDialogue.trim(),
+                            voice: assignments['Narrator'],
+                            character: 'Narrator'
+                        });
+                    }
+                    
+                    // Add the dialogue segment
+                    audioSegments.push({
+                        type: 'dialogue',
+                        text: dialogue.text,
+                        voice: assignments[dialogue.character] || assignments['Narrator'],
+                        character: dialogue.character
+                    });
+                    
+                    processedLength = dialogue.endIndex;
+                }
+                
+                // Add remaining narrator text
+                const remainingText = currentText.substring(processedLength);
+                if (remainingText.trim()) {
+                    audioSegments.push({
+                        type: 'narrator',
+                        text: remainingText.trim(),
+                        voice: assignments['Narrator'],
+                        character: 'Narrator'
+                    });
+                }
+                
+                // Generate audio for each segment
+                updateLoadingText(`Generating ${audioSegments.length} audio segments...`);
+                const audioFiles = [];
+                
+                for (let i = 0; i < audioSegments.length; i++) {
+                    const segment = audioSegments[i];
+                    updateLoadingText(`Generating audio ${i + 1}/${audioSegments.length} - ${segment.character}`);
+                    
+                    try {
+                        const audioBlob = await generateSegmentAudio(segment);
+                        if (audioBlob) {
+                            audioFiles.push({
+                                blob: audioBlob,
+                                segment: segment,
+                                index: i
+                            });
+                        }
+                    } catch (segmentError) {
+                        console.error(`Failed to generate audio for segment ${i}:`, segmentError);
+                        showNotification(`Warning: Failed to generate audio for ${segment.character}`, 'warning');
+                    }
+                }
+                
+                if (audioFiles.length === 0) {
+                    throw new Error('No audio segments were generated successfully');
+                }
+                
+                // Display results
+                displayMultiVoiceResults(audioFiles, assignments);
+                hideLoading();
+                showNotification(`Multi-voice narration generated! ${audioFiles.length} audio segments created.`, 'success');
+                
+            } catch (error) {
+                console.error('Multi-voice generation error:', error);
+                showNotification(`Failed to generate multi-voice narration: ${error.message}`, 'error');
+                hideLoading();
+            }
+        }
+
+        async function generateSegmentAudio(segment) {
+            const voiceInfo = segment.voice.split('_');
+            const provider = voiceInfo[0];
+            const voiceId = voiceInfo[1];
+            
+            if (provider === 'openai') {
+                return await generateOpenAIAudio(segment.text, voiceId);
+            } else if (provider === 'elevenlabs') {
+                const apiKey = getElevenLabsApiKey();
+                if (!apiKey) {
+                    throw new Error('ElevenLabs API key not configured');
+                }
+                return await generateElevenLabsAudio(segment.text, voiceId, apiKey);
+            } else {
+                throw new Error(`Unknown voice provider: ${provider}`);
+            }
+        }
+
+        async function generateOpenAIAudio(text, voice) {
+            const apiKey = getOpenAIApiKey();
+            if (!apiKey) {
+                throw new Error('OpenAI API key not configured');
+            }
+
+            const response = await fetch('https://api.openai.com/v1/audio/speech', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${apiKey}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    model: 'tts-1-hd',
+                    input: text,
+                    voice: voice,
+                    response_format: 'mp3'
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`OpenAI TTS API Error: ${response.status}`);
+            }
+
+            return await response.blob();
+        }
+
+        function displayMultiVoiceResults(audioFiles, assignments) {
+            const narrationResults = document.getElementById('narrationResults');
+            if (!narrationResults) return;
+
+            let resultsHTML = `
+                <div class="bg-theme-secondary p-6 rounded-xl border-2 border-theme">
+                    <h3 class="text-xl font-bold mb-4 text-green-400">
+                        <i class="fas fa-theater-masks mr-2"></i>Multi-Voice Narration Generated
+                    </h3>
+                    
+                    <div class="mb-4 p-3 bg-theme-primary rounded-lg border border-theme">
+                        <h4 class="font-semibold mb-2 text-cyan-400">Voice Assignments Used:</h4>
+                        <div class="text-sm space-y-1">
+            `;
+            
+            Object.entries(assignments).forEach(([character, voice]) => {
+                const voiceDisplay = voice.replace('openai_', 'OpenAI: ').replace('elevenlabs_', 'ElevenLabs: ');
+                resultsHTML += `<div>• <span class="text-cyan-300">${character}:</span> ${voiceDisplay}</div>`;
+            });
+            
+            resultsHTML += `
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-3 max-h-60 overflow-y-auto">
+            `;
+            
+            audioFiles.forEach((audioFile, index) => {
+                const audioUrl = URL.createObjectURL(audioFile.blob);
+                const segment = audioFile.segment;
+                const truncatedText = segment.text.length > 100 ? segment.text.substring(0, 100) + '...' : segment.text;
+                
+                resultsHTML += `
+                    <div class="bg-theme-primary p-3 rounded-lg border border-theme">
+                        <div class="flex justify-between items-start mb-2">
+                            <div class="flex-1">
+                                <div class="font-medium text-cyan-400">${segment.character} (${segment.type})</div>
+                                <div class="text-xs text-theme-secondary mt-1">"${truncatedText}"</div>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <audio controls class="flex-1 h-8">
+                                <source src="${audioUrl}" type="audio/mp3">
+                                Your browser does not support the audio element.
+                            </audio>
+                            <button onclick="downloadAudio('${audioUrl}', '${segment.character}_${index + 1}.mp3')" 
+                                    class="text-cyan-400 hover:text-cyan-300 p-1">
+                                <i class="fas fa-download"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            resultsHTML += `
+                    </div>
+                    <div class="mt-4 text-center">
+                        <button onclick="downloadAllMultiVoiceAudio()" class="btn-primary px-6 py-2 rounded-lg">
+                            <i class="fas fa-download mr-2"></i>Download All Audio Segments
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            narrationResults.innerHTML = resultsHTML;
+        }
+
+        // Multi-voice audio download functions
+        function downloadAllMultiVoiceAudio() {
+            const audioElements = document.querySelectorAll('#narrationResults audio');
+            audioElements.forEach((audio, index) => {
+                const audioUrl = audio.querySelector('source').src;
+                const character = audio.closest('.bg-theme-primary').querySelector('.text-cyan-400').textContent.split(' (')[0];
+                downloadAudio(audioUrl, `${character}_segment_${index + 1}.mp3`);
+            });
+            showNotification(`Downloading ${audioElements.length} audio segments...`, 'success');
+        }
+
+        function downloadAudio(audioUrl, filename) {
+            const link = document.createElement('a');
+            link.href = audioUrl;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
         // Initialize on page load
         document.addEventListener('DOMContentLoaded', function() {
             loadSettings();
+            
+            // Populate voice options when page loads
+            setTimeout(() => {
+                populateVoiceOptions();
+            }, 1000);
             
             // Add text area listener for character count
             const textArea = document.getElementById('cloneTextInput');
