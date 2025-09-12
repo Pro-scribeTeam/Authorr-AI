@@ -3386,21 +3386,6 @@ Provide output in two parts:
                 btn.style.opacity = historyIndex >= editHistory.length - 1 ? '0.5' : '1';
             });
         }
-        
-        function updateHistoryButtons() {
-            const undoBtns = document.querySelectorAll('[onclick="undoEdit()"]');
-            const redoBtns = document.querySelectorAll('[onclick="redoEdit()"]');
-            
-            undoBtns.forEach(btn => {
-                btn.disabled = historyIndex <= 0;
-                btn.style.opacity = historyIndex <= 0 ? '0.5' : '1';
-            });
-            
-            redoBtns.forEach(btn => {
-                btn.disabled = historyIndex >= editHistory.length - 1;
-                btn.style.opacity = historyIndex >= editHistory.length - 1 ? '0.5' : '1';
-            });
-        }
 
         async function applyToolChanges(title, suggestions, modal) {
             const editor = document.getElementById('storyEditor');
