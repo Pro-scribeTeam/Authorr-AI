@@ -633,9 +633,14 @@
                             <i class="fas fa-list-ol text-cyan-400 mr-2"></i>
                             Chapter Plan
                         </h2>
-                        <button onclick="generateAllChapters()" id="generateAllBtn" class="btn-secondary px-4 py-2 rounded-lg text-sm font-semibold" disabled>
-                            <i class="fas fa-bolt mr-1"></i>Generate All Chapters
-                        </button>
+                        <div class="flex space-x-2">
+                            <button onclick="generateAllChapters()" id="generateAllBtn" class="btn-secondary px-4 py-2 rounded-lg text-sm font-semibold" disabled>
+                                <i class="fas fa-bolt mr-1"></i>Generate All Chapters
+                            </button>
+                            <button onclick="combineAllChapters()" id="combineAllBtn" class="btn-primary px-4 py-2 rounded-lg text-sm font-semibold" disabled>
+                                <i class="fas fa-book mr-1"></i>Combine All
+                            </button>
+                        </div>
                     </div>
                     
                     <div id="chapterPlan" class="space-y-3 h-80 overflow-y-auto">
@@ -3499,7 +3504,7 @@ Provide output in two parts:
                 await new Promise(resolve => setTimeout(resolve, 3000));
                 
                 // Save API key
-                localStorage.setItem('openai_api_key', apiKey);
+                localStorage.setItem('openaiApiKey', apiKey);
                 
                 hideLoading();
                 showStatusMessage('API connection successful! Key saved.');
@@ -4086,11 +4091,17 @@ JSON Structure:
                 chaptersContainer.appendChild(chapterDiv);
             });
             
-            // Enable the Generate All Chapters button
+            // Enable the Generate All Chapters and Combine All buttons
             const generateAllBtn = document.getElementById('generateAllBtn');
             if (generateAllBtn) {
                 generateAllBtn.disabled = false;
                 generateAllBtn.classList.remove('opacity-50');
+            }
+            
+            const combineAllBtn = document.getElementById('combineAllBtn');
+            if (combineAllBtn) {
+                combineAllBtn.disabled = false;
+                combineAllBtn.classList.remove('opacity-50');
             }
         }
 
@@ -4600,7 +4611,6 @@ Format as clean, readable text ready for narration.`;
             const storedKey = localStorage.getItem('elevenlabsApiKey');
             if (storedKey && storedKey.startsWith('••••')) {
                 // If the key is masked, we need the user to re-enter it
-                showNotification('Please re-enter your ElevenLabs API key in the Config section', 'error');
                 return null;
             }
             return storedKey;
@@ -4762,13 +4772,15 @@ Format as clean, readable text ready for narration.`;
                         const dialogue = characterMatch[4];
                         
                         characters.add(character);
+                        const lineStart = content.indexOf(line);
+                        const lineEnd = lineStart + line.length;
                         currentDialogue.push({
                             character: character,
                             text: dialogue,
                             line: index + 1,
                             type: 'character_tagged',
-                            startIndex: content.indexOf(line),
-                            endIndex: content.indexOf(line) + line.length
+                            startIndex: lineStart >= 0 ? lineStart : 0,
+                            endIndex: lineEnd
                         });
                     }
                     // Check for standard quoted dialogue
@@ -4783,8 +4795,8 @@ Format as clean, readable text ready for narration.`;
                                     text: dialogueText,
                                     line: index + 1,
                                     type: 'untagged',
-                                    startIndex: quoteIndex,
-                                    endIndex: quoteIndex + quote.length
+                                    startIndex: quoteIndex >= 0 ? quoteIndex : 0,
+                                    endIndex: quoteIndex >= 0 ? quoteIndex + quote.length : quote.length
                                 });
                             });
                         }
@@ -4854,17 +4866,32 @@ Format as clean, readable text ready for narration.`;
             dialogueData.characters.forEach((character, index) => {
                 const characterDiv = document.createElement('div');
                 characterDiv.className = 'flex items-center justify-between p-3 bg-theme-secondary rounded border border-theme';
+                // Get character's dialogue samples
+                const characterDialogue = dialogueData.dialogueSections.filter(d => d.character === character);
+                const sampleText = characterDialogue.length > 0 ? characterDialogue[0].text.substring(0, 80) + (characterDialogue[0].text.length > 80 ? '...' : '') : 'No dialogue found';
+                
                 characterDiv.innerHTML = `
-                    <div class="flex items-center space-x-3">
-                        <div class="w-8 h-8 bg-cyan-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
-                            ${character.charAt(0).toUpperCase()}
+                    <div class="flex-1">
+                        <div class="flex items-center space-x-3 mb-2">
+                            <div class="w-8 h-8 bg-cyan-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                                ${character.charAt(0).toUpperCase()}
+                            </div>
+                            <div class="flex-1">
+                                <span class="font-medium text-cyan-400">${character}</span>
+                                <div class="text-xs text-theme-secondary">${characterDialogue.length} dialogue section(s)</div>
+                            </div>
                         </div>
-                        <span class="font-medium">${character}</span>
-                    </div>
-                    <div class="flex-1 ml-4">
-                        <select id="voice_${index}" class="w-full px-3 py-2 rounded bg-theme-primary border border-theme text-sm" onchange="updateVoiceAssignment('${character}', this.value)">
-                            <option value="">Select voice...</option>
-                        </select>
+                        <div class="text-xs text-theme-secondary mb-2 italic">
+                            Sample: "${sampleText}"
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <select id="voice_${index}" class="flex-1 px-3 py-2 rounded bg-theme-primary border border-theme text-sm" onchange="updateVoiceAssignment('${character}', this.value)">
+                                <option value="">Select voice...</option>
+                            </select>
+                            <button onclick="previewCharacterVoice('${character}', 'voice_${index}')" class="px-3 py-2 bg-cyan-600 hover:bg-cyan-500 rounded text-white text-xs">
+                                <i class="fas fa-play"></i> Preview
+                            </button>
+                        </div>
                     </div>
                 `;
                 characterVoiceList.appendChild(characterDiv);
@@ -4878,17 +4905,32 @@ Format as clean, readable text ready for narration.`;
             // Add narrator voice assignment
             const narratorDiv = document.createElement('div');
             narratorDiv.className = 'flex items-center justify-between p-3 bg-theme-secondary rounded border border-theme';
+            // Get narrator text sample
+            const content = storyData.currentContent || document.getElementById('storyEditor')?.value || '';
+            const narratorSample = content.replace(/"[^"]*"/g, '').trim().substring(0, 100) + (content.length > 100 ? '...' : '');
+            
             narratorDiv.innerHTML = `
-                <div class="flex items-center space-x-3">
-                    <div class="w-8 h-8 bg-orange-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
-                        N
+                <div class="flex-1">
+                    <div class="flex items-center space-x-3 mb-2">
+                        <div class="w-8 h-8 bg-orange-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                            N
+                        </div>
+                        <div class="flex-1">
+                            <span class="font-medium text-orange-400">Narrator</span>
+                            <div class="text-xs text-theme-secondary">For all narrative text</div>
+                        </div>
                     </div>
-                    <span class="font-medium">Narrator</span>
-                </div>
-                <div class="flex-1 ml-4">
-                    <select id="voice_narrator" class="w-full px-3 py-2 rounded bg-theme-primary border border-theme text-sm" onchange="updateVoiceAssignment('Narrator', this.value)">
-                        <option value="">Select voice...</option>
-                    </select>
+                    <div class="text-xs text-theme-secondary mb-2 italic">
+                        Sample: "${narratorSample}"
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <select id="voice_narrator" class="flex-1 px-3 py-2 rounded bg-theme-primary border border-theme text-sm" onchange="updateVoiceAssignment('Narrator', this.value)">
+                            <option value="">Select voice...</option>
+                        </select>
+                        <button onclick="previewCharacterVoice('Narrator', 'voice_narrator')" class="px-3 py-2 bg-orange-600 hover:bg-orange-500 rounded text-white text-xs">
+                            <i class="fas fa-play"></i> Preview
+                        </button>
+                    </div>
                 </div>
             `;
             characterVoiceList.appendChild(narratorDiv);
@@ -4982,42 +5024,84 @@ Format as clean, readable text ready for narration.`;
                 storyData.dialogueSections = dialogueData.dialogueSections;
                 
                 const audioSegments = [];
-                let currentText = content;
-                let processedLength = 0;
                 
-                // Split content into segments based on dialogue
-                for (const dialogue of dialogueData.dialogueSections) {
-                    // Add narrator text before this dialogue
-                    const beforeDialogue = currentText.substring(processedLength, dialogue.startIndex);
-                    if (beforeDialogue.trim()) {
+                // Simplified approach: Create segments by splitting on dialogue patterns
+                const lines = content.split('\n').filter(line => line.trim());
+                
+                for (let i = 0; i < lines.length; i++) {
+                    const line = lines[i].trim();
+                    
+                    // Check if this line contains dialogue
+                    const characterMatch = line.match(/^(?:\[([^\]]+)\]|([A-Z][A-Z\s]*[A-Z])|([A-Z][a-z]+)):\s*"([^"]+)"/);
+                    
+                    if (characterMatch) {
+                        // This is character dialogue
+                        const character = characterMatch[1] || characterMatch[2] || characterMatch[3];
+                        const dialogueText = characterMatch[4];
+                        
+                        audioSegments.push({
+                            type: 'dialogue',
+                            text: dialogueText,
+                            voice: assignments[character] || assignments['Narrator'],
+                            character: character
+                        });
+                        
+                        // Add any remaining narrative part of the line
+                        const narrativePart = line.replace(/^(?:\[([^\]]+)\]|([A-Z][A-Z\s]*[A-Z])|([A-Z][a-z]+)):\s*"([^"]+)"\s*/, '').trim();
+                        if (narrativePart) {
+                            audioSegments.push({
+                                type: 'narrator',
+                                text: narrativePart,
+                                voice: assignments['Narrator'],
+                                character: 'Narrator'
+                            });
+                        }
+                    } else if (line.includes('"')) {
+                        // Handle quoted dialogue without character tags
+                        const quotes = line.match(/"([^"]+)"/g);
+                        if (quotes) {
+                            let remainingLine = line;
+                            quotes.forEach(quote => {
+                                const beforeQuote = remainingLine.substring(0, remainingLine.indexOf(quote)).trim();
+                                if (beforeQuote) {
+                                    audioSegments.push({
+                                        type: 'narrator',
+                                        text: beforeQuote,
+                                        voice: assignments['Narrator'],
+                                        character: 'Narrator'
+                                    });
+                                }
+                                
+                                const dialogueText = quote.replace(/"/g, '');
+                                audioSegments.push({
+                                    type: 'dialogue',
+                                    text: dialogueText,
+                                    voice: assignments['Unknown Speaker'] || assignments['Narrator'],
+                                    character: 'Unknown Speaker'
+                                });
+                                
+                                remainingLine = remainingLine.substring(remainingLine.indexOf(quote) + quote.length);
+                            });
+                            
+                            // Add remaining text after quotes
+                            if (remainingLine.trim()) {
+                                audioSegments.push({
+                                    type: 'narrator',
+                                    text: remainingLine.trim(),
+                                    voice: assignments['Narrator'],
+                                    character: 'Narrator'
+                                });
+                            }
+                        }
+                    } else {
+                        // Pure narrative line
                         audioSegments.push({
                             type: 'narrator',
-                            text: beforeDialogue.trim(),
+                            text: line,
                             voice: assignments['Narrator'],
                             character: 'Narrator'
                         });
                     }
-                    
-                    // Add the dialogue segment
-                    audioSegments.push({
-                        type: 'dialogue',
-                        text: dialogue.text,
-                        voice: assignments[dialogue.character] || assignments['Narrator'],
-                        character: dialogue.character
-                    });
-                    
-                    processedLength = dialogue.endIndex;
-                }
-                
-                // Add remaining narrator text
-                const remainingText = currentText.substring(processedLength);
-                if (remainingText.trim()) {
-                    audioSegments.push({
-                        type: 'narrator',
-                        text: remainingText.trim(),
-                        voice: assignments['Narrator'],
-                        character: 'Narrator'
-                    });
                 }
                 
                 // Generate audio for each segment
@@ -5169,6 +5253,206 @@ Format as clean, readable text ready for narration.`;
             `;
             
             narrationResults.innerHTML = resultsHTML;
+        }
+
+        // Combine All Chapters function
+        async function combineAllChapters() {
+            if (!storyData.chapters || storyData.chapters.length === 0) {
+                showNotification('No chapters found. Please generate chapters first.', 'warning');
+                return;
+            }
+            
+            showLoading('Combining all chapters into one document...');
+            
+            try {
+                let combinedContent = '';
+                let hasContent = false;
+                
+                // Add book title
+                const bookTitle = document.getElementById('bookTitle')?.value || storyData.title || 'Untitled Book';
+                combinedContent += `# ${bookTitle}\n\n`;
+                
+                // Combine all chapters
+                for (let i = 0; i < storyData.chapters.length; i++) {
+                    const chapter = storyData.chapters[i];
+                    
+                    // Add chapter header
+                    combinedContent += `## Chapter ${chapter.number}: ${chapter.title}\n\n`;
+                    
+                    // Add chapter content if it exists
+                    if (chapter.content && chapter.content.trim()) {
+                        combinedContent += chapter.content + '\n\n';
+                        hasContent = true;
+                    } else {
+                        // Generate chapter content if it doesn't exist
+                        updateLoadingText(`Generating content for Chapter ${chapter.number}...`);
+                        try {
+                            const content = await generateSingleChapterContent(chapter);
+                            if (content && content.trim()) {
+                                combinedContent += content + '\n\n';
+                                hasContent = true;
+                                // Store generated content
+                                chapter.content = content;
+                            } else {
+                                combinedContent += `[Chapter ${chapter.number} content will be generated here]\n\n`;
+                            }
+                        } catch (error) {
+                            console.error(`Failed to generate Chapter ${chapter.number}:`, error);
+                            combinedContent += `[Error generating Chapter ${chapter.number}: ${error.message}]\n\n`;
+                        }
+                    }
+                }
+                
+                if (!hasContent) {
+                    throw new Error('No chapter content available to combine');
+                }
+                
+                // Store the combined content
+                storyData.combinedContent = combinedContent;
+                storyData.currentContent = combinedContent;
+                
+                // Display in the story editor
+                const storyEditor = document.getElementById('storyEditor');
+                if (storyEditor) {
+                    storyEditor.value = combinedContent;
+                    updateWordCount(); // Update word count display
+                }
+                
+                hideLoading();
+                showNotification(`Successfully combined ${storyData.chapters.length} chapters! Ready for narration.`, 'success');
+                
+                // Show preview modal
+                showCombinedPreview(combinedContent, bookTitle);
+                
+            } catch (error) {
+                console.error('Combine chapters error:', error);
+                hideLoading();
+                showNotification(`Failed to combine chapters: ${error.message}`, 'error');
+            }
+        }
+        
+        function showCombinedPreview(content, title) {
+            // Create modal overlay
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
+            modal.innerHTML = `
+                <div class="bg-theme-secondary rounded-xl max-w-4xl max-h-[80vh] w-full flex flex-col border-2 border-theme">
+                    <div class="flex items-center justify-between p-6 border-b border-theme">
+                        <h3 class="text-xl font-bold text-cyan-400">
+                            <i class="fas fa-book mr-2"></i>Combined Book Preview: ${title}
+                        </h3>
+                        <button onclick="this.closest('.fixed').remove()" class="text-theme-secondary hover:text-theme-primary">
+                            <i class="fas fa-times text-xl"></i>
+                        </button>
+                    </div>
+                    <div class="flex-1 p-6 overflow-y-auto">
+                        <div class="bg-theme-primary p-4 rounded-lg border border-theme">
+                            <pre class="whitespace-pre-wrap text-sm font-mono text-theme-primary">${content.substring(0, 5000)}${content.length > 5000 ? '\n\n... [Content truncated for preview. Full content is available in the editor.]' : ''}</pre>
+                        </div>
+                    </div>
+                    <div class="p-6 border-t border-theme">
+                        <div class="flex space-x-3 justify-center">
+                            <button onclick="downloadCombinedBook()" class="btn-primary px-6 py-2 rounded-lg">
+                                <i class="fas fa-download mr-2"></i>Download as Text File
+                            </button>
+                            <button onclick="showPage('narration'); this.closest('.fixed').remove()" class="btn-secondary px-6 py-2 rounded-lg">
+                                <i class="fas fa-microphone mr-2"></i>Create Narration
+                            </button>
+                            <button onclick="this.closest('.fixed').remove()" class="btn-gray px-6 py-2 rounded-lg">
+                                Close Preview
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+        }
+        
+        function downloadCombinedBook() {
+            const content = storyData.combinedContent || storyData.currentContent;
+            const title = document.getElementById('bookTitle')?.value || storyData.title || 'Untitled Book';
+            
+            if (!content) {
+                showNotification('No combined content to download', 'error');
+                return;
+            }
+            
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `${title.replace(/[^a-zA-Z0-9]/g, '_')}_Complete_Book.txt`;
+            link.click();
+            URL.revokeObjectURL(url);
+            
+            showNotification('Combined book downloaded!', 'success');
+        }
+
+        // Character voice preview function
+        async function previewCharacterVoice(characterName, selectId) {
+            const selectElement = document.getElementById(selectId);
+            const voiceValue = selectElement?.value;
+            
+            if (!voiceValue) {
+                showNotification('Please select a voice first.', 'warning');
+                return;
+            }
+            
+            // Get sample text for this character
+            let previewText;
+            if (characterName === 'Narrator') {
+                const content = storyData.currentContent || document.getElementById('storyEditor')?.value || '';
+                previewText = content.replace(/"[^"]*"/g, '').trim().substring(0, 100);
+                if (!previewText) previewText = "This is a sample of the narrator's voice speaking the story text.";
+            } else {
+                const characterDialogue = dialogueData.dialogueSections.find(d => d.character === characterName);
+                previewText = characterDialogue ? characterDialogue.text : `Hello, this is ${characterName} speaking.`;
+            }
+            
+            // Parse provider and voice ID
+            const [provider, voiceId] = voiceValue.split('_');
+            
+            try {
+                showLoading(`Previewing ${characterName}'s voice...`);
+                
+                let audioBlob;
+                if (provider === 'openai') {
+                    audioBlob = await generateOpenAIAudio(previewText, voiceId);
+                } else if (provider === 'elevenlabs') {
+                    const apiKey = getElevenLabsApiKey();
+                    if (!apiKey) {
+                        showNotification('Please configure your ElevenLabs API key first', 'error');
+                        hideLoading();
+                        return;
+                    }
+                    audioBlob = await generateElevenLabsAudio(previewText, voiceId, apiKey);
+                }
+                
+                if (audioBlob) {
+                    const audioUrl = URL.createObjectURL(audioBlob);
+                    const audio = new Audio(audioUrl);
+                    
+                    audio.onloadeddata = () => {
+                        hideLoading();
+                        audio.play();
+                        showNotification(`Playing ${characterName}'s voice preview`, 'success');
+                    };
+                    
+                    audio.onerror = () => {
+                        hideLoading();
+                        showNotification('Failed to play voice preview', 'error');
+                    };
+                } else {
+                    hideLoading();
+                    showNotification('Failed to generate voice preview', 'error');
+                }
+                
+            } catch (error) {
+                console.error('Voice preview error:', error);
+                hideLoading();
+                showNotification(`Failed to preview voice: ${error.message}`, 'error');
+            }
         }
 
         // Multi-voice audio download functions
