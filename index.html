@@ -3130,13 +3130,21 @@ Provide output in two parts:
                     <div class="bg-theme-primary p-4 rounded border border-theme">
                         <pre class="text-sm text-theme-primary whitespace-pre-wrap">${content}</pre>
                     </div>
-                    <div class="flex justify-end mt-4 space-x-3">
-                        <button onclick="this.parentElement.parentElement.parentElement.remove()" class="btn-secondary px-4 py-2 rounded">
-                            Close
-                        </button>
-                        <button onclick="copyToClipboard(\`${content.replace(/`/g, '\\`')}\`)" class="btn-primary px-4 py-2 rounded">
-                            <i class="fas fa-copy mr-1"></i>Copy Result
-                        </button>
+                    <div class="flex justify-between mt-4">
+                        <div class="text-xs text-theme-secondary">
+                            💡 <strong>Tip:</strong> Copy suggestions for manual review or apply them automatically
+                        </div>
+                        <div class="flex space-x-3">
+                            <button onclick="this.parentElement.parentElement.parentElement.remove()" class="btn-gray px-4 py-2 rounded">
+                                <i class="fas fa-times mr-1"></i>Close
+                            </button>
+                            <button onclick="copyAnalysis('${title}', \`${content.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`)" class="btn-secondary px-4 py-2 rounded">
+                                <i class="fas fa-copy mr-1"></i>Copy Suggestions
+                            </button>
+                            <button onclick="applyToolChanges('${title}', \`${content.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`, this.closest('.fixed'))" class="btn-primary px-4 py-2 rounded">
+                                <i class="fas fa-magic mr-1"></i>Apply Changes
+                            </button>
+                        </div>
                     </div>
                 </div>
             `;
@@ -3150,6 +3158,68 @@ Provide output in two parts:
             }).catch(() => {
                 showNotification('Failed to copy to clipboard', 'error');
             });
+        }
+
+        function copyAnalysis(title, content) {
+            const textToCopy = `${title}\n${'='.repeat(title.length)}\n\n${content}`;
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                showNotification('📋 Analysis copied to clipboard!', 'success');
+            }).catch(() => {
+                showNotification('Failed to copy to clipboard', 'error');
+            });
+        }
+
+        async function applyToolChanges(title, suggestions, modal) {
+            const editor = document.getElementById('storyEditor');
+            const selectedText = getSelectedText(editor);
+            const currentText = selectedText || editor.value;
+            
+            if (!currentText.trim()) {
+                showNotification('No text to apply changes to', 'warning');
+                return;
+            }
+
+            const confirmed = confirm(`Apply AI suggestions from "${title}" to your text?\n\nThis will modify your content based on the analysis.`);
+            if (!confirmed) return;
+
+            showLoading('Applying AI suggestions to your text...');
+            
+            try {
+                const improvedText = await callOpenAI([
+                    {
+                        role: "system",
+                        content: "You are an expert editor. Apply the provided suggestions to improve the given text. Return ONLY the revised text, maintaining the original style and voice while implementing the suggested improvements."
+                    },
+                    {
+                        role: "user",
+                        content: `Original text:\n${currentText}\n\nSuggestions to apply:\n${suggestions}\n\nPlease provide the improved version:`
+                    }
+                ]);
+
+                // Apply the changes
+                if (selectedText) {
+                    // Replace selected text
+                    const start = editor.selectionStart;
+                    const end = editor.selectionEnd;
+                    editor.value = editor.value.substring(0, start) + improvedText + editor.value.substring(end);
+                } else {
+                    // Replace entire content
+                    editor.value = improvedText;
+                }
+
+                // Update word count
+                updateWordCount();
+                
+                hideLoading();
+                modal.remove();
+                
+                showNotification(`✨ ${title} suggestions applied successfully!`, 'success');
+
+            } catch (error) {
+                console.error('Error applying suggestions:', error);
+                hideLoading();
+                showNotification('Failed to apply suggestions. Please try again.', 'error');
+            }
         }
         
         // Utility Functions
