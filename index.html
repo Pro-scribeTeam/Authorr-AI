@@ -5380,6 +5380,10 @@ Format as clean, readable text ready for narration.`;
                 const lines = content.split('\n').map(line => line.trim()).filter(line => line);
                 console.log('Total lines to process:', lines.length);
                 
+                // Also try splitting by sentences for dialogue that might span multiple lines
+                const sentences = content.split(/[.!?]\s+/).map(s => s.trim()).filter(s => s.length > 0);
+                console.log('Total sentences to process:', sentences.length);
+                
                 // Enhanced dialogue detection patterns
                 const patterns = {
                     // Character: "Dialogue"
@@ -5402,15 +5406,18 @@ Format as clean, readable text ready for narration.`;
                     embeddedQuote: /^(.*?)["""]([^"""]+?)["""](.*)$/
                 };
                 
-                let lineNumber = 0;
-                for (const line of lines) {
-                    lineNumber++;
+                // Process both lines and sentences
+                const textSegments = [...lines, ...sentences];
+                
+                let segmentNumber = 0;
+                for (const segment of textSegments) {
+                    segmentNumber++;
                     
                     // Try each pattern
                     for (const [patternName, pattern] of Object.entries(patterns)) {
-                        const match = line.match(pattern);
+                        const match = segment.match(pattern);
                         if (match) {
-                            console.log(`Line ${lineNumber} matched ${patternName}:`, match);
+                            console.log(`Segment ${segmentNumber} matched ${patternName}:`, match);
                             
                             let character, dialogueText, beforeText, afterText;
                             
@@ -5463,13 +5470,13 @@ Format as clean, readable text ready for narration.`;
                                 dialogueSections.push({
                                     character: character,
                                     text: dialogueText,
-                                    line: lineNumber,
+                                    line: segmentNumber,
                                     type: character === 'Unknown Speaker' ? 'untagged' : 'character_tagged',
                                     beforeText: beforeText || '',
                                     afterText: afterText || '',
-                                    fullLine: line,
-                                    startIndex: content.indexOf(line),
-                                    endIndex: content.indexOf(line) + line.length
+                                    fullLine: segment,
+                                    startIndex: content.indexOf(segment),
+                                    endIndex: content.indexOf(segment) + segment.length
                                 });
                                 
                                 console.log(`Added dialogue: ${character} -> "${dialogueText}"`);
@@ -5482,23 +5489,53 @@ Format as clean, readable text ready for narration.`;
                 console.log('Characters found:', Array.from(characters));
                 console.log('Dialogue sections found:', dialogueSections.length);
                 
-                // If no characters found, try AI detection
-                if (characters.size === 0 && dialogueSections.length === 0) {
-                    console.log('No dialogue detected, trying AI character detection...');
-                    try {
-                        // Use safe text limits for AI detection
-                        const processableText = getTextWithinLimits(content, 8000); // Smaller limit for character detection
-                        const aiCharacters = await detectCharacters(processableText);
-                        console.log('AI detected characters:', aiCharacters);
-                        if (aiCharacters && Array.isArray(aiCharacters)) {
-                            aiCharacters.forEach(char => {
-                                if (char && char.trim()) {
-                                    characters.add(char.trim());
-                                }
-                            });
-                        }
-                    } catch (aiError) {
-                        console.log('AI character detection failed:', aiError);
+                // Try AI detection for characters (even if some patterns matched)
+                console.log('Trying AI character detection...');
+                try {
+                    // Use safe text limits for AI detection
+                    const processableText = getTextWithinLimits(content, 8000); // Smaller limit for character detection
+                    const aiCharacters = await detectCharacters(processableText);
+                    console.log('AI detected characters:', aiCharacters);
+                    if (aiCharacters && Array.isArray(aiCharacters)) {
+                        aiCharacters.forEach(char => {
+                            if (char && char.trim()) {
+                                characters.add(char.trim());
+                            }
+                        });
+                    }
+                } catch (aiError) {
+                    console.log('AI character detection failed:', aiError);
+                }
+                
+                // If we have characters but no dialogue sections, try to create some
+                if (characters.size > 0 && dialogueSections.length === 0) {
+                    console.log('Found characters but no dialogue sections, trying to extract quotes...');
+                    
+                    // Find all quoted text in the content
+                    const quoteMatches = content.match(/["""]([^"""]+?)["""]|["']([^"']+?)["']/g);
+                    if (quoteMatches) {
+                        console.log('Found quote matches:', quoteMatches.length);
+                        
+                        const characterArray = Array.from(characters);
+                        quoteMatches.forEach((quote, index) => {
+                            const cleanQuote = quote.replace(/["""'"]/g, '');
+                            if (cleanQuote.length > 5) { // Only meaningful dialogue
+                                const assignedCharacter = characterArray[index % characterArray.length] || 'Unknown Speaker';
+                                dialogueSections.push({
+                                    character: assignedCharacter,
+                                    text: cleanQuote,
+                                    line: index + 1,
+                                    type: 'extracted_quote',
+                                    beforeText: '',
+                                    afterText: '',
+                                    fullLine: quote,
+                                    startIndex: content.indexOf(quote),
+                                    endIndex: content.indexOf(quote) + quote.length
+                                });
+                            }
+                        });
+                        
+                        console.log(`Created ${dialogueSections.length} dialogue sections from quotes`);
                     }
                 }
                 
@@ -5599,7 +5636,7 @@ Format as clean, readable text ready for narration.`;
                 const analysis = await callOpenAI([
                     {
                         role: "system",
-                        content: "You are a literary analysis expert. Identify all character names mentioned in the given text. Return only the names as a JSON array, like [\"John\", \"Mary\", \"Dr. Smith\"]. Focus on main speaking characters."
+                        content: "You are a literary analysis expert. Identify ALL character names mentioned in the given text, including main characters, secondary characters, and anyone who speaks or is referenced by name. Return only the names as a clean JSON array, like [\"John\", \"Mary\", \"Dr. Smith\", \"Narrator\"]. Include 'Narrator' if there's narrative text. Do not include any markdown formatting - return only the JSON array."
                     },
                     {
                         role: "user",
