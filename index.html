@@ -3181,36 +3181,35 @@ Follow these steps:
             showLoading(chapterInfo, 'book');
             
             try {
-                const humanized = await callOpenAI([
+                const analysis = await callOpenAI([
                     {
                         role: "system",
-                        content: `You are a writing humanization expert. Your task is to rewrite the complete story to make it feel more human-like without altering core meaning.
+                        content: `You are a writing humanization expert who analyzes text for AI-like patterns and provides specific, actionable suggestions for making it more human-like.
 
-When activated:
-1. Maintain the original meaning and factual accuracy across all chapters.
-2. Add human-like characteristics:
-   - Minor imperfections and sentence variety.
-   - More natural transitions between thoughts and chapters.
-   - Occasional colloquial expressions or idiomatic phrases (if context-appropriate).
-   - Inclusion of concrete, sensory, or emotionally nuanced details.
-3. Break overly uniform sentence structures.
-4. Adjust vocabulary to feel contextually authentic, not overly formal unless required.
-5. Ensure the tone matches the intended audience throughout.
-6. Maintain chapter structure and formatting.
+Analyze the text and provide:
+1. **AI Detection Indicators:** Specific patterns that suggest AI authorship
+2. **Humanization Strategies:** Concrete techniques to make it more natural
+3. **Specific Examples:** Show before/after examples from the text
+4. **Priority Areas:** Which sections need the most attention
 
-Provide only the humanized version without any comparison or analysis.`
+Focus on:
+- Sentence variety and natural rhythm
+- Authentic human imperfections
+- Natural transitions and flow
+- Contextually appropriate language
+- Emotional authenticity and nuance`
                     },
                     {
                         role: "user",
-                        content: `Please humanize this ${isTextTruncated ? 'portion of the ' : ''}story to make it feel more natural and human-written while preserving the core meaning${isTextTruncated ? '' : ' and chapter structure'}:\n\n${processableText}`
+                        content: `Analyze this ${isTextTruncated ? 'portion of the ' : ''}story and provide specific humanization suggestions. Identify AI-like patterns and give actionable advice for making it more natural and human-written${isTextTruncated ? ' (analyzing first portion due to length)' : ''}:\n\n${processableText}`
                     }
                 ]);
                 
                 hideLoading();
-                showNotification('Text humanization complete!', 'success');
+                showNotification('Humanization analysis complete!', 'success');
                 
-                // Show humanized result with save/keep options
-                displayHumanizationResult(humanized, allChaptersText);
+                // Show humanization suggestions instead of trying to replace text
+                displayToolResult('Text Humanization Suggestions', analysis);
                 
                 // Scroll to results
                 resultsDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -3218,7 +3217,18 @@ Provide only the humanized version without any comparison or analysis.`
             } catch (error) {
                 console.error('Humanization error:', error);
                 hideLoading();
-                showNotification('Failed to humanize text. Please check your API key and try again.', 'error');
+                
+                // More detailed error message
+                let errorMessage = 'Failed to analyze text for humanization. ';
+                if (error.message && error.message.includes('token')) {
+                    errorMessage += 'Story may be too long for processing.';
+                } else if (error.message && error.message.includes('API')) {
+                    errorMessage += 'Please check your API key.';
+                } else {
+                    errorMessage += 'Please try again or use a shorter text selection.';
+                }
+                
+                showNotification(errorMessage, 'error');
             }
         }
         
