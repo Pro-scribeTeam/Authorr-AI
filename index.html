@@ -5519,35 +5519,15 @@ Format as clean, readable text ready for narration.`;
                     const hasSaid = /\b(said|asked|replied|whispered|shouted)\b/i.test(content);
                     const chapterCount = hasMultipleChapters() ? storyData.chapters.length : 1;
                     
-                    console.log('No dialogue detected - providing fallback characters for testing');
-                    
-                    // Add some default characters so the voice assignment system can still be tested
-                    dialogueData.characters = ['Character 1', 'Character 2', 'Narrator'];
-                    dialogueData.dialogueSections = [
-                        {
-                            character: 'Character 1',
-                            text: 'Sample dialogue for Character 1',
-                            type: 'generated',
-                            line: 0
-                        },
-                        {
-                            character: 'Character 2', 
-                            text: 'Sample dialogue for Character 2',
-                            type: 'generated',
-                            line: 0
-                        }
-                    ];
-                    
                     showNotification(
-                        `No dialogue detected, but added test characters. Analysis:\n` +
-                        `- Chapters scanned: ${chapterCount}\n` +
+                        `No dialogue found in ${chapterCount} chapter(s). Analysis:\n` +
                         `- Lines processed: ${lines.length}\n` +
                         `- Contains quotes: ${hasQuotes}\n` +
                         `- Contains colons: ${hasColons}\n` +
                         `- Contains dialogue verbs: ${hasSaid}\n` +
                         `- Content length: ${content.length} characters\n\n` +
                         `Check browser console for detailed debugging info.`, 
-                        'info'
+                        'warning'
                     );
                     
                     // Show debug dialog
@@ -5627,11 +5607,41 @@ Format as clean, readable text ready for narration.`;
                     }
                 ]);
 
-                const characters = JSON.parse(analysis);
+                // Clean the response - remove markdown code blocks and extra formatting
+                let cleanedResponse = analysis.trim();
+                
+                // Remove markdown code blocks (```json ... ```)
+                cleanedResponse = cleanedResponse.replace(/```json\s*/g, '');
+                cleanedResponse = cleanedResponse.replace(/```\s*/g, '');
+                
+                // Remove any leading/trailing non-JSON text
+                const jsonMatch = cleanedResponse.match(/\[.*\]/s);
+                if (jsonMatch) {
+                    cleanedResponse = jsonMatch[0];
+                }
+                
+                console.log('Raw AI response:', analysis);
+                console.log('Cleaned for JSON parsing:', cleanedResponse);
+                
+                const characters = JSON.parse(cleanedResponse);
                 return Array.isArray(characters) ? characters : [];
             } catch (error) {
                 console.error('Character detection error:', error);
-                return ['Character 1', 'Character 2']; // Fallback
+                console.error('Failed to parse AI response as JSON. Raw response was:', analysis);
+                
+                // Try to extract character names manually as fallback
+                try {
+                    const matches = analysis.match(/"([^"]+)"/g);
+                    if (matches) {
+                        const extractedChars = matches.map(match => match.replace(/"/g, ''));
+                        console.log('Extracted characters manually:', extractedChars);
+                        return extractedChars.length > 0 ? extractedChars : ['Character 1', 'Character 2'];
+                    }
+                } catch (extractError) {
+                    console.error('Manual extraction also failed:', extractError);
+                }
+                
+                return ['Character 1', 'Character 2']; // Final fallback
             }
         }
 
