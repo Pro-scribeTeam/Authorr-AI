@@ -2665,27 +2665,24 @@
             showLoading(chapterInfo, 'book');
             
             try {
-                const adjusted = await callOpenAI([
+                // Use text within safe limits
+                const processableText = getTextWithinLimits(allChaptersText);
+                const isTextTruncated = processableText !== allChaptersText;
+                
+                const analysis = await callOpenAI([
                     {
                         role: "system",
-                        content: "You are a stylist who can diagnose current tone and retarget it. Adjust mood and style for consistency and target audience appropriateness."
+                        content: "You are a stylist who can diagnose current tone and provide specific suggestions for adjustments. Analyze tone consistency and provide actionable recommendations for target audience appropriateness."
                     },
                     {
                         role: "user",
-                        content: `Analyze the current tone throughout this complete story and suggest adjustments for consistency and target audience. Focus on maintaining tone across all chapters:\n\n${allChaptersText}`
+                        content: `Analyze the current tone throughout this story and provide specific suggestions for adjustments to ensure consistency and target audience appropriateness${isTextTruncated ? ' (analyzing first portion due to length)' : ''}:\n\n${processableText}`
                     }
                 ]);
                 
-                if (getSelectedText(editor)) {
-                    replaceSelectedText(editor, adjusted);
-                } else {
-                    editor.value = adjusted;
-                }
-                
-                updateWordCount();
-                saveToHistory();
                 hideLoading();
-                showNotification('Tone successfully adjusted for consistency!', 'success');
+                showNotification('Tone analysis complete!', 'success');
+                displayToolResult('Tone Consistency Analysis', analysis);
                 
             } catch (error) {
                 console.error('Tone shift error:', error);
@@ -2709,27 +2706,24 @@
             showLoading(chapterInfo, 'book');
             
             try {
-                const intensified = await callOpenAI([
+                // Use text within safe limits
+                const processableText = getTextWithinLimits(allChaptersText);
+                const isTextTruncated = processableText !== allChaptersText;
+                
+                const analysis = await callOpenAI([
                     {
                         role: "system",
-                        content: "You raise friction at macro and micro levels without melodrama. Add tension and drama by making characters' goals and obstacles clash more strongly."
+                        content: "You are an expert at analyzing story conflict and providing specific suggestions to intensify tension. Identify areas where friction can be raised at macro and micro levels without melodrama."
                     },
                     {
                         role: "user",
-                        content: `Intensify the conflict throughout this complete story. Add more tension without being melodramatic. Make goals and obstacles clash more strongly across all chapters:\n\n${allChaptersText}`
+                        content: `Analyze the conflict in this story and provide specific suggestions to intensify tension. Focus on making goals and obstacles clash more strongly without being melodramatic${isTextTruncated ? ' (analyzing first portion due to length)' : ''}:\n\n${processableText}`
                     }
                 ]);
                 
-                if (getSelectedText(editor)) {
-                    replaceSelectedText(editor, intensified);
-                } else {
-                    editor.value = intensified;
-                }
-                
-                updateWordCount();
-                saveToHistory();
                 hideLoading();
-                showNotification('Conflict successfully intensified!', 'success');
+                showNotification('Conflict analysis complete!', 'success');
+                displayToolResult('Conflict Intensification Suggestions', analysis);
                 
             } catch (error) {
                 console.error('Conflict intensifier error:', error);
@@ -2746,6 +2740,10 @@
                 return;
             }
             
+            // Use text within safe limits
+            const processableText = getTextWithinLimits(allChaptersText);
+            const isTextTruncated = processableText !== allChaptersText;
+            
             const chapterInfo = hasMultipleChapters() ? 
                 `Enhancing dialogue with subtext and authenticity across ${storyData.chapters.length} chapters...` :
                 'Enhancing dialogue with subtext and authenticity...';
@@ -2756,29 +2754,35 @@
                 const enhanced = await callOpenAI([
                     {
                         role: "system",
-                        content: "You are a dialogue punch-up artist specializing in subtext, voice distinction, compression, and plausibility. Make conversations sound more real, engaging, and filled with hidden meaning."
+                        content: "You are a dialogue punch-up artist specializing in subtext, voice distinction, compression, and plausibility. Analyze the provided text and give actionable suggestions for improving dialogue to be more real, engaging, and filled with hidden meaning."
                     },
                     {
                         role: "user",
-                        content: `Enhance the dialogue throughout this complete story to be more real, engaging, and layered with subtext. Improve voice distinction and compress unnecessary words across all chapters:\n\n${allChaptersText}`
+                        content: `Analyze the dialogue in this story and provide specific suggestions for enhancement. Focus on subtext, voice distinction, and natural conversation flow${isTextTruncated ? ' (analyzing first portion due to length)' : ''}:\n\n${processableText}`
                     }
                 ]);
                 
-                if (getSelectedText(editor)) {
-                    replaceSelectedText(editor, enhanced);
-                } else {
-                    editor.value = enhanced;
-                }
-                
-                updateWordCount();
-                saveToHistory();
                 hideLoading();
-                showNotification('Dialogue enhanced with natural flow and subtext!', 'success');
+                showNotification('Dialogue analysis complete!', 'success');
+                
+                // Display suggestions instead of trying to replace text
+                displayToolResult('Dialogue Enhancement Suggestions', enhanced);
                 
             } catch (error) {
                 console.error('Dialogue enhancer error:', error);
                 hideLoading();
-                showNotification('Failed to enhance dialogue. Please try again.', 'error');
+                
+                // More detailed error message
+                let errorMessage = 'Failed to enhance dialogue. ';
+                if (error.message && error.message.includes('token')) {
+                    errorMessage += 'Story may be too long for processing.';
+                } else if (error.message && error.message.includes('API')) {
+                    errorMessage += 'Please check your API key.';
+                } else {
+                    errorMessage += 'Please try again or use a shorter text selection.';
+                }
+                
+                showNotification(errorMessage, 'error');
             }
         }
         
@@ -2989,27 +2993,24 @@
             showLoading(chapterInfo, 'book');
             
             try {
-                const balanced = await callOpenAI([
+                // Use text within safe limits
+                const processableText = getTextWithinLimits(allChaptersText);
+                const isTextTruncated = processableText !== allChaptersText;
+                
+                const analysis = await callOpenAI([
                     {
                         role: "system",
-                        content: "You regulate rhythm at global, scene, and line levels. Control the speed and rhythm of stories so they never feel too slow or rushed."
+                        content: "You are an expert at analyzing story pacing and providing specific suggestions. You regulate rhythm at global, scene, and line levels and provide actionable recommendations."
                     },
                     {
                         role: "user",
-                        content: `Analyze and adjust the pacing of this complete story across all chapters. Ensure it flows well and doesn't feel rushed or dragging throughout:\n\n${allChaptersText}`
+                        content: `Analyze the pacing of this story and provide specific suggestions to improve rhythm and flow. Focus on ensuring it doesn't feel rushed or dragging${isTextTruncated ? ' (analyzing first portion due to length)' : ''}:\n\n${processableText}`
                     }
                 ]);
                 
-                if (getSelectedText(editor)) {
-                    replaceSelectedText(editor, balanced);
-                } else {
-                    editor.value = balanced;
-                }
-                
-                updateWordCount();
-                saveToHistory();
                 hideLoading();
-                showNotification('Pacing successfully balanced!', 'success');
+                showNotification('Pacing analysis complete!', 'success');
+                displayToolResult('Pacing Balance Suggestions', analysis);
                 
             } catch (error) {
                 console.error('Pacing balancer error:', error);
@@ -3033,27 +3034,24 @@
             showLoading(chapterInfo, 'book');
             
             try {
-                const enhanced = await callOpenAI([
+                // Use text within safe limits
+                const processableText = getTextWithinLimits(allChaptersText);
+                const isTextTruncated = processableText !== allChaptersText;
+                
+                const analysis = await callOpenAI([
                     {
                         role: "system",
-                        content: "You convert on-the-nose exchanges into layered interactions. Help characters say one thing but mean another, adding layers of hidden meaning to dialogue."
+                        content: "You are an expert at analyzing dialogue and providing specific suggestions for adding subtext and layers. You help identify where characters can say one thing but mean another."
                     },
                     {
                         role: "user",
-                        content: `Add subtext and layers throughout this complete story. Make characters say one thing but mean another across all chapters. Convert direct statements into more nuanced, layered communication:\n\n${allChaptersText}`
+                        content: `Analyze the dialogue in this story and provide specific suggestions for adding subtext and layers. Show how to convert direct statements into more nuanced, layered communication${isTextTruncated ? ' (analyzing first portion due to length)' : ''}:\n\n${processableText}`
                     }
                 ]);
                 
-                if (getSelectedText(editor)) {
-                    replaceSelectedText(editor, enhanced);
-                } else {
-                    editor.value = enhanced;
-                }
-                
-                updateWordCount();
-                saveToHistory();
                 hideLoading();
-                showNotification('Subtext and layers successfully added!', 'success');
+                showNotification('Subtext analysis complete!', 'success');
+                displayToolResult('Subtext Building Suggestions', analysis);
                 
             } catch (error) {
                 console.error('Subtext builder error:', error);
@@ -3072,8 +3070,12 @@
                 return;
             }
             
+            // Use text within safe limits
+            const processableText = getTextWithinLimits(allChaptersText);
+            const isTextTruncated = processableText !== allChaptersText;
+            
             const chapterInfo = hasMultipleChapters() ? 
-                `Performing forensic AI detection analysis across ${storyData.chapters.length} chapters...` :
+                `Performing forensic AI detection analysis across ${storyData.chapters.length} chapters${isTextTruncated ? ' (processing first portion)' : ''}...` :
                 'Performing forensic AI detection analysis...';
             
             showLoading(chapterInfo, 'book');
@@ -3135,7 +3137,7 @@ Follow these steps:
                     },
                     {
                         role: "user",
-                        content: allChaptersText
+                        content: processableText
                     }
                 ]);
                 
@@ -3168,8 +3170,12 @@ Follow these steps:
                 return;
             }
             
+            // Use text within safe limits
+            const processableText = getTextWithinLimits(allChaptersText, 12000); // Slightly smaller for humanization
+            const isTextTruncated = processableText !== allChaptersText;
+            
             const chapterInfo = hasMultipleChapters() ? 
-                `Humanizing text while preserving meaning across ${storyData.chapters.length} chapters...` :
+                `Humanizing text while preserving meaning across ${storyData.chapters.length} chapters${isTextTruncated ? ' (processing first portion)' : ''}...` :
                 'Humanizing text while preserving meaning...';
             
             showLoading(chapterInfo, 'book');
@@ -3196,7 +3202,7 @@ Provide only the humanized version without any comparison or analysis.`
                     },
                     {
                         role: "user",
-                        content: `Please humanize this complete story to make it feel more natural and human-written while preserving the core meaning and chapter structure:\n\n${allChaptersText}`
+                        content: `Please humanize this ${isTextTruncated ? 'portion of the ' : ''}story to make it feel more natural and human-written while preserving the core meaning${isTextTruncated ? '' : ' and chapter structure'}:\n\n${processableText}`
                     }
                 ]);
                 
@@ -4008,6 +4014,19 @@ Provide only the humanized version without any comparison or analysis.`
             // Fallback to current editor content if no chapters exist
             const editor = document.getElementById('storyEditor');
             return editor ? editor.value : '';
+        }
+        
+        function getTextWithinLimits(text, maxTokens = 15000) {
+            // Rough estimation: 1 token ≈ 4 characters for English text
+            const maxChars = maxTokens * 4;
+            
+            if (text.length <= maxChars) {
+                return text;
+            }
+            
+            // If text is too long, truncate and add notice
+            const truncatedText = text.substring(0, maxChars - 200);
+            return truncatedText + "\n\n[Note: Text has been truncated to fit processing limits. Analysis covers the first portion of your story.]";
         }
         
         function hasMultipleChapters() {
