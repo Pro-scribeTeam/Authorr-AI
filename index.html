@@ -5338,17 +5338,19 @@ Format as clean, readable text ready for narration.`;
         }
 
         async function scanForDialogue() {
-            // First update content status
-            updateContentStatus();
-            
-            const content = storyData.currentContent || document.getElementById('storyEditor')?.value || '';
+            // Get content from all chapters
+            const content = getAllChaptersText();
             
             if (!content.trim()) {
-                showNotification('No story content found. Please create a story first.', 'warning');
+                showNotification('No story content found. Please generate chapters or write content first.', 'warning');
                 return;
             }
 
-            showLoading('Scanning story for dialogue and characters...');
+            const chapterInfo = hasMultipleChapters() ? 
+                `Scanning ${storyData.chapters.length} chapters for dialogue and characters...` :
+                'Scanning story for dialogue and characters...';
+            
+            showLoading(chapterInfo);
             
             // Add detailed debug information
             console.log('=== DIALOGUE SCANNING DEBUG ===');
@@ -5373,9 +5375,17 @@ Format as clean, readable text ready for narration.`;
                     characterBracket: /^\[([^\]]+)\]:\s*["""]([^"""]+?)["""](.*)$/,
                     // CAPS: "Dialogue"
                     characterCaps: /^([A-Z][A-Z\s]{1,20}):\s*["""]([^"""]+?)["""](.*)$/,
+                    // "Dialogue" said Character
+                    dialogueSaidCharacter: /^["""]([^"""]+?)["""][\s,]*(?:said|asked|replied|whispered|shouted|muttered|exclaimed)\s+([A-Z][a-zA-Z\s]+?)[\s,]*(.*)$/i,
+                    // Character said, "Dialogue"
+                    characterSaidDialogue: /^([A-Z][a-zA-Z\s]+?)[\s,]*(?:said|asked|replied|whispered|shouted|muttered|exclaimed)[\s,]*["""]([^"""]+?)["""](.*)$/i,
+                    // "Dialogue," Character said
+                    dialogueCharacterSaid: /^["""]([^"""]+?)["""][\s,]*([A-Z][a-zA-Z\s]+?)[\s,]*(?:said|asked|replied|whispered|shouted|muttered|exclaimed)(.*)$/i,
+                    // Narrative with "dialogue"
+                    narrativeDialogue: /^(.*?)([A-Z][a-zA-Z\s]+?)(?:\s+(?:said|asked|replied|whispered|shouted|muttered|exclaimed))?[\s,]*["""]([^"""]+?)["""](.*)$/i,
                     // "Dialogue" (standalone)
                     standaloneQuote: /^["""]([^"""]+?)["""](.*)$/,
-                    // Text with "dialogue" in middle
+                    // Text with "dialogue" in middle (last fallback)
                     embeddedQuote: /^(.*?)["""]([^"""]+?)["""](.*)$/
                 };
                 
@@ -5398,6 +5408,26 @@ Format as clean, readable text ready for narration.`;
                                     character = match[1].trim();
                                     dialogueText = match[2].trim();
                                     afterText = match[3] ? match[3].trim() : '';
+                                    break;
+                                    
+                                case 'dialogueSaidCharacter':
+                                case 'dialogueCharacterSaid':
+                                    character = match[2].trim();
+                                    dialogueText = match[1].trim();
+                                    afterText = match[3] ? match[3].trim() : '';
+                                    break;
+                                    
+                                case 'characterSaidDialogue':
+                                    character = match[1].trim();
+                                    dialogueText = match[2].trim();
+                                    afterText = match[3] ? match[3].trim() : '';
+                                    break;
+                                    
+                                case 'narrativeDialogue':
+                                    character = match[2].trim();
+                                    dialogueText = match[3].trim();
+                                    beforeText = match[1] ? match[1].trim() : '';
+                                    afterText = match[4] ? match[4].trim() : '';
                                     break;
                                     
                                 case 'standaloneQuote':
@@ -5443,13 +5473,17 @@ Format as clean, readable text ready for narration.`;
                 if (characters.size === 0 && dialogueSections.length === 0) {
                     console.log('No dialogue detected, trying AI character detection...');
                     try {
-                        const aiCharacters = await detectCharacters(content);
+                        // Use safe text limits for AI detection
+                        const processableText = getTextWithinLimits(content, 8000); // Smaller limit for character detection
+                        const aiCharacters = await detectCharacters(processableText);
                         console.log('AI detected characters:', aiCharacters);
-                        aiCharacters.forEach(char => {
-                            if (char && char.trim()) {
-                                characters.add(char.trim());
-                            }
-                        });
+                        if (aiCharacters && Array.isArray(aiCharacters)) {
+                            aiCharacters.forEach(char => {
+                                if (char && char.trim()) {
+                                    characters.add(char.trim());
+                                }
+                            });
+                        }
                     } catch (aiError) {
                         console.log('AI character detection failed:', aiError);
                     }
@@ -5466,7 +5500,21 @@ Format as clean, readable text ready for narration.`;
                 hideLoading();
                 
                 if (dialogueData.characters.length === 0 && dialogueSections.length === 0) {
-                    showNotification(`No dialogue found. Content analysis:\n- Lines processed: ${lines.length}\n- Contains quotes: ${content.includes('"') || content.includes('"')}\n- Contains colons: ${content.includes(':')}`, 'warning');
+                    // Enhanced content analysis
+                    const hasQuotes = content.includes('"') || content.includes('"') || content.includes('"') || content.includes("'");
+                    const hasColons = content.includes(':');
+                    const hasSaid = /\b(said|asked|replied|whispered|shouted)\b/i.test(content);
+                    const chapterCount = hasMultipleChapters() ? storyData.chapters.length : 1;
+                    
+                    showNotification(
+                        `No dialogue found in ${chapterCount} chapter(s). Analysis:\n` +
+                        `- Lines processed: ${lines.length}\n` +
+                        `- Contains quotes: ${hasQuotes}\n` +
+                        `- Contains colons: ${hasColons}\n` +
+                        `- Contains dialogue verbs: ${hasSaid}\n` +
+                        `- Content length: ${content.length} characters`, 
+                        'warning'
+                    );
                     
                     // Show debug dialog
                     showDialogueDebugModal(content, lines);
