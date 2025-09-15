@@ -5286,16 +5286,12 @@ Format as clean, readable text ready for narration.`;
             const statusText = document.getElementById('contentStatusText');
             const previewToggle = document.getElementById('contentPreviewToggle');
             
-            // Get content from multiple sources
-            const editorContent = document.getElementById('storyEditor')?.value || '';
-            const currentContent = storyData.currentContent || '';
-            const combinedContent = storyData.combinedContent || '';
-            
-            // Determine which content to use (priority: combined > current > editor)
-            let content = combinedContent || currentContent || editorContent;
-            const contentSource = combinedContent ? 'Combined Chapters' : 
-                                 currentContent ? 'Current Story' : 
-                                 editorContent ? 'Story Editor' : 'None';
+            // Get content from all chapters using the same function as dialogue scanning
+            const content = getAllChaptersText();
+            const chapterCount = storyData.chapters ? storyData.chapters.length : 0;
+            const contentSource = chapterCount > 1 ? `${chapterCount} Chapters` : 
+                                 chapterCount === 1 ? '1 Chapter' : 
+                                 'Story Editor';
             
             if (!content.trim()) {
                 statusIcon.className = 'w-3 h-3 rounded-full bg-red-400';
@@ -5316,8 +5312,13 @@ Format as clean, readable text ready for narration.`;
             `;
             previewToggle.classList.remove('hidden');
             
-            // Store the content for dialogue scanning
+            // Store the content for dialogue scanning (use getAllChaptersText for consistency)
             storyData.currentContent = content;
+            
+            // Also update combined content if we have chapters
+            if (storyData.chapters && storyData.chapters.length > 0) {
+                storyData.combinedContent = content;
+            }
         }
         
         function toggleContentPreview() {
@@ -5516,24 +5517,83 @@ Format as clean, readable text ready for narration.`;
                     if (quoteMatches) {
                         console.log('Found quote matches:', quoteMatches.length);
                         
+                        // Enhanced quote attribution with context analysis
                         const characterArray = Array.from(characters);
-                        quoteMatches.forEach((quote, index) => {
+                        
+                        // Instead of simple forEach, analyze each quote with surrounding context
+                        for (let i = 0; i < quoteMatches.length; i++) {
+                            const quote = quoteMatches[i];
                             const cleanQuote = quote.replace(/["""'"]/g, '');
+                            
                             if (cleanQuote.length > 5) { // Only meaningful dialogue
-                                const assignedCharacter = characterArray[index % characterArray.length] || 'Unknown Speaker';
+                                // Find the position of this quote in the content
+                                const quoteIndex = content.indexOf(quote);
+                                const contextStart = Math.max(0, quoteIndex - 200);
+                                const contextEnd = Math.min(content.length, quoteIndex + quote.length + 200);
+                                const contextText = content.substring(contextStart, contextEnd);
+                                
+                                // Try to find character name in surrounding context
+                                let assignedCharacter = 'Unknown Speaker';
+                                let bestMatch = null;
+                                let bestScore = 0;
+                                
+                                for (const character of characterArray) {
+                                    const charLower = character.toLowerCase();
+                                    const contextLower = contextText.toLowerCase();
+                                    
+                                    // Calculate proximity score
+                                    let score = 0;
+                                    
+                                    // Check if character name appears in context
+                                    if (contextLower.includes(charLower)) {
+                                        const charIndex = contextLower.indexOf(charLower);
+                                        const quoteRelativeIndex = quoteIndex - contextStart;
+                                        const distance = Math.abs(charIndex - quoteRelativeIndex);
+                                        
+                                        // Closer proximity gets higher score
+                                        score = Math.max(0, 200 - distance);
+                                        
+                                        // Bonus for dialogue patterns
+                                        if (contextLower.includes(charLower + ' said') || 
+                                            contextLower.includes(charLower + ' asked') ||
+                                            contextLower.includes('said ' + charLower) ||
+                                            contextLower.includes('asked ' + charLower)) {
+                                            score += 100;
+                                        }
+                                        
+                                        // Bonus for being immediately before or after quote
+                                        if (distance < 50) {
+                                            score += 50;
+                                        }
+                                    }
+                                    
+                                    if (score > bestScore) {
+                                        bestScore = score;
+                                        bestMatch = character;
+                                    }
+                                }
+                                
+                                if (bestMatch && bestScore > 50) {
+                                    assignedCharacter = bestMatch;
+                                }
+                                
+                                console.log(`Quote "${cleanQuote}" assigned to ${assignedCharacter} (score: ${bestScore}, context: "${contextText.substring(0, 100)}...")`);
+                                
                                 dialogueSections.push({
                                     character: assignedCharacter,
                                     text: cleanQuote,
-                                    line: index + 1,
-                                    type: 'extracted_quote',
-                                    beforeText: '',
-                                    afterText: '',
+                                    line: i + 1,
+                                    type: 'context_analyzed_quote',
+                                    beforeText: contextText.substring(0, quoteIndex - contextStart),
+                                    afterText: contextText.substring(quoteIndex - contextStart + quote.length),
                                     fullLine: quote,
-                                    startIndex: content.indexOf(quote),
-                                    endIndex: content.indexOf(quote) + quote.length
+                                    startIndex: quoteIndex,
+                                    endIndex: quoteIndex + quote.length,
+                                    confidence: bestScore > 100 ? 'high' : bestScore > 50 ? 'medium' : 'low',
+                                    attributionScore: bestScore
                                 });
                             }
-                        });
+                        }
                         
                         console.log(`Created ${dialogueSections.length} dialogue sections from quotes`);
                     }
