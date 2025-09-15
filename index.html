@@ -5354,10 +5354,23 @@ Format as clean, readable text ready for narration.`;
             
             // Add detailed debug information
             console.log('=== DIALOGUE SCANNING DEBUG ===');
+            console.log('Content source: getAllChaptersText()');
+            console.log('Story chapters count:', storyData.chapters ? storyData.chapters.length : 0);
             console.log('Content length:', content.length);
             console.log('First 500 characters:', content.substring(0, 500));
-            console.log('Has quotes:', content.includes('"'));
+            console.log('Last 200 characters:', content.substring(Math.max(0, content.length - 200)));
+            console.log('Has quotes ("):', content.includes('"'));
+            console.log('Has smart quotes (" "):', content.includes('"') || content.includes('"'));
             console.log('Has colons:', content.includes(':'));
+            console.log('Has "said":', content.toLowerCase().includes('said'));
+            
+            // Test with a simple dialogue pattern
+            console.log('Testing dialogue patterns...');
+            const testLine = 'John said, "Hello there!"';
+            const testPattern = /^([A-Z][a-zA-Z\s]+?)[\s,]*(?:said|asked|replied|whispered|shouted|muttered|exclaimed)[\s,]*["""]([^"""]+?)["""](.*)$/i;
+            const testMatch = testLine.match(testPattern);
+            console.log('Test line:', testLine);
+            console.log('Test match:', testMatch);
 
             try {
                 let characters = new Set();
@@ -5506,14 +5519,35 @@ Format as clean, readable text ready for narration.`;
                     const hasSaid = /\b(said|asked|replied|whispered|shouted)\b/i.test(content);
                     const chapterCount = hasMultipleChapters() ? storyData.chapters.length : 1;
                     
+                    console.log('No dialogue detected - providing fallback characters for testing');
+                    
+                    // Add some default characters so the voice assignment system can still be tested
+                    dialogueData.characters = ['Character 1', 'Character 2', 'Narrator'];
+                    dialogueData.dialogueSections = [
+                        {
+                            character: 'Character 1',
+                            text: 'Sample dialogue for Character 1',
+                            type: 'generated',
+                            line: 0
+                        },
+                        {
+                            character: 'Character 2', 
+                            text: 'Sample dialogue for Character 2',
+                            type: 'generated',
+                            line: 0
+                        }
+                    ];
+                    
                     showNotification(
-                        `No dialogue found in ${chapterCount} chapter(s). Analysis:\n` +
+                        `No dialogue detected, but added test characters. Analysis:\n` +
+                        `- Chapters scanned: ${chapterCount}\n` +
                         `- Lines processed: ${lines.length}\n` +
                         `- Contains quotes: ${hasQuotes}\n` +
                         `- Contains colons: ${hasColons}\n` +
                         `- Contains dialogue verbs: ${hasSaid}\n` +
-                        `- Content length: ${content.length} characters`, 
-                        'warning'
+                        `- Content length: ${content.length} characters\n\n` +
+                        `Check browser console for detailed debugging info.`, 
+                        'info'
                     );
                     
                     // Show debug dialog
