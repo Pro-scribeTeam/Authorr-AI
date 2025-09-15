@@ -2577,25 +2577,28 @@
         // ============ NEW CHAPTER EDITING TOOLS ============
         
         async function plotHoleDetector() {
-            const editor = document.getElementById('storyEditor');
-            const text = getSelectedText(editor) || editor.value;
+            const allChaptersText = getAllChaptersText();
             
-            if (!text.trim()) {
-                showNotification('Please select text or have content in the editor to analyze for plot holes.', 'warning');
+            if (!allChaptersText.trim()) {
+                showNotification('Please have story content to analyze for plot holes. Generate chapters or write content first.', 'warning');
                 return;
             }
             
-            showLoading('Analyzing story logic and continuity...', 'book');
+            const chapterInfo = hasMultipleChapters() ? 
+                `Analyzing ${storyData.chapters.length} chapters for plot holes across the entire story...` :
+                'Analyzing story logic and continuity...';
+            
+            showLoading(chapterInfo, 'book');
             
             try {
                 const analysis = await callOpenAI([
                     {
                         role: "system",
-                        content: "You are an investigative story analyst who cross-checks logic, causality, continuity, stakes, and character motivation. Identify gaps or mistakes in the story that don't make sense and provide specific suggestions on how to fix them."
+                        content: "You are an investigative story analyst who cross-checks logic, causality, continuity, stakes, and character motivation across an entire story. Identify gaps or mistakes that don't make sense and provide specific suggestions on how to fix them. Pay special attention to consistency across multiple chapters."
                     },
                     {
                         role: "user", 
-                        content: `Analyze this chapter for plot holes, logical inconsistencies, and continuity errors. Provide specific feedback and actionable suggestions:\n\n${text}`
+                        content: `Analyze this complete story for plot holes, logical inconsistencies, and continuity errors across all chapters. Provide specific feedback and actionable suggestions:\n\n${allChaptersText}`
                     }
                 ]);
                 
@@ -2611,25 +2614,28 @@
         }
         
         async function characterArcDesigner() {
-            const editor = document.getElementById('storyEditor');
-            const text = getSelectedText(editor) || editor.value;
+            const allChaptersText = getAllChaptersText();
             
-            if (!text.trim()) {
-                showNotification('Please select text or have content in the editor to enhance character development.', 'warning');
+            if (!allChaptersText.trim()) {
+                showNotification('Please have story content to enhance character development. Generate chapters or write content first.', 'warning');
                 return;
             }
             
-            showLoading('Designing character development arc...', 'book');
+            const chapterInfo = hasMultipleChapters() ? 
+                `Designing character arcs across ${storyData.chapters.length} chapters...` :
+                'Designing character development arc...';
+            
+            showLoading(chapterInfo, 'book');
             
             try {
                 const enhancement = await callOpenAI([
                     {
                         role: "system",
-                        content: "You are a developmental editor specializing in internal character change (positive, negative, or flat arcs). Help shape how characters change from beginning to end with meaningful development."
+                        content: "You are a developmental editor specializing in internal character change (positive, negative, or flat arcs) across complete stories. Analyze character development throughout the entire narrative and provide suggestions for meaningful character growth from beginning to end."
                     },
                     {
                         role: "user",
-                        content: `Analyze and enhance the character development in this chapter. Suggest specific improvements for character growth, internal conflict, and meaningful change:\n\n${text}`
+                        content: `Analyze and enhance the character development throughout this complete story. Suggest specific improvements for character growth, internal conflict, and meaningful change across all chapters:\n\n${allChaptersText}`
                     }
                 ]);
                 
@@ -2645,15 +2651,18 @@
         }
         
         async function toneShifter() {
-            const editor = document.getElementById('storyEditor');
-            const text = getSelectedText(editor) || editor.value;
+            const allChaptersText = getAllChaptersText();
             
-            if (!text.trim()) {
-                showNotification('Please select text to adjust tone and style.', 'warning');
+            if (!allChaptersText.trim()) {
+                showNotification('Please have story content to adjust tone and style. Generate chapters or write content first.', 'warning');
                 return;
             }
             
-            showLoading('Analyzing and adjusting tone consistency...', 'book');
+            const chapterInfo = hasMultipleChapters() ? 
+                `Analyzing and adjusting tone consistency across ${storyData.chapters.length} chapters...` :
+                'Analyzing and adjusting tone consistency...';
+            
+            showLoading(chapterInfo, 'book');
             
             try {
                 const adjusted = await callOpenAI([
@@ -2663,7 +2672,7 @@
                     },
                     {
                         role: "user",
-                        content: `Analyze the current tone of this text and suggest adjustments for consistency and target audience. Provide the revised version:\n\n${text}`
+                        content: `Analyze the current tone throughout this complete story and suggest adjustments for consistency and target audience. Focus on maintaining tone across all chapters:\n\n${allChaptersText}`
                     }
                 ]);
                 
@@ -2686,15 +2695,18 @@
         }
         
         async function conflictIntensifier() {
-            const editor = document.getElementById('storyEditor');
-            const text = getSelectedText(editor) || editor.value;
+            const allChaptersText = getAllChaptersText();
             
-            if (!text.trim()) {
-                showNotification('Please select text to intensify conflict and tension.', 'warning');
+            if (!allChaptersText.trim()) {
+                showNotification('Please have story content to intensify conflict. Generate chapters or write content first.', 'warning');
                 return;
             }
             
-            showLoading('Intensifying conflict and raising stakes...', 'book');
+            const chapterInfo = hasMultipleChapters() ? 
+                `Intensifying conflict and raising stakes across ${storyData.chapters.length} chapters...` :
+                'Intensifying conflict and raising stakes...';
+            
+            showLoading(chapterInfo, 'book');
             
             try {
                 const intensified = await callOpenAI([
@@ -2704,7 +2716,7 @@
                     },
                     {
                         role: "user",
-                        content: `Intensify the conflict in this text. Add more tension without being melodramatic. Make goals and obstacles clash more strongly:\n\n${text}`
+                        content: `Intensify the conflict throughout this complete story. Add more tension without being melodramatic. Make goals and obstacles clash more strongly across all chapters:\n\n${allChaptersText}`
                     }
                 ]);
                 
@@ -2727,15 +2739,18 @@
         }
         
         async function dialogueEnhancer() {
-            const editor = document.getElementById('storyEditor');
-            const text = getSelectedText(editor) || editor.value;
+            const allChaptersText = getAllChaptersText();
             
-            if (!text.trim()) {
-                showNotification('Please select dialogue text to enhance.', 'warning');
+            if (!allChaptersText.trim()) {
+                showNotification('Please have story content to enhance dialogue. Generate chapters or write content first.', 'warning');
                 return;
             }
             
-            showLoading('Enhancing dialogue with subtext and authenticity...', 'book');
+            const chapterInfo = hasMultipleChapters() ? 
+                `Enhancing dialogue with subtext and authenticity across ${storyData.chapters.length} chapters...` :
+                'Enhancing dialogue with subtext and authenticity...';
+            
+            showLoading(chapterInfo, 'book');
             
             try {
                 const enhanced = await callOpenAI([
@@ -2745,7 +2760,7 @@
                     },
                     {
                         role: "user",
-                        content: `Enhance this dialogue to be more real, engaging, and layered with subtext. Improve voice distinction and compress unnecessary words:\n\n${text}`
+                        content: `Enhance the dialogue throughout this complete story to be more real, engaging, and layered with subtext. Improve voice distinction and compress unnecessary words across all chapters:\n\n${allChaptersText}`
                     }
                 ]);
                 
@@ -2768,15 +2783,18 @@
         }
         
         async function symbolismSuggester() {
-            const editor = document.getElementById('storyEditor');
-            const text = getSelectedText(editor) || editor.value;
+            const allChaptersText = getAllChaptersText();
             
-            if (!text.trim()) {
-                showNotification('Please select text to add symbolic depth.', 'warning');
+            if (!allChaptersText.trim()) {
+                showNotification('Please have story content to add symbolic depth. Generate chapters or write content first.', 'warning');
                 return;
             }
             
-            showLoading('Curating meaningful symbols and motifs...', 'book');
+            const chapterInfo = hasMultipleChapters() ? 
+                `Curating meaningful symbols and motifs across ${storyData.chapters.length} chapters...` :
+                'Curating meaningful symbols and motifs...';
+            
+            showLoading(chapterInfo, 'book');
             
             try {
                 const suggestions = await callOpenAI([
@@ -2786,7 +2804,7 @@
                     },
                     {
                         role: "user",
-                        content: `Analyze this text and suggest specific symbols, motifs, or symbolic elements that would add depth and meaning. Provide both suggestions and examples of how to incorporate them:\n\n${text}`
+                        content: `Analyze this complete story and suggest specific symbols, motifs, or symbolic elements that would add depth and meaning throughout all chapters. Provide both suggestions and examples of how to incorporate them:\n\n${allChaptersText}`
                     }
                 ]);
                 
@@ -2802,15 +2820,18 @@
         }
         
         async function metaphorGenerator() {
-            const editor = document.getElementById('storyEditor');
-            const text = getSelectedText(editor) || editor.value;
+            const allChaptersText = getAllChaptersText();
             
-            if (!text.trim()) {
-                showNotification('Please select text to enhance with metaphors.', 'warning');
+            if (!allChaptersText.trim()) {
+                showNotification('Please have story content to enhance with metaphors. Generate chapters or write content first.', 'warning');
                 return;
             }
             
-            showLoading('Generating fresh, vivid metaphors...', 'book');
+            const chapterInfo = hasMultipleChapters() ? 
+                `Generating fresh, vivid metaphors across ${storyData.chapters.length} chapters...` :
+                'Generating fresh, vivid metaphors...';
+            
+            showLoading(chapterInfo, 'book');
             
             try {
                 const enhanced = await callOpenAI([
@@ -2820,7 +2841,7 @@
                     },
                     {
                         role: "user",
-                        content: `Enhance this text with fresh, vivid metaphors and figurative language. Make descriptions more powerful and memorable:\n\n${text}`
+                        content: `Enhance this complete story with fresh, vivid metaphors and figurative language throughout all chapters. Make descriptions more powerful and memorable:\n\n${allChaptersText}`
                     }
                 ]);
                 
@@ -2843,15 +2864,18 @@
         }
         
         async function themeTracker() {
-            const editor = document.getElementById('storyEditor');
-            const text = getSelectedText(editor) || editor.value;
+            const allChaptersText = getAllChaptersText();
             
-            if (!text.trim()) {
-                showNotification('Please select text to analyze thematic consistency.', 'warning');
+            if (!allChaptersText.trim()) {
+                showNotification('Please have story content to analyze themes. Generate chapters or write content first.', 'warning');
                 return;
             }
             
-            showLoading('Tracking thematic consistency...', 'book');
+            const chapterInfo = hasMultipleChapters() ? 
+                `Tracking thematic consistency across ${storyData.chapters.length} chapters...` :
+                'Tracking thematic consistency...';
+            
+            showLoading(chapterInfo, 'book');
             
             try {
                 const analysis = await callOpenAI([
@@ -2861,7 +2885,7 @@
                     },
                     {
                         role: "user",
-                        content: `Analyze this text for thematic elements and consistency. Identify the main themes and suggest how to strengthen or maintain thematic coherence:\n\n${text}`
+                        content: `Analyze this complete story for thematic elements and consistency across all chapters. Identify the main themes and suggest how to strengthen or maintain thematic coherence throughout:\n\n${allChaptersText}`
                     }
                 ]);
                 
@@ -2877,15 +2901,18 @@
         }
         
         async function emotionalResonanceChecker() {
-            const editor = document.getElementById('storyEditor');
-            const text = getSelectedText(editor) || editor.value;
+            const allChaptersText = getAllChaptersText();
             
-            if (!text.trim()) {
-                showNotification('Please select text to check emotional resonance.', 'warning');
+            if (!allChaptersText.trim()) {
+                showNotification('Please have story content to check emotional resonance. Generate chapters or write content first.', 'warning');
                 return;
             }
             
-            showLoading('Calibrating emotional resonance...', 'book');
+            const chapterInfo = hasMultipleChapters() ? 
+                `Calibrating emotional resonance across ${storyData.chapters.length} chapters...` :
+                'Calibrating emotional resonance...';
+            
+            showLoading(chapterInfo, 'book');
             
             try {
                 const analysis = await callOpenAI([
@@ -2895,7 +2922,7 @@
                     },
                     {
                         role: "user",
-                        content: `Analyze the emotional resonance of this text. How will readers feel? Are character emotions clearly conveyed? Suggest improvements for emotional impact:\n\n${text}`
+                        content: `Analyze the emotional resonance of this complete story across all chapters. How will readers feel throughout? Are character emotions clearly conveyed? Suggest improvements for emotional impact:\n\n${allChaptersText}`
                     }
                 ]);
                 
@@ -2911,15 +2938,18 @@
         }
         
         async function redHerringGenerator() {
-            const editor = document.getElementById('storyEditor');
-            const text = getSelectedText(editor) || editor.value;
+            const allChaptersText = getAllChaptersText();
             
-            if (!text.trim()) {
-                showNotification('Please select text to add mystery elements.', 'warning');
+            if (!allChaptersText.trim()) {
+                showNotification('Please have story content to add mystery elements. Generate chapters or write content first.', 'warning');
                 return;
             }
             
-            showLoading('Designing fair-play misdirection...', 'book');
+            const chapterInfo = hasMultipleChapters() ? 
+                `Designing fair-play misdirection across ${storyData.chapters.length} chapters...` :
+                'Designing fair-play misdirection...';
+            
+            showLoading(chapterInfo, 'book');
             
             try {
                 const suggestions = await callOpenAI([
@@ -2929,7 +2959,7 @@
                     },
                     {
                         role: "user",
-                        content: `Analyze this text and suggest red herrings or misdirection elements for mystery/thriller. Ensure they're fair-play and don't cheat the reader:\n\n${text}`
+                        content: `Analyze this complete story and suggest red herrings or misdirection elements for mystery/thriller across all chapters. Ensure they're fair-play and don't cheat the reader:\n\n${allChaptersText}`
                     }
                 ]);
                 
@@ -2945,15 +2975,18 @@
         }
         
         async function pacingBalancer() {
-            const editor = document.getElementById('storyEditor');
-            const text = getSelectedText(editor) || editor.value;
+            const allChaptersText = getAllChaptersText();
             
-            if (!text.trim()) {
-                showNotification('Please select text to balance pacing.', 'warning');
+            if (!allChaptersText.trim()) {
+                showNotification('Please have story content to balance pacing. Generate chapters or write content first.', 'warning');
                 return;
             }
             
-            showLoading('Regulating story rhythm and pacing...', 'book');
+            const chapterInfo = hasMultipleChapters() ? 
+                `Regulating story rhythm and pacing across ${storyData.chapters.length} chapters...` :
+                'Regulating story rhythm and pacing...';
+            
+            showLoading(chapterInfo, 'book');
             
             try {
                 const balanced = await callOpenAI([
@@ -2963,7 +2996,7 @@
                     },
                     {
                         role: "user",
-                        content: `Analyze and adjust the pacing of this text. Ensure it flows well and doesn't feel rushed or dragging. Provide the improved version:\n\n${text}`
+                        content: `Analyze and adjust the pacing of this complete story across all chapters. Ensure it flows well and doesn't feel rushed or dragging throughout:\n\n${allChaptersText}`
                     }
                 ]);
                 
@@ -2986,15 +3019,18 @@
         }
         
         async function subtextBuilder() {
-            const editor = document.getElementById('storyEditor');
-            const text = getSelectedText(editor) || editor.value;
+            const allChaptersText = getAllChaptersText();
             
-            if (!text.trim()) {
-                showNotification('Please select dialogue or text to add subtext.', 'warning');
+            if (!allChaptersText.trim()) {
+                showNotification('Please have story content to add subtext. Generate chapters or write content first.', 'warning');
                 return;
             }
             
-            showLoading('Converting to layered interactions with subtext...', 'book');
+            const chapterInfo = hasMultipleChapters() ? 
+                `Converting to layered interactions with subtext across ${storyData.chapters.length} chapters...` :
+                'Converting to layered interactions with subtext...';
+            
+            showLoading(chapterInfo, 'book');
             
             try {
                 const enhanced = await callOpenAI([
@@ -3004,7 +3040,7 @@
                     },
                     {
                         role: "user",
-                        content: `Add subtext and layers to this text. Make characters say one thing but mean another. Convert direct statements into more nuanced, layered communication:\n\n${text}`
+                        content: `Add subtext and layers throughout this complete story. Make characters say one thing but mean another across all chapters. Convert direct statements into more nuanced, layered communication:\n\n${allChaptersText}`
                     }
                 ]);
                 
@@ -3029,15 +3065,18 @@
         // ============ FORENSIC AI DETECTION & HUMANIZATION ============
         
         async function forensicAIDetection() {
-            const editor = document.getElementById('storyEditor');
-            const text = getSelectedText(editor) || editor.value;
+            const allChaptersText = getAllChaptersText();
             
-            if (!text.trim()) {
-                showNotification('Please select text or have content in the editor to analyze.', 'warning');
+            if (!allChaptersText.trim()) {
+                showNotification('Please have story content to analyze. Generate chapters or write content first.', 'warning');
                 return;
             }
             
-            showLoading('Performing forensic AI detection analysis...', 'book');
+            const chapterInfo = hasMultipleChapters() ? 
+                `Performing forensic AI detection analysis across ${storyData.chapters.length} chapters...` :
+                'Performing forensic AI detection analysis...';
+            
+            showLoading(chapterInfo, 'book');
             
             try {
                 const analysis = await callOpenAI([
@@ -3096,7 +3135,7 @@ Follow these steps:
                     },
                     {
                         role: "user",
-                        content: text
+                        content: allChaptersText
                     }
                 ]);
                 
@@ -3122,51 +3161,50 @@ Follow these steps:
         }
         
         async function humanizeText() {
-            const editor = document.getElementById('storyEditor');
-            const text = getSelectedText(editor) || editor.value;
+            const allChaptersText = getAllChaptersText();
             
-            if (!text.trim()) {
-                showNotification('Please select text or have content in the editor to humanize.', 'warning');
+            if (!allChaptersText.trim()) {
+                showNotification('Please have story content to humanize. Generate chapters or write content first.', 'warning');
                 return;
             }
             
-            showLoading('Humanizing text while preserving meaning...', 'book');
+            const chapterInfo = hasMultipleChapters() ? 
+                `Humanizing text while preserving meaning across ${storyData.chapters.length} chapters...` :
+                'Humanizing text while preserving meaning...';
+            
+            showLoading(chapterInfo, 'book');
             
             try {
                 const humanized = await callOpenAI([
                     {
                         role: "system",
-                        content: `You are a writing humanization expert. Your task is to rewrite text to make it feel more human-like without altering core meaning.
+                        content: `You are a writing humanization expert. Your task is to rewrite the complete story to make it feel more human-like without altering core meaning.
 
 When activated:
-1. Maintain the original meaning and factual accuracy.
+1. Maintain the original meaning and factual accuracy across all chapters.
 2. Add human-like characteristics:
    - Minor imperfections and sentence variety.
-   - More natural transitions between thoughts.
+   - More natural transitions between thoughts and chapters.
    - Occasional colloquial expressions or idiomatic phrases (if context-appropriate).
    - Inclusion of concrete, sensory, or emotionally nuanced details.
 3. Break overly uniform sentence structures.
 4. Adjust vocabulary to feel contextually authentic, not overly formal unless required.
-5. Ensure the tone matches the intended audience.
+5. Ensure the tone matches the intended audience throughout.
+6. Maintain chapter structure and formatting.
 
-Provide output in two parts:
-- **Before & After Comparison** (side-by-side for review).
-- **Summary of Changes** (bullet points describing what was humanized and why).`
+Provide only the humanized version without any comparison or analysis.`
                     },
                     {
                         role: "user",
-                        content: `Please humanize this text to make it feel more natural and human-written while preserving the core meaning:\n\n${text}`
+                        content: `Please humanize this complete story to make it feel more natural and human-written while preserving the core meaning and chapter structure:\n\n${allChaptersText}`
                     }
                 ]);
                 
                 hideLoading();
                 showNotification('Text humanization complete!', 'success');
                 
-                const resultsDiv = document.getElementById('humanizationResults');
-                const outputDiv = document.getElementById('humanizationOutput');
-                
-                resultsDiv.classList.remove('hidden');
-                outputDiv.textContent = humanized;
+                // Show humanized result with save/keep options
+                displayHumanizationResult(humanized, allChaptersText);
                 
                 // Scroll to results
                 resultsDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -3176,6 +3214,104 @@ Provide output in two parts:
                 hideLoading();
                 showNotification('Failed to humanize text. Please check your API key and try again.', 'error');
             }
+        }
+        
+        function displayHumanizationResult(humanizedText, originalText) {
+            // Create a modal to show the result
+            const resultModal = document.createElement('div');
+            resultModal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+            
+            const modalContent = document.createElement('div');
+            modalContent.className = 'bg-theme-secondary p-6 rounded-lg max-w-4xl max-h-[90vh] overflow-y-auto border-2 border-theme m-4';
+            modalContent.innerHTML = `
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-bold text-cyan-400">
+                        <i class="fas fa-magic mr-2"></i>Humanized Text Result
+                    </h3>
+                    <button onclick="this.closest('.fixed').remove()" class="text-theme-secondary hover:text-red-400 transition-colors">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                
+                <div class="space-y-4">
+                    <div class="bg-theme-primary p-4 rounded-lg border border-theme">
+                        <h4 class="text-lg font-semibold text-theme-primary mb-2">Humanized Version:</h4>
+                        <div class="text-theme-primary whitespace-pre-wrap max-h-96 overflow-y-auto p-3 bg-gray-800 rounded border">${humanizedText}</div>
+                    </div>
+                    
+                    <div class="flex gap-3 justify-center">
+                        <button id="saveHumanizedBtn" class="btn-primary px-6 py-2 rounded-lg font-semibold">
+                            <i class="fas fa-save mr-2"></i>Save Changes
+                        </button>
+                        <button id="keepOriginalBtn" class="btn-secondary px-6 py-2 rounded-lg font-semibold">
+                            <i class="fas fa-undo mr-2"></i>Keep Original
+                        </button>
+                    </div>
+                    
+                    <div class="text-center text-sm text-theme-secondary">
+                        <i class="fas fa-info-circle mr-1"></i>
+                        You can manually run Forensic AI Detection after saving to check if the AI percentage improved.
+                    </div>
+                </div>
+            `;
+            
+            resultModal.appendChild(modalContent);
+            document.body.appendChild(resultModal);
+            
+            // Add event listeners for the buttons
+            document.getElementById('saveHumanizedBtn').addEventListener('click', () => {
+                saveHumanizedText(humanizedText);
+                resultModal.remove();
+            });
+            
+            document.getElementById('keepOriginalBtn').addEventListener('click', () => {
+                showNotification('Original text kept - no changes made.', 'info');
+                resultModal.remove();
+            });
+        }
+        
+        function saveHumanizedText(humanizedText) {
+            // Parse the humanized text back into chapters if multiple chapters exist
+            if (hasMultipleChapters()) {
+                const chapterSections = humanizedText.split(/===\s*Chapter\s*\d+.*?===/g).filter(section => section.trim());
+                
+                if (chapterSections.length > 0) {
+                    // Update the chapters in storyData
+                    storyData.chapters.forEach((chapter, index) => {
+                        if (chapterSections[index]) {
+                            chapter.content = chapterSections[index].trim();
+                        }
+                    });
+                    
+                    // Update the current editor if viewing a chapter
+                    const editor = document.getElementById('storyEditor');
+                    if (editor && storyData.currentChapter < storyData.chapters.length) {
+                        editor.value = storyData.chapters[storyData.currentChapter].content || '';
+                    }
+                    
+                    updateWordCount();
+                    showNotification('Humanized text saved successfully across all chapters!', 'success');
+                } else {
+                    // Fallback: treat as single content
+                    const editor = document.getElementById('storyEditor');
+                    if (editor) {
+                        editor.value = humanizedText;
+                        updateWordCount();
+                    }
+                    showNotification('Humanized text saved successfully!', 'success');
+                }
+            } else {
+                // Single content update
+                const editor = document.getElementById('storyEditor');
+                if (editor) {
+                    editor.value = humanizedText;
+                    updateWordCount();
+                }
+                showNotification('Humanized text saved successfully!', 'success');
+            }
+            
+            // Save to history for undo functionality
+            saveToHistory();
         }
         
         function displayForensicResults(analysis, aiScore) {
@@ -3856,6 +3992,26 @@ Provide output in two parts:
                 alert('API connection failed. Please check your key and try again.');
                 hideLoading();
             }
+        }
+        
+        // Helper Functions
+        function getAllChaptersText() {
+            // Get all chapters from storyData
+            if (storyData.chapters && storyData.chapters.length > 0) {
+                return storyData.chapters.map((chapter, index) => {
+                    const title = chapter.title || `Chapter ${index + 1}`;
+                    const content = chapter.content || '';
+                    return `=== ${title} ===\n\n${content}`;
+                }).join('\n\n');
+            }
+            
+            // Fallback to current editor content if no chapters exist
+            const editor = document.getElementById('storyEditor');
+            return editor ? editor.value : '';
+        }
+        
+        function hasMultipleChapters() {
+            return storyData.chapters && storyData.chapters.length > 1;
         }
         
         // Utility Functions
