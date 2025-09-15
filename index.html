@@ -57,6 +57,47 @@
           transform: translateY(-1px);
         }
         
+        /* Chapter Editing Tools Styling */
+        .tool-btn {
+          background: linear-gradient(135deg, #1e293b 0%, #334155 100%) !important;
+          color: #e2e8f0 !important;
+          border: 1px solid #475569 !important;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3) !important;
+          font-weight: 500;
+          transition: all 0.3s ease;
+          position: relative;
+        }
+        
+        .tool-btn:hover {
+          background: linear-gradient(135deg, #0ea5e9 0%, #06b6d4 100%) !important;
+          border-color: #0284c7 !important;
+          box-shadow: 0 4px 12px rgba(6, 182, 212, 0.4) !important;
+          transform: translateY(-1px);
+          color: #ffffff !important;
+        }
+        
+        .tool-info {
+          position: absolute;
+          top: -8px;
+          right: -8px;
+          width: 16px;
+          height: 16px;
+          background: #3b82f6;
+          color: white;
+          border-radius: 50%;
+          font-size: 10px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: help;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .tool-info:hover {
+          background: #1d4ed8;
+          transform: scale(1.1);
+        }
+        
         /* Theme Support */
         .theme-light {
           --bg-primary: #ffffff;
@@ -153,6 +194,61 @@
         @keyframes spin {
           0% { transform: rotate(0deg); }
           100% { transform: rotate(360deg); }
+        }
+
+        /* Book Flipping Animation */
+        .book-loader {
+          position: relative;
+          width: 80px;
+          height: 60px;
+          margin: 0 auto;
+        }
+        
+        .book-pages {
+          position: absolute;
+          width: 100%;
+          height: 100%;
+          background: linear-gradient(45deg, var(--brand-cyan), var(--brand-silver));
+          border-radius: 4px;
+          transform-origin: left center;
+          animation: flip-pages 2s ease-in-out infinite;
+        }
+        
+        .book-pages:nth-child(1) { animation-delay: 0s; z-index: 3; }
+        .book-pages:nth-child(2) { animation-delay: 0.4s; z-index: 2; }
+        .book-pages:nth-child(3) { animation-delay: 0.8s; z-index: 1; }
+        
+        .book-spine {
+          position: absolute;
+          left: -2px;
+          top: 0;
+          width: 4px;
+          height: 100%;
+          background: var(--brand-gold);
+          border-radius: 2px;
+          z-index: 4;
+        }
+        
+        @keyframes flip-pages {
+          0%, 20% {
+            transform: rotateY(0deg);
+            opacity: 1;
+          }
+          50% {
+            transform: rotateY(-90deg);
+            opacity: 0.7;
+          }
+          80%, 100% {
+            transform: rotateY(-180deg);
+            opacity: 0.3;
+          }
+        }
+        
+        .loading-content {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 16px;
         }
         
         /* Word Count Display */
@@ -592,9 +688,14 @@
                             <i class="fas fa-list-ol text-cyan-400 mr-2"></i>
                             Chapter Plan
                         </h2>
-                        <button onclick="generateAllChapters()" id="generateAllBtn" class="btn-secondary px-4 py-2 rounded-lg text-sm font-semibold" disabled>
-                            <i class="fas fa-bolt mr-1"></i>Generate All Chapters
-                        </button>
+                        <div class="flex space-x-2">
+                            <button onclick="generateAllChapters()" id="generateAllBtn" class="btn-secondary px-4 py-2 rounded-lg text-sm font-semibold" disabled>
+                                <i class="fas fa-bolt mr-1"></i>Generate All Chapters
+                            </button>
+                            <button onclick="combineAllChapters()" id="combineAllBtn" class="btn-primary px-4 py-2 rounded-lg text-sm font-semibold" disabled>
+                                <i class="fas fa-book mr-1"></i>Combine All
+                            </button>
+                        </div>
                     </div>
                     
                     <div id="chapterPlan" class="space-y-3 h-80 overflow-y-auto">
@@ -627,31 +728,173 @@
                     </div>
                 </div>
                 
-                <!-- AI Writing Tools -->
-                <div class="flex flex-wrap gap-2 mb-4 p-3 bg-theme-primary rounded-lg border border-theme">
-                    <button onclick="expandStory()" class="ai-writing-tool-btn px-3 py-1 rounded text-sm">
-                        <i class="fas fa-expand-alt mr-1"></i>Expand
-                    </button>
-                    <button onclick="improveStory()" class="ai-writing-tool-btn px-3 py-1 rounded text-sm">
-                        <i class="fas fa-magic mr-1"></i>Improve
-                    </button>
-                    <button onclick="addDialogue()" class="ai-writing-tool-btn px-3 py-1 rounded text-sm">
-                        <i class="fas fa-comments mr-1"></i>Add Dialogue
-                    </button>
-                    <button onclick="addDescription()" class="ai-writing-tool-btn px-3 py-1 rounded text-sm">
-                        <i class="fas fa-paint-brush mr-1"></i>Add Description
-                    </button>
-                    <button onclick="createTransition()" class="ai-writing-tool-btn px-3 py-1 rounded text-sm">
-                        <i class="fas fa-arrow-right mr-1"></i>Transition
-                    </button>
-                    <button onclick="addConflict()" class="ai-writing-tool-btn px-3 py-1 rounded text-sm">
-                        <i class="fas fa-bolt mr-1"></i>Add Conflict
-                    </button>
-                </div>
-                
-                <div class="relative">
+                <div class="relative mb-4">
                     <textarea id="storyEditor" placeholder="Start writing your story here, or use the AI writing tools to generate content..." 
                               class="w-full px-4 py-3 rounded-lg form-field bg-theme-primary text-theme-primary h-96 resize-none"></textarea>
+                </div>
+
+                <!-- Chapter-by-Chapter Editing Tools -->
+                <div class="mb-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-semibold text-cyan-400">
+                            <i class="fas fa-tools mr-2"></i>Chapter Editing Tools
+                        </h3>
+                        <div class="text-xs text-theme-secondary">Work on one chapter at a time</div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 p-4 bg-theme-primary rounded-lg border border-theme">
+                        <!-- Row 1 -->
+                        <div class="relative">
+                            <button onclick="plotHoleDetector()" class="tool-btn w-full px-3 py-2 rounded text-sm font-medium">
+                                <i class="fas fa-search mr-1"></i>Plot Hole Detector
+                            </button>
+                            <i class="fas fa-info-circle tool-info" title="Finds gaps or mistakes in the story that don't make sense and shows you how to fix them."></i>
+                        </div>
+                        
+                        <div class="relative">
+                            <button onclick="characterArcDesigner()" class="tool-btn w-full px-3 py-2 rounded text-sm font-medium">
+                                <i class="fas fa-user-edit mr-1"></i>Character Arc Designer
+                            </button>
+                            <i class="fas fa-info-circle tool-info" title="Helps shape how your character changes from the beginning of the story to the end."></i>
+                        </div>
+                        
+                        <div class="relative">
+                            <button onclick="toneShifter()" class="tool-btn w-full px-3 py-2 rounded text-sm font-medium">
+                                <i class="fas fa-palette mr-1"></i>Tone Shifter
+                            </button>
+                            <i class="fas fa-info-circle tool-info" title="Adjusts the mood and style of your writing so it feels consistent and matches your target audience."></i>
+                        </div>
+                        
+                        <div class="relative">
+                            <button onclick="conflictIntensifier()" class="tool-btn w-full px-3 py-2 rounded text-sm font-medium">
+                                <i class="fas fa-fire mr-1"></i>Conflict Intensifier
+                            </button>
+                            <i class="fas fa-info-circle tool-info" title="Adds more tension and drama to your story by making sure characters' goals and obstacles clash strongly."></i>
+                        </div>
+                        
+                        <!-- Row 2 -->
+                        <div class="relative">
+                            <button onclick="dialogueEnhancer()" class="tool-btn w-full px-3 py-2 rounded text-sm font-medium">
+                                <i class="fas fa-comments mr-1"></i>Dialogue Enhancer
+                            </button>
+                            <i class="fas fa-info-circle tool-info" title="Makes conversations between characters sound more real, engaging, and filled with hidden meaning."></i>
+                        </div>
+                        
+                        <div class="relative">
+                            <button onclick="symbolismSuggester()" class="tool-btn w-full px-3 py-2 rounded text-sm font-medium">
+                                <i class="fas fa-gem mr-1"></i>Symbolism Suggester
+                            </button>
+                            <i class="fas fa-info-circle tool-info" title="Suggests meaningful symbols or motifs that give your story extra depth and layers of meaning."></i>
+                        </div>
+                        
+                        <div class="relative">
+                            <button onclick="metaphorGenerator()" class="tool-btn w-full px-3 py-2 rounded text-sm font-medium">
+                                <i class="fas fa-feather-alt mr-1"></i>Metaphor Generator
+                            </button>
+                            <i class="fas fa-info-circle tool-info" title="Creates fresh, vivid comparisons that make your descriptions more powerful and memorable."></i>
+                        </div>
+                        
+                        <div class="relative">
+                            <button onclick="themeTracker()" class="tool-btn w-full px-3 py-2 rounded text-sm font-medium">
+                                <i class="fas fa-compass mr-1"></i>Theme Tracker
+                            </button>
+                            <i class="fas fa-info-circle tool-info" title="Keeps your story's big idea or moral consistent and visible throughout the book."></i>
+                        </div>
+                        
+                        <!-- Row 3 -->
+                        <div class="relative">
+                            <button onclick="emotionalResonanceChecker()" class="tool-btn w-full px-3 py-2 rounded text-sm font-medium">
+                                <i class="fas fa-heart mr-1"></i>Emotional Resonance
+                            </button>
+                            <i class="fas fa-info-circle tool-info" title="Makes sure readers feel the emotions you want them to feel at the right time in the story."></i>
+                        </div>
+                        
+                        <div class="relative">
+                            <button onclick="redHerringGenerator()" class="tool-btn w-full px-3 py-2 rounded text-sm font-medium">
+                                <i class="fas fa-mask mr-1"></i>Red Herring Generator
+                            </button>
+                            <i class="fas fa-info-circle tool-info" title="Adds clever misdirections in mystery or thriller stories to keep readers guessing without cheating."></i>
+                        </div>
+                        
+                        <div class="relative">
+                            <button onclick="pacingBalancer()" class="tool-btn w-full px-3 py-2 rounded text-sm font-medium">
+                                <i class="fas fa-tachometer-alt mr-1"></i>Pacing Balancer
+                            </button>
+                            <i class="fas fa-info-circle tool-info" title="Controls the speed and rhythm of your story so it never feels too slow or rushed."></i>
+                        </div>
+                        
+                        <div class="relative">
+                            <button onclick="subtextBuilder()" class="tool-btn w-full px-3 py-2 rounded text-sm font-medium">
+                                <i class="fas fa-layer-group mr-1"></i>Subtext Builder
+                            </button>
+                            <i class="fas fa-info-circle tool-info" title="Helps characters say one thing but mean another, adding layers of hidden meaning to dialogue."></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Forensic AI Detection Section -->
+                <div class="mb-6">
+                    <div class="bg-theme-primary p-4 rounded-lg border border-theme">
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 class="text-lg font-semibold text-purple-400">
+                                <i class="fas fa-microscope mr-2"></i>Forensic AI Detection
+                            </h3>
+                            <div class="flex space-x-2">
+                                <button onclick="undoEdit()" class="btn-secondary px-3 py-1 rounded text-xs">
+                                    <i class="fas fa-undo"></i> Undo
+                                </button>
+                                <button onclick="redoEdit()" class="btn-secondary px-3 py-1 rounded text-xs">
+                                    <i class="fas fa-redo"></i> Redo
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <p class="text-sm text-theme-secondary mb-3">Detailed stylistic and forensic breakdown of text for AI authorship likelihood.</p>
+                        
+                        <div class="flex gap-3 flex-wrap">
+                            <div class="relative">
+                                <button onclick="forensicAIDetection()" class="btn-primary px-4 py-2 rounded font-medium">
+                                    <i class="fas fa-search-plus mr-2"></i>Analyze Text
+                                </button>
+                                <i class="fas fa-info-circle tool-info" title="Performs statistical analysis to determine AI likelihood score using perplexity, burstiness, and lexical variance measurements."></i>
+                            </div>
+                            
+                            <div class="relative">
+                                <button onclick="humanizeText()" class="btn-secondary px-4 py-2 rounded font-medium" id="humanizeBtn">
+                                    <i class="fas fa-user-edit mr-2"></i>Humanization
+                                </button>
+                                <i class="fas fa-info-circle tool-info" title="Rewrites text to sound more natural and human-like, reducing AI detection scores while preserving meaning and style."></i>
+                            </div>
+                            
+                            <div class="relative">
+                                <button onclick="reanalyzeText()" class="btn-secondary px-4 py-2 rounded font-medium" id="reanalyzeBtn" disabled style="opacity: 0.5;">
+                                    <i class="fas fa-sync mr-2"></i>Reanalyze
+                                </button>
+                                <i class="fas fa-info-circle tool-info" title="Performs a new AI detection analysis on the current text to check improvement after changes."></i>
+                            </div>
+                        </div>
+                        
+                        <!-- Analysis Results Area -->
+                        <div id="forensicResults" class="mt-4 hidden">
+                            <div class="bg-gray-800 p-4 rounded border border-gray-600">
+                                <pre id="forensicOutput" class="text-sm text-gray-300 whitespace-pre-wrap"></pre>
+                            </div>
+                        </div>
+                        
+                        <!-- Humanization Results Area -->
+                        <div id="humanizationResults" class="mt-4 hidden">
+                            <div class="bg-gray-800 p-4 rounded border border-gray-600">
+                                <pre id="humanizationOutput" class="text-sm text-gray-300 whitespace-pre-wrap"></pre>
+                            </div>
+                        </div>
+
+                        <!-- Continue to Narration Button -->
+                        <div class="mt-6 text-center">
+                            <button onclick="showPage('narration')" class="btn-glow bg-cyan-600 hover:bg-cyan-500 text-white px-8 py-3 rounded-lg font-semibold transition-all">
+                                <i class="fas fa-microphone mr-2"></i>Continue to Narration
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -747,6 +990,84 @@
                         <div class="border-t border-theme pt-4">
                             <button onclick="generateNarration()" class="btn-primary w-full py-3 rounded-lg font-semibold">
                                 <i class="fas fa-microphone mr-2"></i>Generate Full Narration
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dialogue-Specific Voice Assignment -->
+                <div class="bg-theme-secondary p-6 rounded-xl border-2 border-theme">
+                    <h2 class="text-xl font-bold mb-4">
+                        <i class="fas fa-users text-purple-400 mr-2"></i>
+                        Dialogue Voice Assignment
+                    </h2>
+                    
+                    <div class="space-y-4">
+                        <p class="text-sm text-theme-secondary">
+                            Assign different voices to characters in your story for dynamic narration.
+                        </p>
+                        
+                        <!-- Content Status Indicator -->
+                        <div id="contentStatusIndicator" class="bg-theme-primary p-3 rounded-lg border border-theme">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-2">
+                                    <div id="contentStatusIcon" class="w-3 h-3 rounded-full bg-gray-400"></div>
+                                    <span class="text-sm font-medium">Story Content Status:</span>
+                                </div>
+                                <button onclick="refreshContentStatus()" class="text-xs text-cyan-400 hover:text-cyan-300">
+                                    <i class="fas fa-sync mr-1"></i>Refresh
+                                </button>
+                            </div>
+                            <div id="contentStatusText" class="text-xs text-theme-secondary mt-1">
+                                Checking for story content...
+                            </div>
+                            <div id="contentPreviewToggle" class="mt-2 hidden">
+                                <button onclick="toggleContentPreview()" class="text-xs text-cyan-400 hover:text-cyan-300">
+                                    <i class="fas fa-eye mr-1"></i>Preview Content
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Content Preview (Hidden by default) -->
+                        <div id="contentPreview" class="hidden bg-theme-primary p-3 rounded-lg border border-theme">
+                            <div class="flex items-center justify-between mb-2">
+                                <h5 class="text-sm font-medium text-cyan-400">Content Preview:</h5>
+                                <button onclick="toggleContentPreview()" class="text-xs text-theme-secondary">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                            <div id="contentPreviewText" class="text-xs text-theme-secondary max-h-32 overflow-y-auto bg-theme-secondary p-2 rounded font-mono">
+                                <!-- Content preview will appear here -->
+                            </div>
+                        </div>
+                        
+                        <button onclick="scanForDialogue()" class="btn-secondary w-full py-2 rounded-lg font-semibold">
+                            <i class="fas fa-search mr-2"></i>Scan Story for Dialogue
+                        </button>
+                        
+                        <!-- Dialogue Assignment Results -->
+                        <div id="dialogueAssignments" class="hidden">
+                            <div class="bg-theme-primary p-4 rounded-lg border border-theme">
+                                <h4 class="font-semibold mb-3 text-cyan-400">Character Voice Assignments</h4>
+                                <div id="characterVoiceList" class="space-y-3">
+                                    <!-- Characters will be populated here -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Dialogue Preview -->
+                        <div id="dialoguePreview" class="hidden">
+                            <div class="bg-theme-primary p-4 rounded-lg border border-theme max-h-60 overflow-y-auto">
+                                <h4 class="font-semibold mb-3 text-green-400">Found Dialogue Sections</h4>
+                                <div id="dialogueList" class="space-y-2">
+                                    <!-- Dialogue will be populated here -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="border-t border-theme pt-4">
+                            <button onclick="generateMultiVoiceNarration()" id="multiVoiceBtn" class="btn-primary w-full py-3 rounded-lg font-semibold" disabled>
+                                <i class="fas fa-theater-masks mr-2"></i>Generate Multi-Voice Narration
                             </button>
                         </div>
                     </div>
@@ -1312,6 +1633,13 @@
                         </div>
                         
                         <div>
+                            <label class="block text-sm font-semibold mb-2">ElevenLabs API Key</label>
+                            <input type="password" id="elevenlabsKey" placeholder="Enter your ElevenLabs API key..." 
+                                   class="w-full px-4 py-2 rounded-lg form-field bg-theme-primary text-theme-primary">
+                            <p class="text-xs text-theme-secondary mt-1">Optional: Enables advanced voice cloning and additional voices</p>
+                        </div>
+                        
+                        <div>
                             <label class="block text-sm font-semibold mb-2">Model Selection</label>
                             <select id="modelSelection" class="w-full px-4 py-2 rounded-lg form-field bg-theme-primary text-theme-primary">
                                 <option value="gpt-4o-mini" selected>GPT-4o-mini (Recommended)</option>
@@ -1412,7 +1740,15 @@
     <!-- Loading Overlay -->
     <div id="loadingOverlay" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
         <div class="bg-theme-secondary p-8 rounded-xl border-2 border-cyan-400 text-center">
-            <div class="loading-spinner mx-auto mb-4"></div>
+            <div class="loading-content">
+                <div class="book-loader">
+                    <div class="book-spine"></div>
+                    <div class="book-pages"></div>
+                    <div class="book-pages"></div>
+                    <div class="book-pages"></div>
+                </div>
+                <div class="loading-spinner mx-auto" style="display: none;"></div>
+            </div>
             <p id="loadingText" class="text-lg font-semibold">Processing...</p>
         </div>
     </div>
@@ -1442,15 +1778,36 @@
             loadSettings();
             updateWordCount();
             setupAutoSave();
+            
+            // Initialize undo/redo system
+            const editor = document.getElementById('storyEditor');
+            if (editor) {
+                // Save initial state
+                saveEditState();
+                
+                // Auto-save on content changes (debounced)
+                let saveTimeout;
+                editor.addEventListener('input', function() {
+                    clearTimeout(saveTimeout);
+                    saveTimeout = setTimeout(() => {
+                        saveEditState();
+                    }, 1000); // Save after 1 second of no typing
+                });
+            }
+            
+            // Initialize button states
+            updateUndoRedoButtons();
         });
         
         // Page Navigation
-        function showPage(pageId) {
+        function showPage(pageId, clickEvent = null) {
             document.querySelectorAll('.page').forEach(page => page.classList.add('hidden'));
             document.getElementById(pageId).classList.remove('hidden');
             
             document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
-            event.target.classList.add('active');
+            if (clickEvent && clickEvent.target) {
+                clickEvent.target.classList.add('active');
+            }
             
             currentPage = pageId;
             
@@ -2217,6 +2574,1043 @@
             return conflicts[Math.floor(Math.random() * conflicts.length)];
         }
         
+        // ============ NEW CHAPTER EDITING TOOLS ============
+        
+        async function plotHoleDetector() {
+            const allChaptersText = getAllChaptersText();
+            
+            if (!allChaptersText.trim()) {
+                showNotification('Please have story content to analyze for plot holes. Generate chapters or write content first.', 'warning');
+                return;
+            }
+            
+            const chapterInfo = hasMultipleChapters() ? 
+                `Analyzing ${storyData.chapters.length} chapters for plot holes across the entire story...` :
+                'Analyzing story logic and continuity...';
+            
+            showLoading(chapterInfo, 'book');
+            
+            try {
+                const analysis = await callOpenAI([
+                    {
+                        role: "system",
+                        content: "You are an investigative story analyst who cross-checks logic, causality, continuity, stakes, and character motivation across an entire story. Identify gaps or mistakes that don't make sense and provide specific suggestions on how to fix them. Pay special attention to consistency across multiple chapters."
+                    },
+                    {
+                        role: "user", 
+                        content: `Analyze this complete story for plot holes, logical inconsistencies, and continuity errors across all chapters. Provide specific feedback and actionable suggestions:\n\n${allChaptersText}`
+                    }
+                ]);
+                
+                hideLoading();
+                showNotification('Plot analysis complete - check suggestions below!', 'success');
+                displayToolResult('Plot Hole Detection Analysis', analysis);
+                
+            } catch (error) {
+                console.error('Plot hole detection error:', error);
+                hideLoading();
+                showNotification('Failed to analyze plot holes. Please check your API key and try again.', 'error');
+            }
+        }
+        
+        async function characterArcDesigner() {
+            const allChaptersText = getAllChaptersText();
+            
+            if (!allChaptersText.trim()) {
+                showNotification('Please have story content to enhance character development. Generate chapters or write content first.', 'warning');
+                return;
+            }
+            
+            const chapterInfo = hasMultipleChapters() ? 
+                `Designing character arcs across ${storyData.chapters.length} chapters...` :
+                'Designing character development arc...';
+            
+            showLoading(chapterInfo, 'book');
+            
+            try {
+                const enhancement = await callOpenAI([
+                    {
+                        role: "system",
+                        content: "You are a developmental editor specializing in internal character change (positive, negative, or flat arcs) across complete stories. Analyze character development throughout the entire narrative and provide suggestions for meaningful character growth from beginning to end."
+                    },
+                    {
+                        role: "user",
+                        content: `Analyze and enhance the character development throughout this complete story. Suggest specific improvements for character growth, internal conflict, and meaningful change across all chapters:\n\n${allChaptersText}`
+                    }
+                ]);
+                
+                hideLoading();
+                showNotification('Character arc enhancements ready!', 'success');
+                displayToolResult('Character Arc Design', enhancement);
+                
+            } catch (error) {
+                console.error('Character arc error:', error);
+                hideLoading();
+                showNotification('Failed to enhance character arc. Please try again.', 'error');
+            }
+        }
+        
+        async function toneShifter() {
+            const allChaptersText = getAllChaptersText();
+            
+            if (!allChaptersText.trim()) {
+                showNotification('Please have story content to adjust tone and style. Generate chapters or write content first.', 'warning');
+                return;
+            }
+            
+            const chapterInfo = hasMultipleChapters() ? 
+                `Analyzing and adjusting tone consistency across ${storyData.chapters.length} chapters...` :
+                'Analyzing and adjusting tone consistency...';
+            
+            showLoading(chapterInfo, 'book');
+            
+            try {
+                // Use text within safe limits
+                const processableText = getTextWithinLimits(allChaptersText);
+                const isTextTruncated = processableText !== allChaptersText;
+                
+                const analysis = await callOpenAI([
+                    {
+                        role: "system",
+                        content: "You are a stylist who can diagnose current tone and provide specific suggestions for adjustments. Analyze tone consistency and provide actionable recommendations for target audience appropriateness."
+                    },
+                    {
+                        role: "user",
+                        content: `Analyze the current tone throughout this story and provide specific suggestions for adjustments to ensure consistency and target audience appropriateness${isTextTruncated ? ' (analyzing first portion due to length)' : ''}:\n\n${processableText}`
+                    }
+                ]);
+                
+                hideLoading();
+                showNotification('Tone analysis complete!', 'success');
+                displayToolResult('Tone Consistency Analysis', analysis);
+                
+            } catch (error) {
+                console.error('Tone shift error:', error);
+                hideLoading();
+                showNotification('Failed to adjust tone. Please try again.', 'error');
+            }
+        }
+        
+        async function conflictIntensifier() {
+            const allChaptersText = getAllChaptersText();
+            
+            if (!allChaptersText.trim()) {
+                showNotification('Please have story content to intensify conflict. Generate chapters or write content first.', 'warning');
+                return;
+            }
+            
+            const chapterInfo = hasMultipleChapters() ? 
+                `Intensifying conflict and raising stakes across ${storyData.chapters.length} chapters...` :
+                'Intensifying conflict and raising stakes...';
+            
+            showLoading(chapterInfo, 'book');
+            
+            try {
+                // Use text within safe limits
+                const processableText = getTextWithinLimits(allChaptersText);
+                const isTextTruncated = processableText !== allChaptersText;
+                
+                const analysis = await callOpenAI([
+                    {
+                        role: "system",
+                        content: "You are an expert at analyzing story conflict and providing specific suggestions to intensify tension. Identify areas where friction can be raised at macro and micro levels without melodrama."
+                    },
+                    {
+                        role: "user",
+                        content: `Analyze the conflict in this story and provide specific suggestions to intensify tension. Focus on making goals and obstacles clash more strongly without being melodramatic${isTextTruncated ? ' (analyzing first portion due to length)' : ''}:\n\n${processableText}`
+                    }
+                ]);
+                
+                hideLoading();
+                showNotification('Conflict analysis complete!', 'success');
+                displayToolResult('Conflict Intensification Suggestions', analysis);
+                
+            } catch (error) {
+                console.error('Conflict intensifier error:', error);
+                hideLoading();
+                showNotification('Failed to intensify conflict. Please try again.', 'error');
+            }
+        }
+        
+        async function dialogueEnhancer() {
+            const allChaptersText = getAllChaptersText();
+            
+            if (!allChaptersText.trim()) {
+                showNotification('Please have story content to enhance dialogue. Generate chapters or write content first.', 'warning');
+                return;
+            }
+            
+            // Use text within safe limits
+            const processableText = getTextWithinLimits(allChaptersText);
+            const isTextTruncated = processableText !== allChaptersText;
+            
+            const chapterInfo = hasMultipleChapters() ? 
+                `Enhancing dialogue with subtext and authenticity across ${storyData.chapters.length} chapters...` :
+                'Enhancing dialogue with subtext and authenticity...';
+            
+            showLoading(chapterInfo, 'book');
+            
+            try {
+                const enhanced = await callOpenAI([
+                    {
+                        role: "system",
+                        content: "You are a dialogue punch-up artist specializing in subtext, voice distinction, compression, and plausibility. Analyze the provided text and give actionable suggestions for improving dialogue to be more real, engaging, and filled with hidden meaning."
+                    },
+                    {
+                        role: "user",
+                        content: `Analyze the dialogue in this story and provide specific suggestions for enhancement. Focus on subtext, voice distinction, and natural conversation flow${isTextTruncated ? ' (analyzing first portion due to length)' : ''}:\n\n${processableText}`
+                    }
+                ]);
+                
+                hideLoading();
+                showNotification('Dialogue analysis complete!', 'success');
+                
+                // Display suggestions instead of trying to replace text
+                displayToolResult('Dialogue Enhancement Suggestions', enhanced);
+                
+            } catch (error) {
+                console.error('Dialogue enhancer error:', error);
+                hideLoading();
+                
+                // More detailed error message
+                let errorMessage = 'Failed to enhance dialogue. ';
+                if (error.message && error.message.includes('token')) {
+                    errorMessage += 'Story may be too long for processing.';
+                } else if (error.message && error.message.includes('API')) {
+                    errorMessage += 'Please check your API key.';
+                } else {
+                    errorMessage += 'Please try again or use a shorter text selection.';
+                }
+                
+                showNotification(errorMessage, 'error');
+            }
+        }
+        
+        async function symbolismSuggester() {
+            const allChaptersText = getAllChaptersText();
+            
+            if (!allChaptersText.trim()) {
+                showNotification('Please have story content to add symbolic depth. Generate chapters or write content first.', 'warning');
+                return;
+            }
+            
+            const chapterInfo = hasMultipleChapters() ? 
+                `Curating meaningful symbols and motifs across ${storyData.chapters.length} chapters...` :
+                'Curating meaningful symbols and motifs...';
+            
+            showLoading(chapterInfo, 'book');
+            
+            try {
+                const suggestions = await callOpenAI([
+                    {
+                        role: "system",
+                        content: "You curate a coherent symbol system aligned to theme, character arcs, and setting. Suggest meaningful symbols or motifs that give stories extra depth and layers of meaning."
+                    },
+                    {
+                        role: "user",
+                        content: `Analyze this complete story and suggest specific symbols, motifs, or symbolic elements that would add depth and meaning throughout all chapters. Provide both suggestions and examples of how to incorporate them:\n\n${allChaptersText}`
+                    }
+                ]);
+                
+                hideLoading();
+                showNotification('Symbolism suggestions generated!', 'success');
+                displayToolResult('Symbolism & Motif Suggestions', suggestions);
+                
+            } catch (error) {
+                console.error('Symbolism suggester error:', error);
+                hideLoading();
+                showNotification('Failed to generate symbolism suggestions. Please try again.', 'error');
+            }
+        }
+        
+        async function metaphorGenerator() {
+            const allChaptersText = getAllChaptersText();
+            
+            if (!allChaptersText.trim()) {
+                showNotification('Please have story content to enhance with metaphors. Generate chapters or write content first.', 'warning');
+                return;
+            }
+            
+            const chapterInfo = hasMultipleChapters() ? 
+                `Generating fresh, vivid metaphors across ${storyData.chapters.length} chapters...` :
+                'Generating fresh, vivid metaphors...';
+            
+            showLoading(chapterInfo, 'book');
+            
+            try {
+                const enhanced = await callOpenAI([
+                    {
+                        role: "system",
+                        content: "You generate fresh, precise figurative language matching POV, tone, and genre. Create vivid comparisons that make descriptions more powerful and memorable."
+                    },
+                    {
+                        role: "user",
+                        content: `Enhance this complete story with fresh, vivid metaphors and figurative language throughout all chapters. Make descriptions more powerful and memorable:\n\n${allChaptersText}`
+                    }
+                ]);
+                
+                if (getSelectedText(editor)) {
+                    replaceSelectedText(editor, enhanced);
+                } else {
+                    editor.value = enhanced;
+                }
+                
+                updateWordCount();
+                saveToHistory();
+                hideLoading();
+                showNotification('Text enhanced with vivid metaphors!', 'success');
+                
+            } catch (error) {
+                console.error('Metaphor generator error:', error);
+                hideLoading();
+                showNotification('Failed to generate metaphors. Please try again.', 'error');
+            }
+        }
+        
+        async function themeTracker() {
+            const allChaptersText = getAllChaptersText();
+            
+            if (!allChaptersText.trim()) {
+                showNotification('Please have story content to analyze themes. Generate chapters or write content first.', 'warning');
+                return;
+            }
+            
+            const chapterInfo = hasMultipleChapters() ? 
+                `Tracking thematic consistency across ${storyData.chapters.length} chapters...` :
+                'Tracking thematic consistency...';
+            
+            showLoading(chapterInfo, 'book');
+            
+            try {
+                const analysis = await callOpenAI([
+                    {
+                        role: "system",
+                        content: "You ensure thematic questions are dramatized and echoed consistently. Keep the story's big idea or moral consistent and visible throughout the book."
+                    },
+                    {
+                        role: "user",
+                        content: `Analyze this complete story for thematic elements and consistency across all chapters. Identify the main themes and suggest how to strengthen or maintain thematic coherence throughout:\n\n${allChaptersText}`
+                    }
+                ]);
+                
+                hideLoading();
+                showNotification('Theme analysis complete!', 'success');
+                displayToolResult('Theme Tracking Analysis', analysis);
+                
+            } catch (error) {
+                console.error('Theme tracker error:', error);
+                hideLoading();
+                showNotification('Failed to analyze themes. Please try again.', 'error');
+            }
+        }
+        
+        async function emotionalResonanceChecker() {
+            const allChaptersText = getAllChaptersText();
+            
+            if (!allChaptersText.trim()) {
+                showNotification('Please have story content to check emotional resonance. Generate chapters or write content first.', 'warning');
+                return;
+            }
+            
+            const chapterInfo = hasMultipleChapters() ? 
+                `Calibrating emotional resonance across ${storyData.chapters.length} chapters...` :
+                'Calibrating emotional resonance...';
+            
+            showLoading(chapterInfo, 'book');
+            
+            try {
+                const analysis = await callOpenAI([
+                    {
+                        role: "system",
+                        content: "You calibrate character feelings vs reader emotions. Ensure readers feel the emotions you want them to feel at the right time in the story."
+                    },
+                    {
+                        role: "user",
+                        content: `Analyze the emotional resonance of this complete story across all chapters. How will readers feel throughout? Are character emotions clearly conveyed? Suggest improvements for emotional impact:\n\n${allChaptersText}`
+                    }
+                ]);
+                
+                hideLoading();
+                showNotification('Emotional resonance analysis complete!', 'success');
+                displayToolResult('Emotional Resonance Check', analysis);
+                
+            } catch (error) {
+                console.error('Emotional resonance error:', error);
+                hideLoading();
+                showNotification('Failed to check emotional resonance. Please try again.', 'error');
+            }
+        }
+        
+        async function redHerringGenerator() {
+            const allChaptersText = getAllChaptersText();
+            
+            if (!allChaptersText.trim()) {
+                showNotification('Please have story content to add mystery elements. Generate chapters or write content first.', 'warning');
+                return;
+            }
+            
+            const chapterInfo = hasMultipleChapters() ? 
+                `Designing fair-play misdirection across ${storyData.chapters.length} chapters...` :
+                'Designing fair-play misdirection...';
+            
+            showLoading(chapterInfo, 'book');
+            
+            try {
+                const suggestions = await callOpenAI([
+                    {
+                        role: "system",
+                        content: "You design fair-play misdirection for mystery/thriller stories. Add clever misdirections that keep readers guessing without cheating."
+                    },
+                    {
+                        role: "user",
+                        content: `Analyze this complete story and suggest red herrings or misdirection elements for mystery/thriller across all chapters. Ensure they're fair-play and don't cheat the reader:\n\n${allChaptersText}`
+                    }
+                ]);
+                
+                hideLoading();
+                showNotification('Red herring suggestions ready!', 'success');
+                displayToolResult('Red Herring & Misdirection Ideas', suggestions);
+                
+            } catch (error) {
+                console.error('Red herring generator error:', error);
+                hideLoading();
+                showNotification('Failed to generate red herrings. Please try again.', 'error');
+            }
+        }
+        
+        async function pacingBalancer() {
+            const allChaptersText = getAllChaptersText();
+            
+            if (!allChaptersText.trim()) {
+                showNotification('Please have story content to balance pacing. Generate chapters or write content first.', 'warning');
+                return;
+            }
+            
+            const chapterInfo = hasMultipleChapters() ? 
+                `Regulating story rhythm and pacing across ${storyData.chapters.length} chapters...` :
+                'Regulating story rhythm and pacing...';
+            
+            showLoading(chapterInfo, 'book');
+            
+            try {
+                // Use text within safe limits
+                const processableText = getTextWithinLimits(allChaptersText);
+                const isTextTruncated = processableText !== allChaptersText;
+                
+                const analysis = await callOpenAI([
+                    {
+                        role: "system",
+                        content: "You are an expert at analyzing story pacing and providing specific suggestions. You regulate rhythm at global, scene, and line levels and provide actionable recommendations."
+                    },
+                    {
+                        role: "user",
+                        content: `Analyze the pacing of this story and provide specific suggestions to improve rhythm and flow. Focus on ensuring it doesn't feel rushed or dragging${isTextTruncated ? ' (analyzing first portion due to length)' : ''}:\n\n${processableText}`
+                    }
+                ]);
+                
+                hideLoading();
+                showNotification('Pacing analysis complete!', 'success');
+                displayToolResult('Pacing Balance Suggestions', analysis);
+                
+            } catch (error) {
+                console.error('Pacing balancer error:', error);
+                hideLoading();
+                showNotification('Failed to balance pacing. Please try again.', 'error');
+            }
+        }
+        
+        async function subtextBuilder() {
+            const allChaptersText = getAllChaptersText();
+            
+            if (!allChaptersText.trim()) {
+                showNotification('Please have story content to add subtext. Generate chapters or write content first.', 'warning');
+                return;
+            }
+            
+            const chapterInfo = hasMultipleChapters() ? 
+                `Converting to layered interactions with subtext across ${storyData.chapters.length} chapters...` :
+                'Converting to layered interactions with subtext...';
+            
+            showLoading(chapterInfo, 'book');
+            
+            try {
+                // Use text within safe limits
+                const processableText = getTextWithinLimits(allChaptersText);
+                const isTextTruncated = processableText !== allChaptersText;
+                
+                const analysis = await callOpenAI([
+                    {
+                        role: "system",
+                        content: "You are an expert at analyzing dialogue and providing specific suggestions for adding subtext and layers. You help identify where characters can say one thing but mean another."
+                    },
+                    {
+                        role: "user",
+                        content: `Analyze the dialogue in this story and provide specific suggestions for adding subtext and layers. Show how to convert direct statements into more nuanced, layered communication${isTextTruncated ? ' (analyzing first portion due to length)' : ''}:\n\n${processableText}`
+                    }
+                ]);
+                
+                hideLoading();
+                showNotification('Subtext analysis complete!', 'success');
+                displayToolResult('Subtext Building Suggestions', analysis);
+                
+            } catch (error) {
+                console.error('Subtext builder error:', error);
+                hideLoading();
+                showNotification('Failed to build subtext. Please try again.', 'error');
+            }
+        }
+        
+        // ============ FORENSIC AI DETECTION & HUMANIZATION ============
+        
+        async function forensicAIDetection() {
+            const allChaptersText = getAllChaptersText();
+            
+            if (!allChaptersText.trim()) {
+                showNotification('Please have story content to analyze. Generate chapters or write content first.', 'warning');
+                return;
+            }
+            
+            // Use text within safe limits
+            const processableText = getTextWithinLimits(allChaptersText);
+            const isTextTruncated = processableText !== allChaptersText;
+            
+            const chapterInfo = hasMultipleChapters() ? 
+                `Performing forensic AI detection analysis across ${storyData.chapters.length} chapters${isTextTruncated ? ' (processing first portion)' : ''}...` :
+                'Performing forensic AI detection analysis...';
+            
+            showLoading(chapterInfo, 'book');
+            
+            try {
+                const analysis = await callOpenAI([
+                    {
+                        role: "system",
+                        content: `You are an AI authorship detection specialist. You must combine statistical-style analysis (similar to Quill/GPTZero) with detailed forensic reasoning to determine the likelihood that a piece of text was AI-generated.
+
+Follow these steps:
+
+1. **Initial Read-Through**
+   - Read the text in full before analyzing.
+   - Get a general impression of tone, flow, and content.
+
+2. **Statistical-Style Scoring**
+   - Estimate **Perplexity**: Rate how predictable the text is on a scale from 0 (very random) to 100 (extremely predictable).
+   - Estimate **Burstiness**: Rate variation in sentence length/complexity from 0 (very uniform) to 100 (very varied).
+   - Measure **Lexical Variance**: Rate the diversity of vocabulary from 0 (very repetitive) to 100 (very diverse).
+   - Flag repetitive n-grams or recurring exact phrases.
+
+3. **Forensic-Style Analysis**
+   Identify and explain:
+   - Signs of AI authorship:
+     * Overly balanced tone and structure.
+     * Generic statements lacking specific, verifiable detail.
+     * Excessive grammatical precision without human-like irregularities.
+     * Mechanical transitions or "list-like" flow.
+   - Signs of human authorship:
+     * Authentic personal details or anecdotes.
+     * Emotional nuance, contradictions, or spontaneity.
+     * Minor errors or idiosyncratic phrasing.
+
+4. **Hybrid Conclusion**
+   - Provide a combined **AI Likelihood Score** (0–100%) that factors in both statistical and forensic observations.
+   - Explain the reasoning: cite specific sentences or patterns.
+   - Give a confidence level (High/Medium/Low).
+   - If uncertainty is high, recommend further verification.
+
+**Output Format:**
+---
+📊 **Statistical Indicators**
+- Perplexity: [xx/100]
+- Burstiness: [xx/100] 
+- Lexical Variance: [xx/100]
+- Repeated n-grams: [list]
+
+🔍 **Forensic Observations**
+- Indicators Suggesting AI: [bullet list]
+- Indicators Suggesting Human: [bullet list]
+- Key Evidence: [paragraph citing examples]
+
+📈 **Conclusion**
+- AI Likelihood Score: [xx%]
+- Confidence Level: [High/Medium/Low]
+- Recommendation: [short statement]
+---`
+                    },
+                    {
+                        role: "user",
+                        content: processableText
+                    }
+                ]);
+                
+                hideLoading();
+                
+                // Extract AI likelihood score
+                const scoreMatch = analysis.match(/AI Likelihood Score:\s*(\d+)%/);
+                const aiScore = scoreMatch ? parseInt(scoreMatch[1]) : 50;
+                
+                // Display enhanced results with score
+                displayForensicResults(analysis, aiScore);
+                
+                // Enable buttons based on score
+                updateForensicButtons(aiScore);
+                
+                showNotification(`Forensic AI analysis complete! Score: ${aiScore}%`, 'success');
+                
+            } catch (error) {
+                console.error('Forensic AI detection error:', error);
+                hideLoading();
+                showNotification('Failed to perform AI detection analysis. Please check your API key and try again.', 'error');
+            }
+        }
+        
+        async function humanizeText() {
+            const allChaptersText = getAllChaptersText();
+            
+            if (!allChaptersText.trim()) {
+                showNotification('Please have story content to humanize. Generate chapters or write content first.', 'warning');
+                return;
+            }
+            
+            // Use text within safe limits
+            const processableText = getTextWithinLimits(allChaptersText, 12000); // Slightly smaller for humanization
+            const isTextTruncated = processableText !== allChaptersText;
+            
+            const chapterInfo = hasMultipleChapters() ? 
+                `Humanizing text while preserving meaning across ${storyData.chapters.length} chapters${isTextTruncated ? ' (processing first portion)' : ''}...` :
+                'Humanizing text while preserving meaning...';
+            
+            showLoading(chapterInfo, 'book');
+            
+            try {
+                const analysis = await callOpenAI([
+                    {
+                        role: "system",
+                        content: `You are a writing humanization expert who analyzes text for AI-like patterns and provides specific, actionable suggestions for making it more human-like.
+
+Analyze the text and provide:
+1. **AI Detection Indicators:** Specific patterns that suggest AI authorship
+2. **Humanization Strategies:** Concrete techniques to make it more natural
+3. **Specific Examples:** Show before/after examples from the text
+4. **Priority Areas:** Which sections need the most attention
+
+Focus on:
+- Sentence variety and natural rhythm
+- Authentic human imperfections
+- Natural transitions and flow
+- Contextually appropriate language
+- Emotional authenticity and nuance`
+                    },
+                    {
+                        role: "user",
+                        content: `Analyze this ${isTextTruncated ? 'portion of the ' : ''}story and provide specific humanization suggestions. Identify AI-like patterns and give actionable advice for making it more natural and human-written${isTextTruncated ? ' (analyzing first portion due to length)' : ''}:\n\n${processableText}`
+                    }
+                ]);
+                
+                hideLoading();
+                showNotification('Humanization analysis complete!', 'success');
+                
+                // Show humanization suggestions instead of trying to replace text
+                displayToolResult('Text Humanization Suggestions', analysis);
+                
+                // Scroll to results
+                resultsDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                
+            } catch (error) {
+                console.error('Humanization error:', error);
+                hideLoading();
+                
+                // More detailed error message
+                let errorMessage = 'Failed to analyze text for humanization. ';
+                if (error.message && error.message.includes('token')) {
+                    errorMessage += 'Story may be too long for processing.';
+                } else if (error.message && error.message.includes('API')) {
+                    errorMessage += 'Please check your API key.';
+                } else {
+                    errorMessage += 'Please try again or use a shorter text selection.';
+                }
+                
+                showNotification(errorMessage, 'error');
+            }
+        }
+        
+        function displayHumanizationResult(humanizedText, originalText) {
+            // Create a modal to show the result
+            const resultModal = document.createElement('div');
+            resultModal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+            
+            const modalContent = document.createElement('div');
+            modalContent.className = 'bg-theme-secondary p-6 rounded-lg max-w-4xl max-h-[90vh] overflow-y-auto border-2 border-theme m-4';
+            modalContent.innerHTML = `
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-bold text-cyan-400">
+                        <i class="fas fa-magic mr-2"></i>Humanized Text Result
+                    </h3>
+                    <button onclick="this.closest('.fixed').remove()" class="text-theme-secondary hover:text-red-400 transition-colors">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                
+                <div class="space-y-4">
+                    <div class="bg-theme-primary p-4 rounded-lg border border-theme">
+                        <h4 class="text-lg font-semibold text-theme-primary mb-2">Humanized Version:</h4>
+                        <div class="text-theme-primary whitespace-pre-wrap max-h-96 overflow-y-auto p-3 bg-gray-800 rounded border">${humanizedText}</div>
+                    </div>
+                    
+                    <div class="flex gap-3 justify-center">
+                        <button id="saveHumanizedBtn" class="btn-primary px-6 py-2 rounded-lg font-semibold">
+                            <i class="fas fa-save mr-2"></i>Save Changes
+                        </button>
+                        <button id="keepOriginalBtn" class="btn-secondary px-6 py-2 rounded-lg font-semibold">
+                            <i class="fas fa-undo mr-2"></i>Keep Original
+                        </button>
+                    </div>
+                    
+                    <div class="text-center text-sm text-theme-secondary">
+                        <i class="fas fa-info-circle mr-1"></i>
+                        You can manually run Forensic AI Detection after saving to check if the AI percentage improved.
+                    </div>
+                </div>
+            `;
+            
+            resultModal.appendChild(modalContent);
+            document.body.appendChild(resultModal);
+            
+            // Add event listeners for the buttons
+            document.getElementById('saveHumanizedBtn').addEventListener('click', () => {
+                saveHumanizedText(humanizedText);
+                resultModal.remove();
+            });
+            
+            document.getElementById('keepOriginalBtn').addEventListener('click', () => {
+                showNotification('Original text kept - no changes made.', 'info');
+                resultModal.remove();
+            });
+        }
+        
+        function saveHumanizedText(humanizedText) {
+            // Parse the humanized text back into chapters if multiple chapters exist
+            if (hasMultipleChapters()) {
+                const chapterSections = humanizedText.split(/===\s*Chapter\s*\d+.*?===/g).filter(section => section.trim());
+                
+                if (chapterSections.length > 0) {
+                    // Update the chapters in storyData
+                    storyData.chapters.forEach((chapter, index) => {
+                        if (chapterSections[index]) {
+                            chapter.content = chapterSections[index].trim();
+                        }
+                    });
+                    
+                    // Update the current editor if viewing a chapter
+                    const editor = document.getElementById('storyEditor');
+                    if (editor && storyData.currentChapter < storyData.chapters.length) {
+                        editor.value = storyData.chapters[storyData.currentChapter].content || '';
+                    }
+                    
+                    updateWordCount();
+                    showNotification('Humanized text saved successfully across all chapters!', 'success');
+                } else {
+                    // Fallback: treat as single content
+                    const editor = document.getElementById('storyEditor');
+                    if (editor) {
+                        editor.value = humanizedText;
+                        updateWordCount();
+                    }
+                    showNotification('Humanized text saved successfully!', 'success');
+                }
+            } else {
+                // Single content update
+                const editor = document.getElementById('storyEditor');
+                if (editor) {
+                    editor.value = humanizedText;
+                    updateWordCount();
+                }
+                showNotification('Humanized text saved successfully!', 'success');
+            }
+            
+            // Save to history for undo functionality
+            saveToHistory();
+        }
+        
+        function displayForensicResults(analysis, aiScore) {
+            const resultsDiv = document.getElementById('forensicResults');
+            
+            // Determine score color and recommendation
+            let scoreColor, recommendation, icon;
+            if (aiScore >= 70) {
+                scoreColor = 'text-red-400';
+                recommendation = 'High AI likelihood - Humanization strongly recommended';
+                icon = '🤖';
+            } else if (aiScore >= 40) {
+                scoreColor = 'text-yellow-400';
+                recommendation = 'Moderate AI likelihood - Consider humanization';
+                icon = '⚠️';
+            } else {
+                scoreColor = 'text-green-400';
+                recommendation = 'Low AI likelihood - Appears human-written';
+                icon = '✅';
+            }
+            
+            resultsDiv.className = 'mt-4';
+            resultsDiv.innerHTML = `
+                <div class="bg-theme-primary p-6 rounded-lg border border-theme">
+                    <div class="flex items-center justify-between mb-4">
+                        <h4 class="text-lg font-semibold text-purple-400">
+                            <i class="fas fa-microscope mr-2"></i>Forensic Analysis Results
+                        </h4>
+                        <div class="text-right">
+                            <div class="text-3xl font-bold ${scoreColor}">${icon} ${aiScore}%</div>
+                            <div class="text-xs text-theme-secondary">AI Likelihood</div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4 p-3 rounded ${aiScore >= 70 ? 'bg-red-900 bg-opacity-20 border border-red-600' : 
+                                                    aiScore >= 40 ? 'bg-yellow-900 bg-opacity-20 border border-yellow-600' : 
+                                                    'bg-green-900 bg-opacity-20 border border-green-600'}">
+                        <div class="font-medium ${scoreColor} mb-1">Assessment:</div>
+                        <div class="text-sm">${recommendation}</div>
+                    </div>
+                    
+                    <div class="bg-theme-secondary p-4 rounded border border-theme">
+                        <pre class="text-sm text-theme-primary whitespace-pre-wrap">${analysis}</pre>
+                    </div>
+                </div>
+            `;
+            
+            // Scroll to results
+            resultsDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        function updateForensicButtons(aiScore) {
+            const humanizeBtn = document.getElementById('humanizeBtn');
+            const reanalyzeBtn = document.getElementById('reanalyzeBtn');
+            
+            // Enable humanization based on AI score
+            if (aiScore >= 30) {
+                humanizeBtn.disabled = false;
+                humanizeBtn.style.opacity = '1';
+            } else {
+                humanizeBtn.disabled = true;
+                humanizeBtn.style.opacity = '0.5';
+            }
+            
+            // Always enable reanalyze after first analysis
+            reanalyzeBtn.disabled = false;
+            reanalyzeBtn.style.opacity = '1';
+        }
+
+        function reanalyzeText() {
+            showNotification('🔄 Performing new analysis on current text...', 'info');
+            forensicAIDetection();
+        }
+
+        // ============ UTILITY FUNCTIONS FOR TOOLS ============
+        
+        async function callOpenAI(messages) {
+            const apiKey = getOpenAIApiKey();
+            if (!apiKey) {
+                throw new Error('OpenAI API key not configured');
+            }
+            
+            const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${apiKey}`
+                },
+                body: JSON.stringify({
+                    model: "gpt-4o-mini",
+                    messages: messages,
+                    temperature: 0.7,
+                    max_tokens: 2000
+                })
+            });
+            
+            if (!response.ok) {
+                throw new Error(`OpenAI API Error: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            return data.choices[0].message.content;
+        }
+        
+        function displayToolResult(title, content) {
+            // Create a modal or result display
+            const resultModal = document.createElement('div');
+            resultModal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+            
+            const modalContent = document.createElement('div');
+            modalContent.className = 'bg-theme-secondary p-6 rounded-lg max-w-4xl max-h-[80vh] overflow-y-auto border-2 border-theme';
+            
+            modalContent.innerHTML = `
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-bold text-cyan-400">${title}</h3>
+                    <button class="close-modal text-gray-400 hover:text-white">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                <div class="bg-theme-primary p-4 rounded border border-theme">
+                    <pre class="text-sm text-theme-primary whitespace-pre-wrap">${content}</pre>
+                </div>
+                <div class="flex justify-between mt-4">
+                    <div class="text-xs text-theme-secondary">
+                        💡 <strong>Tip:</strong> Copy suggestions for manual review or apply them automatically
+                    </div>
+                    <div class="flex space-x-3">
+                        <button class="close-modal btn-gray px-4 py-2 rounded">
+                            <i class="fas fa-times mr-1"></i>Close
+                        </button>
+                        <button class="copy-suggestions btn-secondary px-4 py-2 rounded">
+                            <i class="fas fa-copy mr-1"></i>Copy Suggestions
+                        </button>
+                        <button class="apply-changes btn-primary px-4 py-2 rounded">
+                            <i class="fas fa-magic mr-1"></i>Apply Changes
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            // Add event listeners
+            modalContent.querySelector('.close-modal').addEventListener('click', () => {
+                resultModal.remove();
+            });
+            
+            modalContent.querySelector('.copy-suggestions').addEventListener('click', () => {
+                copyAnalysis(title, content);
+            });
+            
+            modalContent.querySelector('.apply-changes').addEventListener('click', () => {
+                applyToolChanges(title, content, resultModal);
+            });
+            
+            resultModal.appendChild(modalContent);
+            document.body.appendChild(resultModal);
+        }
+        
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                showNotification('Result copied to clipboard!', 'success');
+            }).catch(() => {
+                showNotification('Failed to copy to clipboard', 'error');
+            });
+        }
+
+        function copyAnalysis(title, content) {
+            const textToCopy = `${title}\n${'='.repeat(title.length)}\n\n${content}`;
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                showNotification('📋 Analysis copied to clipboard!', 'success');
+            }).catch(() => {
+                showNotification('Failed to copy to clipboard', 'error');
+            });
+        }
+
+        function saveEditState() {
+            const editor = document.getElementById('storyEditor');
+            if (editor && editor.value !== (editHistory[historyIndex] || '')) {
+                // Remove future history if we're not at the end
+                if (historyIndex < editHistory.length - 1) {
+                    editHistory = editHistory.slice(0, historyIndex + 1);
+                }
+                
+                // Add new state
+                editHistory.push(editor.value);
+                historyIndex++;
+                
+                // Limit history size
+                if (editHistory.length > 50) {
+                    editHistory.shift();
+                    historyIndex--;
+                }
+                
+                updateUndoRedoButtons();
+            }
+        }
+
+        function updateUndoRedoButtons() {
+            const undoBtns = document.querySelectorAll('button[onclick="undoEdit()"]');
+            const redoBtns = document.querySelectorAll('button[onclick="redoEdit()"]');
+            
+            undoBtns.forEach(btn => {
+                btn.disabled = historyIndex <= 0;
+                btn.style.opacity = historyIndex <= 0 ? '0.5' : '1';
+            });
+            
+            redoBtns.forEach(btn => {
+                btn.disabled = historyIndex >= editHistory.length - 1;
+                btn.style.opacity = historyIndex >= editHistory.length - 1 ? '0.5' : '1';
+            });
+        }
+        
+        function updateHistoryButtons() {
+            const undoBtns = document.querySelectorAll('[onclick="undoEdit()"]');
+            const redoBtns = document.querySelectorAll('[onclick="redoEdit()"]');
+            
+            undoBtns.forEach(btn => {
+                btn.disabled = historyIndex <= 0;
+                btn.style.opacity = historyIndex <= 0 ? '0.5' : '1';
+            });
+            
+            redoBtns.forEach(btn => {
+                btn.disabled = historyIndex >= editHistory.length - 1;
+                btn.style.opacity = historyIndex >= editHistory.length - 1 ? '0.5' : '1';
+            });
+        }
+
+        async function applyToolChanges(title, suggestions, modal) {
+            const editor = document.getElementById('storyEditor');
+            const selectedText = getSelectedText(editor);
+            const currentText = selectedText || editor.value;
+            
+            if (!currentText.trim()) {
+                showNotification('No text to apply changes to', 'warning');
+                return;
+            }
+
+            const confirmed = confirm(`Apply AI suggestions from "${title}" to your text?\n\nThis will modify your content based on the analysis.`);
+            if (!confirmed) return;
+
+            // Save current state before making changes
+            saveEditState();
+
+            showLoading('Applying AI suggestions to your text...');
+            
+            try {
+                const improvedText = await callOpenAI([
+                    {
+                        role: "system",
+                        content: "You are an expert editor. Apply the provided suggestions to improve the given text. Return ONLY the revised text, maintaining the original style and voice while implementing the suggested improvements."
+                    },
+                    {
+                        role: "user",
+                        content: `Original text:\n${currentText}\n\nSuggestions to apply:\n${suggestions}\n\nPlease provide the improved version:`
+                    }
+                ]);
+
+                // Apply the changes
+                if (selectedText) {
+                    // Replace selected text
+                    const start = editor.selectionStart;
+                    const end = editor.selectionEnd;
+                    editor.value = editor.value.substring(0, start) + improvedText + editor.value.substring(end);
+                } else {
+                    // Replace entire content
+                    editor.value = improvedText;
+                }
+
+                // Update word count and save new state
+                updateWordCount();
+                saveEditState();
+                
+                hideLoading();
+                modal.remove();
+                
+                showNotification(`✨ ${title} suggestions applied successfully!`, 'success');
+
+            } catch (error) {
+                console.error('Error applying suggestions:', error);
+                hideLoading();
+                showNotification('Failed to apply suggestions. Please try again.', 'error');
+            }
+        }
+        
         // Utility Functions
         function getSelectedText(element) {
             const start = element.selectionStart;
@@ -2296,10 +3690,12 @@
             if (historyIndex > 0) {
                 historyIndex--;
                 const editor = document.getElementById('storyEditor');
-                editor.value = editHistory[historyIndex];
-                updateWordCount();
-                updateHistoryButtons();
-                showStatusMessage('Undo successful');
+                if (editor) {
+                    editor.value = editHistory[historyIndex] || '';
+                    updateWordCount();
+                }
+                updateUndoRedoButtons();
+                showNotification('⏪ Changes undone', 'info');
             }
         }
         
@@ -2307,19 +3703,13 @@
             if (historyIndex < editHistory.length - 1) {
                 historyIndex++;
                 const editor = document.getElementById('storyEditor');
-                editor.value = editHistory[historyIndex];
-                updateWordCount();
-                updateHistoryButtons();
-                showStatusMessage('Redo successful');
+                if (editor) {
+                    editor.value = editHistory[historyIndex] || '';
+                    updateWordCount();
+                }
+                updateUndoRedoButtons();
+                showNotification('⏩ Changes redone', 'info');
             }
-        }
-        
-        function updateHistoryButtons() {
-            const undoBtn = document.getElementById('undoBtn');
-            const redoBtn = document.getElementById('redoBtn');
-            
-            if (undoBtn) undoBtn.disabled = historyIndex <= 0;
-            if (redoBtn) redoBtn.disabled = historyIndex >= editHistory.length - 1;
         }
         
         function saveStory() {
@@ -2609,7 +3999,7 @@
                 await new Promise(resolve => setTimeout(resolve, 3000));
                 
                 // Save API key
-                localStorage.setItem('openai_api_key', apiKey);
+                localStorage.setItem('openaiApiKey', apiKey);
                 
                 hideLoading();
                 showStatusMessage('API connection successful! Key saved.');
@@ -2620,9 +4010,54 @@
             }
         }
         
+        // Helper Functions
+        function getAllChaptersText() {
+            // Get all chapters from storyData
+            if (storyData.chapters && storyData.chapters.length > 0) {
+                return storyData.chapters.map((chapter, index) => {
+                    const title = chapter.title || `Chapter ${index + 1}`;
+                    const content = chapter.content || '';
+                    return `=== ${title} ===\n\n${content}`;
+                }).join('\n\n');
+            }
+            
+            // Fallback to current editor content if no chapters exist
+            const editor = document.getElementById('storyEditor');
+            return editor ? editor.value : '';
+        }
+        
+        function getTextWithinLimits(text, maxTokens = 15000) {
+            // Rough estimation: 1 token ≈ 4 characters for English text
+            const maxChars = maxTokens * 4;
+            
+            if (text.length <= maxChars) {
+                return text;
+            }
+            
+            // If text is too long, truncate and add notice
+            const truncatedText = text.substring(0, maxChars - 200);
+            return truncatedText + "\n\n[Note: Text has been truncated to fit processing limits. Analysis covers the first portion of your story.]";
+        }
+        
+        function hasMultipleChapters() {
+            return storyData.chapters && storyData.chapters.length > 1;
+        }
+        
         // Utility Functions
-        function showLoading(text = 'Processing...') {
+        function showLoading(text = 'Processing...', animationType = 'book') {
             document.getElementById('loadingText').textContent = text;
+            
+            const bookLoader = document.querySelector('.book-loader');
+            const spinnerLoader = document.querySelector('.loading-spinner');
+            
+            if (animationType === 'book') {
+                bookLoader.style.display = 'block';
+                spinnerLoader.style.display = 'none';
+            } else {
+                bookLoader.style.display = 'none';
+                spinnerLoader.style.display = 'block';
+            }
+            
             document.getElementById('loadingOverlay').classList.remove('hidden');
         }
         
@@ -3051,7 +4486,11 @@
 
         // Helper function to get OpenAI API key
         function getOpenAIApiKey() {
-            return localStorage.getItem('openaiApiKey') || '';
+            const storedKey = localStorage.getItem('openaiApiKey');
+            if (!storedKey || storedKey.startsWith('••••')) {
+                return null;
+            }
+            return storedKey;
         }
 
         // OpenAI GPT-4 Writing Assistance Functions
@@ -3196,11 +4635,17 @@ JSON Structure:
                 chaptersContainer.appendChild(chapterDiv);
             });
             
-            // Enable the Generate All Chapters button
+            // Enable the Generate All Chapters and Combine All buttons
             const generateAllBtn = document.getElementById('generateAllBtn');
             if (generateAllBtn) {
                 generateAllBtn.disabled = false;
                 generateAllBtn.classList.remove('opacity-50');
+            }
+            
+            const combineAllBtn = document.getElementById('combineAllBtn');
+            if (combineAllBtn) {
+                combineAllBtn.disabled = false;
+                combineAllBtn.classList.remove('opacity-50');
             }
         }
 
@@ -3407,11 +4852,15 @@ Format as clean, readable text ready for narration.`;
         // Config Page Functions
         function saveSettings() {
             const apiKey = document.getElementById('openaiKey')?.value?.trim();
+            const elevenlabsKey = document.getElementById('elevenlabsKey')?.value?.trim();
             const model = document.getElementById('modelSelection')?.value;
             const autoSave = document.getElementById('autoSave')?.checked;
             
             if (apiKey) {
                 localStorage.setItem('openaiApiKey', apiKey);
+            }
+            if (elevenlabsKey) {
+                localStorage.setItem('elevenlabsApiKey', elevenlabsKey);
             }
             if (model) {
                 localStorage.setItem('selectedModel', model);
@@ -3420,15 +4869,21 @@ Format as clean, readable text ready for narration.`;
             
             showNotification('Settings saved successfully!', 'success');
             
-            // Mask the API key display for security
+            // Mask the API keys display for security
             const keyInput = document.getElementById('openaiKey');
             if (keyInput && apiKey) {
                 keyInput.value = '••••••••••••••••••••••••••••••••••••••••••••••••••••' + apiKey.slice(-4);
+            }
+            
+            const elevenlabsInput = document.getElementById('elevenlabsKey');
+            if (elevenlabsInput && elevenlabsKey) {
+                elevenlabsInput.value = '••••••••••••••••••••••••••••••••••••••••••••••••••••' + elevenlabsKey.slice(-4);
             }
         }
 
         function loadSettings() {
             const apiKey = localStorage.getItem('openaiApiKey');
+            const elevenlabsKey = localStorage.getItem('elevenlabsApiKey');
             const model = localStorage.getItem('selectedModel');
             const autoSave = localStorage.getItem('autoSave');
             
@@ -3436,6 +4891,13 @@ Format as clean, readable text ready for narration.`;
                 const keyInput = document.getElementById('openaiKey');
                 if (keyInput) {
                     keyInput.value = '••••••••••••••••••••••••••••••••••••••••••••••••••••' + apiKey.slice(-4);
+                }
+            }
+            
+            if (elevenlabsKey) {
+                const elevenlabsInput = document.getElementById('elevenlabsKey');
+                if (elevenlabsInput) {
+                    elevenlabsInput.value = '••••••••••••••••••••••••••••••••••••••••••••••••••••' + elevenlabsKey.slice(-4);
                 }
             }
             
@@ -3560,19 +5022,44 @@ Format as clean, readable text ready for narration.`;
 
         // Voice Preview Functions
         async function previewSelectedVoice() {
-            const apiKey = getOpenAIApiKey();
-            if (!apiKey) {
-                showNotification('Please configure your OpenAI API key first', 'error');
+            const voiceSelect = document.getElementById('voiceSelection');
+            const selectedOption = voiceSelect.options[voiceSelect.selectedIndex];
+            
+            if (!selectedOption) {
+                showNotification('Please select a voice first', 'error');
                 return;
             }
 
-            const voice = document.getElementById('voiceSelection')?.value || 'alloy';
-            const previewText = `Hello, this is a preview of the ${voice} voice. This voice will be used to narrate your audiobook with professional quality and clarity.`;
+            const provider = selectedOption.dataset.provider;
+            const voiceId = selectedOption.dataset.voice;
+            const voiceName = selectedOption.textContent;
+            
+            const previewText = `Hello, this is a preview of the ${voiceName} voice. This voice will be used to narrate your audiobook with professional quality and clarity.`;
 
-            showNotification(`Generating ${voice} voice preview...`, 'info');
+            showNotification(`Generating ${voiceName} voice preview...`, 'info');
 
             try {
-                const audioBlob = await generateChapterAudio(previewText, voice, 1.0, apiKey);
+                let audioBlob;
+                
+                if (provider === 'openai') {
+                    const apiKey = getOpenAIApiKey();
+                    if (!apiKey) {
+                        showNotification('Please configure your OpenAI API key first', 'error');
+                        return;
+                    }
+                    audioBlob = await generateChapterAudio(previewText, voiceId, 1.0, apiKey);
+                } else if (provider === 'elevenlabs') {
+                    const apiKey = getElevenLabsApiKey();
+                    if (!apiKey) {
+                        showNotification('Please configure your ElevenLabs API key first', 'error');
+                        return;
+                    }
+                    audioBlob = await generateElevenLabsAudio(previewText, voiceId, apiKey);
+                } else {
+                    showNotification('Unknown voice provider', 'error');
+                    return;
+                }
+
                 const audioUrl = URL.createObjectURL(audioBlob);
                 
                 const previewPlayer = document.getElementById('voicePreviewPlayer');
@@ -3586,7 +5073,7 @@ Format as clean, readable text ready for narration.`;
                 audioElement.load();
                 audioElement.play();
                 
-                showNotification(`${voice} voice preview ready!`, 'success');
+                showNotification(`${voiceName} voice preview ready!`, 'success');
             } catch (error) {
                 showNotification(`Voice preview failed: ${error.message}`, 'error');
             }
@@ -3663,9 +5150,1295 @@ Format as clean, readable text ready for narration.`;
             return storedKey;
         }
 
+        // ElevenLabs API key function
+        function getElevenLabsApiKey() {
+            const storedKey = localStorage.getItem('elevenlabsApiKey');
+            if (storedKey && storedKey.startsWith('••••')) {
+                // If the key is masked, we need the user to re-enter it
+                return null;
+            }
+            return storedKey;
+        }
+
+        // ============ ELEVENLABS API INTEGRATION ============
+
+        async function fetchElevenLabsVoices() {
+            const apiKey = getElevenLabsApiKey();
+            if (!apiKey) {
+                return [];
+            }
+
+            try {
+                const response = await fetch('https://api.elevenlabs.io/v1/voices', {
+                    method: 'GET',
+                    headers: {
+                        'xi-api-key': apiKey,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    console.error('ElevenLabs API error:', response.status);
+                    return [];
+                }
+
+                const data = await response.json();
+                return data.voices || [];
+            } catch (error) {
+                console.error('Failed to fetch ElevenLabs voices:', error);
+                return [];
+            }
+        }
+
+        async function generateElevenLabsAudio(text, voiceId, apiKey) {
+            const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
+                method: 'POST',
+                headers: {
+                    'xi-api-key': apiKey,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    text: text,
+                    model_id: "eleven_monolingual_v1",
+                    voice_settings: {
+                        stability: 0.5,
+                        similarity_boost: 0.75
+                    }
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`ElevenLabs API Error: ${response.status}`);
+            }
+
+            return await response.blob();
+        }
+
+        async function populateVoiceOptions() {
+            const voiceSelect = document.getElementById('voiceSelection');
+            if (!voiceSelect) return;
+
+            // Clear existing options
+            voiceSelect.innerHTML = '';
+
+            // Add OpenAI voices
+            const openaiVoices = [
+                { id: 'openai_alloy', name: 'Alloy - Balanced, Clear', provider: 'openai', voice: 'alloy' },
+                { id: 'openai_echo', name: 'Echo - Male, Authoritative', provider: 'openai', voice: 'echo' },
+                { id: 'openai_fable', name: 'Fable - Warm, Storytelling', provider: 'openai', voice: 'fable' },
+                { id: 'openai_onyx', name: 'Onyx - Deep, Professional', provider: 'openai', voice: 'onyx' },
+                { id: 'openai_nova', name: 'Nova - Female, Engaging', provider: 'openai', voice: 'nova' },
+                { id: 'openai_shimmer', name: 'Shimmer - Soft, Gentle', provider: 'openai', voice: 'shimmer' }
+            ];
+
+            // Add OpenAI section header
+            const openaiOptgroup = document.createElement('optgroup');
+            openaiOptgroup.label = '🤖 OpenAI Voices';
+            voiceSelect.appendChild(openaiOptgroup);
+
+            openaiVoices.forEach(voice => {
+                const option = document.createElement('option');
+                option.value = voice.id;
+                option.textContent = voice.name;
+                option.dataset.provider = voice.provider;
+                option.dataset.voice = voice.voice;
+                openaiOptgroup.appendChild(option);
+            });
+
+            // Add ElevenLabs voices if API key is available
+            const elevenlabsVoices = await fetchElevenLabsVoices();
+            if (elevenlabsVoices.length > 0) {
+                const elevenlabsOptgroup = document.createElement('optgroup');
+                elevenlabsOptgroup.label = '🎭 ElevenLabs Voices';
+                voiceSelect.appendChild(elevenlabsOptgroup);
+
+                elevenlabsVoices.forEach(voice => {
+                    const option = document.createElement('option');
+                    option.value = `elevenlabs_${voice.voice_id}`;
+                    option.textContent = `${voice.name} - ${voice.labels?.accent || 'Professional'}`;
+                    option.dataset.provider = 'elevenlabs';
+                    option.dataset.voice = voice.voice_id;
+                    elevenlabsOptgroup.appendChild(option);
+                });
+            }
+
+            // Select first OpenAI voice by default
+            if (voiceSelect.options.length > 0) {
+                voiceSelect.selectedIndex = 0;
+            }
+        }
+
+        // ============ DIALOGUE-SPECIFIC VOICE ASSIGNMENT ============
+
+        let dialogueData = {
+            characters: [],
+            dialogueSections: [],
+            voiceAssignments: {}
+        };
+
+        // Content status functions
+        function refreshContentStatus() {
+            updateContentStatus();
+        }
+        
+        function updateContentStatus() {
+            const statusIcon = document.getElementById('contentStatusIcon');
+            const statusText = document.getElementById('contentStatusText');
+            const previewToggle = document.getElementById('contentPreviewToggle');
+            
+            // Get content from all chapters using the same function as dialogue scanning
+            const content = getAllChaptersText();
+            const chapterCount = storyData.chapters ? storyData.chapters.length : 0;
+            const contentSource = chapterCount > 1 ? `${chapterCount} Chapters` : 
+                                 chapterCount === 1 ? '1 Chapter' : 
+                                 'Story Editor';
+            
+            if (!content.trim()) {
+                statusIcon.className = 'w-3 h-3 rounded-full bg-red-400';
+                statusText.textContent = 'No story content found. Please create or combine chapters first.';
+                previewToggle.classList.add('hidden');
+                return;
+            }
+            
+            const wordCount = content.trim().split(/\s+/).length;
+            const charCount = content.length;
+            const hasDialogue = content.includes('"') || content.match(/^[A-Z][a-z]*:/m);
+            
+            statusIcon.className = 'w-3 h-3 rounded-full bg-green-400';
+            statusText.innerHTML = `
+                <div><strong>Source:</strong> ${contentSource}</div>
+                <div><strong>Length:</strong> ${wordCount} words, ${charCount} characters</div>
+                <div><strong>Dialogue:</strong> ${hasDialogue ? '✅ Detected' : '❌ None found'}</div>
+            `;
+            previewToggle.classList.remove('hidden');
+            
+            // Store the content for dialogue scanning (use getAllChaptersText for consistency)
+            storyData.currentContent = content;
+            
+            // Also update combined content if we have chapters
+            if (storyData.chapters && storyData.chapters.length > 0) {
+                storyData.combinedContent = content;
+            }
+        }
+        
+        function toggleContentPreview() {
+            const preview = document.getElementById('contentPreview');
+            const previewText = document.getElementById('contentPreviewText');
+            
+            if (preview.classList.contains('hidden')) {
+                const content = storyData.currentContent || '';
+                if (content) {
+                    // Show first 1000 characters
+                    const truncated = content.length > 1000 ? content.substring(0, 1000) + '\n\n... [Content truncated. Full content will be used for dialogue scanning.]' : content;
+                    previewText.textContent = truncated;
+                    preview.classList.remove('hidden');
+                }
+            } else {
+                preview.classList.add('hidden');
+            }
+        }
+
+        async function scanForDialogue() {
+            // Get content from all chapters
+            const content = getAllChaptersText();
+            
+            if (!content.trim()) {
+                showNotification('No story content found. Please generate chapters or write content first.', 'warning');
+                return;
+            }
+
+            const chapterInfo = hasMultipleChapters() ? 
+                `Scanning ${storyData.chapters.length} chapters for dialogue and characters...` :
+                'Scanning story for dialogue and characters...';
+            
+            showLoading(chapterInfo);
+            
+            // Add detailed debug information
+            console.log('=== DIALOGUE SCANNING DEBUG ===');
+            console.log('Content source: getAllChaptersText()');
+            console.log('Story chapters count:', storyData.chapters ? storyData.chapters.length : 0);
+            console.log('Content length:', content.length);
+            console.log('First 500 characters:', content.substring(0, 500));
+            console.log('Last 200 characters:', content.substring(Math.max(0, content.length - 200)));
+            console.log('Has quotes ("):', content.includes('"'));
+            console.log('Has smart quotes (" "):', content.includes('"') || content.includes('"'));
+            console.log('Has colons:', content.includes(':'));
+            console.log('Has "said":', content.toLowerCase().includes('said'));
+            
+            // Test with a simple dialogue pattern
+            console.log('Testing dialogue patterns...');
+            const testLine = 'John said, "Hello there!"';
+            const testPattern = /^([A-Z][a-zA-Z\s]+?)[\s,]*(?:said|asked|replied|whispered|shouted|muttered|exclaimed)[\s,]*["""]([^"""]+?)["""](.*)$/i;
+            const testMatch = testLine.match(testPattern);
+            console.log('Test line:', testLine);
+            console.log('Test match:', testMatch);
+
+            try {
+                let characters = new Set();
+                let dialogueSections = [];
+                
+                // Split into lines for processing
+                const lines = content.split('\n').map(line => line.trim()).filter(line => line);
+                console.log('Total lines to process:', lines.length);
+                
+                // Also try splitting by sentences for dialogue that might span multiple lines
+                const sentences = content.split(/[.!?]\s+/).map(s => s.trim()).filter(s => s.length > 0);
+                console.log('Total sentences to process:', sentences.length);
+                
+                // Enhanced dialogue detection patterns
+                const patterns = {
+                    // Character: "Dialogue"
+                    characterColon: /^([A-Z][a-zA-Z\s]+?):\s*["""]([^"""]+?)["""](.*)$/,
+                    // [Character]: "Dialogue"  
+                    characterBracket: /^\[([^\]]+)\]:\s*["""]([^"""]+?)["""](.*)$/,
+                    // CAPS: "Dialogue"
+                    characterCaps: /^([A-Z][A-Z\s]{1,20}):\s*["""]([^"""]+?)["""](.*)$/,
+                    // "Dialogue" said Character
+                    dialogueSaidCharacter: /^["""]([^"""]+?)["""][\s,]*(?:said|asked|replied|whispered|shouted|muttered|exclaimed)\s+([A-Z][a-zA-Z\s]+?)[\s,]*(.*)$/i,
+                    // Character said, "Dialogue"
+                    characterSaidDialogue: /^([A-Z][a-zA-Z\s]+?)[\s,]*(?:said|asked|replied|whispered|shouted|muttered|exclaimed)[\s,]*["""]([^"""]+?)["""](.*)$/i,
+                    // "Dialogue," Character said
+                    dialogueCharacterSaid: /^["""]([^"""]+?)["""][\s,]*([A-Z][a-zA-Z\s]+?)[\s,]*(?:said|asked|replied|whispered|shouted|muttered|exclaimed)(.*)$/i,
+                    // Narrative with "dialogue"
+                    narrativeDialogue: /^(.*?)([A-Z][a-zA-Z\s]+?)(?:\s+(?:said|asked|replied|whispered|shouted|muttered|exclaimed))?[\s,]*["""]([^"""]+?)["""](.*)$/i,
+                    // "Dialogue" (standalone)
+                    standaloneQuote: /^["""]([^"""]+?)["""](.*)$/,
+                    // Text with "dialogue" in middle (last fallback)
+                    embeddedQuote: /^(.*?)["""]([^"""]+?)["""](.*)$/
+                };
+                
+                // Process both lines and sentences
+                const textSegments = [...lines, ...sentences];
+                
+                let segmentNumber = 0;
+                for (const segment of textSegments) {
+                    segmentNumber++;
+                    
+                    // Try each pattern
+                    for (const [patternName, pattern] of Object.entries(patterns)) {
+                        const match = segment.match(pattern);
+                        if (match) {
+                            console.log(`Segment ${segmentNumber} matched ${patternName}:`, match);
+                            
+                            let character, dialogueText, beforeText, afterText;
+                            
+                            switch(patternName) {
+                                case 'characterColon':
+                                case 'characterBracket':
+                                case 'characterCaps':
+                                    character = match[1].trim();
+                                    dialogueText = match[2].trim();
+                                    afterText = match[3] ? match[3].trim() : '';
+                                    break;
+                                    
+                                case 'dialogueSaidCharacter':
+                                case 'dialogueCharacterSaid':
+                                    character = match[2].trim();
+                                    dialogueText = match[1].trim();
+                                    afterText = match[3] ? match[3].trim() : '';
+                                    break;
+                                    
+                                case 'characterSaidDialogue':
+                                    character = match[1].trim();
+                                    dialogueText = match[2].trim();
+                                    afterText = match[3] ? match[3].trim() : '';
+                                    break;
+                                    
+                                case 'narrativeDialogue':
+                                    character = match[2].trim();
+                                    dialogueText = match[3].trim();
+                                    beforeText = match[1] ? match[1].trim() : '';
+                                    afterText = match[4] ? match[4].trim() : '';
+                                    break;
+                                    
+                                case 'standaloneQuote':
+                                    character = 'Unknown Speaker';
+                                    dialogueText = match[1].trim();
+                                    afterText = match[2] ? match[2].trim() : '';
+                                    break;
+                                    
+                                case 'embeddedQuote':
+                                    character = 'Unknown Speaker';
+                                    dialogueText = match[2].trim();
+                                    beforeText = match[1] ? match[1].trim() : '';
+                                    afterText = match[3] ? match[3].trim() : '';
+                                    break;
+                            }
+                            
+                            if (dialogueText && dialogueText.length > 0) {
+                                characters.add(character);
+                                
+                                dialogueSections.push({
+                                    character: character,
+                                    text: dialogueText,
+                                    line: segmentNumber,
+                                    type: character === 'Unknown Speaker' ? 'untagged' : 'character_tagged',
+                                    beforeText: beforeText || '',
+                                    afterText: afterText || '',
+                                    fullLine: segment,
+                                    startIndex: content.indexOf(segment),
+                                    endIndex: content.indexOf(segment) + segment.length
+                                });
+                                
+                                console.log(`Added dialogue: ${character} -> "${dialogueText}"`);
+                            }
+                            break; // Found a match, stop trying other patterns for this line
+                        }
+                    }
+                }
+                
+                console.log('Characters found:', Array.from(characters));
+                console.log('Dialogue sections found:', dialogueSections.length);
+                
+                // Try AI detection for characters (even if some patterns matched)
+                console.log('Trying AI character detection...');
+                try {
+                    // Use safe text limits for AI detection
+                    const processableText = getTextWithinLimits(content, 8000); // Smaller limit for character detection
+                    const aiCharacters = await detectCharacters(processableText);
+                    console.log('AI detected characters:', aiCharacters);
+                    if (aiCharacters && Array.isArray(aiCharacters)) {
+                        aiCharacters.forEach(char => {
+                            if (char && char.trim()) {
+                                characters.add(char.trim());
+                            }
+                        });
+                    }
+                } catch (aiError) {
+                    console.log('AI character detection failed:', aiError);
+                }
+                
+                // If we have characters but no dialogue sections, try to create some
+                if (characters.size > 0 && dialogueSections.length === 0) {
+                    console.log('Found characters but no dialogue sections, trying to extract quotes...');
+                    
+                    // Find all quoted text in the content
+                    const quoteMatches = content.match(/["""]([^"""]+?)["""]|["']([^"']+?)["']/g);
+                    if (quoteMatches) {
+                        console.log('Found quote matches:', quoteMatches.length);
+                        
+                        // Enhanced quote attribution with context analysis
+                        const characterArray = Array.from(characters);
+                        
+                        // Instead of simple forEach, analyze each quote with surrounding context
+                        for (let i = 0; i < quoteMatches.length; i++) {
+                            const quote = quoteMatches[i];
+                            const cleanQuote = quote.replace(/["""'"]/g, '');
+                            
+                            if (cleanQuote.length > 5) { // Only meaningful dialogue
+                                // Find the position of this quote in the content
+                                const quoteIndex = content.indexOf(quote);
+                                const contextStart = Math.max(0, quoteIndex - 200);
+                                const contextEnd = Math.min(content.length, quoteIndex + quote.length + 200);
+                                const contextText = content.substring(contextStart, contextEnd);
+                                
+                                // Try to find character name in surrounding context
+                                let assignedCharacter = 'Unknown Speaker';
+                                let bestMatch = null;
+                                let bestScore = 0;
+                                
+                                for (const character of characterArray) {
+                                    const charLower = character.toLowerCase();
+                                    const contextLower = contextText.toLowerCase();
+                                    
+                                    // Calculate proximity score
+                                    let score = 0;
+                                    
+                                    // Check if character name appears in context
+                                    if (contextLower.includes(charLower)) {
+                                        const charIndex = contextLower.indexOf(charLower);
+                                        const quoteRelativeIndex = quoteIndex - contextStart;
+                                        const distance = Math.abs(charIndex - quoteRelativeIndex);
+                                        
+                                        // Closer proximity gets higher score
+                                        score = Math.max(0, 200 - distance);
+                                        
+                                        // Bonus for dialogue patterns
+                                        if (contextLower.includes(charLower + ' said') || 
+                                            contextLower.includes(charLower + ' asked') ||
+                                            contextLower.includes('said ' + charLower) ||
+                                            contextLower.includes('asked ' + charLower)) {
+                                            score += 100;
+                                        }
+                                        
+                                        // Bonus for being immediately before or after quote
+                                        if (distance < 50) {
+                                            score += 50;
+                                        }
+                                    }
+                                    
+                                    if (score > bestScore) {
+                                        bestScore = score;
+                                        bestMatch = character;
+                                    }
+                                }
+                                
+                                if (bestMatch && bestScore > 50) {
+                                    assignedCharacter = bestMatch;
+                                }
+                                
+                                console.log(`Quote "${cleanQuote}" assigned to ${assignedCharacter} (score: ${bestScore}, context: "${contextText.substring(0, 100)}...")`);
+                                
+                                dialogueSections.push({
+                                    character: assignedCharacter,
+                                    text: cleanQuote,
+                                    line: i + 1,
+                                    type: 'context_analyzed_quote',
+                                    beforeText: contextText.substring(0, quoteIndex - contextStart),
+                                    afterText: contextText.substring(quoteIndex - contextStart + quote.length),
+                                    fullLine: quote,
+                                    startIndex: quoteIndex,
+                                    endIndex: quoteIndex + quote.length,
+                                    confidence: bestScore > 100 ? 'high' : bestScore > 50 ? 'medium' : 'low',
+                                    attributionScore: bestScore
+                                });
+                            }
+                        }
+                        
+                        console.log(`Created ${dialogueSections.length} dialogue sections from quotes`);
+                    }
+                }
+                
+                // Store results
+                dialogueData.characters = Array.from(characters);
+                dialogueData.dialogueSections = dialogueSections;
+                
+                console.log('Final results:');
+                console.log('- Characters:', dialogueData.characters);
+                console.log('- Dialogue sections:', dialogueData.dialogueSections.length);
+                
+                hideLoading();
+                
+                if (dialogueData.characters.length === 0 && dialogueSections.length === 0) {
+                    // Enhanced content analysis
+                    const hasQuotes = content.includes('"') || content.includes('"') || content.includes('"') || content.includes("'");
+                    const hasColons = content.includes(':');
+                    const hasSaid = /\b(said|asked|replied|whispered|shouted)\b/i.test(content);
+                    const chapterCount = hasMultipleChapters() ? storyData.chapters.length : 1;
+                    
+                    showNotification(
+                        `No dialogue found in ${chapterCount} chapter(s). Analysis:\n` +
+                        `- Lines processed: ${lines.length}\n` +
+                        `- Contains quotes: ${hasQuotes}\n` +
+                        `- Contains colons: ${hasColons}\n` +
+                        `- Contains dialogue verbs: ${hasSaid}\n` +
+                        `- Content length: ${content.length} characters\n\n` +
+                        `Check browser console for detailed debugging info.`, 
+                        'warning'
+                    );
+                    
+                    // Show debug dialog
+                    showDialogueDebugModal(content, lines);
+                    return;
+                }
+                
+                displayDialogueResults();
+                showNotification(`✅ Scan complete! Found ${dialogueData.characters.length} characters and ${dialogueSections.length} dialogue sections`, 'success');
+
+            } catch (error) {
+                console.error('Dialogue scanning error:', error);
+                hideLoading();
+                showNotification(`Failed to scan dialogue: ${error.message}`, 'error');
+            }
+        }
+        
+        function showDialogueDebugModal(content, lines) {
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
+            modal.innerHTML = `
+                <div class="bg-theme-secondary rounded-xl max-w-4xl max-h-[80vh] w-full flex flex-col border-2 border-theme">
+                    <div class="flex items-center justify-between p-6 border-b border-theme">
+                        <h3 class="text-xl font-bold text-yellow-400">
+                            <i class="fas fa-bug mr-2"></i>Dialogue Scanning Debug
+                        </h3>
+                        <button onclick="this.closest('.fixed').remove()" class="text-theme-secondary hover:text-theme-primary">
+                            <i class="fas fa-times text-xl"></i>
+                        </button>
+                    </div>
+                    <div class="flex-1 p-6 overflow-y-auto">
+                        <div class="space-y-4">
+                            <div class="bg-theme-primary p-4 rounded-lg border border-theme">
+                                <h4 class="font-medium text-cyan-400 mb-2">Content Statistics:</h4>
+                                <div class="text-sm text-theme-secondary space-y-1">
+                                    <div>Total length: ${content.length} characters</div>
+                                    <div>Total lines: ${lines.length}</div>
+                                    <div>Contains quotes (""): ${content.includes('"') ? 'Yes' : 'No'}</div>
+                                    <div>Contains smart quotes (""): ${content.includes('"') || content.includes('"') ? 'Yes' : 'No'}</div>
+                                    <div>Contains colons (:): ${content.includes(':') ? 'Yes' : 'No'}</div>
+                                </div>
+                            </div>
+                            <div class="bg-theme-primary p-4 rounded-lg border border-theme">
+                                <h4 class="font-medium text-cyan-400 mb-2">Content Preview (First 10 lines):</h4>
+                                <pre class="text-xs text-theme-secondary whitespace-pre-wrap bg-theme-secondary p-2 rounded">${lines.slice(0, 10).join('\n')}</pre>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="p-6 border-t border-theme">
+                        <div class="text-sm text-theme-secondary mb-3">
+                            <strong>Expected dialogue formats:</strong><br>
+                            • Character: "Hello there!"<br>
+                            • [John]: "How are you?"<br>
+                            • MARY: "I'm fine, thanks!"<br>
+                            • "Standalone dialogue"
+                        </div>
+                        <button onclick="this.closest('.fixed').remove()" class="btn-primary px-6 py-2 rounded-lg w-full">
+                            Close Debug Info
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+        }
+
+        async function detectCharacters(content) {
+            try {
+                const analysis = await callOpenAI([
+                    {
+                        role: "system",
+                        content: "You are a literary analysis expert. Identify ALL character names mentioned in the given text, including main characters, secondary characters, and anyone who speaks or is referenced by name. Return only the names as a clean JSON array, like [\"John\", \"Mary\", \"Dr. Smith\", \"Narrator\"]. Include 'Narrator' if there's narrative text. Do not include any markdown formatting - return only the JSON array."
+                    },
+                    {
+                        role: "user",
+                        content: `Analyze this text and identify all character names:\n\n${content.substring(0, 2000)}`
+                    }
+                ]);
+
+                // Clean the response - remove markdown code blocks and extra formatting
+                let cleanedResponse = analysis.trim();
+                
+                // Remove markdown code blocks (```json ... ```)
+                cleanedResponse = cleanedResponse.replace(/```json\s*/g, '');
+                cleanedResponse = cleanedResponse.replace(/```\s*/g, '');
+                
+                // Remove any leading/trailing non-JSON text
+                const jsonMatch = cleanedResponse.match(/\[.*\]/s);
+                if (jsonMatch) {
+                    cleanedResponse = jsonMatch[0];
+                }
+                
+                console.log('Raw AI response:', analysis);
+                console.log('Cleaned for JSON parsing:', cleanedResponse);
+                
+                const characters = JSON.parse(cleanedResponse);
+                return Array.isArray(characters) ? characters : [];
+            } catch (error) {
+                console.error('Character detection error:', error);
+                console.error('Failed to parse AI response as JSON. Raw response was:', analysis);
+                
+                // Try to extract character names manually as fallback
+                try {
+                    const matches = analysis.match(/"([^"]+)"/g);
+                    if (matches) {
+                        const extractedChars = matches.map(match => match.replace(/"/g, ''));
+                        console.log('Extracted characters manually:', extractedChars);
+                        return extractedChars.length > 0 ? extractedChars : ['Character 1', 'Character 2'];
+                    }
+                } catch (extractError) {
+                    console.error('Manual extraction also failed:', extractError);
+                }
+                
+                return ['Character 1', 'Character 2']; // Final fallback
+            }
+        }
+
+        function displayDialogueResults() {
+            const dialogueAssignments = document.getElementById('dialogueAssignments');
+            const dialoguePreview = document.getElementById('dialoguePreview');
+            const characterVoiceList = document.getElementById('characterVoiceList');
+            const dialogueList = document.getElementById('dialogueList');
+
+            // Show the sections
+            dialogueAssignments.classList.remove('hidden');
+            dialoguePreview.classList.remove('hidden');
+
+            // Clear previous results
+            characterVoiceList.innerHTML = '';
+            dialogueList.innerHTML = '';
+
+            // Populate character voice assignments
+            dialogueData.characters.forEach((character, index) => {
+                const characterDiv = document.createElement('div');
+                characterDiv.className = 'flex items-center justify-between p-3 bg-theme-secondary rounded border border-theme';
+                // Get character's dialogue samples
+                const characterDialogue = dialogueData.dialogueSections.filter(d => d.character === character);
+                const sampleText = characterDialogue.length > 0 ? characterDialogue[0].text.substring(0, 80) + (characterDialogue[0].text.length > 80 ? '...' : '') : 'No dialogue found';
+                
+                characterDiv.innerHTML = `
+                    <div class="flex-1">
+                        <div class="flex items-center space-x-3 mb-2">
+                            <div class="w-8 h-8 bg-cyan-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                                ${character.charAt(0).toUpperCase()}
+                            </div>
+                            <div class="flex-1">
+                                <span class="font-medium text-cyan-400">${character}</span>
+                                <div class="text-xs text-theme-secondary">${characterDialogue.length} dialogue section(s)</div>
+                            </div>
+                        </div>
+                        <div class="text-xs text-theme-secondary mb-2 italic">
+                            Sample: "${sampleText}"
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <select id="voice_${index}" class="flex-1 px-3 py-2 rounded bg-theme-primary border border-theme text-sm" onchange="updateVoiceAssignment('${character}', this.value)">
+                                <option value="">Select voice...</option>
+                            </select>
+                            <button onclick="previewCharacterVoice('${character}', 'voice_${index}')" class="px-3 py-2 bg-cyan-600 hover:bg-cyan-500 rounded text-white text-xs">
+                                <i class="fas fa-play"></i> Preview
+                            </button>
+                        </div>
+                    </div>
+                `;
+                characterVoiceList.appendChild(characterDiv);
+
+                // Populate voice options for this character
+                setTimeout(() => {
+                    populateCharacterVoiceOptions(`voice_${index}`);
+                }, 100);
+            });
+
+            // Add narrator voice assignment
+            const narratorDiv = document.createElement('div');
+            narratorDiv.className = 'flex items-center justify-between p-3 bg-theme-secondary rounded border border-theme';
+            // Get narrator text sample
+            const content = storyData.currentContent || document.getElementById('storyEditor')?.value || '';
+            const narratorSample = content.replace(/"[^"]*"/g, '').trim().substring(0, 100) + (content.length > 100 ? '...' : '');
+            
+            narratorDiv.innerHTML = `
+                <div class="flex-1">
+                    <div class="flex items-center space-x-3 mb-2">
+                        <div class="w-8 h-8 bg-orange-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                            N
+                        </div>
+                        <div class="flex-1">
+                            <span class="font-medium text-orange-400">Narrator</span>
+                            <div class="text-xs text-theme-secondary">For all narrative text</div>
+                        </div>
+                    </div>
+                    <div class="text-xs text-theme-secondary mb-2 italic">
+                        Sample: "${narratorSample}"
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <select id="voice_narrator" class="flex-1 px-3 py-2 rounded bg-theme-primary border border-theme text-sm" onchange="updateVoiceAssignment('Narrator', this.value)">
+                            <option value="">Select voice...</option>
+                        </select>
+                        <button onclick="previewCharacterVoice('Narrator', 'voice_narrator')" class="px-3 py-2 bg-orange-600 hover:bg-orange-500 rounded text-white text-xs">
+                            <i class="fas fa-play"></i> Preview
+                        </button>
+                    </div>
+                </div>
+            `;
+            characterVoiceList.appendChild(narratorDiv);
+            
+            setTimeout(() => {
+                populateCharacterVoiceOptions('voice_narrator');
+            }, 100);
+
+            // Populate dialogue preview
+            dialogueData.dialogueSections.slice(0, 10).forEach((dialogue, index) => {
+                const dialogueDiv = document.createElement('div');
+                dialogueDiv.className = 'p-2 bg-theme-secondary rounded text-sm border-l-4 border-cyan-500';
+                dialogueDiv.innerHTML = `
+                    <div class="font-medium text-cyan-400">${dialogue.character} (Line ${dialogue.line}):</div>
+                    <div class="text-theme-primary mt-1">"${dialogue.text}"</div>
+                    ${dialogue.type === 'untagged' ? '<div class="text-xs text-yellow-400 mt-1">⚠ Untagged dialogue - may need manual assignment</div>' : ''}
+                `;
+                dialogueList.appendChild(dialogueDiv);
+            });
+
+            if (dialogueData.dialogueSections.length > 10) {
+                const moreDiv = document.createElement('div');
+                moreDiv.className = 'text-center text-sm text-theme-secondary';
+                moreDiv.textContent = `... and ${dialogueData.dialogueSections.length - 10} more dialogue sections`;
+                dialogueList.appendChild(moreDiv);
+            }
+
+            // Enable multi-voice button
+            document.getElementById('multiVoiceBtn').disabled = false;
+        }
+
+        function populateCharacterVoiceOptions(selectId) {
+            const select = document.getElementById(selectId);
+            const mainVoiceSelect = document.getElementById('voiceSelection');
+            
+            if (!select || !mainVoiceSelect) return;
+
+            // Copy options from main voice selector
+            select.innerHTML = '<option value="">Select voice...</option>';
+            
+            Array.from(mainVoiceSelect.children).forEach(child => {
+                if (child.tagName === 'OPTGROUP') {
+                    const optgroup = document.createElement('optgroup');
+                    optgroup.label = child.label;
+                    Array.from(child.children).forEach(option => {
+                        const newOption = document.createElement('option');
+                        newOption.value = option.value;
+                        newOption.textContent = option.textContent;
+                        newOption.dataset.provider = option.dataset.provider;
+                        newOption.dataset.voice = option.dataset.voice;
+                        optgroup.appendChild(newOption);
+                    });
+                    select.appendChild(optgroup);
+                }
+            });
+        }
+
+        function updateVoiceAssignment(character, voiceValue) {
+            if (voiceValue) {
+                dialogueData.voiceAssignments[character] = voiceValue;
+                console.log(`Assigned ${voiceValue} to ${character}`);
+            } else {
+                delete dialogueData.voiceAssignments[character];
+            }
+        }
+
+        async function generateMultiVoiceNarration() {
+            const assignments = dialogueData.voiceAssignments;
+            const characters = dialogueData.characters;
+            
+            if (Object.keys(assignments).length === 0) {
+                showNotification('Please assign voices to characters first.', 'warning');
+                return;
+            }
+
+            if (!assignments['Narrator']) {
+                showNotification('Please assign a narrator voice.', 'warning');
+                return;
+            }
+
+            showLoading('Generating multi-voice narration...');
+            
+            try {
+                const content = storyData.currentContent || document.getElementById('storyEditor')?.value || '';
+                if (!content.trim()) {
+                    throw new Error('No story content to narrate');
+                }
+
+                // Store the plan for actual narration generation
+                storyData.voiceAssignments = assignments;
+                storyData.dialogueSections = dialogueData.dialogueSections;
+                
+                const audioSegments = [];
+                
+                // Simplified approach: Create segments by splitting on dialogue patterns
+                const lines = content.split('\n').filter(line => line.trim());
+                
+                for (let i = 0; i < lines.length; i++) {
+                    const line = lines[i].trim();
+                    
+                    // Check if this line contains dialogue
+                    const characterMatch = line.match(/^(?:\[([^\]]+)\]|([A-Z][A-Z\s]*[A-Z])|([A-Z][a-z]+)):\s*"([^"]+)"/);
+                    
+                    if (characterMatch) {
+                        // This is character dialogue
+                        const character = characterMatch[1] || characterMatch[2] || characterMatch[3];
+                        const dialogueText = characterMatch[4];
+                        
+                        audioSegments.push({
+                            type: 'dialogue',
+                            text: dialogueText,
+                            voice: assignments[character] || assignments['Narrator'],
+                            character: character
+                        });
+                        
+                        // Add any remaining narrative part of the line
+                        const narrativePart = line.replace(/^(?:\[([^\]]+)\]|([A-Z][A-Z\s]*[A-Z])|([A-Z][a-z]+)):\s*"([^"]+)"\s*/, '').trim();
+                        if (narrativePart) {
+                            audioSegments.push({
+                                type: 'narrator',
+                                text: narrativePart,
+                                voice: assignments['Narrator'],
+                                character: 'Narrator'
+                            });
+                        }
+                    } else if (line.includes('"')) {
+                        // Handle quoted dialogue without character tags
+                        const quotes = line.match(/"([^"]+)"/g);
+                        if (quotes) {
+                            let remainingLine = line;
+                            quotes.forEach(quote => {
+                                const beforeQuote = remainingLine.substring(0, remainingLine.indexOf(quote)).trim();
+                                if (beforeQuote) {
+                                    audioSegments.push({
+                                        type: 'narrator',
+                                        text: beforeQuote,
+                                        voice: assignments['Narrator'],
+                                        character: 'Narrator'
+                                    });
+                                }
+                                
+                                const dialogueText = quote.replace(/"/g, '');
+                                audioSegments.push({
+                                    type: 'dialogue',
+                                    text: dialogueText,
+                                    voice: assignments['Unknown Speaker'] || assignments['Narrator'],
+                                    character: 'Unknown Speaker'
+                                });
+                                
+                                remainingLine = remainingLine.substring(remainingLine.indexOf(quote) + quote.length);
+                            });
+                            
+                            // Add remaining text after quotes
+                            if (remainingLine.trim()) {
+                                audioSegments.push({
+                                    type: 'narrator',
+                                    text: remainingLine.trim(),
+                                    voice: assignments['Narrator'],
+                                    character: 'Narrator'
+                                });
+                            }
+                        }
+                    } else {
+                        // Pure narrative line
+                        audioSegments.push({
+                            type: 'narrator',
+                            text: line,
+                            voice: assignments['Narrator'],
+                            character: 'Narrator'
+                        });
+                    }
+                }
+                
+                // Show detailed progress
+                console.log('=== MULTI-VOICE GENERATION DEBUG ===');
+                console.log('Audio segments to generate:', audioSegments.length);
+                console.log('Voice assignments:', assignments);
+                
+                updateLoadingText(`Preparing ${audioSegments.length} audio segments...`);
+                const audioFiles = [];
+                const failedSegments = [];
+                
+                // Add progress tracking
+                for (let i = 0; i < audioSegments.length; i++) {
+                    const segment = audioSegments[i];
+                    const progress = Math.round(((i + 1) / audioSegments.length) * 100);
+                    
+                    updateLoadingText(`🎙️ Generating ${segment.character} (${i + 1}/${audioSegments.length}) - ${progress}%`);
+                    console.log(`Processing segment ${i + 1}: ${segment.character} - "${segment.text.substring(0, 50)}..."`);
+                    
+                    try {
+                        const audioBlob = await generateSegmentAudio(segment);
+                        if (audioBlob) {
+                            audioFiles.push({
+                                blob: audioBlob,
+                                segment: segment,
+                                index: i
+                            });
+                            console.log(`✅ Success: Generated audio for ${segment.character}`);
+                        } else {
+                            throw new Error('No audio blob returned');
+                        }
+                    } catch (segmentError) {
+                        console.error(`❌ Failed: Segment ${i} (${segment.character}):`, segmentError);
+                        failedSegments.push({
+                            index: i,
+                            character: segment.character,
+                            error: segmentError.message,
+                            text: segment.text.substring(0, 100)
+                        });
+                        
+                        // Show individual warnings but continue
+                        setTimeout(() => {
+                            showNotification(`⚠️ Failed: ${segment.character} - ${segmentError.message}`, 'warning');
+                        }, 100);
+                    }
+                    
+                    // Small delay to prevent API rate limiting
+                    if (i < audioSegments.length - 1) {
+                        await new Promise(resolve => setTimeout(resolve, 500));
+                    }
+                }
+                
+                console.log('=== GENERATION RESULTS ===');
+                console.log(`✅ Successful: ${audioFiles.length}`);
+                console.log(`❌ Failed: ${failedSegments.length}`);
+                console.log('Failed segments:', failedSegments);
+                
+                if (audioFiles.length === 0) {
+                    const errorDetails = failedSegments.map(f => `${f.character}: ${f.error}`).join(', ');
+                    throw new Error(`No audio segments were generated successfully. Errors: ${errorDetails}`);
+                }
+                
+                // Display results with summary
+                displayMultiVoiceResults(audioFiles, assignments, failedSegments);
+                hideLoading();
+                
+                // Show comprehensive results notification
+                if (failedSegments.length === 0) {
+                    showNotification(`✅ Perfect! All ${audioFiles.length} audio segments generated successfully!`, 'success');
+                } else {
+                    showNotification(`⚠️ Partial success: ${audioFiles.length} segments generated, ${failedSegments.length} failed. Check results below.`, 'warning');
+                }
+                
+            } catch (error) {
+                console.error('Multi-voice generation error:', error);
+                showNotification(`Failed to generate multi-voice narration: ${error.message}`, 'error');
+                hideLoading();
+            }
+        }
+
+        async function generateSegmentAudio(segment) {
+            const voiceInfo = segment.voice.split('_');
+            const provider = voiceInfo[0];
+            const voiceId = voiceInfo[1];
+            
+            if (provider === 'openai') {
+                return await generateOpenAIAudio(segment.text, voiceId);
+            } else if (provider === 'elevenlabs') {
+                const apiKey = getElevenLabsApiKey();
+                if (!apiKey) {
+                    throw new Error('ElevenLabs API key not configured');
+                }
+                return await generateElevenLabsAudio(segment.text, voiceId, apiKey);
+            } else {
+                throw new Error(`Unknown voice provider: ${provider}`);
+            }
+        }
+
+        async function generateOpenAIAudio(text, voice) {
+            const apiKey = getOpenAIApiKey();
+            if (!apiKey) {
+                throw new Error('OpenAI API key not configured');
+            }
+
+            const response = await fetch('https://api.openai.com/v1/audio/speech', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${apiKey}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    model: 'tts-1-hd',
+                    input: text,
+                    voice: voice,
+                    response_format: 'mp3'
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`OpenAI TTS API Error: ${response.status}`);
+            }
+
+            return await response.blob();
+        }
+
+        function displayMultiVoiceResults(audioFiles, assignments, failedSegments = []) {
+            const narrationResults = document.getElementById('narrationResults');
+            if (!narrationResults) return;
+
+            let resultsHTML = `
+                <div class="bg-theme-secondary p-6 rounded-xl border-2 border-theme">
+                    <h3 class="text-xl font-bold mb-4 text-green-400">
+                        <i class="fas fa-theater-masks mr-2"></i>Multi-Voice Narration Generated
+                    </h3>
+                    
+                    <div class="mb-4 p-3 bg-theme-primary rounded-lg border border-theme">
+                        <h4 class="font-semibold mb-2 text-cyan-400">Voice Assignments Used:</h4>
+                        <div class="text-sm space-y-1">
+            `;
+            
+            Object.entries(assignments).forEach(([character, voice]) => {
+                const voiceDisplay = voice.replace('openai_', 'OpenAI: ').replace('elevenlabs_', 'ElevenLabs: ');
+                resultsHTML += `<div>• <span class="text-cyan-300">${character}:</span> ${voiceDisplay}</div>`;
+            });
+            
+            resultsHTML += `
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-3 max-h-60 overflow-y-auto">
+            `;
+            
+            audioFiles.forEach((audioFile, index) => {
+                const audioUrl = URL.createObjectURL(audioFile.blob);
+                const segment = audioFile.segment;
+                const truncatedText = segment.text.length > 100 ? segment.text.substring(0, 100) + '...' : segment.text;
+                
+                resultsHTML += `
+                    <div class="bg-theme-primary p-3 rounded-lg border border-theme">
+                        <div class="flex justify-between items-start mb-2">
+                            <div class="flex-1">
+                                <div class="font-medium text-cyan-400">${segment.character} (${segment.type})</div>
+                                <div class="text-xs text-theme-secondary mt-1">"${truncatedText}"</div>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <audio controls class="flex-1 h-8">
+                                <source src="${audioUrl}" type="audio/mp3">
+                                Your browser does not support the audio element.
+                            </audio>
+                            <button onclick="downloadAudio('${audioUrl}', '${segment.character}_${index + 1}.mp3')" 
+                                    class="text-cyan-400 hover:text-cyan-300 p-1">
+                                <i class="fas fa-download"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            resultsHTML += `
+                    </div>
+            `;
+            
+            // Add failed segments section if any
+            if (failedSegments.length > 0) {
+                resultsHTML += `
+                    <div class="mt-4 bg-red-900 bg-opacity-20 border border-red-600 rounded-lg p-4">
+                        <h4 class="font-medium text-red-400 mb-2">⚠️ Failed Segments (${failedSegments.length}):</h4>
+                        <div class="text-sm text-red-300 space-y-1">
+                `;
+                failedSegments.forEach(failed => {
+                    resultsHTML += `<div>• ${failed.character}: ${failed.error}</div>`;
+                });
+                resultsHTML += `
+                        </div>
+                    </div>
+                `;
+            }
+            
+            resultsHTML += `
+                    <div class="mt-4 text-center">
+                        <div class="bg-theme-primary p-3 rounded-lg mb-3 text-sm">
+                            📊 <strong>Generation Summary:</strong> ${audioFiles.length} successful, ${failedSegments.length} failed
+                        </div>
+                        <button onclick="downloadAllMultiVoiceAudio()" class="btn-primary px-6 py-2 rounded-lg">
+                            <i class="fas fa-download mr-2"></i>Download All Audio Segments
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            narrationResults.innerHTML = resultsHTML;
+        }
+
+        // Combine All Chapters function
+        async function combineAllChapters() {
+            if (!storyData.chapters || storyData.chapters.length === 0) {
+                showNotification('No chapters found. Please generate chapters first.', 'warning');
+                return;
+            }
+            
+            showLoading('Combining all chapters into one document...');
+            
+            try {
+                let combinedContent = '';
+                let hasContent = false;
+                
+                // Add book title
+                const bookTitle = document.getElementById('bookTitle')?.value || storyData.title || 'Untitled Book';
+                combinedContent += `# ${bookTitle}\n\n`;
+                
+                // Combine all chapters
+                for (let i = 0; i < storyData.chapters.length; i++) {
+                    const chapter = storyData.chapters[i];
+                    
+                    // Add chapter header
+                    combinedContent += `## Chapter ${chapter.number}: ${chapter.title}\n\n`;
+                    
+                    // Add chapter content if it exists
+                    if (chapter.content && chapter.content.trim()) {
+                        combinedContent += chapter.content + '\n\n';
+                        hasContent = true;
+                    } else {
+                        // Generate chapter content if it doesn't exist
+                        updateLoadingText(`Generating content for Chapter ${chapter.number}...`);
+                        try {
+                            const content = await generateSingleChapterContent(chapter);
+                            if (content && content.trim()) {
+                                combinedContent += content + '\n\n';
+                                hasContent = true;
+                                // Store generated content
+                                chapter.content = content;
+                            } else {
+                                combinedContent += `[Chapter ${chapter.number} content will be generated here]\n\n`;
+                            }
+                        } catch (error) {
+                            console.error(`Failed to generate Chapter ${chapter.number}:`, error);
+                            combinedContent += `[Error generating Chapter ${chapter.number}: ${error.message}]\n\n`;
+                        }
+                    }
+                }
+                
+                if (!hasContent) {
+                    throw new Error('No chapter content available to combine');
+                }
+                
+                // Store the combined content
+                storyData.combinedContent = combinedContent;
+                storyData.currentContent = combinedContent;
+                
+                // Display in the story editor
+                const storyEditor = document.getElementById('storyEditor');
+                if (storyEditor) {
+                    storyEditor.value = combinedContent;
+                    updateWordCount(); // Update word count display
+                }
+                
+                hideLoading();
+                showNotification(`Successfully combined ${storyData.chapters.length} chapters! Ready for narration.`, 'success');
+                
+                // Show preview modal
+                showCombinedPreview(combinedContent, bookTitle);
+                
+            } catch (error) {
+                console.error('Combine chapters error:', error);
+                hideLoading();
+                showNotification(`Failed to combine chapters: ${error.message}`, 'error');
+            }
+        }
+        
+        function showCombinedPreview(content, title) {
+            // Create modal overlay
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
+            modal.innerHTML = `
+                <div class="bg-theme-secondary rounded-xl max-w-4xl max-h-[80vh] w-full flex flex-col border-2 border-theme">
+                    <div class="flex items-center justify-between p-6 border-b border-theme">
+                        <h3 class="text-xl font-bold text-cyan-400">
+                            <i class="fas fa-book mr-2"></i>Combined Book Preview: ${title}
+                        </h3>
+                        <button onclick="this.closest('.fixed').remove()" class="text-theme-secondary hover:text-theme-primary">
+                            <i class="fas fa-times text-xl"></i>
+                        </button>
+                    </div>
+                    <div class="flex-1 p-6 overflow-y-auto">
+                        <div class="bg-theme-primary p-4 rounded-lg border border-theme">
+                            <pre class="whitespace-pre-wrap text-sm font-mono text-theme-primary">${content.substring(0, 5000)}${content.length > 5000 ? '\n\n... [Content truncated for preview. Full content is available in the editor.]' : ''}</pre>
+                        </div>
+                    </div>
+                    <div class="p-6 border-t border-theme">
+                        <div class="flex space-x-3 justify-center">
+                            <button onclick="downloadCombinedBook()" class="btn-primary px-6 py-2 rounded-lg">
+                                <i class="fas fa-download mr-2"></i>Download as Text File
+                            </button>
+                            <button onclick="showPage('narration'); this.closest('.fixed').remove()" class="btn-secondary px-6 py-2 rounded-lg">
+                                <i class="fas fa-microphone mr-2"></i>Create Narration
+                            </button>
+                            <button onclick="this.closest('.fixed').remove()" class="btn-gray px-6 py-2 rounded-lg">
+                                Close Preview
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+        }
+        
+        function downloadCombinedBook() {
+            const content = storyData.combinedContent || storyData.currentContent;
+            const title = document.getElementById('bookTitle')?.value || storyData.title || 'Untitled Book';
+            
+            if (!content) {
+                showNotification('No combined content to download', 'error');
+                return;
+            }
+            
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `${title.replace(/[^a-zA-Z0-9]/g, '_')}_Complete_Book.txt`;
+            link.click();
+            URL.revokeObjectURL(url);
+            
+            showNotification('Combined book downloaded!', 'success');
+        }
+
+        // Character voice preview function
+        async function previewCharacterVoice(characterName, selectId) {
+            const selectElement = document.getElementById(selectId);
+            const voiceValue = selectElement?.value;
+            
+            if (!voiceValue) {
+                showNotification('Please select a voice first.', 'warning');
+                return;
+            }
+            
+            // Get sample text for this character
+            let previewText;
+            if (characterName === 'Narrator') {
+                const content = storyData.currentContent || document.getElementById('storyEditor')?.value || '';
+                previewText = content.replace(/"[^"]*"/g, '').trim().substring(0, 100);
+                if (!previewText) previewText = "This is a sample of the narrator's voice speaking the story text.";
+            } else {
+                const characterDialogue = dialogueData.dialogueSections.find(d => d.character === characterName);
+                previewText = characterDialogue ? characterDialogue.text : `Hello, this is ${characterName} speaking.`;
+            }
+            
+            // Parse provider and voice ID
+            const [provider, voiceId] = voiceValue.split('_');
+            
+            try {
+                showLoading(`Previewing ${characterName}'s voice...`);
+                
+                let audioBlob;
+                if (provider === 'openai') {
+                    audioBlob = await generateOpenAIAudio(previewText, voiceId);
+                } else if (provider === 'elevenlabs') {
+                    const apiKey = getElevenLabsApiKey();
+                    if (!apiKey) {
+                        showNotification('Please configure your ElevenLabs API key first', 'error');
+                        hideLoading();
+                        return;
+                    }
+                    audioBlob = await generateElevenLabsAudio(previewText, voiceId, apiKey);
+                }
+                
+                if (audioBlob) {
+                    const audioUrl = URL.createObjectURL(audioBlob);
+                    const audio = new Audio(audioUrl);
+                    
+                    audio.onloadeddata = () => {
+                        hideLoading();
+                        audio.play();
+                        showNotification(`Playing ${characterName}'s voice preview`, 'success');
+                    };
+                    
+                    audio.onerror = () => {
+                        hideLoading();
+                        showNotification('Failed to play voice preview', 'error');
+                    };
+                } else {
+                    hideLoading();
+                    showNotification('Failed to generate voice preview', 'error');
+                }
+                
+            } catch (error) {
+                console.error('Voice preview error:', error);
+                hideLoading();
+                showNotification(`Failed to preview voice: ${error.message}`, 'error');
+            }
+        }
+
+        // Multi-voice audio download functions
+        function downloadAllMultiVoiceAudio() {
+            const audioElements = document.querySelectorAll('#narrationResults audio');
+            audioElements.forEach((audio, index) => {
+                const audioUrl = audio.querySelector('source').src;
+                const character = audio.closest('.bg-theme-primary').querySelector('.text-cyan-400').textContent.split(' (')[0];
+                downloadAudio(audioUrl, `${character}_segment_${index + 1}.mp3`);
+            });
+            showNotification(`Downloading ${audioElements.length} audio segments...`, 'success');
+        }
+
+        function downloadAudio(audioUrl, filename) {
+            const link = document.createElement('a');
+            link.href = audioUrl;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
         // Initialize on page load
         document.addEventListener('DOMContentLoaded', function() {
             loadSettings();
+            
+            // Populate voice options when page loads
+            setTimeout(() => {
+                populateVoiceOptions();
+                updateContentStatus(); // Check content status on load
+            }, 1000);
             
             // Add text area listener for character count
             const textArea = document.getElementById('cloneTextInput');
