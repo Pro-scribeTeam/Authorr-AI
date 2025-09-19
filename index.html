@@ -3083,59 +3083,72 @@
             try {
                 const analysis = await callOpenAI([
                     {
-                        role: "system",
-                        content: `You are an advanced AI detection specialist that provides accurate, consistent scoring. Analyze the text for AI authorship patterns and provide a precise likelihood score.
+                        role: "system", 
+                        content: `You are a precise AI detection tool that gives consistent, calibrated scores. Your job is to be accurate and reproducible.
 
-Analysis Framework:
+**STRICT SCORING CRITERIA:**
 
-**AI Indicators (increase score):**
-- Overly perfect grammar and structure
-- Repetitive sentence patterns or lengths
-- Generic, non-specific descriptions
-- Mechanical transitions ("Furthermore," "Moreover," "Additionally")
-- Balanced, overly diplomatic tone
-- Lack of personal quirks or idiosyncratic phrasing
-- Excessive use of complex vocabulary unnecessarily
-- Perfect punctuation without natural human variations
+**85-100% AI Likelihood:**
+- Perfect grammar with zero natural errors
+- All sentences similar length (15-25 words)
+- Excessive use of transition words ("Furthermore," "Moreover," "Additionally," "However")
+- Generic, non-specific descriptions ("beautiful scenery," "delicious food")
+- Overly balanced, diplomatic tone throughout
+- No contractions or casual language
+- Complex vocabulary used unnecessarily
+- Mechanical paragraph structure
 
-**Human Indicators (decrease score):**
-- Natural sentence rhythm variations
-- Specific, concrete details and examples
-- Emotional authenticity and spontaneity
-- Minor grammatical imperfections or casual language
-- Personal voice and unique phrasing
-- Natural dialogue with interruptions, hesitations
-- Organic topic transitions
-- Authentic character inconsistencies
+**65-84% AI Likelihood:**
+- Mostly perfect grammar with minimal natural variation
+- Some sentence length variation but still quite uniform
+- Frequent formal transitions and connectors
+- Mix of generic and specific descriptions
+- Generally polished tone with little personality
+- Few contractions, mostly formal language
+- Some unnecessary complexity in word choice
 
-**Scoring Guidelines:**
-- 0-20%: Clearly human-written with strong personal voice
-- 21-40%: Likely human with some polished elements
-- 41-60%: Mixed signals, could be either
-- 61-80%: Likely AI with some human touches
-- 81-100%: Clearly AI-generated patterns
+**45-64% AI Likelihood:**
+- Good grammar with occasional natural imperfections
+- Moderate sentence length variation
+- Some natural transitions mixed with formal ones
+- Balance of specific and general descriptions
+- Consistent but not overly polished tone
+- Some contractions and casual elements
+- Appropriate vocabulary level
 
-**Required Output Format:**
----
-📊 **Analysis Results**
+**25-44% AI Likelihood:**
+- Natural grammar with human-like irregularities
+- Significant sentence length variation (3-30+ words)
+- Organic, natural transitions
+- Specific, concrete details throughout
+- Personal voice and style quirks
+- Regular use of contractions and casual language
+- Natural, conversational vocabulary
 
-**Key Patterns Detected:**
-[List 3-4 specific examples with line references]
+**0-24% AI Likelihood:**
+- Natural imperfections and casual grammar
+- Highly varied sentence structure and length
+- Stream-of-consciousness or emotional flow
+- Highly specific, personal details
+- Strong individual voice and personality
+- Heavy use of contractions, slang, colloquialisms
+- Natural, unpolished language patterns
 
-**AI Likelihood Score: [X]%**
+**CRITICAL:** Always explain your exact score with specific textual evidence. Be consistent between analyses of the same text.
 
-**Confidence Level:** [High/Medium/Low]
+**Output Format:**
+AI Likelihood Score: [X]%
 
-**Reasoning:**
-[2-3 sentences explaining the score based on specific evidence]
+**Evidence:**
+- [Specific pattern 1 with example]
+- [Specific pattern 2 with example] 
+- [Specific pattern 3 with example]
 
-**Recommendations:**
-[If score >50%, suggest specific improvements]
----`
+**Reasoning:** [1-2 sentences explaining the score]`
                     },
                     {
                         role: "user",
-                        content: `Please analyze this text for AI authorship likelihood. Be consistent and accurate in your scoring:\n\n${processableText}`
+                        content: `Analyze this text and provide a precise AI likelihood score with specific evidence. Be consistent and calibrated:\\n\\n${processableText}`
                     }
                 ]);
                 
@@ -3182,47 +3195,60 @@ Analysis Framework:
                 const humanizedText = await callOpenAI([
                     {
                         role: "system",
-                        content: `You are a professional editor specializing in making text sound naturally human-written. Your goal is to rewrite text to score LOWER on AI detection tools (aim for 20-30% AI likelihood instead of 60-80%).
+                        content: `You are an expert at defeating AI detection tools. Your mission is to transform AI-sounding text into authentic human writing that will score 25-35% on AI detectors instead of 70-80%.
 
-**Critical Anti-AI Patterns to Implement:**
+**AGGRESSIVE HUMANIZATION TACTICS:**
 
-1. **Sentence Rhythm Variation**
-   - Mix very short sentences with longer, complex ones
-   - Use sentence fragments occasionally 
-   - Add natural pauses with em-dashes and ellipses
-   - Break up overly balanced paragraph structures
+🎯 **CRITICAL: Apply ALL of these techniques heavily:**
 
-2. **Human Imperfections** 
-   - Occasional minor grammar quirks (but keep readable)
-   - Natural redundancy or slight repetition for emphasis
-   - Conversational asides or parenthetical thoughts
-   - Less formal, more casual language where appropriate
+1. **Radical Sentence Restructuring**
+   - Break long, balanced sentences into choppy fragments
+   - Use run-on sentences with multiple clauses connected by "and" or "but"
+   - Start sentences with "And," "But," "So," (ignore grammar rules)
+   - Mix 3-word sentences with 25+ word rambling ones
+   - Use incomplete thoughts... like this one.
 
-3. **Dialogue Authenticity**
-   - Add interruptions, hesitations ("Well, I mean...")  
-   - Use contractions consistently
-   - Include natural speech patterns and colloquialisms
-   - Make each character's voice distinctly different
+2. **Heavy Contractions & Casual Language**
+   - Change ALL formal language to contractions: "cannot" → "can't", "would not" → "wouldn't" 
+   - Replace sophisticated words with simpler ones
+   - Add filler words: "like", "you know", "I mean", "well"
+   - Use colloquialisms and regional expressions
 
-4. **Specific Details**
-   - Replace generic descriptions with concrete, specific imagery
-   - Add sensory details (sounds, smells, textures)
-   - Include authentic, realistic character reactions
-   - Use precise numbers, colors, or measurements
+3. **Aggressive Dialogue Changes**
+   - Add stutters, interruptions: "I—I don't know what you—"
+   - Include "um," "uh," "er" in speech
+   - Characters cut each other off mid-sentence
+   - Add slang and informal speech patterns
+   - Include overlapping dialogue
 
-5. **Natural Transitions**
-   - Avoid mechanical connectors ("Furthermore," "Additionally")
-   - Use organic scene transitions
-   - Let thoughts flow more naturally between ideas
-   - Include natural topic drift in conversations
+4. **Inject Human Quirks**
+   - Add parenthetical thoughts (like this random aside)
+   - Include minor contradictions or inconsistencies
+   - Add personal asides and tangential thoughts
+   - Use em-dashes for sudden topic changes—like right now
+   - Include rhetorical questions that don't get answered
 
-**Important:** Preserve ALL plot points, character development, and story meaning. Only change HOW it's written, not WHAT happens.
+5. **Sensory Overload & Specific Details**
+   - Replace every generic description with hyper-specific details
+   - Add random sensory observations ("the coffee smelled burnt")
+   - Include seemingly irrelevant but human details
+   - Use exact numbers, times, measurements
+   - Add personal memories or associations
 
-Return ONLY the rewritten text with the same formatting structure.`
+6. **Destroy Perfect Grammar**
+   - End sentences with prepositions (grammar nazis hate this!)
+   - Use dangling participles occasionally
+   - Split some infinitives deliberately
+   - Mix up "who" and "whom" like normal people do
+   - Use "they" for singular when it sounds natural
+
+**MOST IMPORTANT:** Be EXTREMELY aggressive with these changes. Don't hold back. Make it sound like a real person wrote this while distracted, emotional, or in a hurry.
+
+Return ONLY the completely rewritten text. No explanations.`
                     },
                     {
                         role: "user",
-                        content: `Rewrite this story to reduce AI detection from 60% to 20-30%. Focus on natural human writing patterns while preserving the plot${isTextTruncated ? ' (rewriting first portion due to length)' : ''}:\n\n${processableText}`
+                        content: `AGGRESSIVELY rewrite this to score under 35% on AI detection. Current score is 70%+. Be ruthless with humanization techniques. Preserve the story but make it sound like a real human wrote it while emotional/distracted:\n\n${processableText}`
                     }
                 ]);
                 
