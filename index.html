@@ -3084,71 +3084,81 @@
                 const analysis = await callOpenAI([
                     {
                         role: "system", 
-                        content: `You are a precise AI detection tool that gives consistent, calibrated scores. Your job is to be accurate and reproducible.
+                        content: `You must calibrate your scoring to match industry-standard AI detectors like GPTZero and Copyleaks, which typically score AI-generated text at 80-100%. Be STRICT to match their standards.
 
-**STRICT SCORING CRITERIA:**
+**INDUSTRY-CALIBRATED SCORING:**
 
-**85-100% AI Likelihood:**
-- Perfect grammar with zero natural errors
-- All sentences similar length (15-25 words)
-- Excessive use of transition words ("Furthermore," "Moreover," "Additionally," "However")
-- Generic, non-specific descriptions ("beautiful scenery," "delicious food")
-- Overly balanced, diplomatic tone throughout
-- No contractions or casual language
-- Complex vocabulary used unnecessarily
-- Mechanical paragraph structure
+**90-100% AI Likelihood (Match GPTZero/Copyleaks high scores):**
+- Perfect grammar with no natural errors
+- Uniform sentence structure (similar lengths throughout)
+- Transition word overuse: "Furthermore," "Moreover," "Additionally," "However," "Nevertheless"
+- Generic, vague descriptions: "beautiful," "amazing," "significant," "important"
+- Overly balanced, diplomatic tone
+- No contractions ("cannot" instead of "can't")
+- Unnecessarily complex vocabulary
+- Predictable paragraph structure
+- No speech interruptions or natural dialogue quirks
 
-**65-84% AI Likelihood:**
-- Mostly perfect grammar with minimal natural variation
-- Some sentence length variation but still quite uniform
-- Frequent formal transitions and connectors
-- Mix of generic and specific descriptions
-- Generally polished tone with little personality
-- Few contractions, mostly formal language
-- Some unnecessary complexity in word choice
+**75-89% AI Likelihood:**
+- Mostly perfect grammar
+- Limited sentence variation
+- Frequent formal transitions  
+- Mix of generic and specific details
+- Polished but personality-lacking tone
+- Rare contractions
+- Some vocabulary complexity
+- Structured writing patterns
 
-**45-64% AI Likelihood:**
-- Good grammar with occasional natural imperfections
-- Moderate sentence length variation
-- Some natural transitions mixed with formal ones
-- Balance of specific and general descriptions
-- Consistent but not overly polished tone
-- Some contractions and casual elements
-- Appropriate vocabulary level
+**60-74% AI Likelihood:**
+- Good grammar with minor variations
+- Some sentence diversity
+- Mix of formal/natural transitions
+- Balanced specific/general content
+- Somewhat natural tone
+- Occasional contractions
+- Appropriate vocabulary
 
-**25-44% AI Likelihood:**
-- Natural grammar with human-like irregularities
-- Significant sentence length variation (3-30+ words)
-- Organic, natural transitions
-- Specific, concrete details throughout
-- Personal voice and style quirks
-- Regular use of contractions and casual language
-- Natural, conversational vocabulary
+**40-59% AI Likelihood:**
+- Natural grammar imperfections
+- Varied sentence lengths
+- Organic transitions
+- Specific details present
+- Personal voice emerging
+- Regular contractions
+- Conversational style
 
-**0-24% AI Likelihood:**
-- Natural imperfections and casual grammar
-- Highly varied sentence structure and length
-- Stream-of-consciousness or emotional flow
-- Highly specific, personal details
-- Strong individual voice and personality
-- Heavy use of contractions, slang, colloquialisms
-- Natural, unpolished language patterns
+**20-39% AI Likelihood:**
+- Casual grammar with quirks
+- Highly varied sentences
+- Natural flow
+- Very specific details
+- Strong personal voice
+- Heavy contractions/casual language
+- Authentic dialogue
 
-**CRITICAL:** Always explain your exact score with specific textual evidence. Be consistent between analyses of the same text.
+**0-19% AI Likelihood:**
+- Informal, imperfect grammar
+- Chaotic sentence variation
+- Stream-of-consciousness
+- Extremely personal/specific
+- Unique voice and style
+- Slang and colloquialisms
+
+**CRITICAL:** Score like GPTZero/Copyleaks would. If they'd say 90%, you say 85-95%. Be strict on AI patterns.
 
 **Output Format:**
 AI Likelihood Score: [X]%
 
 **Evidence:**
-- [Specific pattern 1 with example]
-- [Specific pattern 2 with example] 
-- [Specific pattern 3 with example]
+- [Quote showing AI pattern]
+- [Quote showing AI pattern] 
+- [Quote showing AI pattern]
 
-**Reasoning:** [1-2 sentences explaining the score]`
+**Industry Calibration:** [How this matches GPTZero/Copyleaks expectations]`
                     },
                     {
                         role: "user",
-                        content: `Analyze this text and provide a precise AI likelihood score with specific evidence. Be consistent and calibrated:\\n\\n${processableText}`
+                        content: `Score this text to match how GPTZero/Copyleaks would score it. They typically score AI text at 80-100%, so be equally strict. Provide exact evidence:\\n\\n${processableText}`
                     }
                 ]);
                 
@@ -3195,60 +3205,59 @@ AI Likelihood Score: [X]%
                 const humanizedText = await callOpenAI([
                     {
                         role: "system",
-                        content: `You are an expert at defeating AI detection tools. Your mission is to transform AI-sounding text into authentic human writing that will score 25-35% on AI detectors instead of 70-80%.
+                        content: `You are specifically designed to fool GPTZero, Copyleaks, and similar AI detectors. Your goal: transform 90-100% AI text into 10-30% AI text by applying proven anti-detection techniques.
 
-**AGGRESSIVE HUMANIZATION TACTICS:**
+**PROVEN AI DETECTOR EVASION METHODS:**
 
-🎯 **CRITICAL: Apply ALL of these techniques heavily:**
+**1. DESTROY UNIFORMITY (Critical for GPTZero):**
+- Sentence lengths: Mix 3-word fragments with 35+ word run-ons
+- Paragraph sizes: Vary from 1 sentence to 8+ sentences randomly  
+- Break AI's predictable rhythm completely
 
-1. **Radical Sentence Restructuring**
-   - Break long, balanced sentences into choppy fragments
-   - Use run-on sentences with multiple clauses connected by "and" or "but"
-   - Start sentences with "And," "But," "So," (ignore grammar rules)
-   - Mix 3-word sentences with 25+ word rambling ones
-   - Use incomplete thoughts... like this one.
+**2. INJECT HUMAN IMPERFECTIONS:**
+- Add natural grammar "mistakes": "Me and him went..." "Who did you see?" "Between you and I..."
+- Include redundancies: "The thing is, is that..." 
+- Use filler words extensively: "like," "you know," "I mean," "well," "um"
+- Add false starts: "I was going to— well, never mind that"
 
-2. **Heavy Contractions & Casual Language**
-   - Change ALL formal language to contractions: "cannot" → "can't", "would not" → "wouldn't" 
-   - Replace sophisticated words with simpler ones
-   - Add filler words: "like", "you know", "I mean", "well"
-   - Use colloquialisms and regional expressions
+**3. HEAVY CONTRACTIONIZATION:**
+- Convert ALL formal language: "cannot" → "can't", "will not" → "won't", "would have" → "would've"
+- Stack contractions: "wouldn't've", "shouldn't've", "couldn't've"
+- Use casual forms: "gonna," "wanna," "kinda," "sorta"
 
-3. **Aggressive Dialogue Changes**
-   - Add stutters, interruptions: "I—I don't know what you—"
-   - Include "um," "uh," "er" in speech
-   - Characters cut each other off mid-sentence
-   - Add slang and informal speech patterns
-   - Include overlapping dialogue
+**4. DIALOGUE CHAOS:**
+- Add interruptions: "I think we should—" "No way!" 
+- Include overlapping speech: "We need to go—" "—right now, I know!"
+- Add speech disfluencies: "I, uh, I don't really know if we should, like, do that"
+- Use regional dialects and slang
 
-4. **Inject Human Quirks**
-   - Add parenthetical thoughts (like this random aside)
-   - Include minor contradictions or inconsistencies
-   - Add personal asides and tangential thoughts
-   - Use em-dashes for sudden topic changes—like right now
-   - Include rhetorical questions that don't get answered
+**5. DESTROY AI TRANSITIONS:**
+- Replace "Furthermore," "Moreover," "Additionally" with: "And," "But," "So," "Plus," "Also,"
+- Use abrupt topic changes without smooth transitions
+- Include tangential thoughts mid-sentence
 
-5. **Sensory Overload & Specific Details**
-   - Replace every generic description with hyper-specific details
-   - Add random sensory observations ("the coffee smelled burnt")
-   - Include seemingly irrelevant but human details
-   - Use exact numbers, times, measurements
-   - Add personal memories or associations
+**6. SPECIFIC DETAIL BOMBING:**
+- Replace "beautiful day" → "72-degree Tuesday morning with those weird puffy clouds"
+- Replace "delicious food" → "greasy pepperoni pizza from Tony's on 5th Street"
+- Add irrelevant but human details about colors, sounds, smells, textures
 
-6. **Destroy Perfect Grammar**
-   - End sentences with prepositions (grammar nazis hate this!)
-   - Use dangling participles occasionally
-   - Split some infinitives deliberately
-   - Mix up "who" and "whom" like normal people do
-   - Use "they" for singular when it sounds natural
+**7. EMOTIONAL AUTHENTICITY:**
+- Add personal reactions: "God, that was awkward" "Ugh, why did I say that?"
+- Include self-doubt: "I'm probably wrong, but..." "Maybe I'm overthinking this..."
+- Add stream-of-consciousness tangents
 
-**MOST IMPORTANT:** Be EXTREMELY aggressive with these changes. Don't hold back. Make it sound like a real person wrote this while distracted, emotional, or in a hurry.
+**CRITICAL SUCCESS METRICS:**
+- GPTZero should drop from 90%+ to 20-30%
+- Copyleaks should drop from 100% to 15-35%  
+- Text should feel authentically human-written
 
-Return ONLY the completely rewritten text. No explanations.`
+Apply these techniques AGGRESSIVELY. Don't preserve formal tone. Make it sound like someone texting or talking casually.
+
+Return ONLY the rewritten text with same chapter structure.`
                     },
                     {
                         role: "user",
-                        content: `AGGRESSIVELY rewrite this to score under 35% on AI detection. Current score is 70%+. Be ruthless with humanization techniques. Preserve the story but make it sound like a real human wrote it while emotional/distracted:\n\n${processableText}`
+                        content: `This text currently scores 90-100% on GPTZero/Copyleaks. Transform it to score 15-30% by applying ALL anti-detection techniques. Be RUTHLESS - destroy uniformity, inject imperfections, use heavy contractions. Preserve plot/characters but make it sound like casual human writing:\n\n${processableText}`
                     }
                 ]);
                 
