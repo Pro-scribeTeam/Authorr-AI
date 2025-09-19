@@ -3264,6 +3264,14 @@ Return ONLY the rewritten text with same chapter structure.`
                 hideLoading();
                 
                 if (humanizedText && humanizedText.trim()) {
+                    // Debug logging
+                    console.log('=== HUMANIZATION DEBUG ===');
+                    console.log('Original text length:', processableText.length);
+                    console.log('Humanized text length:', humanizedText.length);
+                    console.log('Original first 200 chars:', processableText.substring(0, 200));
+                    console.log('Humanized first 200 chars:', humanizedText.substring(0, 200));
+                    console.log('Texts are identical:', processableText.trim() === humanizedText.trim());
+                    
                     showNotification('Text successfully humanized! Review the changes below.', 'success');
                     displayHumanizationResult(humanizedText.trim(), processableText);
                     
@@ -3352,9 +3360,33 @@ Return ONLY the rewritten text with same chapter structure.`
         }
         
         function saveHumanizedText(humanizedText) {
+            console.log('=== SAVE HUMANIZED TEXT DEBUG ===');
+            console.log('Humanized text to save:', humanizedText.substring(0, 200) + '...');
+            console.log('Has multiple chapters:', hasMultipleChapters());
+            console.log('Current storyData chapters:', storyData.chapters ? storyData.chapters.length : 'none');
+            
             // Parse the humanized text back into chapters if multiple chapters exist
             if (hasMultipleChapters()) {
-                const chapterSections = humanizedText.split(/===\s*Chapter\s*\d+.*?===/g).filter(section => section.trim());
+                // Try multiple chapter parsing patterns
+                let chapterSections = [];
+                
+                // Pattern 1: === Chapter N ===
+                const pattern1 = humanizedText.split(/===\s*Chapter\s*\d+[^=]*===/g).filter(section => section.trim());
+                if (pattern1.length > 1) {
+                    chapterSections = pattern1;
+                    console.log('Used pattern 1, found', chapterSections.length, 'sections');
+                } else {
+                    // Pattern 2: Chapter N: Title
+                    const pattern2 = humanizedText.split(/Chapter\s*\d+[:\-\s][^\n]*\n/).filter(section => section.trim());
+                    if (pattern2.length > 1) {
+                        chapterSections = pattern2;
+                        console.log('Used pattern 2, found', chapterSections.length, 'sections');
+                    } else {
+                        // Fallback: treat as single content
+                        chapterSections = [humanizedText];
+                        console.log('No chapter pattern found, treating as single content');
+                    }
+                }
                 
                 if (chapterSections.length > 0) {
                     // Update the chapters in storyData
@@ -3371,6 +3403,11 @@ Return ONLY the rewritten text with same chapter structure.`
                     }
                     
                     updateWordCount();
+                    
+                    // Force update the content status and combined content for reanalysis
+                    updateContentStatus();
+                    
+                    console.log('Updated chapters, current content now:', getAllChaptersText().substring(0, 200) + '...');
                     showNotification('Humanized text saved successfully across all chapters!', 'success');
                 } else {
                     // Fallback: treat as single content

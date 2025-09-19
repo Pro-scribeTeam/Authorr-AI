@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Humanization</title>
+</head>
+<body>
+    <h1>Humanization Test</h1>
+    <div id="test-results"></div>
+    
+    <script>
+        // Test sample AI text
+        const testText = `
+Chapter 1: The Beginning
+
+Furthermore, it was evident that the situation required careful consideration. Additionally, the protagonist had to make a decision that would significantly impact the narrative. Moreover, the circumstances were complex and multifaceted, necessitating a comprehensive approach to problem-solving.
+
+The character approached the door with methodical precision. Subsequently, they examined the environment with thorough attention to detail. The atmosphere was tense and filled with anticipation.
+
+"I must proceed with caution," the character declared with measured confidence. "This situation demands careful analysis and strategic thinking."
+`;
+
+        // Expected humanized patterns to look for
+        const expectedChanges = [
+            'Furthermore' → 'And' or 'But' or 'So',
+            'Additionally' → contractions,
+            'methodical precision' → more casual language,
+            'careful analysis' → simpler terms,
+            'comprehensive approach' → casual phrasing
+        ];
+
+        document.getElementById('test-results').innerHTML = `
+            <h2>Original Text:</h2>
+            <pre>${testText}</pre>
+            
+            <h2>Expected Changes:</h2>
+            <ul>
+                <li>Replace "Furthermore" with "And", "But", "So"</li>
+                <li>Replace "Additionally" with casual connectors</li>
+                <li>Convert formal phrases to casual language</li>
+                <li>Add contractions (cannot → can't, would not → wouldn't)</li>
+                <li>Add sentence fragments and run-ons</li>
+                <li>Include filler words (like, you know, I mean)</li>
+            </ul>
+            
+            <h2>AI Patterns Found:</h2>
+            <ul>
+                <li>✓ "Furthermore" - needs replacement</li>
+                <li>✓ "Additionally" - needs replacement</li>  
+                <li>✓ "Moreover" - needs replacement</li>
+                <li>✓ "Subsequently" - needs replacement</li>
+                <li>✓ "methodical precision" - too formal</li>
+                <li>✓ "comprehensive approach" - too formal</li>
+                <li>✓ "measured confidence" - too formal</li>
+                <li>✓ "strategic thinking" - too formal</li>
+            </ul>
+            
+            <p><strong>This text should be HEAVILY transformed by humanization!</strong></p>
+        `;
+    </script>
+</body>
+</html>
