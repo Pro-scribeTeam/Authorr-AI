@@ -2670,31 +2670,67 @@
             }
             
             const chapterInfo = hasMultipleChapters() ? 
-                `Designing character arcs across ${storyData.chapters.length} chapters...` :
-                'Designing character development arc...';
+                `Enhancing character arcs across ${storyData.chapters.length} chapters...` :
+                'Enhancing character development and arcs...';
             
             showLoading(chapterInfo, 'book');
             
             try {
-                const enhancement = await callOpenAI([
+                // Use text within safe limits
+                const processableText = getTextWithinLimits(allChaptersText);
+                const isTextTruncated = processableText !== allChaptersText;
+                
+                // Get genre-specific prompt for character development
+                const basePrompt = `You are a developmental editor specializing in character arcs and growth. Rewrite the provided text to enhance character development, internal conflict, and meaningful change.
+
+IMPORTANT: Return the COMPLETE rewritten text with enhanced character development, preserving all plot points and structure. Only improve character depth, motivation, and growth.
+
+Focus on:
+- Stronger character motivation and goals
+- Internal conflicts and emotional depth
+- Character growth through actions and decisions
+- Distinctive character voices and perspectives
+- Meaningful character interactions and relationships`;
+
+                const genrePrompt = getGenrePrompt('CharacterArcDesigner', basePrompt);
+                
+                const enhanced = await callOpenAI([
                     {
                         role: "system",
-                        content: "You are a developmental editor specializing in internal character change (positive, negative, or flat arcs) across complete stories. Analyze character development throughout the entire narrative and provide suggestions for meaningful character growth from beginning to end."
+                        content: genrePrompt
                     },
                     {
                         role: "user",
-                        content: `Analyze and enhance the character development throughout this complete story. Suggest specific improvements for character growth, internal conflict, and meaningful change across all chapters:\n\n${allChaptersText}`
+                        content: `Enhance the character development and arcs in this text while preserving the story structure. Return the complete rewritten text${isTextTruncated ? ' (processing first portion due to length)' : ''}:\n\n${processableText}`
                     }
                 ]);
                 
                 hideLoading();
-                showNotification('Character arc enhancements ready!', 'success');
-                displayToolResult('Character Arc Design', enhancement);
+                
+                if (enhanced && enhanced.trim() && enhanced.trim() !== processableText.trim()) {
+                    showNotification('Character development enhanced! Review the changes below.', 'success');
+                    displayToolChanges('Character Arc Enhancement', processableText, enhanced.trim());
+                    
+                    // Track human touch interaction
+                    trackHumanTouch('lines_edited', 1);
+                } else {
+                    showNotification('Your character development is already strong! No significant enhancements needed.', 'info');
+                }
                 
             } catch (error) {
                 console.error('Character arc error:', error);
                 hideLoading();
-                showNotification('Failed to enhance character arc. Please try again.', 'error');
+                
+                let errorMessage = 'Failed to enhance character arcs. ';
+                if (error.message && error.message.includes('token')) {
+                    errorMessage += 'Story may be too long for processing.';
+                } else if (error.message && error.message.includes('API')) {
+                    errorMessage += 'Please check your API key.';
+                } else {
+                    errorMessage += 'Please try again or use a shorter text selection.';
+                }
+                
+                showNotification(errorMessage, 'error');
             }
         }
         
@@ -2707,8 +2743,8 @@
             }
             
             const chapterInfo = hasMultipleChapters() ? 
-                `Analyzing and adjusting tone consistency across ${storyData.chapters.length} chapters...` :
-                'Analyzing and adjusting tone consistency...';
+                `Adjusting tone consistency across ${storyData.chapters.length} chapters...` :
+                'Adjusting tone and style consistency...';
             
             showLoading(chapterInfo, 'book');
             
@@ -2717,25 +2753,57 @@
                 const processableText = getTextWithinLimits(allChaptersText);
                 const isTextTruncated = processableText !== allChaptersText;
                 
-                const analysis = await callOpenAI([
+                // Get genre-specific prompt for tone adjustment
+                const basePrompt = `You are a professional editor specializing in tone consistency. Rewrite the provided text to improve tone consistency and ensure it's appropriate for the target audience.
+
+IMPORTANT: Return the COMPLETE rewritten text with improved tone consistency, preserving all story content and structure. Only adjust the tone, voice, and style.
+
+Focus on:
+- Consistent narrative voice throughout
+- Age-appropriate language and themes
+- Uniform style and pacing
+- Emotional consistency
+- Clear target audience alignment`;
+
+                const genrePrompt = getGenrePrompt('ToneShifter', basePrompt);
+                
+                const enhanced = await callOpenAI([
                     {
                         role: "system",
-                        content: "You are a stylist who can diagnose current tone and provide specific suggestions for adjustments. Analyze tone consistency and provide actionable recommendations for target audience appropriateness."
+                        content: genrePrompt
                     },
                     {
                         role: "user",
-                        content: `Analyze the current tone throughout this story and provide specific suggestions for adjustments to ensure consistency and target audience appropriateness${isTextTruncated ? ' (analyzing first portion due to length)' : ''}:\n\n${processableText}`
+                        content: `Adjust the tone and style in this text for consistency and target audience appropriateness. Return the complete rewritten text${isTextTruncated ? ' (processing first portion due to length)' : ''}:\n\n${processableText}`
                     }
                 ]);
                 
                 hideLoading();
-                showNotification('Tone analysis complete!', 'success');
-                displayToolResult('Tone Consistency Analysis', analysis);
+                
+                if (enhanced && enhanced.trim() && enhanced.trim() !== processableText.trim()) {
+                    showNotification('Tone adjusted! Review the changes below.', 'success');
+                    displayToolChanges('Tone & Style Adjustment', processableText, enhanced.trim());
+                    
+                    // Track human touch interaction
+                    trackHumanTouch('lines_edited', 1);
+                } else {
+                    showNotification('Your tone is already well-balanced! No significant adjustments needed.', 'info');
+                }
                 
             } catch (error) {
-                console.error('Tone shift error:', error);
+                console.error('Tone shifter error:', error);
                 hideLoading();
-                showNotification('Failed to adjust tone. Please try again.', 'error');
+                
+                let errorMessage = 'Failed to adjust tone. ';
+                if (error.message && error.message.includes('token')) {
+                    errorMessage += 'Story may be too long for processing.';
+                } else if (error.message && error.message.includes('API')) {
+                    errorMessage += 'Please check your API key.';
+                } else {
+                    errorMessage += 'Please try again or use a shorter text selection.';
+                }
+                
+                showNotification(errorMessage, 'error');
             }
         }
         
@@ -2758,25 +2826,57 @@
                 const processableText = getTextWithinLimits(allChaptersText);
                 const isTextTruncated = processableText !== allChaptersText;
                 
-                const analysis = await callOpenAI([
+                // Get genre-specific prompt for conflict enhancement
+                const basePrompt = `You are an expert at intensifying story conflict and tension. Rewrite the provided text to strengthen conflict, raise stakes, and increase tension without being melodramatic.
+
+IMPORTANT: Return the COMPLETE rewritten text with intensified conflict, preserving all story structure and character development. Only enhance the tension and stakes.
+
+Focus on:
+- Stronger obstacles opposing character goals
+- Higher stakes and consequences
+- More urgent time pressure
+- Deeper emotional conflicts
+- Clearer opposing forces and motivations`;
+
+                const genrePrompt = getGenrePrompt('ConflictIntensifier', basePrompt);
+                
+                const enhanced = await callOpenAI([
                     {
                         role: "system",
-                        content: "You are an expert at analyzing story conflict and providing specific suggestions to intensify tension. Identify areas where friction can be raised at macro and micro levels without melodrama."
+                        content: genrePrompt
                     },
                     {
                         role: "user",
-                        content: `Analyze the conflict in this story and provide specific suggestions to intensify tension. Focus on making goals and obstacles clash more strongly without being melodramatic${isTextTruncated ? ' (analyzing first portion due to length)' : ''}:\n\n${processableText}`
+                        content: `Intensify the conflict and tension in this text while preserving the story structure. Return the complete rewritten text${isTextTruncated ? ' (processing first portion due to length)' : ''}:\n\n${processableText}`
                     }
                 ]);
                 
                 hideLoading();
-                showNotification('Conflict analysis complete!', 'success');
-                displayToolResult('Conflict Intensification Suggestions', analysis);
+                
+                if (enhanced && enhanced.trim() && enhanced.trim() !== processableText.trim()) {
+                    showNotification('Conflict intensified! Review the changes below.', 'success');
+                    displayToolChanges('Conflict & Tension Enhancement', processableText, enhanced.trim());
+                    
+                    // Track human touch interaction
+                    trackHumanTouch('lines_edited', 1);
+                } else {
+                    showNotification('Your conflict is already well-developed! No significant intensification needed.', 'info');
+                }
                 
             } catch (error) {
                 console.error('Conflict intensifier error:', error);
                 hideLoading();
-                showNotification('Failed to intensify conflict. Please try again.', 'error');
+                
+                let errorMessage = 'Failed to intensify conflict. ';
+                if (error.message && error.message.includes('token')) {
+                    errorMessage += 'Story may be too long for processing.';
+                } else if (error.message && error.message.includes('API')) {
+                    errorMessage += 'Please check your API key.';
+                } else {
+                    errorMessage += 'Please try again or use a shorter text selection.';
+                }
+                
+                showNotification(errorMessage, 'error');
             }
         }
         
@@ -2793,14 +2893,24 @@
             const isTextTruncated = processableText !== allChaptersText;
             
             const chapterInfo = hasMultipleChapters() ? 
-                `Enhancing dialogue with subtext and authenticity across ${storyData.chapters.length} chapters...` :
-                'Enhancing dialogue with subtext and authenticity...';
+                `Enhancing dialogue across ${storyData.chapters.length} chapters...` :
+                'Enhancing dialogue with better subtext and voice...';
             
             showLoading(chapterInfo, 'book');
             
             try {
-                // Get genre-specific prompt
-                const basePrompt = "You are a dialogue punch-up artist specializing in subtext, voice distinction, compression, and plausibility. Analyze the provided text and give actionable suggestions for improving dialogue to be more real, engaging, and filled with hidden meaning.";
+                // Get genre-specific prompt for actual rewriting
+                const basePrompt = `You are a dialogue enhancement expert. Rewrite the provided text to improve dialogue with better subtext, voice distinction, and natural conversation flow. 
+                
+IMPORTANT: Return the COMPLETE rewritten text with enhanced dialogue, preserving all non-dialogue content exactly as is. Only improve the dialogue sections.
+
+Focus on:
+- Adding subtext and hidden meaning to conversations
+- Making each character's voice distinctive 
+- Natural interruptions, hesitations, and speech patterns
+- Removing exposition-heavy dialogue
+- Adding emotional undercurrents`;
+
                 const genrePrompt = getGenrePrompt('DialogueEnhancer', basePrompt);
                 
                 const enhanced = await callOpenAI([
@@ -2810,24 +2920,26 @@
                     },
                     {
                         role: "user",
-                        content: `Analyze the dialogue in this story and provide specific suggestions for enhancement. Focus on subtext, voice distinction, and natural conversation flow${isTextTruncated ? ' (analyzing first portion due to length)' : ''}:\n\n${processableText}`
+                        content: `Enhance the dialogue in this text while preserving all non-dialogue content exactly. Return the complete rewritten text${isTextTruncated ? ' (enhancing first portion due to length)' : ''}:\n\n${processableText}`
                     }
                 ]);
                 
-                // Track human touch interaction
-                trackHumanTouch('lines_edited', 1);
-                
                 hideLoading();
-                showNotification('Dialogue analysis complete!', 'success');
                 
-                // Display suggestions instead of trying to replace text
-                displayToolResult('Dialogue Enhancement Suggestions', enhanced);
+                if (enhanced && enhanced.trim() && enhanced.trim() !== processableText.trim()) {
+                    showNotification('Dialogue enhanced! Review the changes below.', 'success');
+                    displayToolChanges('Dialogue Enhancement', processableText, enhanced.trim());
+                    
+                    // Track human touch interaction
+                    trackHumanTouch('lines_edited', 1);
+                } else {
+                    showNotification('No significant dialogue improvements found. Your dialogue may already be well-crafted!', 'info');
+                }
                 
             } catch (error) {
                 console.error('Dialogue enhancer error:', error);
                 hideLoading();
                 
-                // More detailed error message
                 let errorMessage = 'Failed to enhance dialogue. ';
                 if (error.message && error.message.includes('token')) {
                     errorMessage += 'Story may be too long for processing.';
@@ -3644,6 +3756,104 @@ Return ONLY the rewritten text with same chapter structure.`
             document.body.appendChild(resultModal);
         }
         
+        function displayToolChanges(title, originalText, newText) {
+            // Create a modal for showing before/after comparison
+            const resultModal = document.createElement('div');
+            resultModal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+            
+            const modalContent = document.createElement('div');
+            modalContent.className = 'bg-theme-secondary p-6 rounded-lg max-w-6xl max-h-[90vh] overflow-y-auto border-2 border-theme';
+            
+            modalContent.innerHTML = `
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-bold text-cyan-400">${title}</h3>
+                    <button class="close-modal text-gray-400 hover:text-white">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div class="bg-theme-primary p-4 rounded border border-theme">
+                        <h4 class="text-sm font-bold text-gray-400 mb-2">ORIGINAL TEXT</h4>
+                        <pre class="text-xs text-theme-primary whitespace-pre-wrap max-h-96 overflow-y-auto">${originalText}</pre>
+                    </div>
+                    <div class="bg-theme-primary p-4 rounded border border-cyan-400">
+                        <h4 class="text-sm font-bold text-cyan-400 mb-2">ENHANCED TEXT</h4>
+                        <pre class="text-xs text-theme-primary whitespace-pre-wrap max-h-96 overflow-y-auto">${newText}</pre>
+                    </div>
+                </div>
+                <div class="flex justify-between items-center">
+                    <div class="text-xs text-theme-secondary">
+                        💡 <strong>Tip:</strong> Review the changes and choose to keep original or apply the enhanced version
+                    </div>
+                    <div class="flex space-x-3">
+                        <button class="close-modal btn-gray px-4 py-2 rounded">
+                            <i class="fas fa-times mr-1"></i>Keep Original
+                        </button>
+                        <button class="copy-changes btn-secondary px-4 py-2 rounded">
+                            <i class="fas fa-copy mr-1"></i>Copy Enhanced
+                        </button>
+                        <button class="apply-enhanced btn-primary px-4 py-2 rounded">
+                            <i class="fas fa-magic mr-1"></i>Apply Changes
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            // Add event listeners
+            modalContent.querySelectorAll('.close-modal').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    resultModal.remove();
+                });
+            });
+            
+            modalContent.querySelector('.copy-changes').addEventListener('click', () => {
+                navigator.clipboard.writeText(newText).then(() => {
+                    showNotification('Enhanced text copied to clipboard!', 'success');
+                }).catch(() => {
+                    showNotification('Failed to copy to clipboard', 'error');
+                });
+            });
+            
+            modalContent.querySelector('.apply-enhanced').addEventListener('click', () => {
+                applyTextChanges(newText, resultModal);
+            });
+            
+            resultModal.appendChild(modalContent);
+            document.body.appendChild(resultModal);
+        }
+
+        function applyTextChanges(newText, modal) {
+            const editor = document.getElementById('storyEditor');
+            if (!editor) {
+                showNotification('No text editor found to apply changes', 'error');
+                return;
+            }
+
+            // Save current state for undo
+            saveEditState();
+
+            // Apply the enhanced text
+            editor.value = newText;
+            
+            // Update story data if we're in chapter editing mode
+            const activeChapter = document.querySelector('.chapter-tab.active');
+            if (activeChapter && storyData.chapters) {
+                const chapterIndex = parseInt(activeChapter.dataset.chapter);
+                if (!isNaN(chapterIndex) && storyData.chapters[chapterIndex]) {
+                    storyData.chapters[chapterIndex].content = newText;
+                }
+            }
+
+            // Track human touch for making edits
+            trackHumanTouch('lines_edited', Math.max(1, newText.split('\n').length * 0.1));
+            
+            // Update UI
+            updateUndoRedoButtons();
+            showNotification('Changes applied successfully! ✨', 'success');
+            
+            modal.remove();
+        }
+
         function copyToClipboard(text) {
             navigator.clipboard.writeText(text).then(() => {
                 showNotification('Result copied to clipboard!', 'success');
@@ -6698,27 +6908,54 @@ Format as clean, readable text ready for narration.`;
             const genreSelect = document.getElementById('storyGenre');
             const tooltipElement = document.getElementById('genreTooltip');
             
+            if (!genreSelect || !tooltipElement) {
+                console.log('Genre elements not found yet, will retry in 500ms...');
+                setTimeout(updateGenreSettings, 500);
+                return;
+            }
+            
             currentGenre = genreSelect.value;
+            console.log('Updating genre to:', currentGenre);
+            console.log('Genre config available:', !!genreConfig);
+            console.log('Available tooltip coachmarks:', genreConfig?.tooltip_coachmarks ? Object.keys(genreConfig.tooltip_coachmarks) : 'none');
             
             // Update tooltip with genre-specific coaching
             if (genreConfig && genreConfig.tooltip_coachmarks && genreConfig.tooltip_coachmarks[currentGenre]) {
-                tooltipElement.textContent = `💡 ${genreConfig.tooltip_coachmarks[currentGenre]}`;
-                tooltipElement.title = genreConfig.tooltip_coachmarks[currentGenre];
-            } else {
+                const coaching = genreConfig.tooltip_coachmarks[currentGenre];
+                tooltipElement.textContent = `💡 ${coaching}`;
+                tooltipElement.title = coaching;
+                tooltipElement.classList.remove('text-gray-400');
+                tooltipElement.classList.add('text-cyan-300', 'font-medium');
+                console.log('✅ Applied tooltip:', coaching);
+            } else if (currentGenre === 'General') {
                 tooltipElement.textContent = '';
+                tooltipElement.title = '';
+                console.log('✅ Cleared tooltip for General genre');
+            } else {
+                // If config isn't loaded yet, try again shortly
+                if (!genreConfig) {
+                    tooltipElement.textContent = '⏳ Loading genre tips...';
+                    console.log('⏳ Genre config not loaded yet, retrying...');
+                    setTimeout(updateGenreSettings, 1000);
+                    return;
+                } else {
+                    tooltipElement.textContent = '⚠️ No tips available';
+                    tooltipElement.classList.add('text-gray-400');
+                    console.log('⚠️ No tooltip available for genre:', currentGenre);
+                }
             }
             
             // Update narration guidance
             updateNarrationGuidance();
-            
-            console.log('Genre updated to:', currentGenre);
             
             // Store genre selection
             if (typeof storyData !== 'undefined') {
                 storyData.genre = currentGenre;
             }
             
-            showNotification(`Genre set to ${currentGenre}. Tools will now adapt to ${currentGenre.toLowerCase()} writing style.`, 'info');
+            if (currentGenre !== 'General' && genreConfig?.tooltip_coachmarks?.[currentGenre]) {
+                showNotification(`✨ Genre set to ${currentGenre}. Smart coaching active!`, 'success');
+            }
         }
 
         // Update narration guidance based on current genre
@@ -6881,14 +7118,38 @@ Format as clean, readable text ready for narration.`;
 
         // Initialize genre system
         async function initializeGenreSystem() {
-            await loadGenreConfig();
-            updateGenreSettings(); // Set initial genre
-            updateHumanTouchScore(); // Initialize score display
+            console.log('🔧 Initializing genre system...');
+            try {
+                await loadGenreConfig();
+                console.log('✅ Genre config loaded successfully');
+                
+                // Wait a bit for DOM elements to be ready
+                setTimeout(() => {
+                    updateGenreSettings(); // Set initial genre
+                    updateHumanTouchScore(); // Initialize score display
+                    console.log('✅ Genre system initialized');
+                }, 100);
+                
+            } catch (error) {
+                console.error('❌ Failed to initialize genre system:', error);
+                // Retry once after a delay
+                setTimeout(async () => {
+                    try {
+                        await loadGenreConfig();
+                        updateGenreSettings();
+                        updateHumanTouchScore();
+                        console.log('✅ Genre system initialized on retry');
+                    } catch (retryError) {
+                        console.error('❌ Genre system retry failed:', retryError);
+                    }
+                }, 2000);
+            }
         }
 
-        // Initialize on page load
+        // Initialize on page load - ensure this runs after other DOM setup
         document.addEventListener('DOMContentLoaded', () => {
-            initializeGenreSystem();
+            // Give other initializers time to complete first
+            setTimeout(initializeGenreSystem, 200);
         });
         
     </script>
