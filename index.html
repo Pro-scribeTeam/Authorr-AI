@@ -3171,59 +3171,74 @@ Follow these steps:
             }
             
             // Use text within safe limits
-            const processableText = getTextWithinLimits(allChaptersText, 12000); // Slightly smaller for humanization
+            const processableText = getTextWithinLimits(allChaptersText, 10000); // Smaller limit for rewriting
             const isTextTruncated = processableText !== allChaptersText;
             
             const chapterInfo = hasMultipleChapters() ? 
-                `Humanizing text while preserving meaning across ${storyData.chapters.length} chapters${isTextTruncated ? ' (processing first portion)' : ''}...` :
-                'Humanizing text while preserving meaning...';
+                `Rewriting text to reduce AI detection across ${storyData.chapters.length} chapters${isTextTruncated ? ' (processing first portion)' : ''}...` :
+                'Rewriting text to reduce AI detection...';
             
             showLoading(chapterInfo, 'book');
             
             try {
-                const analysis = await callOpenAI([
+                const humanizedText = await callOpenAI([
                     {
                         role: "system",
-                        content: `You are a writing humanization expert who analyzes text for AI-like patterns and provides specific, actionable suggestions for making it more human-like.
+                        content: `You are an expert human writer who specializes in rewriting AI-generated text to make it sound completely natural and human-written.
 
-Analyze the text and provide:
-1. **AI Detection Indicators:** Specific patterns that suggest AI authorship
-2. **Humanization Strategies:** Concrete techniques to make it more natural
-3. **Specific Examples:** Show before/after examples from the text
-4. **Priority Areas:** Which sections need the most attention
+Your task is to:
+1. Rewrite the text to eliminate AI detection patterns
+2. Add natural human imperfections and variations
+3. Use more varied sentence structures and lengths
+4. Include subtle inconsistencies that humans naturally have
+5. Make dialogue more authentic and natural
+6. Add organic transitions and flow
+7. Preserve the original meaning and plot
 
-Focus on:
-- Sentence variety and natural rhythm
-- Authentic human imperfections
-- Natural transitions and flow
-- Contextually appropriate language
-- Emotional authenticity and nuance`
+Key techniques:
+- Mix short and long sentences naturally
+- Use contractions and informal language where appropriate
+- Add minor grammatical variations (but keep it readable)
+- Include more specific, concrete details
+- Make character voices more distinct
+- Add emotional nuance and subtext
+
+Return ONLY the rewritten text, formatted exactly like the original with proper paragraph breaks and chapter divisions if present.`
                     },
                     {
                         role: "user",
-                        content: `Analyze this ${isTextTruncated ? 'portion of the ' : ''}story and provide specific humanization suggestions. Identify AI-like patterns and give actionable advice for making it more natural and human-written${isTextTruncated ? ' (analyzing first portion due to length)' : ''}:\n\n${processableText}`
+                        content: `Please rewrite this ${isTextTruncated ? 'portion of the ' : ''}story to make it sound completely human-written and reduce AI detection likelihood. Maintain all plot points, characters, and meaning${isTextTruncated ? ' (rewriting first portion due to length)' : ''}:\n\n${processableText}`
                     }
                 ]);
                 
                 hideLoading();
-                showNotification('Humanization analysis complete!', 'success');
                 
-                // Show humanization suggestions instead of trying to replace text
-                displayToolResult('Text Humanization Suggestions', analysis);
-                
-                // Scroll to results
-                resultsDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                if (humanizedText && humanizedText.trim()) {
+                    showNotification('Text successfully humanized! Review the changes below.', 'success');
+                    displayHumanizationResult(humanizedText.trim(), processableText);
+                    
+                    // Enable reanalyze button
+                    const reanalyzeBtn = document.getElementById('reanalyzeBtn');
+                    if (reanalyzeBtn) {
+                        reanalyzeBtn.disabled = false;
+                        reanalyzeBtn.style.opacity = '1';
+                    }
+                } else {
+                    showNotification('Humanization completed but no changes detected. Text may already be sufficiently human-like.', 'warning');
+                }
                 
             } catch (error) {
                 console.error('Humanization error:', error);
                 hideLoading();
                 
                 // More detailed error message
-                let errorMessage = 'Failed to analyze text for humanization. ';
+                let errorMessage = 'Failed to humanize text. ';
                 if (error.message && error.message.includes('token')) {
-                    errorMessage += 'Story may be too long for processing.';
+                    errorMessage += 'Story may be too long for processing. Try with shorter content.';
                 } else if (error.message && error.message.includes('API')) {
-                    errorMessage += 'Please check your API key.';
+                    errorMessage += 'Please check your OpenAI API key in Settings.';
+                } else if (error.message && error.message.includes('rate')) {
+                    errorMessage += 'Rate limit reached. Please wait a moment and try again.';
                 } else {
                     errorMessage += 'Please try again or use a shorter text selection.';
                 }
@@ -5302,7 +5317,11 @@ Format as clean, readable text ready for narration.`;
             
             const wordCount = content.trim().split(/\s+/).length;
             const charCount = content.length;
-            const hasDialogue = content.includes('"') || content.match(/^[A-Z][a-z]*:/m);
+            // Enhanced dialogue detection (same patterns as scanForDialogue)
+            const hasDialogue = content.includes('"') || content.includes('"') || content.includes('"') ||
+                               content.match(/^[A-Z][a-zA-Z\s]+?:\s*["""]/m) ||
+                               /\b(said|asked|replied|whispered|shouted|muttered|exclaimed)\b.*?["""]/i.test(content) ||
+                               /["""']([^"""']{3,})["""']/g.test(content);
             
             statusIcon.className = 'w-3 h-3 rounded-full bg-green-400';
             statusText.innerHTML = `
