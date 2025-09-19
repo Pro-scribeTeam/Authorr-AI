@@ -600,6 +600,39 @@
                                    class="w-full px-4 py-2 rounded-lg form-field bg-theme-primary text-theme-primary">
                         </div>
                         
+                        <div>
+                            <label class="block text-sm font-semibold mb-2">
+                                <i class="fas fa-palette mr-1"></i>Story Genre
+                                <span id="genreTooltip" class="ml-2 text-xs text-cyan-400 cursor-help"></span>
+                            </label>
+                            <select id="storyGenre" onchange="updateGenreSettings()" class="w-full px-4 py-2 rounded-lg form-field bg-theme-primary text-theme-primary">
+                                <option value="General">General (No Specific Genre)</option>
+                                <option value="Thriller">Thriller</option>
+                                <option value="Romance">Romance</option>
+                                <option value="Fantasy">Fantasy</option>
+                                <option value="Horror">Horror</option>
+                                <option value="Comedy">Comedy</option>
+                                <option value="Drama">Drama</option>
+                                <option value="YoungAdult">Young Adult</option>
+                                <option value="Children">Children's Story</option>
+                                <option value="Memoir">Memoir/Non-Fiction</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Human Touch Score -->
+                        <div class="bg-theme-primary p-4 rounded-lg border border-theme">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-2">
+                                    <i class="fas fa-heart text-red-400"></i>
+                                    <span class="text-sm font-semibold">Human Touch Score:</span>
+                                </div>
+                                <span class="human-touch-score text-lg font-bold">0%</span>
+                            </div>
+                            <div class="text-xs text-theme-secondary mt-1">
+                                Based on personal edits, notes, and voice choices
+                            </div>
+                        </div>
+                        
                         <div class="grid grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-sm font-semibold mb-2">Chapter Selection</label>
@@ -911,6 +944,21 @@
                 <button onclick="showPage('export')" class="btn-primary px-6 py-2 rounded-lg font-semibold">
                     <i class="fas fa-download mr-2"></i>Export Audiobook
                 </button>
+            </div>
+            
+            <!-- Genre-Specific Narration Guidance -->
+            <div id="genreNarrationGuidance" class="mb-6 bg-gradient-to-r from-purple-600 to-blue-600 p-4 rounded-xl border-2 border-purple-400">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <i class="fas fa-palette text-purple-200"></i>
+                        <span class="text-white font-semibold" id="currentGenreDisplay">General</span>
+                        <span class="text-purple-200 text-sm">Narration Guidelines</span>
+                    </div>
+                    <span class="text-purple-200 text-sm">Human Touch: <span class="human-touch-score text-white font-semibold">0%</span></span>
+                </div>
+                <div id="genreNarrationTips" class="text-purple-100 text-sm mt-2">
+                    Select a genre in the Workspace to get tailored narration guidance.
+                </div>
             </div>
 
             <!-- Animated Sound Wave -->
@@ -2751,16 +2799,23 @@
             showLoading(chapterInfo, 'book');
             
             try {
+                // Get genre-specific prompt
+                const basePrompt = "You are a dialogue punch-up artist specializing in subtext, voice distinction, compression, and plausibility. Analyze the provided text and give actionable suggestions for improving dialogue to be more real, engaging, and filled with hidden meaning.";
+                const genrePrompt = getGenrePrompt('DialogueEnhancer', basePrompt);
+                
                 const enhanced = await callOpenAI([
                     {
-                        role: "system",
-                        content: "You are a dialogue punch-up artist specializing in subtext, voice distinction, compression, and plausibility. Analyze the provided text and give actionable suggestions for improving dialogue to be more real, engaging, and filled with hidden meaning."
+                        role: "system", 
+                        content: genrePrompt
                     },
                     {
                         role: "user",
                         content: `Analyze the dialogue in this story and provide specific suggestions for enhancement. Focus on subtext, voice distinction, and natural conversation flow${isTextTruncated ? ' (analyzing first portion due to length)' : ''}:\n\n${processableText}`
                     }
                 ]);
+                
+                // Track human touch interaction
+                trackHumanTouch('lines_edited', 1);
                 
                 hideLoading();
                 showNotification('Dialogue analysis complete!', 'success');
@@ -3408,6 +3463,8 @@ Return ONLY the rewritten text with same chapter structure.`
                     updateContentStatus();
                     
                     console.log('Updated chapters, current content now:', getAllChaptersText().substring(0, 200) + '...');
+                    // Track human touch for personalization
+                    trackHumanTouch('lines_edited', chapterSections.length);
                     showNotification('Humanized text saved successfully across all chapters!', 'success');
                 } else {
                     // Fallback: treat as single content
@@ -6607,6 +6664,233 @@ Format as clean, readable text ready for narration.`;
                 }, 300);
             }, 5000);
         }
+
+        // ============ GENRE SYSTEM ============
+        
+        let genreConfig = null;
+        let currentGenre = 'General';
+        let humanTouchData = {
+            lines_edited: 0,
+            total_lines: 0,
+            personal_notes_added: 0,
+            voice_direction_chosen: false
+        };
+
+        // Load genre configuration
+        async function loadGenreConfig() {
+            try {
+                const response = await fetch('./genre-config.json');
+                genreConfig = await response.json();
+                console.log('Genre configuration loaded:', Object.keys(genreConfig.genres));
+            } catch (error) {
+                console.error('Failed to load genre configuration:', error);
+                // Fallback - create minimal config
+                genreConfig = {
+                    default_genre: 'General',
+                    tooltip_coachmarks: {},
+                    genres: {}
+                };
+            }
+        }
+
+        // Update genre settings when user selects a genre
+        function updateGenreSettings() {
+            const genreSelect = document.getElementById('storyGenre');
+            const tooltipElement = document.getElementById('genreTooltip');
+            
+            currentGenre = genreSelect.value;
+            
+            // Update tooltip with genre-specific coaching
+            if (genreConfig && genreConfig.tooltip_coachmarks && genreConfig.tooltip_coachmarks[currentGenre]) {
+                tooltipElement.textContent = `💡 ${genreConfig.tooltip_coachmarks[currentGenre]}`;
+                tooltipElement.title = genreConfig.tooltip_coachmarks[currentGenre];
+            } else {
+                tooltipElement.textContent = '';
+            }
+            
+            // Update narration guidance
+            updateNarrationGuidance();
+            
+            console.log('Genre updated to:', currentGenre);
+            
+            // Store genre selection
+            if (typeof storyData !== 'undefined') {
+                storyData.genre = currentGenre;
+            }
+            
+            showNotification(`Genre set to ${currentGenre}. Tools will now adapt to ${currentGenre.toLowerCase()} writing style.`, 'info');
+        }
+
+        // Update narration guidance based on current genre
+        function updateNarrationGuidance() {
+            const genreDisplayElement = document.getElementById('currentGenreDisplay');
+            const tipsElement = document.getElementById('genreNarrationTips');
+            
+            if (genreDisplayElement) {
+                genreDisplayElement.textContent = currentGenre;
+            }
+            
+            if (tipsElement) {
+                const guidance = getNarrationGuidance();
+                if (guidance && currentGenre !== 'General') {
+                    let tipsHTML = '<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">';
+                    
+                    if (guidance.voice_tone) {
+                        tipsHTML += `<div><strong>Voice Tone:</strong> ${guidance.voice_tone}</div>`;
+                    }
+                    if (guidance.pauses) {
+                        tipsHTML += `<div><strong>Pacing:</strong> ${guidance.pauses}</div>`;
+                    }
+                    if (guidance.effects) {
+                        tipsHTML += `<div><strong>Effects:</strong> ${guidance.effects}</div>`;
+                    }
+                    if (guidance.background) {
+                        tipsHTML += `<div><strong>Background:</strong> ${guidance.background}</div>`;
+                    }
+                    if (guidance.tip) {
+                        tipsHTML += `<div><strong>Pro Tip:</strong> ${guidance.tip}</div>`;
+                    }
+                    if (guidance.recording_tip) {
+                        tipsHTML += `<div><strong>Recording:</strong> ${guidance.recording_tip}</div>`;
+                    }
+                    
+                    tipsHTML += '</div>';
+                    tipsElement.innerHTML = tipsHTML;
+                } else {
+                    tipsElement.innerHTML = 'Select a specific genre in the Workspace to get tailored narration guidance for your story type.';
+                }
+            }
+        }
+
+        // Get genre-specific tool configuration
+        function getGenreToolConfig(toolName) {
+            if (!genreConfig || currentGenre === 'General' || !genreConfig.genres[currentGenre]) {
+                return null;
+            }
+            
+            const genreData = genreConfig.genres[currentGenre];
+            return genreData.tool_customizations && genreData.tool_customizations[toolName] || null;
+        }
+
+        // Get genre-specific prompts for tools
+        function getGenrePrompt(toolName, defaultPrompt) {
+            const toolConfig = getGenreToolConfig(toolName);
+            
+            if (!toolConfig) return defaultPrompt;
+            
+            // Handle different types of genre customizations
+            if (toolConfig.prompt) {
+                return toolConfig.prompt;
+            }
+            
+            if (toolConfig.override_prompt) {
+                return toolConfig.override_prompt;
+            }
+            
+            if (toolConfig.suggestion_prompt) {
+                return toolConfig.suggestion_prompt;
+            }
+            
+            // Add genre-specific context to default prompt
+            const genreData = genreConfig.genres[currentGenre];
+            if (genreData && genreData.chapter_writing_rules) {
+                const rules = genreData.chapter_writing_rules;
+                let genreContext = `\\n\\n**Genre: ${currentGenre} - Writing Guidelines:**\\n`;
+                genreContext += `- Point of View: ${rules.point_of_view}\\n`;
+                genreContext += `- Focus on: ${rules.focus.join(', ')}\\n`;
+                genreContext += `- Avoid: ${rules.avoid.join(', ')}\\n`;
+                
+                if (toolConfig.default_tone) {
+                    genreContext += `- Tone: ${toolConfig.default_tone}\\n`;
+                }
+                if (toolConfig.pace) {
+                    genreContext += `- Pacing: ${toolConfig.pace}\\n`;
+                }
+                
+                return defaultPrompt + genreContext;
+            }
+            
+            return defaultPrompt;
+        }
+
+        // Calculate human touch score
+        function calculateHumanTouchScore() {
+            if (!genreConfig) return 0;
+            
+            const formula = genreConfig.human_touch_score_formula;
+            const data = humanTouchData;
+            
+            // Parse and evaluate the formula
+            // ((lines_edited / total_lines) * 0.4) + ((personal_notes_added > 0 ? 0.3 : 0) + (voice_direction_chosen ? 0.3 : 0))
+            
+            const linesRatio = data.total_lines > 0 ? data.lines_edited / data.total_lines : 0;
+            const notesBonus = data.personal_notes_added > 0 ? 0.3 : 0;
+            const voiceBonus = data.voice_direction_chosen ? 0.3 : 0;
+            
+            const score = (linesRatio * 0.4) + notesBonus + voiceBonus;
+            return Math.min(Math.round(score * 100), 100); // Cap at 100%
+        }
+
+        // Update human touch score display
+        function updateHumanTouchScore() {
+            const score = calculateHumanTouchScore();
+            const scoreElements = document.querySelectorAll('.human-touch-score');
+            
+            scoreElements.forEach(element => {
+                element.textContent = `${score}%`;
+                
+                // Color coding
+                if (score >= 70) {
+                    element.className = 'human-touch-score text-green-400 font-semibold';
+                } else if (score >= 40) {
+                    element.className = 'human-touch-score text-yellow-400 font-semibold';
+                } else {
+                    element.className = 'human-touch-score text-red-400 font-semibold';
+                }
+            });
+        }
+
+        // Track human touch interactions
+        function trackHumanTouch(type, value = 1) {
+            switch(type) {
+                case 'lines_edited':
+                    humanTouchData.lines_edited += value;
+                    break;
+                case 'total_lines':
+                    humanTouchData.total_lines = value;
+                    break;
+                case 'personal_notes':
+                    humanTouchData.personal_notes_added += value;
+                    break;
+                case 'voice_direction':
+                    humanTouchData.voice_direction_chosen = true;
+                    break;
+            }
+            
+            updateHumanTouchScore();
+        }
+
+        // Get narration guidance for current genre
+        function getNarrationGuidance() {
+            if (!genreConfig || currentGenre === 'General' || !genreConfig.genres[currentGenre]) {
+                return null;
+            }
+            
+            return genreConfig.genres[currentGenre].narration_prep || null;
+        }
+
+        // Initialize genre system
+        async function initializeGenreSystem() {
+            await loadGenreConfig();
+            updateGenreSettings(); // Set initial genre
+            updateHumanTouchScore(); // Initialize score display
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeGenreSystem();
+        });
+        
     </script>
 </body>
 </html>

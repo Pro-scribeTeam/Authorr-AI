@@ -1,0 +1,248 @@
+{
+  "version": "1.0",
+  "last_updated": "2025-04-05",
+  "default_genre": "General",
+  "human_touch_score_formula": "((lines_edited / total_lines) * 0.4) + ((personal_notes_added > 0 ? 0.3 : 0) + (voice_direction_chosen ? 0.3 : 0))",
+  "tooltip_coachmarks": {
+    "Thriller": "End chapters with a question or cliffhanger to keep listeners hooked!",
+    "Romance": "Show longing through small gestures — a glance, a pause, a trembling hand.",
+    "Fantasy": "Introduce one new world element per chapter — magic, creature, or rule.",
+    "Memoir": "Include sensory memories: smell of rain, sound of laughter, texture of a blanket.",
+    "Children": "Use repetition, rhythm, and clear emotional beats — kids love predictability with surprise!",
+    "Drama": "Let silence speak. Sometimes what's not said is the most powerful.",
+    "Comedy": "Punchlines work best after setup. Let the reader lean in… then surprise them.",
+    "Horror": "Fear lives in the unknown. Describe less — imply more.",
+    "YoungAdult": "Voice matters most. Let your character sound like they're talking to a friend."
+  },
+  "genres": {
+    "Memoir": {
+      "outline_rules": {
+        "structure": ["Childhood", "Turning Point", "Struggle", "Insight", "Transformation"],
+        "required_elements": ["Emotional anchor", "Low point (Ch6)", "Epiphany (Ch9)", "Present Reflection"],
+        "characters": ["Self (protagonist)", "Key Influencer", "Community"]
+      },
+      "chapter_writing_rules": {
+        "point_of_view": "First Person",
+        "focus": ["Sensory memories", "Reflection on meaning", "Show emotion through detail"],
+        "avoid": ["Telling instead of showing", "Over-explaining feelings"]
+      },
+      "tool_customizations": {
+        "EmotionalResonance": { "flag_if_missing": ["vulnerability", "regret", "joy", "growth"] },
+        "SubtextBuilder": { "suggestion_prompt": "Rewrite to imply emotion through action (e.g., 'I smiled, but my hands shook')" },
+        "ToneShifter": { "default_tone": "Reflective, Honest, Warm or Raw" },
+        "PacingBalancer": { "pace": "Slow, contemplative" },
+        "DialogueEnhancer": { "goal": "Authentic, conversational, not scripted" },
+        "ThemeTracker": { "themes": ["Identity", "Belonging", "Resilience", "Forgiveness"] }
+      },
+      "narration_prep": {
+        "voice_tone": "Conversational, intimate",
+        "pauses": "Add natural pauses for reflection",
+        "recording_tip": "Record in quiet, personal space for authenticity"
+      }
+    },
+    "Children": {
+      "outline_rules": {
+        "structure": ["Introduction", "Problem", "Attempts to Solve", "Big Mistake or Surprise", "Solution & Celebration"],
+        "required_elements": ["Repetition or rhyme", "Clear emotional arc", "Visualizable scenes", "Moral or lesson (subtle)"],
+        "characters": ["Child protagonist", "Friendly guide (animal or adult)", "Obstacle (not villain)"]
+      },
+      "chapter_writing_rules": {
+        "point_of_view": "Third Person or First Person (child)",
+        "focus": ["Rhythm and repetition", "Bright sensory words", "Short sentences", "Clear cause-effect"],
+        "avoid": ["Complex metaphors", "Long paragraphs", "Ambiguous endings"]
+      },
+      "tool_customizations": {
+        "PacingBalancer": { "pace": "Bouncy, rhythmic, predictable with surprise" },
+        "DialogueEnhancer": { "goal": "Simple, playful, repeatable lines" },
+        "EmotionalResonance": { "flag_if_missing": ["Joy", "Curiosity", "Mild fear", "Triumph"] },
+        "ToneShifter": { "default_tone": "Playful, Warm, Reassuring" },
+        "MetaphorGenerator": { "override_prompt": "Use simple comparisons: 'as loud as a lion's yawn', 'as soft as kitten paws'" },
+        "ThemeTracker": { "themes": ["Friendship", "Bravery", "Sharing", "Trying Again"] }
+      },
+      "narration_prep": {
+        "voice_tone": "Energetic, expressive, slightly exaggerated",
+        "pauses": "Pause before punchlines or surprises",
+        "sound_effects": "Optional: add giggle, gasp, or animal sound cues"
+      }
+    },
+    "Drama": {
+      "outline_rules": {
+        "structure": ["Status Quo", "Disruption", "Internal Conflict", "Climax", "Ambiguous or Quiet Resolution"],
+        "required_elements": ["Moral dilemma (Ch4)", "Relationship fracture (Ch7)", "Silent climax (Ch10)"],
+        "characters": ["Complex, flawed, morally gray characters — no clear heroes or villains"]
+      },
+      "chapter_writing_rules": {
+        "point_of_view": "Third Limited or First Person",
+        "focus": ["Internal monologue", "Subtext", "Symbolism", "Silence as power"],
+        "avoid": ["Plot-driven action", "Rushed resolution", "Explaining themes"]
+      },
+      "tool_customizations": {
+        "SymbolismSuggester": { "prompt": "Suggest recurring motifs (e.g., 'The empty chair = loss')" },
+        "MetaphorGenerator": { "prompt": "Suggest poetic, layered comparisons tied to emotion" },
+        "SubtextBuilder": { "prompt": "Rewrite dialogue to imply, not declare — silence can speak louder" },
+        "ThemeTracker": { "themes": ["Isolation", "Truth", "Regret", "Redemption"] },
+        "EmotionalResonance": { "flag_if_missing": ["Ambiguity", "Silence", "Moral weight"] },
+        "ToneShifter": { "default_tone": "Quiet, Poetic, Haunting" },
+        "PacingBalancer": { "pace": "Very slow — allow space for reflection" }
+      },
+      "narration_prep": {
+        "voice_tone": "Soft, measured, with long pauses",
+        "emphasis": "Add weight to symbolic or ambiguous lines",
+        "background": "Recommend minimal or no background music"
+      }
+    },
+    "Comedy": {
+      "outline_rules": {
+        "structure": ["Setup (Normal World)", "Inciting Goof", "Escalating Mishaps", "Big Reveal or Twist", "Happy Chaos Resolution"],
+        "required_elements": ["Rule of Three jokes", "Character flaw as punchline source", "Misunderstanding (Ch5)", "Physical or verbal gag per chapter"],
+        "characters": ["Flawed protagonist", "Straight man (reacts seriously)", "Wildcard (causes chaos)"]
+      },
+      "chapter_writing_rules": {
+        "point_of_view": "Third Person or First Person (sarcastic)",
+        "focus": ["Timing", "Misunderstandings", "Exaggeration", "Callbacks"],
+        "avoid": ["Explaining the joke", "Overused clichés", "Mean-spirited humor"]
+      },
+      "tool_customizations": {
+        "ConflictIntensifier": { "prompt": "Turn minor annoyance into absurd disaster" },
+        "DialogueEnhancer": { "goal": "Punch up with sarcasm, irony, or literal interpretations" },
+        "PacingBalancer": { "pace": "Fast setup, pause before punchline, quick recovery" },
+        "ToneShifter": { "default_tone": "Witty, Sarcastic, Playfully Absurd" },
+        "EmotionalResonance": { "flag_if_missing": ["Surprise", "Relief", "Shared laughter"] },
+        "ThemeTracker": { "themes": ["Ego vs. Humility", "Expectation vs. Reality", "Friendship in Chaos"] }
+      },
+      "narration_prep": {
+        "voice_tone": "Expressive, timing-focused, slightly exaggerated",
+        "pauses": "Critical pause before punchlines",
+        "tip": "Record with a friend laughing in the background for natural timing"
+      }
+    },
+    "Horror": {
+      "outline_rules": {
+        "structure": ["False Normalcy", "First Sign", "Denial", "The Turn (no escape)", "Final Confrontation or Escape"],
+        "required_elements": ["Isolation (physical or emotional)", "Unseen threat", "Sensory dread (sound, smell, touch)", "Ambiguous or bleak ending"],
+        "characters": ["Victim (relatable)", "Skeptic (denies threat)", "Knows-Too-Much (disappears)"]
+      },
+      "chapter_writing_rules": {
+        "point_of_view": "First Person or Close Third",
+        "focus": ["Sensory dread", "Withholding information", "Implied threat", "Breaking routine"],
+        "avoid": ["Over-describing monster", "Jump scares in text", "Happy endings"]
+      },
+      "tool_customizations": {
+        "PacingBalancer": { "pace": "Slow build, sudden spikes, then silence" },
+        "SubtextBuilder": { "prompt": "Replace direct fear with physiological reactions: 'My throat closed. I didn't scream. I couldn't.'" },
+        "ToneShifter": { "default_tone": "Claustrophobic, Dread-Filled, Whispered" },
+        "SymbolismSuggester": { "prompt": "Suggest recurring dread symbols: flickering lights, wet footprints, child's drawing" },
+        "EmotionalResonance": { "flag_if_missing": ["Dread", "Paranoia", "Helplessness"] },
+        "ThemeTracker": { "themes": ["Fear of the Unknown", "Loss of Control", "Guilt Manifested"] }
+      },
+      "narration_prep": {
+        "voice_tone": "Low, slow, breathy — like telling a campfire story",
+        "pauses": "Long silences after creepy lines",
+        "effects": "Optional: subtle echo, distant whisper, or heartbeat SFX"
+      }
+    },
+    "YoungAdult": {
+      "outline_rules": {
+        "structure": ["Who I Am", "The Change", "Friendship Tested", "Identity Crisis", "Own My Truth"],
+        "required_elements": ["Authentic teen voice", "Friend group dynamics", "First love or heartbreak", "Adults don't understand moment"],
+        "characters": ["Teen protagonist", "Best friend (loyal or betrayer)", "Mentor (flawed but tries)", "Crush or rival"]
+      },
+      "chapter_writing_rules": {
+        "point_of_view": "First Person (teen voice)",
+        "focus": ["Internal monologue", "Text-style dialogue", "Emotional honesty", "Pop culture references (optional)"],
+        "avoid": ["Adult-sounding narration", "Preachy lessons", "Over-explaining feelings"]
+      },
+      "tool_customizations": {
+        "DialogueEnhancer": { "goal": "Make it sound like real teen talk — interruptions, slang, half-sentences" },
+        "ToneShifter": { "default_tone": "Raw, Honest, Sarcastic or Vulnerable" },
+        "EmotionalResonance": { "flag_if_missing": ["Confusion", "Passion", "Anger", "Hope"] },
+        "PacingBalancer": { "pace": "Fast banter, slow emotional moments" },
+        "ThemeTracker": { "themes": ["Finding Your Voice", "Belonging", "First Love", "Breaking Free"] }
+      },
+      "narration_prep": {
+        "voice_tone": "Like talking to a best friend — casual, emotional, real",
+        "pauses": "Natural teen speech rhythm — sometimes rushed, sometimes hesitant",
+        "tip": "Cast a young narrator — authenticity matters more than polish"
+      }
+    },
+    "Fantasy": {
+      "outline_rules": {
+        "structure": ["Ordinary World", "Call to Adventure", "Trials", "Revelation", "Final Battle", "New World"],
+        "required_elements": ["World-building intro (Ch1-2)", "Magic/Tech rules (Ch3)", "Mentor Figure", "Moral Choice (Ch8)"],
+        "characters": ["Hero (reluctant)", "Mentor (wise but flawed)", "Villain (ideological)", "Sidekick (comic or loyal)"]
+      },
+      "chapter_writing_rules": {
+        "point_of_view": "Third Limited or First Person",
+        "focus": ["Sensory immersion", "Introduce 1 new world element per chapter", "Metaphors tied to world"],
+        "avoid": ["Info-dumping", "Over-explaining magic", "Generic fantasy tropes without twist"]
+      },
+      "tool_customizations": {
+        "SymbolismSuggester": { "prompt": "Tie symbols to world (e.g., 'Broken crown = fallen kingdom')" },
+        "MetaphorGenerator": { "prompt": "Suggest world-consistent metaphors ('His rage burned like a dying star')" },
+        "ThemeTracker": { "themes": ["Power vs. Responsibility", "Tradition vs. Innovation"] },
+        "PlotHoleDetector": { "flag_if": ["Inconsistent magic/tech rules", "Geography errors"] },
+        "PacingBalancer": { "pace": "Slower early (world-building), faster later (action)" },
+        "ToneShifter": { "default_tone": "Epic, Mysterious, Mythic" },
+        "ConflictIntensifier": { "prompt": "Suggest ideological clashes, betrayals, forbidden knowledge" }
+      },
+      "narration_prep": {
+        "voice_tone": "Deep, resonant for narration",
+        "effects": "Add echo or reverb for magical/tech scenes",
+        "tip": "Differentiate character voices — villain = distorted, hero = clear and strong"
+      }
+    },
+    "Romance": {
+      "outline_rules": {
+        "structure": ["Meet-Cute", "Tension", "Separation", "Grand Gesture", "Happy Ever After (HEA)"],
+        "required_elements": ["Emotional turning point (Ch5)", "Misunderstanding (Ch8)", "Reunion (Ch11)"],
+        "characters": ["Two leads with chemistry", "One obstacle (internal or external)", "Sidekick (comic relief or wise friend)"]
+      },
+      "chapter_writing_rules": {
+        "point_of_view": "Dual First Person or Third Limited",
+        "focus": ["Internal monologue", "Sensory detail (touch, scent, glance)", "Slow-burn tension"],
+        "avoid": ["Rushing physical intimacy", "Telling emotions instead of showing", "Clichéd dialogue"]
+      },
+      "tool_customizations": {
+        "EmotionalResonance": { "flag_if_missing": ["Longing", "Jealousy", "Vulnerability"] },
+        "DialogueEnhancer": { "prompt": "Add subtext — 'I'm fine' = 'I'm heartbroken'" },
+        "SubtextBuilder": { "prompt": "Suggest hidden feelings in gestures (e.g., 'She tucked hair behind ear — always does that when nervous')" },
+        "MetaphorGenerator": { "prompt": "Suggest romantic imagery (storms = passion, gardens = growth)" },
+        "ToneShifter": { "default_tone": "Warm, Intimate, Yearning" },
+        "PacingBalancer": { "pace": "Slow for emotional scenes, faster for banter" },
+        "ThemeTracker": { "themes": ["Love vs. Fear", "Independence vs. Connection"] }
+      },
+      "narration_prep": {
+        "voice_tone": "Soft, breathy for intimate scenes",
+        "pauses": "Add sigh or pause after emotional lines",
+        "tip": "Recommend female/male duo narration if multiple POVs"
+      }
+    },
+    "Thriller": {
+      "outline_rules": {
+        "structure": ["Setup", "Confrontation", "Twist", "Resolution"],
+        "required_elements": ["Inciting incident by Ch2", "Midpoint Twist (Ch5-7)", "False Victory (Ch9)", "Final Reveal (Ch12)"],
+        "characters": ["Protagonist (flawed)", "Antagonist (hidden)", "Red Herring (misleading ally)", "Sidekick (moral compass)"]
+      },
+      "chapter_writing_rules": {
+        "point_of_view": "First Person or Close Third",
+        "focus": ["End every chapter with question/cliffhanger", "Short punchy sentences during action", "Dialogue with subtext"],
+        "avoid": ["Explaining the twist early", "Flat action sequences", "Passive protagonist"]
+      },
+      "tool_customizations": {
+        "PlotHoleDetector": { "flag_if": ["Timeline inconsistencies", "Unexplained access", "Missing motives"] },
+        "ConflictIntensifier": { "prompt": "Suggest time bombs, betrayals, secrets revealed" },
+        "RedHerringGenerator": { "prompt": "Auto-suggest misleading clues or characters" },
+        "PacingBalancer": { "pace": "Faster in Act 2, slower in Act 3 for suspense" },
+        "SubtextBuilder": { "prompt": "Rewrite flat dialogue into coded threats or hidden meanings" },
+        "ToneShifter": { "default_tone": "Dark, Suspenseful, Gritty" },
+        "EmotionalResonance": { "flag_if_missing": ["Fear", "Paranoia", "Moral dilemma"] },
+        "ThemeTracker": { "themes": ["Trust vs. Deception", "Truth vs. Illusion"] }
+      },
+      "narration_prep": {
+        "voice_tone": "Low, urgent, controlled intensity",
+        "pauses": "Insert pause markers after cliffhangers",
+        "effects": "Add whisper cues for secrets or hidden lines"
+      }
+    }
+  }
+}
