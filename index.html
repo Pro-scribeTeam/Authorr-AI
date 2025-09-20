@@ -2623,8 +2623,8 @@
                 ]);
                 
                 hideLoading();
-                showNotification('Plot analysis complete - check suggestions below!', 'success');
-                displayToolResult('Plot Hole Detection Analysis', analysis);
+                showNotification('Plot analysis complete - review suggestions below!', 'success');
+                displayToolChanges('Plot Hole Analysis', allChaptersText, `=== PLOT ANALYSIS RESULTS ===\n\n${analysis}\n\n=== ORIGINAL TEXT ===\n\n${allChaptersText}`);
                 
             } catch (error) {
                 console.error('Plot hole detection error:', error);
@@ -3216,7 +3216,7 @@ Focus on:
                 
                 hideLoading();
                 showNotification('Red herring suggestions ready!', 'success');
-                displayToolResult('Red Herring & Misdirection Ideas', suggestions);
+                displayToolChanges('Red Herring & Misdirection Ideas', allChaptersText, `=== MISDIRECTION SUGGESTIONS ===\n\n${suggestions}\n\n=== ORIGINAL TEXT ===\n\n${allChaptersText}`);
                 
             } catch (error) {
                 console.error('Red herring generator error:', error);
@@ -3373,126 +3373,8 @@ Focus on:
         
         // ============ TEXT HUMANIZATION ============
         
-        async function forensicAIDetection() {
-            const allChaptersText = getAllChaptersText();
-            
-            if (!allChaptersText.trim()) {
-                showNotification('Please have story content to analyze. Generate chapters or write content first.', 'warning');
-                return;
-            }
-            
-            // Use text within safe limits
-            const processableText = getTextWithinLimits(allChaptersText);
-            const isTextTruncated = processableText !== allChaptersText;
-            
-            const chapterInfo = hasMultipleChapters() ? 
-                `Performing AI detection analysis across ${storyData.chapters.length} chapters${isTextTruncated ? ' (processing first portion)' : ''}...` :
-                'Performing AI detection analysis...';
-            
-            showLoading(chapterInfo, 'book');
-            
-            try {
-                const analysis = await callOpenAI([
-                    {
-                        role: "system", 
-                        content: `You must calibrate your scoring to match industry-standard AI detectors like GPTZero and Copyleaks, which typically score AI-generated text at 80-100%. Be STRICT to match their standards.
-
-**INDUSTRY-CALIBRATED SCORING:**
-
-**90-100% AI Likelihood (Match GPTZero/Copyleaks high scores):**
-- Perfect grammar with no natural errors
-- Uniform sentence structure (similar lengths throughout)
-- Transition word overuse: "Furthermore," "Moreover," "Additionally," "However," "Nevertheless"
-- Generic, vague descriptions: "beautiful," "amazing," "significant," "important"
-- Overly balanced, diplomatic tone
-- No contractions ("cannot" instead of "can't")
-- Unnecessarily complex vocabulary
-- Predictable paragraph structure
-- No speech interruptions or natural dialogue quirks
-
-**75-89% AI Likelihood:**
-- Mostly perfect grammar
-- Limited sentence variation
-- Frequent formal transitions  
-- Mix of generic and specific details
-- Polished but personality-lacking tone
-- Rare contractions
-- Some vocabulary complexity
-- Structured writing patterns
-
-**60-74% AI Likelihood:**
-- Good grammar with minor variations
-- Some sentence diversity
-- Mix of formal/natural transitions
-- Balanced specific/general content
-- Somewhat natural tone
-- Occasional contractions
-- Appropriate vocabulary
-
-**40-59% AI Likelihood:**
-- Natural grammar imperfections
-- Varied sentence lengths
-- Organic transitions
-- Specific details present
-- Personal voice emerging
-- Regular contractions
-- Conversational style
-
-**20-39% AI Likelihood:**
-- Casual grammar with quirks
-- Highly varied sentences
-- Natural flow
-- Very specific details
-- Strong personal voice
-- Heavy contractions/casual language
-- Authentic dialogue
-
-**0-19% AI Likelihood:**
-- Informal, imperfect grammar
-- Chaotic sentence variation
-- Stream-of-consciousness
-- Extremely personal/specific
-- Unique voice and style
-- Slang and colloquialisms
-
-**CRITICAL:** Score like GPTZero/Copyleaks would. If they'd say 90%, you say 85-95%. Be strict on AI patterns.
-
-**Output Format:**
-AI Likelihood Score: [X]%
-
-**Evidence:**
-- [Quote showing AI pattern]
-- [Quote showing AI pattern] 
-- [Quote showing AI pattern]
-
-**Industry Calibration:** [How this matches GPTZero/Copyleaks expectations]`
-                    },
-                    {
-                        role: "user",
-                        content: `Score this text to match how GPTZero/Copyleaks would score it. They typically score AI text at 80-100%, so be equally strict. Provide exact evidence:\\n\\n${processableText}`
-                    }
-                ]);
-                
-                hideLoading();
-                
-                // Extract AI likelihood score
-                const scoreMatch = analysis.match(/AI Likelihood Score:\s*(\d+)%/);
-                const aiScore = scoreMatch ? parseInt(scoreMatch[1]) : 50;
-                
-                // Display enhanced results with score
-                displayForensicResults(analysis, aiScore);
-                
-                // Enable buttons based on score
-                updateForensicButtons(aiScore);
-                
-                showNotification(`Forensic AI analysis complete! Score: ${aiScore}%`, 'success');
-                
-            } catch (error) {
-                console.error('Forensic AI detection error:', error);
-                hideLoading();
-                showNotification('Failed to perform AI detection analysis. Please check your API key and try again.', 'error');
-            }
-        }
+        // Removed forensicAIDetection function - focusing on humanization only
+        
         
         async function humanizeText() {
             const allChaptersText = getAllChaptersText();
@@ -3584,14 +3466,10 @@ Return ONLY the rewritten text with same chapter structure.`
                     console.log('Texts are identical:', processableText.trim() === humanizedText.trim());
                     
                     showNotification('Text successfully humanized! Review the changes below.', 'success');
-                    displayHumanizationResult(humanizedText.trim(), processableText);
+                    displayToolChanges('Text Humanization', processableText, humanizedText.trim());
                     
-                    // Enable reanalyze button
-                    const reanalyzeBtn = document.getElementById('reanalyzeBtn');
-                    if (reanalyzeBtn) {
-                        reanalyzeBtn.disabled = false;
-                        reanalyzeBtn.style.opacity = '1';
-                    }
+                    // Track human touch interaction
+                    trackHumanTouch('lines_edited', 1);
                 } else {
                     showNotification('Humanization completed but no changes detected. Text may already be sufficiently human-like.', 'warning');
                 }
@@ -3616,206 +3494,8 @@ Return ONLY the rewritten text with same chapter structure.`
             }
         }
         
-        function displayHumanizationResult(humanizedText, originalText) {
-            // Create a modal to show the result
-            const resultModal = document.createElement('div');
-            resultModal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
-            
-            const modalContent = document.createElement('div');
-            modalContent.className = 'bg-theme-secondary p-6 rounded-lg max-w-4xl max-h-[90vh] overflow-y-auto border-2 border-theme m-4';
-            modalContent.innerHTML = `
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-xl font-bold text-cyan-400">
-                        <i class="fas fa-magic mr-2"></i>Humanized Text Result
-                    </h3>
-                    <button onclick="this.closest('.fixed').remove()" class="text-theme-secondary hover:text-red-400 transition-colors">
-                        <i class="fas fa-times text-xl"></i>
-                    </button>
-                </div>
-                
-                <div class="space-y-4">
-                    <div class="bg-theme-primary p-4 rounded-lg border border-theme">
-                        <h4 class="text-lg font-semibold text-theme-primary mb-2">Humanized Version:</h4>
-                        <div class="text-theme-primary whitespace-pre-wrap max-h-96 overflow-y-auto p-3 bg-gray-800 rounded border">${humanizedText}</div>
-                    </div>
-                    
-                    <div class="flex gap-3 justify-center">
-                        <button id="saveHumanizedBtn" class="btn-primary px-6 py-2 rounded-lg font-semibold">
-                            <i class="fas fa-save mr-2"></i>Save Changes
-                        </button>
-                        <button id="keepOriginalBtn" class="btn-secondary px-6 py-2 rounded-lg font-semibold">
-                            <i class="fas fa-undo mr-2"></i>Keep Original
-                        </button>
-                    </div>
-                    
-                    <div class="text-center text-sm text-theme-secondary">
-                        <i class="fas fa-info-circle mr-1"></i>
-                        You can manually run Forensic AI Detection after saving to check if the AI percentage improved.
-                    </div>
-                </div>
-            `;
-            
-            resultModal.appendChild(modalContent);
-            document.body.appendChild(resultModal);
-            
-            // Add event listeners for the buttons
-            document.getElementById('saveHumanizedBtn').addEventListener('click', () => {
-                saveHumanizedText(humanizedText);
-                resultModal.remove();
-            });
-            
-            document.getElementById('keepOriginalBtn').addEventListener('click', () => {
-                showNotification('Original text kept - no changes made.', 'info');
-                resultModal.remove();
-            });
-        }
         
-        function saveHumanizedText(humanizedText) {
-            console.log('=== SAVE HUMANIZED TEXT DEBUG ===');
-            console.log('Humanized text to save:', humanizedText.substring(0, 200) + '...');
-            console.log('Has multiple chapters:', hasMultipleChapters());
-            console.log('Current storyData chapters:', storyData.chapters ? storyData.chapters.length : 'none');
-            
-            // Parse the humanized text back into chapters if multiple chapters exist
-            if (hasMultipleChapters()) {
-                // Try multiple chapter parsing patterns
-                let chapterSections = [];
-                
-                // Pattern 1: === Chapter N ===
-                const pattern1 = humanizedText.split(/===\s*Chapter\s*\d+[^=]*===/g).filter(section => section.trim());
-                if (pattern1.length > 1) {
-                    chapterSections = pattern1;
-                    console.log('Used pattern 1, found', chapterSections.length, 'sections');
-                } else {
-                    // Pattern 2: Chapter N: Title
-                    const pattern2 = humanizedText.split(/Chapter\s*\d+[:\-\s][^\n]*\n/).filter(section => section.trim());
-                    if (pattern2.length > 1) {
-                        chapterSections = pattern2;
-                        console.log('Used pattern 2, found', chapterSections.length, 'sections');
-                    } else {
-                        // Fallback: treat as single content
-                        chapterSections = [humanizedText];
-                        console.log('No chapter pattern found, treating as single content');
-                    }
-                }
-                
-                if (chapterSections.length > 0) {
-                    // Update the chapters in storyData
-                    storyData.chapters.forEach((chapter, index) => {
-                        if (chapterSections[index]) {
-                            chapter.content = chapterSections[index].trim();
-                        }
-                    });
-                    
-                    // Update the current editor if viewing a chapter
-                    const editor = document.getElementById('storyEditor');
-                    if (editor && storyData.currentChapter < storyData.chapters.length) {
-                        editor.value = storyData.chapters[storyData.currentChapter].content || '';
-                    }
-                    
-                    updateWordCount();
-                    
-                    // Force update the content status and combined content for reanalysis
-                    updateContentStatus();
-                    
-                    console.log('Updated chapters, current content now:', getAllChaptersText().substring(0, 200) + '...');
-                    // Track human touch for personalization
-                    trackHumanTouch('lines_edited', chapterSections.length);
-                    showNotification('Humanized text saved successfully across all chapters!', 'success');
-                } else {
-                    // Fallback: treat as single content
-                    const editor = document.getElementById('storyEditor');
-                    if (editor) {
-                        editor.value = humanizedText;
-                        updateWordCount();
-                    }
-                    showNotification('Humanized text saved successfully!', 'success');
-                }
-            } else {
-                // Single content update
-                const editor = document.getElementById('storyEditor');
-                if (editor) {
-                    editor.value = humanizedText;
-                    updateWordCount();
-                }
-                showNotification('Humanized text saved successfully!', 'success');
-            }
-            
-            // Save to history for undo functionality
-            saveToHistory();
-        }
-        
-        function displayForensicResults(analysis, aiScore) {
-            const resultsDiv = document.getElementById('forensicResults');
-            
-            // Determine score color and recommendation
-            let scoreColor, recommendation, icon;
-            if (aiScore >= 70) {
-                scoreColor = 'text-red-400';
-                recommendation = 'High AI likelihood - Humanization strongly recommended';
-                icon = '🤖';
-            } else if (aiScore >= 40) {
-                scoreColor = 'text-yellow-400';
-                recommendation = 'Moderate AI likelihood - Consider humanization';
-                icon = '⚠️';
-            } else {
-                scoreColor = 'text-green-400';
-                recommendation = 'Low AI likelihood - Appears human-written';
-                icon = '✅';
-            }
-            
-            resultsDiv.className = 'mt-4';
-            resultsDiv.innerHTML = `
-                <div class="bg-theme-primary p-6 rounded-lg border border-theme">
-                    <div class="flex items-center justify-between mb-4">
-                        <h4 class="text-lg font-semibold text-purple-400">
-                            <i class="fas fa-microscope mr-2"></i>Forensic Analysis Results
-                        </h4>
-                        <div class="text-right">
-                            <div class="text-3xl font-bold ${scoreColor}">${icon} ${aiScore}%</div>
-                            <div class="text-xs text-theme-secondary">AI Likelihood</div>
-                        </div>
-                    </div>
-                    
-                    <div class="mb-4 p-3 rounded ${aiScore >= 70 ? 'bg-red-900 bg-opacity-20 border border-red-600' : 
-                                                    aiScore >= 40 ? 'bg-yellow-900 bg-opacity-20 border border-yellow-600' : 
-                                                    'bg-green-900 bg-opacity-20 border border-green-600'}">
-                        <div class="font-medium ${scoreColor} mb-1">Assessment:</div>
-                        <div class="text-sm">${recommendation}</div>
-                    </div>
-                    
-                    <div class="bg-theme-secondary p-4 rounded border border-theme">
-                        <pre class="text-sm text-theme-primary whitespace-pre-wrap">${analysis}</pre>
-                    </div>
-                </div>
-            `;
-            
-            // Scroll to results
-            resultsDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-
-        function updateForensicButtons(aiScore) {
-            const humanizeBtn = document.getElementById('humanizeBtn');
-            const reanalyzeBtn = document.getElementById('reanalyzeBtn');
-            
-            // Enable humanization based on AI score
-            if (aiScore >= 30) {
-                humanizeBtn.disabled = false;
-                humanizeBtn.style.opacity = '1';
-            } else {
-                humanizeBtn.disabled = true;
-                humanizeBtn.style.opacity = '0.5';
-            }
-            
-            // Always enable reanalyze after first analysis
-            reanalyzeBtn.disabled = false;
-            reanalyzeBtn.style.opacity = '1';
-        }
-
-        function reanalyzeText() {
-            showNotification('🔄 Performing new analysis on current text...', 'info');
-            forensicAIDetection();
-        }
+        // Removed forensic analysis functions - focusing on humanization only
 
         // ============ UTILITY FUNCTIONS FOR TOOLS ============
         
@@ -3847,58 +3527,6 @@ Return ONLY the rewritten text with same chapter structure.`
             return data.choices[0].message.content;
         }
         
-        function displayToolResult(title, content) {
-            // Create a modal or result display
-            const resultModal = document.createElement('div');
-            resultModal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
-            
-            const modalContent = document.createElement('div');
-            modalContent.className = 'bg-theme-secondary p-6 rounded-lg max-w-4xl max-h-[80vh] overflow-y-auto border-2 border-theme';
-            
-            modalContent.innerHTML = `
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-xl font-bold text-cyan-400">${title}</h3>
-                    <button class="close-modal text-gray-400 hover:text-white">
-                        <i class="fas fa-times text-xl"></i>
-                    </button>
-                </div>
-                <div class="bg-theme-primary p-4 rounded border border-theme">
-                    <pre class="text-sm text-theme-primary whitespace-pre-wrap">${content}</pre>
-                </div>
-                <div class="flex justify-between mt-4">
-                    <div class="text-xs text-theme-secondary">
-                        💡 <strong>Tip:</strong> Copy suggestions for manual review or apply them automatically
-                    </div>
-                    <div class="flex space-x-3">
-                        <button class="close-modal btn-gray px-4 py-2 rounded">
-                            <i class="fas fa-times mr-1"></i>Close
-                        </button>
-                        <button class="copy-suggestions btn-secondary px-4 py-2 rounded">
-                            <i class="fas fa-copy mr-1"></i>Copy Suggestions
-                        </button>
-                        <button class="apply-changes btn-primary px-4 py-2 rounded">
-                            <i class="fas fa-magic mr-1"></i>Apply Changes
-                        </button>
-                    </div>
-                </div>
-            `;
-            
-            // Add event listeners
-            modalContent.querySelector('.close-modal').addEventListener('click', () => {
-                resultModal.remove();
-            });
-            
-            modalContent.querySelector('.copy-suggestions').addEventListener('click', () => {
-                copyAnalysis(title, content);
-            });
-            
-            modalContent.querySelector('.apply-changes').addEventListener('click', () => {
-                applyToolChanges(title, content, resultModal);
-            });
-            
-            resultModal.appendChild(modalContent);
-            document.body.appendChild(resultModal);
-        }
         
         function displayToolChanges(title, originalText, newText) {
             // Generate highlighted diff
