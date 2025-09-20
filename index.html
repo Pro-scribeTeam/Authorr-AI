@@ -2653,16 +2653,22 @@
                 const isTextTruncated = processableText !== allChaptersText;
                 
                 // Get genre-specific prompt for character development
-                const basePrompt = `You are a developmental editor specializing in character arcs and growth. Rewrite the provided text to enhance character development, internal conflict, and meaningful change.
+                const basePrompt = `You are an AGGRESSIVE character development specialist. You must make MASSIVE, VISIBLE improvements to character depth and development. Don't make minor tweaks - create DRAMATIC character transformations that readers will immediately notice.
 
-IMPORTANT: Return the COMPLETE rewritten text with enhanced character development, preserving all plot points and structure. Only improve character depth, motivation, and growth.
+MANDATORY ENHANCEMENTS - Apply ALL ruthlessly:
 
-Focus on:
-- Stronger character motivation and goals
-- Internal conflicts and emotional depth
-- Character growth through actions and decisions
-- Distinctive character voices and perspectives
-- Meaningful character interactions and relationships`;
+1. **ADD DEEP INTERNAL CONFLICTS** - Every character must wrestle with contradictory desires, fears, and motivations
+2. **INJECT EMOTIONAL COMPLEXITY** - Transform simple emotions into layered, conflicting feelings
+3. **ADD REVEALING CHARACTER ACTIONS** - Show personality through specific behaviors, habits, and reactions
+4. **ENHANCE BACKSTORY HINTS** - Weave in subtle references to past experiences that shape current behavior
+5. **AMPLIFY CHARACTER FLAWS** - Make weaknesses more prominent and consequential
+6. **ADD UNIQUE MANNERISMS** - Give each character distinctive physical habits, speech patterns, and quirks
+7. **DEEPEN RELATIONSHIPS** - Transform shallow interactions into complex, tension-filled dynamics
+8. **SHOW CHARACTER GROWTH** - Make internal change visible through evolving behavior and dialogue
+
+CRITICAL: Characters should feel like completely different, more complex people after your rewrite. If readers don't immediately notice richer, more compelling characters, you've failed.
+
+Return the COMPLETE text with DRAMATICALLY enhanced character development.`;
 
                 const genrePrompt = getGenrePrompt('CharacterArcDesigner', basePrompt);
                 
@@ -2726,16 +2732,22 @@ Focus on:
                 const isTextTruncated = processableText !== allChaptersText;
                 
                 // Get genre-specific prompt for tone adjustment
-                const basePrompt = `You are a professional editor specializing in tone consistency. Rewrite the provided text to improve tone consistency and ensure it's appropriate for the target audience.
+                const basePrompt = `You are an AGGRESSIVE tone and style editor. You must make DRAMATIC, VISIBLE changes to transform the writing style. Don't make subtle adjustments - make BOLD transformations that readers will immediately notice.
 
-IMPORTANT: Return the COMPLETE rewritten text with improved tone consistency, preserving all story content and structure. Only adjust the tone, voice, and style.
+MANDATORY TRANSFORMATIONS - Apply ALL aggressively:
 
-Focus on:
-- Consistent narrative voice throughout
-- Age-appropriate language and themes
-- Uniform style and pacing
-- Emotional consistency
-- Clear target audience alignment`;
+1. **COMPLETELY REWRITE SENTENCE STRUCTURES** - Vary from short punchy sentences to long flowing ones
+2. **TRANSFORM VOCABULARY** - Replace bland words with vivid, specific, emotionally-charged alternatives
+3. **INJECT PERSONALITY INTO NARRATION** - Add voice, attitude, and character to the narrative style
+4. **ADD SENSORY DETAILS** - Transform "it was dark" into "shadows clawed at the walls like hungry fingers"
+5. **ENHANCE EMOTIONAL LANGUAGE** - Amplify feelings and reactions dramatically
+6. **VARY RHYTHM AND PACE** - Mix rapid-fire action with slow, contemplative passages
+7. **ADD LITERARY DEVICES** - Include metaphors, similes, and figurative language
+8. **STRENGTHEN VOICE CONSISTENCY** - Ensure every sentence reflects the same compelling narrative personality
+
+CRITICAL: The rewritten text should feel like it was written by a completely different, much more skilled writer. If a reader can't immediately tell the difference, you've failed to make sufficient changes.
+
+Return the COMPLETE text with DRAMATICALLY transformed tone and style.`;
 
                 const genrePrompt = getGenrePrompt('ToneShifter', basePrompt);
                 
@@ -2799,16 +2811,22 @@ Focus on:
                 const isTextTruncated = processableText !== allChaptersText;
                 
                 // Get genre-specific prompt for conflict enhancement
-                const basePrompt = `You are an expert at intensifying story conflict and tension. Rewrite the provided text to strengthen conflict, raise stakes, and increase tension without being melodramatic.
+                const basePrompt = `You are a RUTHLESS conflict intensification specialist. You must create DRAMATICALLY higher tension and conflict. Don't make subtle improvements - create EXPLOSIVE tension that grabs readers by the throat.
 
-IMPORTANT: Return the COMPLETE rewritten text with intensified conflict, preserving all story structure and character development. Only enhance the tension and stakes.
+MANDATORY INTENSIFICATIONS - Apply ALL aggressively:
 
-Focus on:
-- Stronger obstacles opposing character goals
-- Higher stakes and consequences
-- More urgent time pressure
-- Deeper emotional conflicts
-- Clearer opposing forces and motivations`;
+1. **RAISE STAKES TO BREAKING POINT** - Make consequences life-changing, devastating, or irreversible
+2. **ADD URGENT TIME PRESSURE** - Create crushing deadlines and ticking clocks
+3. **INJECT PERSONAL BETRAYALS** - Add unexpected betrayals from trusted allies or loved ones
+4. **AMPLIFY EMOTIONAL CONFLICTS** - Transform disagreements into heart-wrenching dilemmas
+5. **ADD IMPOSSIBLE CHOICES** - Force characters to choose between equally devastating options
+6. **CREATE CASCADING DISASTERS** - Make every attempt to solve problems create bigger problems
+7. **DEEPEN OPPOSING MOTIVATIONS** - Make antagonistic forces more personal and threatening
+8. **ADD VISCERAL TENSION** - Include physical manifestations of stress, fear, and desperation
+
+CRITICAL: Readers should feel their heart racing from the intensified conflict. If the tension doesn't feel dramatically higher and more gripping, you've failed.
+
+Return the COMPLETE text with EXPLOSIVELY intensified conflict and tension.`;
 
                 const genrePrompt = getGenrePrompt('ConflictIntensifier', basePrompt);
                 
@@ -2872,16 +2890,22 @@ Focus on:
             
             try {
                 // Get genre-specific prompt for actual rewriting
-                const basePrompt = `You are a dialogue enhancement expert. Rewrite the provided text to improve dialogue with better subtext, voice distinction, and natural conversation flow. 
-                
-IMPORTANT: Return the COMPLETE rewritten text with enhanced dialogue, preserving all non-dialogue content exactly as is. Only improve the dialogue sections.
+                const basePrompt = `You are a AGGRESSIVE dialogue enhancement expert. You must make SUBSTANTIAL, VISIBLE changes to improve dialogue dramatically. Don't be subtle - make bold improvements that are clearly noticeable.
 
-Focus on:
-- Adding subtext and hidden meaning to conversations
-- Making each character's voice distinctive 
-- Natural interruptions, hesitations, and speech patterns
-- Removing exposition-heavy dialogue
-- Adding emotional undercurrents`;
+MANDATORY CHANGES - Apply ALL of these aggressively:
+
+1. **REWRITE ALL BLAND DIALOGUE** - Transform boring conversations into compelling exchanges
+2. **ADD HEAVY SUBTEXT** - Characters must say one thing but mean something completely different  
+3. **INJECT PERSONALITY** - Give each character a distinct voice with unique speech patterns, vocabulary, slang
+4. **ADD INTERRUPTIONS & OVERLAPS** - "I think we should—" "No way!" "But listen—" "I'm done listening!"
+5. **INCLUDE EMOTIONAL REACTIONS** - "God, that's..." "Shit, really?" "Oh hell no..."
+6. **ADD HESITATIONS & FILLER** - "I, uh, I don't know if we should, like, do this..."
+7. **ELIMINATE EXPOSITION** - Remove all "As you know, Bob" dialogue and replace with natural conversation
+8. **ADD CONFLICT** - Every exchange should have tension, even friendly conversations
+
+CRITICAL: Make changes so substantial that a reader would immediately notice the difference. If the dialogue doesn't feel dramatically improved and more engaging, you've failed.
+
+Return the COMPLETE rewritten text with DRAMATICALLY enhanced dialogue.`;
 
                 const genrePrompt = getGenrePrompt('DialogueEnhancer', basePrompt);
                 
@@ -2945,16 +2969,22 @@ Focus on:
                 const isTextTruncated = processableText !== allChaptersText;
                 
                 // Get genre-specific prompt for symbolism enhancement
-                const basePrompt = `You are a literary editor specializing in symbolism and motifs. Rewrite the provided text to add meaningful symbols, motifs, and symbolic elements that enhance the story's depth and themes.
+                const basePrompt = `You are an AGGRESSIVE symbolism and motif specialist. You must weave RICH, POWERFUL symbolic elements throughout the text. Don't add subtle hints - create STRIKING symbolic patterns that transform the story's depth.
 
-IMPORTANT: Return the COMPLETE rewritten text with added symbolism, preserving all story content and structure. Only enhance the symbolic depth through subtle additions.
+MANDATORY SYMBOLIC ENHANCEMENTS - Apply ALL boldly:
 
-Focus on:
-- Consistent symbolic elements that reinforce themes
-- Meaningful motifs that recur throughout the story
-- Visual symbols that enhance emotional resonance
-- Objects, colors, or imagery that carry deeper meaning
-- Subtle symbolic details in descriptions and actions`;
+1. **ADD RECURRING VISUAL MOTIFS** - Objects, colors, or images that appear multiple times with deeper meaning
+2. **INJECT NATURE SYMBOLISM** - Weather, seasons, animals that reflect character emotions and story themes
+3. **CREATE SYMBOLIC OBJECTS** - Transform ordinary items into carriers of deep meaning and memory
+4. **ADD COLOR SYMBOLISM** - Use specific colors to represent emotions, themes, and character states
+5. **WEAVE IN METAPHORICAL LANGUAGE** - Replace plain descriptions with symbol-rich alternatives
+6. **ADD ARCHITECTURAL/SPATIAL SYMBOLS** - Use buildings, rooms, landscapes to reflect internal states
+7. **INSERT SYMBOLIC ACTIONS** - Make character behaviors carry deeper thematic meaning
+8. **CREATE SYMBOLIC CONTRASTS** - Light/dark, high/low, old/new that reinforce story themes
+
+CRITICAL: The symbolic richness should be immediately apparent to readers. Every paragraph should contain meaningful symbolic elements that add layers of meaning.
+
+Return the COMPLETE text with DRAMATICALLY enhanced symbolic depth and meaning.`;
 
                 const genrePrompt = getGenrePrompt('SymbolismSuggester', basePrompt);
                 
@@ -3062,16 +3092,22 @@ Focus on:
                 const isTextTruncated = processableText !== allChaptersText;
                 
                 // Get genre-specific prompt for theme enhancement
-                const basePrompt = `You are a literary editor specializing in thematic development. Rewrite the provided text to strengthen and clarify thematic elements throughout the story.
+                const basePrompt = `You are a POWERFUL thematic development specialist. You must make themes DRAMATICALLY more prominent and compelling. Don't make subtle thematic hints - create BOLD thematic statements that resonate powerfully with readers.
 
-IMPORTANT: Return the COMPLETE rewritten text with enhanced thematic consistency, preserving all story content and structure. Only strengthen the thematic elements.
+MANDATORY THEMATIC ENHANCEMENTS - Apply ALL forcefully:
 
-Focus on:
-- Consistent thematic questions and moral dilemmas
-- Clear thematic statements through character actions
-- Symbolic reinforcement of central themes
-- Thematic echoes and callbacks throughout the story
-- Deeper exploration of the story's big ideas and messages`;
+1. **AMPLIFY MORAL DILEMMAS** - Make ethical choices more complex and heart-wrenching
+2. **ADD THEMATIC DIALOGUE** - Characters must grapple with big ideas through conversation
+3. **INJECT PHILOSOPHICAL QUESTIONS** - Weave in profound questions about life, meaning, and purpose
+4. **CREATE THEMATIC PARALLELS** - Add situations that echo and reinforce central themes
+5. **ENHANCE SYMBOLIC REINFORCEMENT** - Use imagery and metaphors that powerfully support themes
+6. **ADD THEMATIC CHARACTER ARCS** - Make character growth directly reflect thematic lessons
+7. **DEEPEN UNIVERSAL CONNECTIONS** - Connect story events to broader human experiences and truths
+8. **CREATE THEMATIC CLIMAXES** - Make the story's peak moments resolve thematic conflicts
+
+CRITICAL: Themes should be impossible to miss - woven powerfully throughout every scene. If readers don't come away with profound thematic insights, you've failed.
+
+Return the COMPLETE text with POWERFULLY enhanced thematic depth and meaning.`;
 
                 const genrePrompt = getGenrePrompt('ThemeTracker', basePrompt);
                 
@@ -3135,16 +3171,22 @@ Focus on:
                 const isTextTruncated = processableText !== allChaptersText;
                 
                 // Get genre-specific prompt for emotional enhancement
-                const basePrompt = `You are a literary editor specializing in emotional impact. Rewrite the provided text to enhance emotional resonance and create stronger emotional connections with readers.
+                const basePrompt = `You are an EMOTIONAL IMPACT SPECIALIST. You must create OVERWHELMING emotional resonance that moves readers to tears, laughter, or heart-pounding excitement. Don't create gentle emotions - create POWERFUL emotional experiences that readers will never forget.
 
-IMPORTANT: Return the COMPLETE rewritten text with enhanced emotional impact, preserving all story content and structure. Only enhance the emotional depth and reader connection.
+MANDATORY EMOTIONAL AMPLIFICATIONS - Apply ALL intensely:
 
-Focus on:
-- Stronger emotional peaks and valleys throughout the story
-- Clear emotional arcs that trigger intended reactions
-- Deeper emotional connection between readers and characters
-- Enhanced character emotions that resonate with readers
-- More visceral and impactful emotional moments`;
+1. **INTENSIFY ALL EMOTIONS TO BREAKING POINT** - Turn sadness into devastating heartbreak, joy into euphoria
+2. **ADD VISCERAL PHYSICAL REACTIONS** - Trembling hands, racing hearts, tears, breathless moments
+3. **CREATE EMOTIONAL WHIPLASH** - Rapid shifts between contrasting emotions for maximum impact
+4. **INJECT RAW VULNERABILITY** - Expose characters' deepest fears, desires, and pain
+5. **ADD EMOTIONAL STAKES** - Make every scene emotionally consequential and heart-wrenching
+6. **AMPLIFY SENSORY DETAILS** - Use touch, smell, sound to trigger deep emotional responses
+7. **CREATE CATHARTIC MOMENTS** - Build to explosive emotional releases and breakthroughs
+8. **ADD UNIVERSAL EMOTIONAL TRIGGERS** - Tap into primal fears, loves, and longings
+
+CRITICAL: Readers should be emotionally exhausted and deeply moved by your rewrite. If they don't feel profound emotional impact, you've failed completely.
+
+Return the COMPLETE text with DEVASTATINGLY powerful emotional resonance.`;
 
                 const genrePrompt = getGenrePrompt('EmotionalResonanceChecker', basePrompt);
                 
@@ -3245,16 +3287,22 @@ Focus on:
                 const isTextTruncated = processableText !== allChaptersText;
                 
                 // Get genre-specific prompt for pacing enhancement
-                const basePrompt = `You are an expert editor specializing in story pacing and rhythm. Rewrite the provided text to improve pacing, flow, and rhythm at global, scene, and line levels.
+                const basePrompt = `You are a MASTER of story rhythm and pacing. You must create DRAMATICALLY varied and compelling pacing that grips readers and never lets them go. Don't make minor adjustments - create RADICAL pacing transformations.
 
-IMPORTANT: Return the COMPLETE rewritten text with improved pacing, preserving all story content and structure. Only adjust the rhythm and flow.
+MANDATORY PACING OVERHAULS - Apply ALL dynamically:
 
-Focus on:
-- Better balance between fast and slow moments
-- Improved sentence and paragraph rhythm
-- Smoother transitions between scenes
-- Appropriate pacing for tension and relaxation
-- Enhanced story flow that doesn't feel rushed or dragging`;
+1. **CREATE EXTREME PACE VARIATIONS** - Mix lightning-fast action with slow, contemplative moments
+2. **ADD SENTENCE RHYTHM VARIETY** - Combine short, punchy sentences with long, flowing passages
+3. **INSERT STRATEGIC PAUSES** - Add moments of silence, hesitation, and contemplation for impact
+4. **ACCELERATE ACTION SEQUENCES** - Make fast scenes feel breathless and urgent
+5. **SLOW EMOTIONAL MOMENTS** - Expand meaningful scenes with rich detail and reflection
+6. **ADD PACING SURPRISES** - Unexpected rhythm changes that keep readers off-balance
+7. **CREATE MOMENTUM BUILDS** - Gradually increase pace leading to climactic moments
+8. **ENHANCE TRANSITION FLOW** - Make scene changes feel seamless yet distinctly paced
+
+CRITICAL: The pacing should feel like a perfectly orchestrated musical composition - varied, dynamic, and impossible to put down. If readers don't notice dramatically improved rhythm, you've failed.
+
+Return the COMPLETE text with MASTERFULLY enhanced pacing and flow.`;
 
                 const genrePrompt = getGenrePrompt('PacingBalancer', basePrompt);
                 
@@ -3318,16 +3366,22 @@ Focus on:
                 const isTextTruncated = processableText !== allChaptersText;
                 
                 // Get genre-specific prompt for subtext enhancement
-                const basePrompt = `You are an expert editor specializing in dialogue subtext and layered communication. Rewrite the provided text to add subtext, hidden meanings, and layers to dialogue and interactions.
+                const basePrompt = `You are a SUBTEXT MASTER who creates LAYERED, COMPLEX dialogue that says one thing but means something completely different. You must add DEEP, OBVIOUS subtext that transforms simple conversations into psychological warfare.
 
-IMPORTANT: Return the COMPLETE rewritten text with enhanced subtext, preserving all story content and structure. Only enhance the layers and hidden meanings.
+MANDATORY SUBTEXT TRANSFORMATIONS - Apply ALL aggressively:
 
-Focus on:
-- Characters saying one thing but meaning another
-- Layered dialogue with multiple interpretations
-- Hidden emotions and motivations in conversations
-- Subtext that reveals character relationships and conflicts
-- More nuanced and sophisticated communication patterns`;
+1. **EVERY LINE MUST HAVE DOUBLE MEANING** - Characters never say exactly what they mean
+2. **ADD PASSIVE-AGGRESSIVE UNDERTONES** - Sweet words hiding sharp daggers of meaning
+3. **CREATE UNSPOKEN POWER STRUGGLES** - Every conversation becomes a battle for control
+4. **INJECT HIDDEN ACCUSATIONS** - Characters imply blame and guilt without stating it directly
+5. **ADD EMOTIONAL MINEFIELDS** - Seemingly innocent topics that trigger explosive reactions
+6. **CREATE VERBAL CHESS MATCHES** - Characters maneuvering for advantage through words
+7. **INSERT LOADED SILENCES** - Pauses that speak louder than words
+8. **ADD CULTURAL/HISTORICAL REFERENCES** - Shared knowledge that carries hidden weight
+
+CRITICAL: Every conversation should feel like characters are speaking in code. Readers should sense the hidden tensions and meanings immediately. If dialogue doesn't feel psychologically complex, you've completely failed.
+
+Return the COMPLETE text with DEVASTATINGLY layered subtext and hidden meanings.`;
 
                 const genrePrompt = getGenrePrompt('SubtextBuilder', basePrompt);
                 
@@ -3398,55 +3452,50 @@ Focus on:
                 const humanizedText = await callOpenAI([
                     {
                         role: "system",
-                        content: `You are specifically designed to fool GPTZero, Copyleaks, and similar AI detectors. Your goal: transform 90-100% AI text into 10-30% AI text by applying proven anti-detection techniques.
+                        content: `You are an AGGRESSIVE text humanization specialist. You must make MASSIVE, VISIBLE changes to transform AI-generated text into naturally human-written text. Don't make subtle changes - make DRAMATIC transformations that readers will immediately notice.
 
-**PROVEN AI DETECTOR EVASION METHODS:**
+**MANDATORY HUMANIZATION OVERHAULS - Apply ALL ruthlessly:**
 
-**1. DESTROY UNIFORMITY (Critical for GPTZero):**
-- Sentence lengths: Mix 3-word fragments with 35+ word run-ons
-- Paragraph sizes: Vary from 1 sentence to 8+ sentences randomly  
-- Break AI's predictable rhythm completely
+**1. DESTROY ALL UNIFORMITY:**
+- Transform every sentence structure completely
+- Mix 2-word fragments with 40+ word run-on sentences
+- Vary paragraph lengths from single sentences to massive blocks
+- Break all predictable patterns and rhythms
 
-**2. INJECT HUMAN IMPERFECTIONS:**
-- Add natural grammar "mistakes": "Me and him went..." "Who did you see?" "Between you and I..."
-- Include redundancies: "The thing is, is that..." 
-- Use filler words extensively: "like," "you know," "I mean," "well," "um"
-- Add false starts: "I was going to— well, never mind that"
+**2. INJECT HEAVY HUMAN IMPERFECTIONS:**
+- Add natural grammar "mistakes": "Me and Sarah went" "Who'd you see?" "Between you and I"
+- Include redundancies and awkward phrasings: "The thing is, is that..." "What I'm trying to say is..."
+- Use extensive filler words: "like," "you know," "I mean," "well," "um," "basically," "actually"
+- Add false starts and corrections: "I was going to— well, actually, never mind"
 
-**3. HEAVY CONTRACTIONIZATION:**
-- Convert ALL formal language: "cannot" → "can't", "will not" → "won't", "would have" → "would've"
-- Stack contractions: "wouldn't've", "shouldn't've", "couldn't've"
-- Use casual forms: "gonna," "wanna," "kinda," "sorta"
+**3. EXTREME CASUALIZATION:**
+- Convert ALL formal language: "cannot" → "can't", "would not" → "wouldn't", "going to" → "gonna"
+- Use colloquialisms: "wanna," "kinda," "sorta," "coulda," "shoulda," "y'know"
+- Add regional speech patterns and slang appropriately
 
-**4. DIALOGUE CHAOS:**
-- Add interruptions: "I think we should—" "No way!" 
-- Include overlapping speech: "We need to go—" "—right now, I know!"
-- Add speech disfluencies: "I, uh, I don't really know if we should, like, do that"
-- Use regional dialects and slang
+**4. ADD CONVERSATIONAL CHAOS:**
+- Include interruptions and overlapping thoughts
+- Add speech disfluencies: "I, uh, well... I don't really know if we should, like, do that, you know?"
+- Use contractions in narration: "It wasn't just that he was tired—he was completely done"
 
-**5. DESTROY AI TRANSITIONS:**
-- Replace "Furthermore," "Moreover," "Additionally" with: "And," "But," "So," "Plus," "Also,"
-- Use abrupt topic changes without smooth transitions
-- Include tangential thoughts mid-sentence
+**5. REPLACE ALL AI-TYPICAL LANGUAGE:**
+- Eliminate: "Furthermore," "Moreover," "Additionally," "Nevertheless," "Consequently"
+- Replace with: "And," "But," "So," "Plus," "Also," or just start new sentences
+- Use abrupt transitions and tangential thoughts
 
-**6. SPECIFIC DETAIL BOMBING:**
-- Replace "beautiful day" → "72-degree Tuesday morning with those weird puffy clouds"
-- Replace "delicious food" → "greasy pepperoni pizza from Tony's on 5th Street"
-- Add irrelevant but human details about colors, sounds, smells, textures
+**6. ADD HYPER-SPECIFIC DETAILS:**
+- Replace "nice weather" → "that weird 73-degree October morning with the humidity that made my shirt stick"
+- Replace "good food" → "the kind of greasy pizza that probably took years off my life but was worth every bite"
+- Add sensory details that feel personally experienced
 
-**7. EMOTIONAL AUTHENTICITY:**
-- Add personal reactions: "God, that was awkward" "Ugh, why did I say that?"
-- Include self-doubt: "I'm probably wrong, but..." "Maybe I'm overthinking this..."
-- Add stream-of-consciousness tangents
+**7. INJECT PERSONALITY AND EMOTION:**
+- Add personal reactions: "God, that was painful" "Christ, what a mess" "Ugh, seriously?"
+- Include self-doubt: "I'm probably totally wrong here, but..." "Maybe I'm just being paranoid..."
+- Add stream-of-consciousness asides and tangents
 
-**CRITICAL SUCCESS METRICS:**
-- GPTZero should drop from 90%+ to 20-30%
-- Copyleaks should drop from 100% to 15-35%  
-- Text should feel authentically human-written
+**CRITICAL:** The rewritten text should sound like it was written by a real person having real thoughts, not an AI trying to sound human. Every paragraph should have obvious human characteristics.
 
-Apply these techniques AGGRESSIVELY. Don't preserve formal tone. Make it sound like someone texting or talking casually.
-
-Return ONLY the rewritten text with same chapter structure.`
+Return the COMPLETE text with DRAMATICALLY humanized writing that's obviously different from the original.`
                     },
                     {
                         role: "user",
@@ -3598,41 +3647,58 @@ Return ONLY the rewritten text with same chapter structure.`
         }
 
         function generateDiffHighlight(original, enhanced) {
-            // Simple word-based diff highlighting
+            // Advanced word-by-word diff with precise highlighting
             const originalWords = original.split(/(\s+)/);
             const enhancedWords = enhanced.split(/(\s+)/);
             
-            let result = '';
-            let oIndex = 0;
-            let eIndex = 0;
+            // Create a more sophisticated diff using dynamic programming approach
+            const dp = [];
+            for (let i = 0; i <= originalWords.length; i++) {
+                dp[i] = [];
+                for (let j = 0; j <= enhancedWords.length; j++) {
+                    if (i === 0) dp[i][j] = j;
+                    else if (j === 0) dp[i][j] = i;
+                    else if (originalWords[i-1] === enhancedWords[j-1]) {
+                        dp[i][j] = dp[i-1][j-1];
+                    } else {
+                        dp[i][j] = 1 + Math.min(dp[i-1][j], dp[i][j-1], dp[i-1][j-1]);
+                    }
+                }
+            }
             
-            while (eIndex < enhancedWords.length) {
-                const enhancedWord = enhancedWords[eIndex];
-                
-                // If we find a matching word, add it without highlighting
-                if (oIndex < originalWords.length && originalWords[oIndex] === enhancedWord) {
-                    result += escapeHtml(enhancedWord);
-                    oIndex++;
-                    eIndex++;
+            // Backtrack to find the actual changes
+            let result = '';
+            let i = originalWords.length;
+            let j = enhancedWords.length;
+            const changes = [];
+            
+            while (i > 0 && j > 0) {
+                if (originalWords[i-1] === enhancedWords[j-1]) {
+                    changes.unshift({type: 'same', word: enhancedWords[j-1]});
+                    i--;
+                    j--;
+                } else if (dp[i-1][j] < dp[i][j-1]) {
+                    // Deletion in original (skip)
+                    i--;
                 } else {
-                    // This is a change - highlight it
-                    result += `<span style="background-color: #fbbf24; color: #000; padding: 1px 2px; border-radius: 2px;">${escapeHtml(enhancedWord)}</span>`;
-                    eIndex++;
-                    
-                    // Skip ahead in original to find next match
-                    let foundMatch = false;
-                    for (let i = oIndex; i < originalWords.length; i++) {
-                        if (originalWords[i] === enhancedWord) {
-                            oIndex = i + 1;
-                            foundMatch = true;
-                            break;
-                        }
-                    }
-                    
-                    if (!foundMatch) {
-                        // Skip some original words if no match found
-                        oIndex = Math.min(oIndex + 3, originalWords.length);
-                    }
+                    // Addition/substitution in enhanced (highlight)
+                    changes.unshift({type: 'change', word: enhancedWords[j-1]});
+                    j--;
+                }
+            }
+            
+            // Add remaining enhanced words (all changes)
+            while (j > 0) {
+                changes.unshift({type: 'change', word: enhancedWords[j-1]});
+                j--;
+            }
+            
+            // Build result with precise highlighting
+            for (const change of changes) {
+                if (change.type === 'same') {
+                    result += escapeHtml(change.word);
+                } else {
+                    result += `<span style="background-color: #fbbf24; color: #000; padding: 1px 2px; border-radius: 2px; font-weight: 600;">${escapeHtml(change.word)}</span>`;
                 }
             }
             
