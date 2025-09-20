@@ -865,12 +865,12 @@
                     </div>
                 </div>
 
-                <!-- Forensic AI Detection Section -->
+                <!-- Text Humanization Section -->
                 <div class="mb-6">
                     <div class="bg-theme-primary p-4 rounded-lg border border-theme">
                         <div class="flex justify-between items-center mb-3">
                             <h3 class="text-lg font-semibold text-purple-400">
-                                <i class="fas fa-microscope mr-2"></i>Forensic AI Detection
+                                <i class="fas fa-user-edit mr-2"></i>Text Humanization
                             </h3>
                             <div class="flex space-x-2">
                                 <button onclick="undoEdit()" class="btn-secondary px-3 py-1 rounded text-xs">
@@ -882,42 +882,14 @@
                             </div>
                         </div>
                         
-                        <p class="text-sm text-theme-secondary mb-3">Detailed stylistic and forensic breakdown of text for AI authorship likelihood.</p>
+                        <p class="text-sm text-theme-secondary mb-3">Enhance text to sound more natural and human-written while preserving meaning and quality.</p>
                         
                         <div class="flex gap-3 flex-wrap">
                             <div class="relative">
-                                <button onclick="forensicAIDetection()" class="btn-primary px-4 py-2 rounded font-medium">
-                                    <i class="fas fa-search-plus mr-2"></i>Analyze Text
+                                <button onclick="humanizeText()" class="btn-primary px-4 py-2 rounded font-medium" id="humanizeBtn">
+                                    <i class="fas fa-user-edit mr-2"></i>Humanize Text
                                 </button>
-                                <i class="fas fa-info-circle tool-info" title="Performs statistical analysis to determine AI likelihood score using perplexity, burstiness, and lexical variance measurements."></i>
-                            </div>
-                            
-                            <div class="relative">
-                                <button onclick="humanizeText()" class="btn-secondary px-4 py-2 rounded font-medium" id="humanizeBtn">
-                                    <i class="fas fa-user-edit mr-2"></i>Humanization
-                                </button>
-                                <i class="fas fa-info-circle tool-info" title="Rewrites text to sound more natural and human-like, reducing AI detection scores while preserving meaning and style."></i>
-                            </div>
-                            
-                            <div class="relative">
-                                <button onclick="reanalyzeText()" class="btn-secondary px-4 py-2 rounded font-medium" id="reanalyzeBtn" disabled style="opacity: 0.5;">
-                                    <i class="fas fa-sync mr-2"></i>Reanalyze
-                                </button>
-                                <i class="fas fa-info-circle tool-info" title="Performs a new AI detection analysis on the current text to check improvement after changes."></i>
-                            </div>
-                        </div>
-                        
-                        <!-- Analysis Results Area -->
-                        <div id="forensicResults" class="mt-4 hidden">
-                            <div class="bg-gray-800 p-4 rounded border border-gray-600">
-                                <pre id="forensicOutput" class="text-sm text-gray-300 whitespace-pre-wrap"></pre>
-                            </div>
-                        </div>
-                        
-                        <!-- Humanization Results Area -->
-                        <div id="humanizationResults" class="mt-4 hidden">
-                            <div class="bg-gray-800 p-4 rounded border border-gray-600">
-                                <pre id="humanizationOutput" class="text-sm text-gray-300 whitespace-pre-wrap"></pre>
+                                <i class="fas fa-info-circle tool-info" title="Applies advanced techniques to make text sound more natural and human-written while preserving meaning and quality."></i>
                             </div>
                         </div>
 
@@ -2962,31 +2934,67 @@ Focus on:
             }
             
             const chapterInfo = hasMultipleChapters() ? 
-                `Curating meaningful symbols and motifs across ${storyData.chapters.length} chapters...` :
-                'Curating meaningful symbols and motifs...';
+                `Adding meaningful symbols and motifs across ${storyData.chapters.length} chapters...` :
+                'Adding meaningful symbols and motifs...';
             
             showLoading(chapterInfo, 'book');
             
             try {
-                const suggestions = await callOpenAI([
+                // Use text within safe limits
+                const processableText = getTextWithinLimits(allChaptersText);
+                const isTextTruncated = processableText !== allChaptersText;
+                
+                // Get genre-specific prompt for symbolism enhancement
+                const basePrompt = `You are a literary editor specializing in symbolism and motifs. Rewrite the provided text to add meaningful symbols, motifs, and symbolic elements that enhance the story's depth and themes.
+
+IMPORTANT: Return the COMPLETE rewritten text with added symbolism, preserving all story content and structure. Only enhance the symbolic depth through subtle additions.
+
+Focus on:
+- Consistent symbolic elements that reinforce themes
+- Meaningful motifs that recur throughout the story
+- Visual symbols that enhance emotional resonance
+- Objects, colors, or imagery that carry deeper meaning
+- Subtle symbolic details in descriptions and actions`;
+
+                const genrePrompt = getGenrePrompt('SymbolismSuggester', basePrompt);
+                
+                const enhanced = await callOpenAI([
                     {
                         role: "system",
-                        content: "You curate a coherent symbol system aligned to theme, character arcs, and setting. Suggest meaningful symbols or motifs that give stories extra depth and layers of meaning."
+                        content: genrePrompt
                     },
                     {
                         role: "user",
-                        content: `Analyze this complete story and suggest specific symbols, motifs, or symbolic elements that would add depth and meaning throughout all chapters. Provide both suggestions and examples of how to incorporate them:\n\n${allChaptersText}`
+                        content: `Add meaningful symbols and motifs to this text while preserving the story structure. Return the complete rewritten text${isTextTruncated ? ' (processing first portion due to length)' : ''}:\n\n${processableText}`
                     }
                 ]);
                 
                 hideLoading();
-                showNotification('Symbolism suggestions generated!', 'success');
-                displayToolResult('Symbolism & Motif Suggestions', suggestions);
+                
+                if (enhanced && enhanced.trim() && enhanced.trim() !== processableText.trim()) {
+                    showNotification('Symbolism and motifs enhanced! Review the changes below.', 'success');
+                    displayToolChanges('Symbolism & Motif Enhancement', processableText, enhanced.trim());
+                    
+                    // Track human touch interaction
+                    trackHumanTouch('lines_edited', 1);
+                } else {
+                    showNotification('Your story already has rich symbolism! No significant enhancements needed.', 'info');
+                }
                 
             } catch (error) {
                 console.error('Symbolism suggester error:', error);
                 hideLoading();
-                showNotification('Failed to generate symbolism suggestions. Please try again.', 'error');
+                
+                let errorMessage = 'Failed to enhance symbolism. ';
+                if (error.message && error.message.includes('token')) {
+                    errorMessage += 'Story may be too long for processing.';
+                } else if (error.message && error.message.includes('API')) {
+                    errorMessage += 'Please check your API key.';
+                } else {
+                    errorMessage += 'Please try again or use a shorter text selection.';
+                }
+                
+                showNotification(errorMessage, 'error');
             }
         }
         
@@ -3038,36 +3046,72 @@ Focus on:
             const allChaptersText = getAllChaptersText();
             
             if (!allChaptersText.trim()) {
-                showNotification('Please have story content to analyze themes. Generate chapters or write content first.', 'warning');
+                showNotification('Please have story content to enhance themes. Generate chapters or write content first.', 'warning');
                 return;
             }
             
             const chapterInfo = hasMultipleChapters() ? 
-                `Tracking thematic consistency across ${storyData.chapters.length} chapters...` :
-                'Tracking thematic consistency...';
+                `Enhancing thematic consistency across ${storyData.chapters.length} chapters...` :
+                'Enhancing thematic consistency...';
             
             showLoading(chapterInfo, 'book');
             
             try {
-                const analysis = await callOpenAI([
+                // Use text within safe limits
+                const processableText = getTextWithinLimits(allChaptersText);
+                const isTextTruncated = processableText !== allChaptersText;
+                
+                // Get genre-specific prompt for theme enhancement
+                const basePrompt = `You are a literary editor specializing in thematic development. Rewrite the provided text to strengthen and clarify thematic elements throughout the story.
+
+IMPORTANT: Return the COMPLETE rewritten text with enhanced thematic consistency, preserving all story content and structure. Only strengthen the thematic elements.
+
+Focus on:
+- Consistent thematic questions and moral dilemmas
+- Clear thematic statements through character actions
+- Symbolic reinforcement of central themes
+- Thematic echoes and callbacks throughout the story
+- Deeper exploration of the story's big ideas and messages`;
+
+                const genrePrompt = getGenrePrompt('ThemeTracker', basePrompt);
+                
+                const enhanced = await callOpenAI([
                     {
                         role: "system",
-                        content: "You ensure thematic questions are dramatized and echoed consistently. Keep the story's big idea or moral consistent and visible throughout the book."
+                        content: genrePrompt
                     },
                     {
                         role: "user",
-                        content: `Analyze this complete story for thematic elements and consistency across all chapters. Identify the main themes and suggest how to strengthen or maintain thematic coherence throughout:\n\n${allChaptersText}`
+                        content: `Enhance the thematic consistency and depth in this text while preserving the story structure. Return the complete rewritten text${isTextTruncated ? ' (processing first portion due to length)' : ''}:\n\n${processableText}`
                     }
                 ]);
                 
                 hideLoading();
-                showNotification('Theme analysis complete!', 'success');
-                displayToolResult('Theme Tracking Analysis', analysis);
+                
+                if (enhanced && enhanced.trim() && enhanced.trim() !== processableText.trim()) {
+                    showNotification('Thematic elements enhanced! Review the changes below.', 'success');
+                    displayToolChanges('Theme Enhancement', processableText, enhanced.trim());
+                    
+                    // Track human touch interaction
+                    trackHumanTouch('lines_edited', 1);
+                } else {
+                    showNotification('Your thematic elements are already well-developed! No significant enhancements needed.', 'info');
+                }
                 
             } catch (error) {
                 console.error('Theme tracker error:', error);
                 hideLoading();
-                showNotification('Failed to analyze themes. Please try again.', 'error');
+                
+                let errorMessage = 'Failed to enhance themes. ';
+                if (error.message && error.message.includes('token')) {
+                    errorMessage += 'Story may be too long for processing.';
+                } else if (error.message && error.message.includes('API')) {
+                    errorMessage += 'Please check your API key.';
+                } else {
+                    errorMessage += 'Please try again or use a shorter text selection.';
+                }
+                
+                showNotification(errorMessage, 'error');
             }
         }
         
@@ -3075,36 +3119,72 @@ Focus on:
             const allChaptersText = getAllChaptersText();
             
             if (!allChaptersText.trim()) {
-                showNotification('Please have story content to check emotional resonance. Generate chapters or write content first.', 'warning');
+                showNotification('Please have story content to enhance emotional resonance. Generate chapters or write content first.', 'warning');
                 return;
             }
             
             const chapterInfo = hasMultipleChapters() ? 
-                `Calibrating emotional resonance across ${storyData.chapters.length} chapters...` :
-                'Calibrating emotional resonance...';
+                `Enhancing emotional resonance across ${storyData.chapters.length} chapters...` :
+                'Enhancing emotional resonance...';
             
             showLoading(chapterInfo, 'book');
             
             try {
-                const analysis = await callOpenAI([
+                // Use text within safe limits
+                const processableText = getTextWithinLimits(allChaptersText);
+                const isTextTruncated = processableText !== allChaptersText;
+                
+                // Get genre-specific prompt for emotional enhancement
+                const basePrompt = `You are a literary editor specializing in emotional impact. Rewrite the provided text to enhance emotional resonance and create stronger emotional connections with readers.
+
+IMPORTANT: Return the COMPLETE rewritten text with enhanced emotional impact, preserving all story content and structure. Only enhance the emotional depth and reader connection.
+
+Focus on:
+- Stronger emotional peaks and valleys throughout the story
+- Clear emotional arcs that trigger intended reactions
+- Deeper emotional connection between readers and characters
+- Enhanced character emotions that resonate with readers
+- More visceral and impactful emotional moments`;
+
+                const genrePrompt = getGenrePrompt('EmotionalResonanceChecker', basePrompt);
+                
+                const enhanced = await callOpenAI([
                     {
                         role: "system",
-                        content: "You calibrate character feelings vs reader emotions. Ensure readers feel the emotions you want them to feel at the right time in the story."
+                        content: genrePrompt
                     },
                     {
                         role: "user",
-                        content: `Analyze the emotional resonance of this complete story across all chapters. How will readers feel throughout? Are character emotions clearly conveyed? Suggest improvements for emotional impact:\n\n${allChaptersText}`
+                        content: `Enhance the emotional resonance and reader connection in this text while preserving the story structure. Return the complete rewritten text${isTextTruncated ? ' (processing first portion due to length)' : ''}:\n\n${processableText}`
                     }
                 ]);
                 
                 hideLoading();
-                showNotification('Emotional resonance analysis complete!', 'success');
-                displayToolResult('Emotional Resonance Check', analysis);
+                
+                if (enhanced && enhanced.trim() && enhanced.trim() !== processableText.trim()) {
+                    showNotification('Emotional resonance enhanced! Review the changes below.', 'success');
+                    displayToolChanges('Emotional Resonance Enhancement', processableText, enhanced.trim());
+                    
+                    // Track human touch interaction
+                    trackHumanTouch('lines_edited', 1);
+                } else {
+                    showNotification('Your story already has strong emotional resonance! No significant enhancements needed.', 'info');
+                }
                 
             } catch (error) {
                 console.error('Emotional resonance error:', error);
                 hideLoading();
-                showNotification('Failed to check emotional resonance. Please try again.', 'error');
+                
+                let errorMessage = 'Failed to enhance emotional resonance. ';
+                if (error.message && error.message.includes('token')) {
+                    errorMessage += 'Story may be too long for processing.';
+                } else if (error.message && error.message.includes('API')) {
+                    errorMessage += 'Please check your API key.';
+                } else {
+                    errorMessage += 'Please try again or use a shorter text selection.';
+                }
+                
+                showNotification(errorMessage, 'error');
             }
         }
         
@@ -3154,8 +3234,8 @@ Focus on:
             }
             
             const chapterInfo = hasMultipleChapters() ? 
-                `Regulating story rhythm and pacing across ${storyData.chapters.length} chapters...` :
-                'Regulating story rhythm and pacing...';
+                `Balancing story rhythm and pacing across ${storyData.chapters.length} chapters...` :
+                'Balancing story rhythm and pacing...';
             
             showLoading(chapterInfo, 'book');
             
@@ -3164,25 +3244,57 @@ Focus on:
                 const processableText = getTextWithinLimits(allChaptersText);
                 const isTextTruncated = processableText !== allChaptersText;
                 
-                const analysis = await callOpenAI([
+                // Get genre-specific prompt for pacing enhancement
+                const basePrompt = `You are an expert editor specializing in story pacing and rhythm. Rewrite the provided text to improve pacing, flow, and rhythm at global, scene, and line levels.
+
+IMPORTANT: Return the COMPLETE rewritten text with improved pacing, preserving all story content and structure. Only adjust the rhythm and flow.
+
+Focus on:
+- Better balance between fast and slow moments
+- Improved sentence and paragraph rhythm
+- Smoother transitions between scenes
+- Appropriate pacing for tension and relaxation
+- Enhanced story flow that doesn't feel rushed or dragging`;
+
+                const genrePrompt = getGenrePrompt('PacingBalancer', basePrompt);
+                
+                const enhanced = await callOpenAI([
                     {
                         role: "system",
-                        content: "You are an expert at analyzing story pacing and providing specific suggestions. You regulate rhythm at global, scene, and line levels and provide actionable recommendations."
+                        content: genrePrompt
                     },
                     {
                         role: "user",
-                        content: `Analyze the pacing of this story and provide specific suggestions to improve rhythm and flow. Focus on ensuring it doesn't feel rushed or dragging${isTextTruncated ? ' (analyzing first portion due to length)' : ''}:\n\n${processableText}`
+                        content: `Improve the pacing and rhythm in this text while preserving the story structure. Return the complete rewritten text${isTextTruncated ? ' (processing first portion due to length)' : ''}:\n\n${processableText}`
                     }
                 ]);
                 
                 hideLoading();
-                showNotification('Pacing analysis complete!', 'success');
-                displayToolResult('Pacing Balance Suggestions', analysis);
+                
+                if (enhanced && enhanced.trim() && enhanced.trim() !== processableText.trim()) {
+                    showNotification('Pacing and rhythm improved! Review the changes below.', 'success');
+                    displayToolChanges('Pacing Balance Enhancement', processableText, enhanced.trim());
+                    
+                    // Track human touch interaction
+                    trackHumanTouch('lines_edited', 1);
+                } else {
+                    showNotification('Your story pacing is already well-balanced! No significant adjustments needed.', 'info');
+                }
                 
             } catch (error) {
                 console.error('Pacing balancer error:', error);
                 hideLoading();
-                showNotification('Failed to balance pacing. Please try again.', 'error');
+                
+                let errorMessage = 'Failed to balance pacing. ';
+                if (error.message && error.message.includes('token')) {
+                    errorMessage += 'Story may be too long for processing.';
+                } else if (error.message && error.message.includes('API')) {
+                    errorMessage += 'Please check your API key.';
+                } else {
+                    errorMessage += 'Please try again or use a shorter text selection.';
+                }
+                
+                showNotification(errorMessage, 'error');
             }
         }
         
@@ -3195,8 +3307,8 @@ Focus on:
             }
             
             const chapterInfo = hasMultipleChapters() ? 
-                `Converting to layered interactions with subtext across ${storyData.chapters.length} chapters...` :
-                'Converting to layered interactions with subtext...';
+                `Adding layered subtext and hidden meanings across ${storyData.chapters.length} chapters...` :
+                'Adding layered subtext and hidden meanings...';
             
             showLoading(chapterInfo, 'book');
             
@@ -3205,29 +3317,61 @@ Focus on:
                 const processableText = getTextWithinLimits(allChaptersText);
                 const isTextTruncated = processableText !== allChaptersText;
                 
-                const analysis = await callOpenAI([
+                // Get genre-specific prompt for subtext enhancement
+                const basePrompt = `You are an expert editor specializing in dialogue subtext and layered communication. Rewrite the provided text to add subtext, hidden meanings, and layers to dialogue and interactions.
+
+IMPORTANT: Return the COMPLETE rewritten text with enhanced subtext, preserving all story content and structure. Only enhance the layers and hidden meanings.
+
+Focus on:
+- Characters saying one thing but meaning another
+- Layered dialogue with multiple interpretations
+- Hidden emotions and motivations in conversations
+- Subtext that reveals character relationships and conflicts
+- More nuanced and sophisticated communication patterns`;
+
+                const genrePrompt = getGenrePrompt('SubtextBuilder', basePrompt);
+                
+                const enhanced = await callOpenAI([
                     {
                         role: "system",
-                        content: "You are an expert at analyzing dialogue and providing specific suggestions for adding subtext and layers. You help identify where characters can say one thing but mean another."
+                        content: genrePrompt
                     },
                     {
                         role: "user",
-                        content: `Analyze the dialogue in this story and provide specific suggestions for adding subtext and layers. Show how to convert direct statements into more nuanced, layered communication${isTextTruncated ? ' (analyzing first portion due to length)' : ''}:\n\n${processableText}`
+                        content: `Add subtext and layered meanings to the dialogue and interactions in this text while preserving the story structure. Return the complete rewritten text${isTextTruncated ? ' (processing first portion due to length)' : ''}:\n\n${processableText}`
                     }
                 ]);
                 
                 hideLoading();
-                showNotification('Subtext analysis complete!', 'success');
-                displayToolResult('Subtext Building Suggestions', analysis);
+                
+                if (enhanced && enhanced.trim() && enhanced.trim() !== processableText.trim()) {
+                    showNotification('Subtext and layers added! Review the changes below.', 'success');
+                    displayToolChanges('Subtext Enhancement', processableText, enhanced.trim());
+                    
+                    // Track human touch interaction
+                    trackHumanTouch('lines_edited', 1);
+                } else {
+                    showNotification('Your dialogue already has rich subtext! No significant enhancements needed.', 'info');
+                }
                 
             } catch (error) {
                 console.error('Subtext builder error:', error);
                 hideLoading();
-                showNotification('Failed to build subtext. Please try again.', 'error');
+                
+                let errorMessage = 'Failed to add subtext. ';
+                if (error.message && error.message.includes('token')) {
+                    errorMessage += 'Story may be too long for processing.';
+                } else if (error.message && error.message.includes('API')) {
+                    errorMessage += 'Please check your API key.';
+                } else {
+                    errorMessage += 'Please try again or use a shorter text selection.';
+                }
+                
+                showNotification(errorMessage, 'error');
             }
         }
         
-        // ============ FORENSIC AI DETECTION & HUMANIZATION ============
+        // ============ TEXT HUMANIZATION ============
         
         async function forensicAIDetection() {
             const allChaptersText = getAllChaptersText();
@@ -3757,6 +3901,9 @@ Return ONLY the rewritten text with same chapter structure.`
         }
         
         function displayToolChanges(title, originalText, newText) {
+            // Generate highlighted diff
+            const highlightedText = generateDiffHighlight(originalText, newText);
+            
             // Create a modal for showing before/after comparison
             const resultModal = document.createElement('div');
             resultModal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
@@ -3774,16 +3921,16 @@ Return ONLY the rewritten text with same chapter structure.`
                 <div class="grid grid-cols-2 gap-4 mb-4">
                     <div class="bg-theme-primary p-4 rounded border border-theme">
                         <h4 class="text-sm font-bold text-gray-400 mb-2">ORIGINAL TEXT</h4>
-                        <pre class="text-xs text-theme-primary whitespace-pre-wrap max-h-96 overflow-y-auto">${originalText}</pre>
+                        <div class="text-xs text-theme-primary whitespace-pre-wrap max-h-96 overflow-y-auto bg-gray-900 p-3 rounded">${escapeHtml(originalText)}</div>
                     </div>
                     <div class="bg-theme-primary p-4 rounded border border-cyan-400">
-                        <h4 class="text-sm font-bold text-cyan-400 mb-2">ENHANCED TEXT</h4>
-                        <pre class="text-xs text-theme-primary whitespace-pre-wrap max-h-96 overflow-y-auto">${newText}</pre>
+                        <h4 class="text-sm font-bold text-cyan-400 mb-2">ENHANCED TEXT <span class="text-yellow-400">(Changes Highlighted)</span></h4>
+                        <div class="text-xs text-theme-primary whitespace-pre-wrap max-h-96 overflow-y-auto bg-gray-900 p-3 rounded">${highlightedText}</div>
                     </div>
                 </div>
                 <div class="flex justify-between items-center">
                     <div class="text-xs text-theme-secondary">
-                        💡 <strong>Tip:</strong> Review the changes and choose to keep original or apply the enhanced version
+                        💡 <strong>Tip:</strong> Yellow highlights show changes made. When applied, highlights are removed and only the changes remain.
                     </div>
                     <div class="flex space-x-3">
                         <button class="close-modal btn-gray px-4 py-2 rounded">
@@ -3820,6 +3967,54 @@ Return ONLY the rewritten text with same chapter structure.`
             
             resultModal.appendChild(modalContent);
             document.body.appendChild(resultModal);
+        }
+
+        function generateDiffHighlight(original, enhanced) {
+            // Simple word-based diff highlighting
+            const originalWords = original.split(/(\s+)/);
+            const enhancedWords = enhanced.split(/(\s+)/);
+            
+            let result = '';
+            let oIndex = 0;
+            let eIndex = 0;
+            
+            while (eIndex < enhancedWords.length) {
+                const enhancedWord = enhancedWords[eIndex];
+                
+                // If we find a matching word, add it without highlighting
+                if (oIndex < originalWords.length && originalWords[oIndex] === enhancedWord) {
+                    result += escapeHtml(enhancedWord);
+                    oIndex++;
+                    eIndex++;
+                } else {
+                    // This is a change - highlight it
+                    result += `<span style="background-color: #fbbf24; color: #000; padding: 1px 2px; border-radius: 2px;">${escapeHtml(enhancedWord)}</span>`;
+                    eIndex++;
+                    
+                    // Skip ahead in original to find next match
+                    let foundMatch = false;
+                    for (let i = oIndex; i < originalWords.length; i++) {
+                        if (originalWords[i] === enhancedWord) {
+                            oIndex = i + 1;
+                            foundMatch = true;
+                            break;
+                        }
+                    }
+                    
+                    if (!foundMatch) {
+                        // Skip some original words if no match found
+                        oIndex = Math.min(oIndex + 3, originalWords.length);
+                    }
+                }
+            }
+            
+            return result;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
         }
 
         function applyTextChanges(newText, modal) {
