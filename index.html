@@ -1042,9 +1042,14 @@
                                 Checking for story content...
                             </div>
                             <div id="contentPreviewToggle" class="mt-2 hidden">
-                                <button onclick="toggleContentPreview()" class="text-xs text-cyan-400 hover:text-cyan-300">
-                                    <i class="fas fa-eye mr-1"></i>Preview Content
-                                </button>
+                                <div class="flex items-center space-x-2">
+                                    <button onclick="toggleContentPreview()" class="text-xs text-cyan-400 hover:text-cyan-300">
+                                        <i class="fas fa-eye mr-1"></i>Preview Content
+                                    </button>
+                                    <button onclick="clearPreviewContent()" class="text-xs text-yellow-400 hover:text-yellow-300">
+                                        <i class="fas fa-refresh mr-1"></i>Clear Preview
+                                    </button>
+                                </div>
                             </div>
                         </div>
                         
@@ -5599,6 +5604,36 @@ Format as clean, readable text ready for narration.`;
                 preview.classList.add('hidden');
             }
         }
+        
+        function clearPreviewContent() {
+            // Clear preview content display
+            const preview = document.getElementById('contentPreview');
+            const previewText = document.getElementById('contentPreviewText');
+            
+            preview.classList.add('hidden');
+            previewText.textContent = '';
+            
+            // Clear dialogue results to force rescan
+            dialogueData.characters = [];
+            dialogueData.dialogueSections = [];
+            dialogueData.voiceAssignments = {};
+            
+            // Hide dialogue assignment sections
+            const dialogueAssignments = document.getElementById('dialogueAssignments');
+            const dialoguePreview = document.getElementById('dialoguePreview');
+            if (dialogueAssignments) dialogueAssignments.classList.add('hidden');
+            if (dialoguePreview) dialoguePreview.classList.add('hidden');
+            
+            // Clear content cache to force refresh from chapters
+            storyData.currentContent = null;
+            storyData.combinedContent = null;
+            
+            // Update status to reflect cleared state
+            updateStoryStatus();
+            
+            showNotification('Preview content cleared. Click "Scan Story for Dialogue" to rescan.', 'info');
+            console.log('Preview content and dialogue data cleared for fresh scan');
+        }
 
         async function scanForDialogue() {
             // Get content from all chapters
@@ -5987,7 +6022,7 @@ Format as clean, readable text ready for narration.`;
                 const analysis = await callOpenAI([
                     {
                         role: "system",
-                        content: "You are a literary analysis expert. Identify ALL DISTINCT character names who appear in the given text. Look for: 1) Characters who speak dialogue, 2) Named individuals mentioned in narration, 3) People referenced by others. Return ONLY the character names as a clean JSON array like [\"Character1\", \"Character2\", \"Character3\"]. Requirements: - Include ALL different characters, not just the main one - Do NOT repeat the same character multiple times - Do NOT include generic titles like 'man', 'woman', 'person' - DO include proper names and specific character names - Return only the JSON array, no markdown or extra text"
+                        content: "You are a character extraction specialist. Analyze this story text and identify ALL named characters. Find: 1) Anyone who speaks dialogue, 2) Named people mentioned by name, 3) Characters referenced by proper names. CRITICAL RULES: - Return ONLY real character names (Emily, Alex, Sarah, John, etc.) - NEVER use generic names like 'Character 1', 'Character 2', 'Speaker A' - If you find no real names, return empty array [] - Return ONLY a JSON array like [\"Emily\", \"Alex\", \"Dr. Smith\"] - No markdown, no extra text, just the JSON array"
                     },
                     {
                         role: "user",
@@ -6019,17 +6054,40 @@ Format as clean, readable text ready for narration.`;
                 
                 // Try to extract character names manually as fallback
                 try {
+                    // Look for proper names in the content (capitalized words that could be names)
+                    const namePattern = /\b([A-Z][a-z]{2,15})\b/g;
+                    const potentialNames = [...content.matchAll(namePattern)].map(match => match[1]);
+                    
+                    // Filter out common words that aren't names
+                    const commonWords = ['The', 'And', 'But', 'When', 'Where', 'What', 'Who', 'How', 'Why', 'This', 'That', 'Then', 'They', 'There', 'She', 'Her', 'His', 'Him', 'Chapter', 'Story', 'Once', 'Upon', 'After', 'Before', 'During', 'While'];
+                    const likelyNames = potentialNames.filter(name => 
+                        !commonWords.includes(name) && 
+                        name.length >= 3 && 
+                        name.length <= 15
+                    );
+                    
+                    // Remove duplicates and take top candidates
+                    const uniqueNames = [...new Set(likelyNames)].slice(0, 5);
+                    console.log('Extracted potential character names:', uniqueNames);
+                    
+                    if (uniqueNames.length > 0) {
+                        return uniqueNames;
+                    }
+                    
+                    // If still no names found, try to parse JSON-like strings from AI response
                     const matches = analysis.match(/"([^"]+)"/g);
                     if (matches) {
-                        const extractedChars = matches.map(match => match.replace(/"/g, ''));
-                        console.log('Extracted characters manually:', extractedChars);
-                        return extractedChars.length > 0 ? extractedChars : ['Speaker A', 'Speaker B', 'Speaker C'];
+                        const extractedChars = matches.map(match => match.replace(/"/g, ''))
+                            .filter(char => !char.toLowerCase().includes('character') && !char.toLowerCase().includes('speaker'));
+                        console.log('Extracted characters manually (filtered):', extractedChars);
+                        return extractedChars.length > 0 ? extractedChars : [];
                     }
                 } catch (extractError) {
                     console.error('Manual extraction also failed:', extractError);
                 }
                 
-                return ['Speaker A', 'Speaker B', 'Speaker C']; // Final fallback with more variety
+                // Return empty array instead of generic names - let dialogue patterns extract speakers
+                return [];
             }
         }
 
@@ -6051,34 +6109,75 @@ Format as clean, readable text ready for narration.`;
             dialogueData.characters.forEach((character, index) => {
                 const characterDiv = document.createElement('div');
                 characterDiv.className = 'flex items-center justify-between p-3 bg-theme-secondary rounded border border-theme';
+                
                 // Get character's dialogue samples
                 const characterDialogue = dialogueData.dialogueSections.filter(d => d.character === character);
                 const sampleText = characterDialogue.length > 0 ? characterDialogue[0].text.substring(0, 80) + (characterDialogue[0].text.length > 80 ? '...' : '') : 'No dialogue found';
                 
-                characterDiv.innerHTML = `
-                    <div class="flex-1">
-                        <div class="flex items-center space-x-3 mb-2">
-                            <div class="w-8 h-8 bg-cyan-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
-                                ${character.charAt(0).toUpperCase()}
-                            </div>
-                            <div class="flex-1">
-                                <span class="font-medium text-cyan-400">${character}</span>
-                                <div class="text-xs text-theme-secondary">${characterDialogue.length} dialogue section(s)</div>
-                            </div>
-                        </div>
-                        <div class="text-xs text-theme-secondary mb-2 italic">
-                            Sample: "${sampleText}"
-                        </div>
-                        <div class="flex items-center space-x-2">
-                            <select id="voice_${index}" class="flex-1 px-3 py-2 rounded bg-theme-primary border border-theme text-sm" onchange="updateVoiceAssignment('${character}', this.value)">
-                                <option value="">Select voice...</option>
-                            </select>
-                            <button onclick="previewCharacterVoice('${character}', 'voice_${index}')" class="px-3 py-2 bg-cyan-600 hover:bg-cyan-500 rounded text-white text-xs">
-                                <i class="fas fa-play"></i> Preview
-                            </button>
-                        </div>
-                    </div>
-                `;
+                // Create main container
+                const mainContainer = document.createElement('div');
+                mainContainer.className = 'flex-1';
+                
+                // Create header section
+                const headerSection = document.createElement('div');
+                headerSection.className = 'flex items-center space-x-3 mb-2';
+                
+                // Create character avatar
+                const avatar = document.createElement('div');
+                avatar.className = 'w-8 h-8 bg-cyan-600 rounded-full flex items-center justify-center text-white font-bold text-sm';
+                avatar.textContent = character.charAt(0).toUpperCase();
+                
+                // Create character info section
+                const infoSection = document.createElement('div');
+                infoSection.className = 'flex-1';
+                
+                const characterName = document.createElement('span');
+                characterName.className = 'font-medium text-cyan-400';
+                characterName.textContent = character;
+                
+                const dialogueCount = document.createElement('div');
+                dialogueCount.className = 'text-xs text-theme-secondary';
+                dialogueCount.textContent = `${characterDialogue.length} dialogue section(s)`;
+                
+                infoSection.appendChild(characterName);
+                infoSection.appendChild(dialogueCount);
+                
+                headerSection.appendChild(avatar);
+                headerSection.appendChild(infoSection);
+                
+                // Create sample section
+                const sampleSection = document.createElement('div');
+                sampleSection.className = 'text-xs text-theme-secondary mb-2 italic';
+                sampleSection.textContent = `Sample: "${sampleText}"`;
+                
+                // Create controls section
+                const controlsSection = document.createElement('div');
+                controlsSection.className = 'flex items-center space-x-2';
+                
+                const voiceSelect = document.createElement('select');
+                voiceSelect.id = `voice_${index}`;
+                voiceSelect.className = 'flex-1 px-3 py-2 rounded bg-theme-primary border border-theme text-sm';
+                voiceSelect.onchange = () => updateVoiceAssignment(character, voiceSelect.value);
+                
+                const defaultOption = document.createElement('option');
+                defaultOption.value = '';
+                defaultOption.textContent = 'Select voice...';
+                voiceSelect.appendChild(defaultOption);
+                
+                const previewButton = document.createElement('button');
+                previewButton.className = 'px-3 py-2 bg-cyan-600 hover:bg-cyan-500 rounded text-white text-xs';
+                previewButton.onclick = () => previewCharacterVoice(character, `voice_${index}`);
+                previewButton.innerHTML = '<i class="fas fa-play"></i> Preview';
+                
+                controlsSection.appendChild(voiceSelect);
+                controlsSection.appendChild(previewButton);
+                
+                // Assemble main container
+                mainContainer.appendChild(headerSection);
+                mainContainer.appendChild(sampleSection);
+                mainContainer.appendChild(controlsSection);
+                
+                characterDiv.appendChild(mainContainer);
                 characterVoiceList.appendChild(characterDiv);
 
                 // Populate voice options for this character
@@ -6094,30 +6193,70 @@ Format as clean, readable text ready for narration.`;
             const content = storyData.currentContent || document.getElementById('storyEditor')?.value || '';
             const narratorSample = content.replace(/"[^"]*"/g, '').trim().substring(0, 100) + (content.length > 100 ? '...' : '');
             
-            narratorDiv.innerHTML = `
-                <div class="flex-1">
-                    <div class="flex items-center space-x-3 mb-2">
-                        <div class="w-8 h-8 bg-orange-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
-                            N
-                        </div>
-                        <div class="flex-1">
-                            <span class="font-medium text-orange-400">Narrator</span>
-                            <div class="text-xs text-theme-secondary">For all narrative text</div>
-                        </div>
-                    </div>
-                    <div class="text-xs text-theme-secondary mb-2 italic">
-                        Sample: "${narratorSample}"
-                    </div>
-                    <div class="flex items-center space-x-2">
-                        <select id="voice_narrator" class="flex-1 px-3 py-2 rounded bg-theme-primary border border-theme text-sm" onchange="updateVoiceAssignment('Narrator', this.value)">
-                            <option value="">Select voice...</option>
-                        </select>
-                        <button onclick="previewCharacterVoice('Narrator', 'voice_narrator')" class="px-3 py-2 bg-orange-600 hover:bg-orange-500 rounded text-white text-xs">
-                            <i class="fas fa-play"></i> Preview
-                        </button>
-                    </div>
-                </div>
-            `;
+            // Create narrator section using DOM elements
+            const narratorMainContainer = document.createElement('div');
+            narratorMainContainer.className = 'flex-1';
+            
+            // Create narrator header section
+            const narratorHeaderSection = document.createElement('div');
+            narratorHeaderSection.className = 'flex items-center space-x-3 mb-2';
+            
+            // Create narrator avatar
+            const narratorAvatar = document.createElement('div');
+            narratorAvatar.className = 'w-8 h-8 bg-orange-600 rounded-full flex items-center justify-center text-white font-bold text-sm';
+            narratorAvatar.textContent = 'N';
+            
+            // Create narrator info section
+            const narratorInfoSection = document.createElement('div');
+            narratorInfoSection.className = 'flex-1';
+            
+            const narratorName = document.createElement('span');
+            narratorName.className = 'font-medium text-orange-400';
+            narratorName.textContent = 'Narrator';
+            
+            const narratorDescription = document.createElement('div');
+            narratorDescription.className = 'text-xs text-theme-secondary';
+            narratorDescription.textContent = 'For all narrative text';
+            
+            narratorInfoSection.appendChild(narratorName);
+            narratorInfoSection.appendChild(narratorDescription);
+            
+            narratorHeaderSection.appendChild(narratorAvatar);
+            narratorHeaderSection.appendChild(narratorInfoSection);
+            
+            // Create narrator sample section
+            const narratorSampleSection = document.createElement('div');
+            narratorSampleSection.className = 'text-xs text-theme-secondary mb-2 italic';
+            narratorSampleSection.textContent = `Sample: "${narratorSample}"`;
+            
+            // Create narrator controls section
+            const narratorControlsSection = document.createElement('div');
+            narratorControlsSection.className = 'flex items-center space-x-2';
+            
+            const narratorVoiceSelect = document.createElement('select');
+            narratorVoiceSelect.id = 'voice_narrator';
+            narratorVoiceSelect.className = 'flex-1 px-3 py-2 rounded bg-theme-primary border border-theme text-sm';
+            narratorVoiceSelect.onchange = () => updateVoiceAssignment('Narrator', narratorVoiceSelect.value);
+            
+            const narratorDefaultOption = document.createElement('option');
+            narratorDefaultOption.value = '';
+            narratorDefaultOption.textContent = 'Select voice...';
+            narratorVoiceSelect.appendChild(narratorDefaultOption);
+            
+            const narratorPreviewButton = document.createElement('button');
+            narratorPreviewButton.className = 'px-3 py-2 bg-orange-600 hover:bg-orange-500 rounded text-white text-xs';
+            narratorPreviewButton.onclick = () => previewCharacterVoice('Narrator', 'voice_narrator');
+            narratorPreviewButton.innerHTML = '<i class="fas fa-play"></i> Preview';
+            
+            narratorControlsSection.appendChild(narratorVoiceSelect);
+            narratorControlsSection.appendChild(narratorPreviewButton);
+            
+            // Assemble narrator container
+            narratorMainContainer.appendChild(narratorHeaderSection);
+            narratorMainContainer.appendChild(narratorSampleSection);
+            narratorMainContainer.appendChild(narratorControlsSection);
+            
+            narratorDiv.appendChild(narratorMainContainer);
             characterVoiceList.appendChild(narratorDiv);
             
             setTimeout(() => {
