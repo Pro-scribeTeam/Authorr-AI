@@ -5820,7 +5820,8 @@ Format as clean, readable text ready for narration.`;
                         // Instead of simple forEach, analyze each quote with surrounding context
                         for (let i = 0; i < quoteMatches.length; i++) {
                             const quote = quoteMatches[i];
-                            const cleanQuote = quote.replace(/["""'"]/g, '');
+                            // Remove only the surrounding quotes, preserve internal apostrophes
+                            const cleanQuote = quote.replace(/^["""'"]+|["""'"]+$/g, '').trim();
                             
                             if (cleanQuote.length > 5) { // Only meaningful dialogue
                                 // Find the position of this quote in the content
@@ -6112,7 +6113,14 @@ Format as clean, readable text ready for narration.`;
                 
                 // Get character's dialogue samples
                 const characterDialogue = dialogueData.dialogueSections.filter(d => d.character === character);
-                const sampleText = characterDialogue.length > 0 ? characterDialogue[0].text.substring(0, 80) + (characterDialogue[0].text.length > 80 ? '...' : '') : 'No dialogue found';
+                // Clean sample text properly - remove surrounding quotes but preserve internal punctuation
+                let sampleText = 'No dialogue found';
+                if (characterDialogue.length > 0) {
+                    let rawText = characterDialogue[0].text || '';
+                    // Remove surrounding quotes but preserve internal apostrophes and punctuation
+                    rawText = rawText.replace(/^["""'"]+|["""'"]+$/g, '').trim();
+                    sampleText = rawText.substring(0, 80) + (rawText.length > 80 ? '...' : '');
+                }
                 
                 // Create main container
                 const mainContainer = document.createElement('div');
