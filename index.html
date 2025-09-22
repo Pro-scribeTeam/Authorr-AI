@@ -5783,8 +5783,7 @@ Format as clean, readable text ready for narration.`;
                     embeddedQuote: /^(.*?)["""]([^"""]+?)["""](.*)$/
                 };
                 
-                // Process both lines and sentences
-                const textSegments = [...lines, ...sentences];
+                // Skip old complex processing - using simple patterns above
                 
                 let segmentNumber = 0;
                 for (const segment of textSegments) {
@@ -6031,9 +6030,10 @@ Format as clean, readable text ready for narration.`;
                     const hasSaid = /\b(said|asked|replied|whispered|shouted)\b/i.test(content);
                     const chapterCount = hasMultipleChapters() ? storyData.chapters.length : 1;
                     
+                    const contentLines = content.split('\n').filter(line => line.trim());
                     showNotification(
                         `No dialogue found in ${chapterCount} chapter(s). Analysis:\n` +
-                        `- Lines processed: ${lines.length}\n` +
+                        `- Lines processed: ${contentLines.length}\n` +
                         `- Contains quotes: ${hasQuotes}\n` +
                         `- Contains colons: ${hasColons}\n` +
                         `- Contains dialogue verbs: ${hasSaid}\n` +
@@ -6043,7 +6043,7 @@ Format as clean, readable text ready for narration.`;
                     );
                     
                     // Show debug dialog
-                    showDialogueDebugModal(content, lines);
+                    showDialogueDebugModal(content, contentLines);
                     return;
                 }
                 
