@@ -5580,11 +5580,26 @@ Format as clean, readable text ready for narration.`;
             previewToggle.classList.remove('hidden');
             
             // Store the content for dialogue scanning (use getAllChaptersText for consistency)
+            const previousContent = storyData.currentContent;
             storyData.currentContent = content;
             
             // Also update combined content if we have chapters
             if (storyData.chapters && storyData.chapters.length > 0) {
                 storyData.combinedContent = content;
+            }
+            
+            // Clear dialogue data if content has changed to prevent stale results
+            if (previousContent && previousContent !== content) {
+                console.log('Content changed - clearing cached dialogue data');
+                dialogueData.characters = [];
+                dialogueData.dialogueSections = [];
+                dialogueData.voiceAssignments = {};
+                
+                // Hide dialogue sections since they're now stale
+                const dialogueAssignments = document.getElementById('dialogueAssignments');
+                const dialoguePreview = document.getElementById('dialoguePreview');
+                if (dialogueAssignments) dialogueAssignments.classList.add('hidden');
+                if (dialoguePreview) dialoguePreview.classList.add('hidden');
             }
         }
         
@@ -5613,7 +5628,7 @@ Format as clean, readable text ready for narration.`;
             preview.classList.add('hidden');
             previewText.textContent = '';
             
-            // Clear dialogue results to force rescan
+            // FORCE CLEAR ALL dialogue data completely
             dialogueData.characters = [];
             dialogueData.dialogueSections = [];
             dialogueData.voiceAssignments = {};
@@ -5621,28 +5636,51 @@ Format as clean, readable text ready for narration.`;
             // Hide dialogue assignment sections
             const dialogueAssignments = document.getElementById('dialogueAssignments');
             const dialoguePreview = document.getElementById('dialoguePreview');
-            if (dialogueAssignments) dialogueAssignments.classList.add('hidden');
+            if (dialogueAssignments) {
+                dialogueAssignments.classList.add('hidden');
+                // Clear the content too
+                const characterVoiceList = document.getElementById('characterVoiceList');
+                const dialogueList = document.getElementById('dialogueList');
+                if (characterVoiceList) characterVoiceList.innerHTML = '';
+                if (dialogueList) dialogueList.innerHTML = '';
+            }
             if (dialoguePreview) dialoguePreview.classList.add('hidden');
             
-            // Clear content cache to force refresh from chapters
+            // Clear ALL content caches to force refresh from chapters
             storyData.currentContent = null;
             storyData.combinedContent = null;
             
             // Update status to reflect cleared state
             updateStoryStatus();
             
-            showNotification('Preview content cleared. Click "Scan Story for Dialogue" to rescan.', 'info');
-            console.log('Preview content and dialogue data cleared for fresh scan');
+            showNotification('All content and dialogue data cleared. Click "Scan Story for Dialogue" for fresh scan.', 'info');
+            console.log('=== COMPLETE CLEAR ===');
+            console.log('All preview content and dialogue data forcibly cleared');
         }
 
         async function scanForDialogue() {
-            // Get content from all chapters
+            // FORCE CLEAR all cached dialogue data before scanning
+            dialogueData.characters = [];
+            dialogueData.dialogueSections = [];
+            dialogueData.voiceAssignments = {};
+            
+            // Hide any existing results immediately
+            const dialogueAssignments = document.getElementById('dialogueAssignments');
+            const dialoguePreview = document.getElementById('dialoguePreview');
+            if (dialogueAssignments) dialogueAssignments.classList.add('hidden');
+            if (dialoguePreview) dialoguePreview.classList.add('hidden');
+            
+            // Get content from all chapters (force refresh)
             const content = getAllChaptersText();
             
             if (!content.trim()) {
                 showNotification('No story content found. Please generate chapters or write content first.', 'warning');
                 return;
             }
+            
+            console.log('=== FORCED FRESH SCAN ===');
+            console.log('Cleared all cached dialogue data');
+            console.log('Content to scan:', content.substring(0, 200) + '...');
 
             const chapterInfo = hasMultipleChapters() ? 
                 `Scanning ${storyData.chapters.length} chapters for dialogue and characters...` :
@@ -5917,9 +5955,12 @@ Format as clean, readable text ready for narration.`;
                     }
                 }
                 
-                // Store results
+                // Store results (completely replace, don't append)
                 dialogueData.characters = Array.from(characters);
                 dialogueData.dialogueSections = dialogueSections;
+                
+                console.log('=== STORING NEW RESULTS ===');
+                console.log('Replacing old data with new scan results');
                 
                 console.log('=== FINAL DIALOGUE SCAN RESULTS ===');
                 console.log('Characters found:', dialogueData.characters);
