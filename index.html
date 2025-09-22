@@ -5718,44 +5718,62 @@ Format as clean, readable text ready for narration.`;
                 
                 console.log('Starting pattern matching...');
                 
-                // PATTERN 1: Character: "Dialogue" (most common)
-                const colonPattern = /([A-Z][a-zA-Z\s]{1,25})\s*:\s*["""']([^"""']{5,})["""']/g;
+                // PATTERN 1: Character: "Dialogue" (strict colon format only)
+                const colonPattern = /^\s*([A-Z][a-zA-Z\s]{1,25})\s*:\s*["""']([^"""']{5,})["""']\s*$/gm;
                 let match;
                 
-                console.log('Trying Pattern 1: Character: "Dialogue"');
+                console.log('Trying Pattern 1: Character: "Dialogue" (strict colon format)');
                 while ((match = colonPattern.exec(content)) !== null && foundCount < 50) {
                     const character = match[1].trim();
                     const dialogue = match[2].trim();
-                    foundCount++;
                     
-                    console.log(`Match ${foundCount}: ${character} -> "${dialogue.substring(0, 40)}..."`);
+                    // Skip if character name contains narrative words
+                    if (character.toLowerCase().includes('said') || character.toLowerCase().includes('asked') || 
+                        character.toLowerCase().includes('the ') || character.toLowerCase().includes('and ') ||
+                        character.toLowerCase().includes('he ') || character.toLowerCase().includes('she ')) {
+                        console.log(`Skipping narrative text: "${character}"`);
+                        continue;
+                    }
+                    
+                    foundCount++;
+                    console.log(`✓ DIALOGUE: "${character}" -> "${dialogue.substring(0, 40)}..."`);
                     
                     characters.add(character);
                     dialogueSections.push({
                         character: character,
                         text: dialogue,
                         line: foundCount,
-                        type: 'colon_format'
+                        type: 'pure_dialogue'
                     });
                 }
                 
-                // PATTERN 2: Character said "Dialogue"
-                const saidPattern = /([A-Z][a-zA-Z\s]{2,25})\s+(said|asked|replied|whispered|called|shouted)\s*["""']([^"""']{5,})["""']/gi;
+                // PATTERN 2: Character said "Dialogue" (narrative dialogue attribution)
+                const saidPattern = /\b([A-Z][a-zA-Z\s]{2,20})\s+(said|asked|replied|whispered|called|shouted|exclaimed|muttered)[,:]?\s*["""']([^"""']{5,})["""']/gi;
                 
                 console.log('Trying Pattern 2: Character said "Dialogue"');
                 while ((match = saidPattern.exec(content)) !== null && foundCount < 100) {
                     const character = match[1].trim();
                     const dialogue = match[3].trim();
-                    foundCount++;
                     
-                    console.log(`Match ${foundCount}: ${character} -> "${dialogue.substring(0, 40)}..."`);
+                    // Strict character name validation - only proper names
+                    if (character.toLowerCase().includes('he ') || character.toLowerCase().includes('she ') ||
+                        character.toLowerCase().includes('the ') || character.toLowerCase().includes('and ') ||
+                        character.toLowerCase().includes('it ') || character.toLowerCase().includes('they ') ||
+                        character.length < 2 || character.length > 25 || 
+                        !/^[A-Z][a-zA-Z\s]*$/.test(character)) {
+                        console.log(`Skipping invalid character: "${character}"`);
+                        continue;
+                    }
+                    
+                    foundCount++;
+                    console.log(`✓ DIALOGUE: "${character}" -> "${dialogue.substring(0, 40)}..."`);
                     
                     characters.add(character);
                     dialogueSections.push({
                         character: character,
                         text: dialogue,
                         line: foundCount,
-                        type: 'said_format'
+                        type: 'attributed_dialogue'
                     });
                 }
                 
@@ -6210,9 +6228,25 @@ Format as clean, readable text ready for narration.`;
             // Add narrator voice assignment
             const narratorDiv = document.createElement('div');
             narratorDiv.className = 'flex items-center justify-between p-3 bg-theme-secondary rounded border border-theme';
-            // Get narrator text sample
+            // Get narrator text sample (pure narrative, no dialogue)
             const content = storyData.currentContent || document.getElementById('storyEditor')?.value || '';
-            const narratorSample = content.replace(/"[^"]*"/g, '').trim().substring(0, 100) + (content.length > 100 ? '...' : '');
+            let narratorSample = content
+                // Remove all quoted dialogue (various quote types)
+                .replace(/["""'][^"""']*["""']/g, '')
+                // Remove dialogue attribution lines (Character said, etc.)
+                .replace(/\b[A-Z][a-zA-Z\s]{1,25}\s+(said|asked|replied|whispered|called|shouted|exclaimed|muttered)[^.!?]*[.!?]/gi, '')
+                // Remove character colon lines
+                .replace(/^\s*[A-Z][a-zA-Z\s]{1,25}\s*:\s*.*/gm, '')
+                // Clean up extra whitespace and newlines
+                .replace(/\s+/g, ' ')
+                .trim();
+            
+            // If no narrative text found, use default
+            if (!narratorSample || narratorSample.length < 20) {
+                narratorSample = 'The story unfolds with rich narrative description and scene-setting text.';
+            } else {
+                narratorSample = narratorSample.substring(0, 100) + (narratorSample.length > 100 ? '...' : '');
+            }
             
             // Create narrator section using DOM elements
             const narratorMainContainer = document.createElement('div');
@@ -6827,7 +6861,14 @@ Format as clean, readable text ready for narration.`;
             let previewText;
             if (characterName === 'Narrator') {
                 const content = storyData.currentContent || document.getElementById('storyEditor')?.value || '';
-                previewText = content.replace(/"[^"]*"/g, '').trim().substring(0, 100);
+                // Get clean narrative text for narrator preview
+                previewText = content
+                    .replace(/["""'][^"""']*["""']/g, '')
+                    .replace(/\b[A-Z][a-zA-Z\s]{1,25}\s+(said|asked|replied|whispered|called|shouted|exclaimed|muttered)[^.!?]*[.!?]/gi, '')
+                    .replace(/^\s*[A-Z][a-zA-Z\s]{1,25}\s*:\s*.*/gm, '')
+                    .replace(/\s+/g, ' ')
+                    .trim()
+                    .substring(0, 100);
                 if (!previewText) previewText = "This is a sample of the narrator's voice speaking the story text.";
             } else {
                 const characterDialogue = dialogueData.dialogueSections.find(d => d.character === characterName);
