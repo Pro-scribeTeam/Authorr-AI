@@ -6148,8 +6148,12 @@ Format as clean, readable text ready for narration.`;
                 let sampleText = 'No dialogue found';
                 if (characterDialogue.length > 0) {
                     let rawText = characterDialogue[0].text || '';
-                    // Remove surrounding quotes but preserve internal apostrophes and punctuation
-                    rawText = rawText.replace(/^["""'"]+|["""'"]+$/g, '').trim();
+                    // Aggressive cleaning to fix 's character issue
+                    rawText = rawText
+                        .replace(/^["""'"s\s]*/, '') // Remove quotes and 's' at start
+                        .replace(/["""'"\s]*$/, '') // Remove quotes at end
+                        .replace(/^s\s+/, '') // Remove leading 's '
+                        .trim();
                     sampleText = rawText.substring(0, 80) + (rawText.length > 80 ? '...' : '');
                 }
                 
