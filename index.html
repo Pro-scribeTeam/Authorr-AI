@@ -5662,11 +5662,16 @@ Format as clean, readable text ready for narration.`;
             dialogueData.dialogueSections = [];
             dialogueData.voiceAssignments = {};
             
-            // Hide any existing results immediately
+            // Hide and clear any existing results immediately
             const dialogueAssignments = document.getElementById('dialogueAssignments');
             const dialoguePreview = document.getElementById('dialoguePreview');
+            const characterVoiceList = document.getElementById('characterVoiceList');
+            const dialogueList = document.getElementById('dialogueList');
+            
             if (dialogueAssignments) dialogueAssignments.classList.add('hidden');
             if (dialoguePreview) dialoguePreview.classList.add('hidden');
+            if (characterVoiceList) characterVoiceList.innerHTML = '';
+            if (dialogueList) dialogueList.innerHTML = '';
             
             // Get content from all chapters (force refresh)
             const content = getAllChaptersText();
