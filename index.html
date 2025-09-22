@@ -5681,9 +5681,9 @@ Format as clean, readable text ready for narration.`;
                 return;
             }
             
-            console.log('=== FORCED FRESH SCAN ===');
-            console.log('Cleared all cached dialogue data');
-            console.log('Content to scan:', content.substring(0, 200) + '...');
+            console.log('=== SIMPLE DIALOGUE SCANNER ===');
+            console.log('Content length:', content.length);
+            console.log('Content preview:', content.substring(0, 200));
 
             const chapterInfo = hasMultipleChapters() ? 
                 `Scanning ${storyData.chapters.length} chapters for dialogue and characters...` :
@@ -5714,14 +5714,52 @@ Format as clean, readable text ready for narration.`;
             try {
                 let characters = new Set();
                 let dialogueSections = [];
+                let foundCount = 0;
                 
-                // Split into lines for processing
-                const lines = content.split('\n').map(line => line.trim()).filter(line => line);
-                console.log('Total lines to process:', lines.length);
+                console.log('Starting pattern matching...');
                 
-                // Also try splitting by sentences for dialogue that might span multiple lines
-                const sentences = content.split(/[.!?]\s+/).map(s => s.trim()).filter(s => s.length > 0);
-                console.log('Total sentences to process:', sentences.length);
+                // PATTERN 1: Character: "Dialogue" (most common)
+                const colonPattern = /([A-Z][a-zA-Z\s]{1,25})\s*:\s*["""']([^"""']{5,})["""']/g;
+                let match;
+                
+                console.log('Trying Pattern 1: Character: "Dialogue"');
+                while ((match = colonPattern.exec(content)) !== null && foundCount < 50) {
+                    const character = match[1].trim();
+                    const dialogue = match[2].trim();
+                    foundCount++;
+                    
+                    console.log(`Match ${foundCount}: ${character} -> "${dialogue.substring(0, 40)}..."`);
+                    
+                    characters.add(character);
+                    dialogueSections.push({
+                        character: character,
+                        text: dialogue,
+                        line: foundCount,
+                        type: 'colon_format'
+                    });
+                }
+                
+                // PATTERN 2: Character said "Dialogue"
+                const saidPattern = /([A-Z][a-zA-Z\s]{2,25})\s+(said|asked|replied|whispered|called|shouted)\s*["""']([^"""']{5,})["""']/gi;
+                
+                console.log('Trying Pattern 2: Character said "Dialogue"');
+                while ((match = saidPattern.exec(content)) !== null && foundCount < 100) {
+                    const character = match[1].trim();
+                    const dialogue = match[3].trim();
+                    foundCount++;
+                    
+                    console.log(`Match ${foundCount}: ${character} -> "${dialogue.substring(0, 40)}..."`);
+                    
+                    characters.add(character);
+                    dialogueSections.push({
+                        character: character,
+                        text: dialogue,
+                        line: foundCount,
+                        type: 'said_format'
+                    });
+                }
+                
+                console.log(`Pattern matching complete. Found ${foundCount} matches.`);
                 
                 // Enhanced dialogue detection patterns
                 const patterns = {
@@ -5825,8 +5863,14 @@ Format as clean, readable text ready for narration.`;
                     }
                 }
                 
+                console.log('=== SCAN RESULTS ===');
                 console.log('Characters found:', Array.from(characters));
                 console.log('Dialogue sections found:', dialogueSections.length);
+                
+                // Show first few results for verification
+                dialogueSections.slice(0, 3).forEach((section, i) => {
+                    console.log(`Sample ${i + 1}: ${section.character} -> "${section.text.substring(0, 50)}..."`);
+                });
                 
                 // Try AI detection for characters (even if some patterns matched)
                 console.log('Trying AI character detection...');
