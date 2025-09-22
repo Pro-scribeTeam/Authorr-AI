@@ -5827,6 +5827,13 @@ Format as clean, readable text ready for narration.`;
                                         if (distance < 50) {
                                             score += 50;
                                         }
+                                        
+                                        // PENALTY: If this character is already assigned to many quotes,
+                                        // reduce score to encourage diversity
+                                        const existingAssignments = dialogueSections.filter(d => d.character === character).length;
+                                        if (existingAssignments > 2) {
+                                            score -= (existingAssignments - 2) * 25; // Penalty for overuse
+                                        }
                                     }
                                     
                                     if (score > bestScore) {
@@ -5835,11 +5842,24 @@ Format as clean, readable text ready for narration.`;
                                     }
                                 }
                                 
-                                if (bestMatch && bestScore > 50) {
+                                // More strict threshold for assignment and better fallbacks
+                                if (bestMatch && bestScore > 75) {
                                     assignedCharacter = bestMatch;
+                                } else if (characterArray.length > 1) {
+                                    // Distribute quotes among available characters if no strong match
+                                    const leastUsedChar = characterArray.reduce((min, char) => {
+                                        const usageCount = dialogueSections.filter(d => d.character === char).length;
+                                        const minUsageCount = dialogueSections.filter(d => d.character === min).length;
+                                        return usageCount < minUsageCount ? char : min;
+                                    });
+                                    assignedCharacter = leastUsedChar;
                                 }
                                 
-                                console.log(`Quote "${cleanQuote}" assigned to ${assignedCharacter} (score: ${bestScore}, context: "${contextText.substring(0, 100)}...")`);
+                                console.log(`Quote ${i+1}: "${cleanQuote}" assigned to ${assignedCharacter} (score: ${bestScore})`);
+                console.log(`  - Available characters: [${characterArray.join(', ')}]`);
+                console.log(`  - Best match: ${bestMatch}, Score: ${bestScore}`);
+                console.log(`  - Context: "${contextText.substring(0, 100)}..."`);
+                console.log(`  - Existing assignments for ${assignedCharacter}: ${dialogueSections.filter(d => d.character === assignedCharacter).length}`);
                                 
                                 dialogueSections.push({
                                     character: assignedCharacter,
@@ -5865,9 +5885,18 @@ Format as clean, readable text ready for narration.`;
                 dialogueData.characters = Array.from(characters);
                 dialogueData.dialogueSections = dialogueSections;
                 
-                console.log('Final results:');
-                console.log('- Characters:', dialogueData.characters);
-                console.log('- Dialogue sections:', dialogueData.dialogueSections.length);
+                console.log('=== FINAL DIALOGUE SCAN RESULTS ===');
+                console.log('Characters found:', dialogueData.characters);
+                console.log('Total dialogue sections:', dialogueData.dialogueSections.length);
+                console.log('Dialogue distribution:');
+                dialogueData.characters.forEach(char => {
+                    const count = dialogueData.dialogueSections.filter(d => d.character === char).length;
+                    console.log(`  - ${char}: ${count} dialogue sections`);
+                });
+                console.log('Dialogue sections preview:');
+                dialogueData.dialogueSections.slice(0, 5).forEach((d, i) => {
+                    console.log(`  ${i+1}. ${d.character}: "${d.text.substring(0, 50)}..."`);  
+                });
                 
                 hideLoading();
                 
@@ -5958,7 +5987,7 @@ Format as clean, readable text ready for narration.`;
                 const analysis = await callOpenAI([
                     {
                         role: "system",
-                        content: "You are a literary analysis expert. Identify ALL character names mentioned in the given text, including main characters, secondary characters, and anyone who speaks or is referenced by name. Return only the names as a clean JSON array, like [\"John\", \"Mary\", \"Dr. Smith\", \"Narrator\"]. Include 'Narrator' if there's narrative text. Do not include any markdown formatting - return only the JSON array."
+                        content: "You are a literary analysis expert. Identify ALL DISTINCT character names who appear in the given text. Look for: 1) Characters who speak dialogue, 2) Named individuals mentioned in narration, 3) People referenced by others. Return ONLY the character names as a clean JSON array like [\"Character1\", \"Character2\", \"Character3\"]. Requirements: - Include ALL different characters, not just the main one - Do NOT repeat the same character multiple times - Do NOT include generic titles like 'man', 'woman', 'person' - DO include proper names and specific character names - Return only the JSON array, no markdown or extra text"
                     },
                     {
                         role: "user",
@@ -5994,13 +6023,13 @@ Format as clean, readable text ready for narration.`;
                     if (matches) {
                         const extractedChars = matches.map(match => match.replace(/"/g, ''));
                         console.log('Extracted characters manually:', extractedChars);
-                        return extractedChars.length > 0 ? extractedChars : ['Character 1', 'Character 2'];
+                        return extractedChars.length > 0 ? extractedChars : ['Speaker A', 'Speaker B', 'Speaker C'];
                     }
                 } catch (extractError) {
                     console.error('Manual extraction also failed:', extractError);
                 }
                 
-                return ['Character 1', 'Character 2']; // Final fallback
+                return ['Speaker A', 'Speaker B', 'Speaker C']; // Final fallback with more variety
             }
         }
 
@@ -6099,11 +6128,29 @@ Format as clean, readable text ready for narration.`;
             dialogueData.dialogueSections.slice(0, 10).forEach((dialogue, index) => {
                 const dialogueDiv = document.createElement('div');
                 dialogueDiv.className = 'p-2 bg-theme-secondary rounded text-sm border-l-4 border-cyan-500';
-                dialogueDiv.innerHTML = `
-                    <div class="font-medium text-cyan-400">${dialogue.character} (Line ${dialogue.line}):</div>
-                    <div class="text-theme-primary mt-1">"${dialogue.text}"</div>
-                    ${dialogue.type === 'untagged' ? '<div class="text-xs text-yellow-400 mt-1">⚠ Untagged dialogue - may need manual assignment</div>' : ''}
-                `;
+                
+                // Create character header
+                const characterHeader = document.createElement('div');
+                characterHeader.className = 'font-medium text-cyan-400';
+                characterHeader.textContent = `${dialogue.character || 'Unknown Speaker'} (Line ${dialogue.line || 'N/A'}):`;
+                
+                // Create dialogue text
+                const dialogueText = document.createElement('div');
+                dialogueText.className = 'text-theme-primary mt-1';
+                dialogueText.textContent = `"${dialogue.text || 'No text'}"`;  
+                
+                // Add elements to container
+                dialogueDiv.appendChild(characterHeader);
+                dialogueDiv.appendChild(dialogueText);
+                
+                // Add warning for untagged dialogue
+                if (dialogue.type === 'untagged') {
+                    const warningDiv = document.createElement('div');
+                    warningDiv.className = 'text-xs text-yellow-400 mt-1';
+                    warningDiv.textContent = '⚠ Untagged dialogue - may need manual assignment';
+                    dialogueDiv.appendChild(warningDiv);
+                }
+                
                 dialogueList.appendChild(dialogueDiv);
             });
 
