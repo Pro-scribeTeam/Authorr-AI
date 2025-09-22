@@ -6146,9 +6146,11 @@ Format as clean, readable text ready for narration.`;
             dialogueAssignments.classList.remove('hidden');
             dialoguePreview.classList.remove('hidden');
 
-            // Clear previous results
+            // FORCE clear ALL previous results
             characterVoiceList.innerHTML = '';
             dialogueList.innerHTML = '';
+            
+            console.log('Cleared characterVoiceList and dialogueList DOM elements');
 
             // Populate character voice assignments
             dialogueData.characters.forEach((character, index) => {
