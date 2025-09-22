@@ -5633,18 +5633,16 @@ Format as clean, readable text ready for narration.`;
             dialogueData.dialogueSections = [];
             dialogueData.voiceAssignments = {};
             
-            // Hide dialogue assignment sections
+            // Hide AND completely clear dialogue assignment sections
             const dialogueAssignments = document.getElementById('dialogueAssignments');
             const dialoguePreview = document.getElementById('dialoguePreview');
-            if (dialogueAssignments) {
-                dialogueAssignments.classList.add('hidden');
-                // Clear the content too
-                const characterVoiceList = document.getElementById('characterVoiceList');
-                const dialogueList = document.getElementById('dialogueList');
-                if (characterVoiceList) characterVoiceList.innerHTML = '';
-                if (dialogueList) dialogueList.innerHTML = '';
-            }
+            const characterVoiceList = document.getElementById('characterVoiceList');
+            const dialogueList = document.getElementById('dialogueList');
+            
+            if (dialogueAssignments) dialogueAssignments.classList.add('hidden');
             if (dialoguePreview) dialoguePreview.classList.add('hidden');
+            if (characterVoiceList) characterVoiceList.innerHTML = '';
+            if (dialogueList) dialogueList.innerHTML = '';
             
             // Clear ALL content caches to force refresh from chapters
             storyData.currentContent = null;
