@@ -5801,6 +5801,31 @@ Format as clean, readable text ready for narration.`;
                     
                     console.log(`Line ${i+1}: "${line.substring(0, 100)}${line.length > 100 ? '...' : ''}"`);
                     
+                    // DEBUG: Test each pattern on every line that has quotes
+                    if (line.includes('"')) {
+                        console.log(`  🔍 Testing patterns on line with quotes: "${line}"`);
+                        
+                        // Test Pattern 1
+                        const test1 = line.match(/"([^"]{3,})"[^A-Z]*?(?:his friend |her friend |)\s*([A-Z][a-zA-Z\s]{2,15})\s+(?:said|asked|replied|whispered|called|shouted|exclaimed|muttered|spoke|answered|continued|added)/i);
+                        console.log(`  Pattern 1 test:`, test1);
+                        
+                        // Test Pattern 2
+                        const test2 = line.match(/([A-Z][a-zA-Z\s]{2,15})\s+(?:chuckled|scoffed|said|asked|replied|whispered|called|shouted|exclaimed|muttered|spoke|answered|continued|added|smiled|laughed|nodded|shook)[^"]*?"([^"]{3,})"/i);
+                        console.log(`  Pattern 2 test:`, test2);
+                        
+                        // Test Pattern 3
+                        const test3 = line.match(/"([^"]{3,})"[?!,.]?\s+([A-Z][a-zA-Z\s]{2,15})\s+(?:interjected|chimed|said|asked|replied|whispered|called|shouted|exclaimed|muttered|spoke|answered|continued|added)/i);
+                        console.log(`  Pattern 3 test:`, test3);
+                        
+                        // Test Pattern 4
+                        const test4 = line.match(/"([^"]{3,})"[,.]?\s+([A-Z][a-zA-Z\s]{2,15})\s+said/i);
+                        console.log(`  Pattern 4 test:`, test4);
+                        
+                        // Test simple quote extraction
+                        const testQuotes = line.match(/"([^"]{3,})"/g);
+                        console.log(`  Quote extraction:`, testQuotes);
+                    }
+                    
                     // PATTERN 1: "Dialogue," his friend Character said
                     // Matches: "Come on, Michael! Just one kiss," his friend Jake said
                     const pattern1 = line.match(/"([^"]{3,})"[^A-Z]*?(?:his friend |her friend |)\s*([A-Z][a-zA-Z\s]{2,15})\s+(?:said|asked|replied|whispered|called|shouted|exclaimed|muttered|spoke|answered|continued|added)/i);
