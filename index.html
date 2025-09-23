@@ -5741,7 +5741,7 @@ Format as clean, readable text ready for narration.`;
                         // Clean up dialogue text
                         dialogue = dialogue.replace(/^["""''"`'s\s]*/, '').replace(/["""''"`'\s]*$/, '').trim();
                         
-                        if (dialogue.length >= 1 && !isNarrativeText(character)) {
+                        if (dialogue.length >= 1 && !isNarrativeText(character) && isActualDialogue(dialogue)) {
                             foundCount++;
                             console.log(`✓ COLON DIALOGUE: "${character}" -> "${dialogue.substring(0, 40)}..."`);
                             
@@ -5766,7 +5766,7 @@ Format as clean, readable text ready for narration.`;
                         // Clean up dialogue text
                         dialogue = dialogue.replace(/^["""''"`'s\s]*/, '').replace(/["""''"`'\s]*$/, '').trim();
                         
-                        if (dialogue.length >= 1 && !isNarrativeText(character)) {
+                        if (dialogue.length >= 1 && !isNarrativeText(character) && isActualDialogue(dialogue)) {
                             foundCount++;
                             console.log(`✓ SAID DIALOGUE: "${character}" -> "${dialogue.substring(0, 40)}..."`);
                             
@@ -5790,7 +5790,7 @@ Format as clean, readable text ready for narration.`;
                         // Clean up dialogue text
                         dialogue = dialogue.replace(/^["""''"`'s\s]*/, '').replace(/["""''"`'\s]*$/, '').trim();
                         
-                        if (dialogue.length >= 1 && !isNarrativeText(character)) {
+                        if (dialogue.length >= 1 && !isNarrativeText(character) && isActualDialogue(dialogue)) {
                             foundCount++;
                             console.log(`✓ REVERSE DIALOGUE: "${character}" -> "${dialogue.substring(0, 40)}..."`);
                             
@@ -5813,7 +5813,8 @@ Format as clean, readable text ready for narration.`;
                         // Clean up dialogue text
                         dialogue = dialogue.replace(/^["""''"`'s\s]*/, '').replace(/["""''"`'\s]*$/, '').trim();
                         
-                        if (dialogue.length >= 3) {
+                        // CRITICAL: Filter out narrative descriptions that aren't actually dialogue
+                        if (dialogue.length >= 3 && isActualDialogue(dialogue)) {
                             foundCount++;
                             console.log(`✓ STANDALONE QUOTE: "${dialogue.substring(0, 40)}..."`);
                             
@@ -5823,6 +5824,8 @@ Format as clean, readable text ready for narration.`;
                                 line: i + 1,
                                 type: 'standalone_quote'
                             });
+                        } else {
+                            console.log(`✗ SKIPPED NARRATIVE: "${dialogue.substring(0, 40)}..." (not actual dialogue)`);
                         }
                     }
                 }
@@ -5835,6 +5838,57 @@ Format as clean, readable text ready for narration.`;
                            character.length < 2 || 
                            character.length > 25 ||
                            !/^[A-Z][a-zA-Z\s]*$/.test(character);
+                }
+                
+                // Helper function to check if quoted text is actual dialogue vs narrative description
+                function isActualDialogue(text) {
+                    const lower = text.toLowerCase();
+                    
+                    // Narrative indicators (NOT dialogue)
+                    const narrativeIndicators = [
+                        'laughter filled', 'they had spent', 'hours talking', 'the space around',
+                        'he walked', 'she moved', 'they went', 'it was', 'there was', 'there were',
+                        'the room', 'the house', 'the street', 'the door', 'the window',
+                        'morning came', 'evening fell', 'night approached', 'sun rose', 'sun set',
+                        'time passed', 'minutes later', 'hours passed', 'days went by',
+                        'meanwhile', 'suddenly', 'eventually', 'finally', 'afterwards'
+                    ];
+                    
+                    // Check for narrative patterns
+                    if (narrativeIndicators.some(indicator => lower.includes(indicator))) {
+                        return false;
+                    }
+                    
+                    // Very long descriptions are usually narrative
+                    if (text.length > 200) {
+                        return false;
+                    }
+                    
+                    // Third person pronouns at start usually indicate narrative
+                    if (/^(he|she|they|it|the)\s/i.test(text)) {
+                        return false;
+                    }
+                    
+                    // Dialogue indicators (likely to be spoken)
+                    const dialogueIndicators = [
+                        /^(yes|no|okay|ok|sure|maybe|perhaps|well|oh|ah|um|hmm)/i,
+                        /^(hello|hi|hey|goodbye|bye|thanks|please|sorry)/i,
+                        /^(what|where|when|why|how|who)/i,
+                        /\?$/, // Questions
+                        /!$/, // Exclamations
+                        /^(i|you|we|my|your|our)/i, // First/second person
+                        /^(let's|don't|can't|won't|shouldn't)/i // Contractions
+                    ];
+                    
+                    // Check for dialogue patterns
+                    if (dialogueIndicators.some(pattern => 
+                        typeof pattern === 'string' ? lower.includes(pattern) : pattern.test(text)
+                    )) {
+                        return true;
+                    }
+                    
+                    // Short text without narrative indicators is likely dialogue
+                    return text.length < 100;
                 }
                 
                 console.log(`Pattern matching complete. Found ${foundCount} matches.`);
@@ -5890,119 +5944,8 @@ Format as clean, readable text ready for narration.`;
                     console.log('AI character detection failed:', aiError);
                 }
                 
-                // If we have characters but no dialogue sections, try to create some
-                if (characters.size > 0 && dialogueSections.length === 0) {
-                    console.log('Found characters but no dialogue sections, trying to extract quotes...');
-                    
-                    // Find all quoted text in the content with enhanced pattern matching
-                    const quoteMatches = content.match(/["""''"`']([^"""''"`']+?)["""''"`']/g);
-                    if (quoteMatches) {
-                        console.log('Found quote matches:', quoteMatches.length);
-                        
-                        // Enhanced quote attribution with context analysis
-                        const characterArray = Array.from(characters);
-                        
-                        // Instead of simple forEach, analyze each quote with surrounding context
-                        for (let i = 0; i < quoteMatches.length; i++) {
-                            const quote = quoteMatches[i];
-                            // Remove only the surrounding quotes, preserve internal apostrophes
-                            let cleanQuote = quote.replace(/^["""''"`']+|["""''"`']+$/g, '').trim();
-                            // Additional cleaning for common artifacts
-                            cleanQuote = cleanQuote.replace(/^s\s+/, '').trim(); // Remove leading 's '
-                            
-                            if (cleanQuote.length > 5) { // Only meaningful dialogue
-                                // Find the position of this quote in the content
-                                const quoteIndex = content.indexOf(quote);
-                                const contextStart = Math.max(0, quoteIndex - 200);
-                                const contextEnd = Math.min(content.length, quoteIndex + quote.length + 200);
-                                const contextText = content.substring(contextStart, contextEnd);
-                                
-                                // Try to find character name in surrounding context
-                                let assignedCharacter = 'Unknown Speaker';
-                                let bestMatch = null;
-                                let bestScore = 0;
-                                
-                                for (const character of characterArray) {
-                                    const charLower = character.toLowerCase();
-                                    const contextLower = contextText.toLowerCase();
-                                    
-                                    // Calculate proximity score
-                                    let score = 0;
-                                    
-                                    // Check if character name appears in context
-                                    if (contextLower.includes(charLower)) {
-                                        const charIndex = contextLower.indexOf(charLower);
-                                        const quoteRelativeIndex = quoteIndex - contextStart;
-                                        const distance = Math.abs(charIndex - quoteRelativeIndex);
-                                        
-                                        // Closer proximity gets higher score
-                                        score = Math.max(0, 200 - distance);
-                                        
-                                        // Bonus for dialogue patterns
-                                        if (contextLower.includes(charLower + ' said') || 
-                                            contextLower.includes(charLower + ' asked') ||
-                                            contextLower.includes('said ' + charLower) ||
-                                            contextLower.includes('asked ' + charLower)) {
-                                            score += 100;
-                                        }
-                                        
-                                        // Bonus for being immediately before or after quote
-                                        if (distance < 50) {
-                                            score += 50;
-                                        }
-                                        
-                                        // PENALTY: If this character is already assigned to many quotes,
-                                        // reduce score to encourage diversity
-                                        const existingAssignments = dialogueSections.filter(d => d.character === character).length;
-                                        if (existingAssignments > 2) {
-                                            score -= (existingAssignments - 2) * 25; // Penalty for overuse
-                                        }
-                                    }
-                                    
-                                    if (score > bestScore) {
-                                        bestScore = score;
-                                        bestMatch = character;
-                                    }
-                                }
-                                
-                                // More strict threshold for assignment and better fallbacks
-                                if (bestMatch && bestScore > 75) {
-                                    assignedCharacter = bestMatch;
-                                } else if (characterArray.length > 1) {
-                                    // Distribute quotes among available characters if no strong match
-                                    const leastUsedChar = characterArray.reduce((min, char) => {
-                                        const usageCount = dialogueSections.filter(d => d.character === char).length;
-                                        const minUsageCount = dialogueSections.filter(d => d.character === min).length;
-                                        return usageCount < minUsageCount ? char : min;
-                                    });
-                                    assignedCharacter = leastUsedChar;
-                                }
-                                
-                                console.log(`Quote ${i+1}: "${cleanQuote}" assigned to ${assignedCharacter} (score: ${bestScore})`);
-                console.log(`  - Available characters: [${characterArray.join(', ')}]`);
-                console.log(`  - Best match: ${bestMatch}, Score: ${bestScore}`);
-                console.log(`  - Context: "${contextText.substring(0, 100)}..."`);
-                console.log(`  - Existing assignments for ${assignedCharacter}: ${dialogueSections.filter(d => d.character === assignedCharacter).length}`);
-                                
-                                dialogueSections.push({
-                                    character: assignedCharacter,
-                                    text: cleanQuote,
-                                    line: i + 1,
-                                    type: 'context_analyzed_quote',
-                                    beforeText: contextText.substring(0, quoteIndex - contextStart),
-                                    afterText: contextText.substring(quoteIndex - contextStart + quote.length),
-                                    fullLine: quote,
-                                    startIndex: quoteIndex,
-                                    endIndex: quoteIndex + quote.length,
-                                    confidence: bestScore > 100 ? 'high' : bestScore > 50 ? 'medium' : 'low',
-                                    attributionScore: bestScore
-                                });
-                            }
-                        }
-                        
-                        console.log(`Created ${dialogueSections.length} dialogue sections from quotes`);
-                    }
-                }
+                // DISABLED: Skip problematic fallback quote assignment that causes incorrect attribution
+                console.log('Skipping problematic fallback quote assignment - relying on proper pattern matching only');
                 
                 // Store results (completely replace, don't append)
                 dialogueData.characters = Array.from(characters);
