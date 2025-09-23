@@ -5656,6 +5656,67 @@ Format as clean, readable text ready for narration.`;
             console.log('All preview content and dialogue data forcibly cleared');
         }
 
+        // Helper function to check if text looks like narrative
+        function isNarrativeText(character) {
+            const lower = character.toLowerCase();
+            const narrativeWords = ['he', 'she', 'they', 'it', 'the', 'and', 'but', 'then', 'said', 'asked', 'chapter'];
+            return narrativeWords.some(word => lower.includes(word)) || 
+                   character.length < 2 || 
+                   character.length > 25 ||
+                   !/^[A-Z][a-zA-Z\s]*$/.test(character);
+        }
+        
+        // Helper function to check if quoted text is actual dialogue vs narrative description
+        function isActualDialogue(text) {
+            const lower = text.toLowerCase();
+            
+            // Narrative indicators (NOT dialogue)
+            const narrativeIndicators = [
+                'laughter filled', 'they had spent', 'hours talking', 'the space around',
+                'he walked', 'she moved', 'they went', 'it was', 'there was', 'there were',
+                'the room', 'the house', 'the street', 'the door', 'the window',
+                'morning came', 'evening fell', 'night approached', 'sun rose', 'sun set',
+                'time passed', 'minutes later', 'hours passed', 'days went by',
+                'meanwhile', 'suddenly', 'eventually', 'finally', 'afterwards'
+            ];
+            
+            // Check for narrative patterns
+            if (narrativeIndicators.some(indicator => lower.includes(indicator))) {
+                return false;
+            }
+            
+            // Very long descriptions are usually narrative
+            if (text.length > 200) {
+                return false;
+            }
+            
+            // Third person pronouns at start usually indicate narrative
+            if (/^(he|she|they|it|the)\s/i.test(text)) {
+                return false;
+            }
+            
+            // Dialogue indicators (likely to be spoken)
+            const dialogueIndicators = [
+                /^(yes|no|okay|ok|sure|maybe|perhaps|well|oh|ah|um|hmm)/i,
+                /^(hello|hi|hey|goodbye|bye|thanks|please|sorry)/i,
+                /^(what|where|when|why|how|who)/i,
+                /\?$/, // Questions
+                /!$/, // Exclamations
+                /^(i|you|we|my|your|our)/i, // First/second person
+                /^(let's|don't|can't|won't|shouldn't)/i // Contractions
+            ];
+            
+            // Check for dialogue patterns
+            if (dialogueIndicators.some(pattern => 
+                typeof pattern === 'string' ? lower.includes(pattern) : pattern.test(text)
+            )) {
+                return true;
+            }
+            
+            // Short text without narrative indicators is likely dialogue
+            return text.length < 100;
+        }
+
         async function scanForDialogue() {
             // FORCE CLEAR all cached dialogue data before scanning
             dialogueData.characters = [];
@@ -5828,67 +5889,6 @@ Format as clean, readable text ready for narration.`;
                             console.log(`✗ SKIPPED NARRATIVE: "${dialogue.substring(0, 40)}..." (not actual dialogue)`);
                         }
                     }
-                }
-                
-                // Helper function to check if text looks like narrative
-                function isNarrativeText(character) {
-                    const lower = character.toLowerCase();
-                    const narrativeWords = ['he', 'she', 'they', 'it', 'the', 'and', 'but', 'then', 'said', 'asked', 'chapter'];
-                    return narrativeWords.some(word => lower.includes(word)) || 
-                           character.length < 2 || 
-                           character.length > 25 ||
-                           !/^[A-Z][a-zA-Z\s]*$/.test(character);
-                }
-                
-                // Helper function to check if quoted text is actual dialogue vs narrative description
-                function isActualDialogue(text) {
-                    const lower = text.toLowerCase();
-                    
-                    // Narrative indicators (NOT dialogue)
-                    const narrativeIndicators = [
-                        'laughter filled', 'they had spent', 'hours talking', 'the space around',
-                        'he walked', 'she moved', 'they went', 'it was', 'there was', 'there were',
-                        'the room', 'the house', 'the street', 'the door', 'the window',
-                        'morning came', 'evening fell', 'night approached', 'sun rose', 'sun set',
-                        'time passed', 'minutes later', 'hours passed', 'days went by',
-                        'meanwhile', 'suddenly', 'eventually', 'finally', 'afterwards'
-                    ];
-                    
-                    // Check for narrative patterns
-                    if (narrativeIndicators.some(indicator => lower.includes(indicator))) {
-                        return false;
-                    }
-                    
-                    // Very long descriptions are usually narrative
-                    if (text.length > 200) {
-                        return false;
-                    }
-                    
-                    // Third person pronouns at start usually indicate narrative
-                    if (/^(he|she|they|it|the)\s/i.test(text)) {
-                        return false;
-                    }
-                    
-                    // Dialogue indicators (likely to be spoken)
-                    const dialogueIndicators = [
-                        /^(yes|no|okay|ok|sure|maybe|perhaps|well|oh|ah|um|hmm)/i,
-                        /^(hello|hi|hey|goodbye|bye|thanks|please|sorry)/i,
-                        /^(what|where|when|why|how|who)/i,
-                        /\?$/, // Questions
-                        /!$/, // Exclamations
-                        /^(i|you|we|my|your|our)/i, // First/second person
-                        /^(let's|don't|can't|won't|shouldn't)/i // Contractions
-                    ];
-                    
-                    // Check for dialogue patterns
-                    if (dialogueIndicators.some(pattern => 
-                        typeof pattern === 'string' ? lower.includes(pattern) : pattern.test(text)
-                    )) {
-                        return true;
-                    }
-                    
-                    // Short text without narrative indicators is likely dialogue
-                    return text.length < 100;
                 }
                 
                 console.log(`Pattern matching complete. Found ${foundCount} matches.`);
