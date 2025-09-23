@@ -5718,63 +5718,123 @@ Format as clean, readable text ready for narration.`;
                 
                 console.log('Starting pattern matching...');
                 
-                // PATTERN 1: Character: "Dialogue" (strict colon format only)
-                const colonPattern = /^\s*([A-Z][a-zA-Z\s]{1,25})\s*:\s*["""']([^"""']{5,})["""']\s*$/gm;
-                let match;
+                // ENHANCED DIALOGUE PATTERNS - More Flexible and Comprehensive
+                console.log('Using enhanced flexible dialogue patterns...');
                 
-                console.log('Trying Pattern 1: Character: "Dialogue" (strict colon format)');
-                while ((match = colonPattern.exec(content)) !== null && foundCount < 50) {
-                    const character = match[1].trim();
-                    const dialogue = match[2].trim();
+                // Split content into lines for line-by-line analysis
+                const lines = content.split('\n');
+                console.log(`Processing ${lines.length} lines...`);
+                
+                for (let i = 0; i < lines.length && foundCount < 200; i++) {
+                    const line = lines[i].trim();
+                    if (!line || line.length < 3) continue; // Skip empty/very short lines
                     
-                    // Skip if character name contains narrative words
-                    if (character.toLowerCase().includes('said') || character.toLowerCase().includes('asked') || 
-                        character.toLowerCase().includes('the ') || character.toLowerCase().includes('and ') ||
-                        character.toLowerCase().includes('he ') || character.toLowerCase().includes('she ')) {
-                        console.log(`Skipping narrative text: "${character}"`);
-                        continue;
+                    console.log(`Line ${i+1}: "${line.substring(0, 60)}${line.length > 60 ? '...' : ''}"`);
+                    
+                    // PATTERN 1: Character: "Dialogue" (flexible colon format)
+                    // Handles: Name: "text", NAME: "text", [Name]: "text"
+                    const colonMatch = line.match(/^\s*[\[\s]*([A-Z][a-zA-Z\s]{1,25})[\]\s]*:\s*["""''"`']([^"""''"`']{1,})["""''"`']/);
+                    if (colonMatch) {
+                        const character = colonMatch[1].trim();
+                        let dialogue = colonMatch[2].trim();
+                        
+                        // Clean up dialogue text
+                        dialogue = dialogue.replace(/^["""''"`'s\s]*/, '').replace(/["""''"`'\s]*$/, '').trim();
+                        
+                        if (dialogue.length >= 1 && !isNarrativeText(character)) {
+                            foundCount++;
+                            console.log(`✓ COLON DIALOGUE: "${character}" -> "${dialogue.substring(0, 40)}..."`);
+                            
+                            characters.add(character);
+                            dialogueSections.push({
+                                character: character,
+                                text: dialogue,
+                                line: i + 1,
+                                type: 'colon_dialogue'
+                            });
+                            continue; // Move to next line
+                        }
                     }
                     
-                    foundCount++;
-                    console.log(`✓ DIALOGUE: "${character}" -> "${dialogue.substring(0, 40)}..."`);
+                    // PATTERN 2: Character said "Dialogue" (flexible attribution)
+                    // Handles: Name said "text", Name asked, "text", etc.
+                    const saidMatch = line.match(/\b([A-Z][a-zA-Z\s]{2,25})\s+(said|asked|replied|whispered|called|shouted|exclaimed|muttered|spoke|answered|continued|added)[,:]?\s*["""''"`']([^"""''"`']{1,})["""''"`']/i);
+                    if (saidMatch) {
+                        const character = saidMatch[1].trim();
+                        let dialogue = saidMatch[3].trim();
+                        
+                        // Clean up dialogue text
+                        dialogue = dialogue.replace(/^["""''"`'s\s]*/, '').replace(/["""''"`'\s]*$/, '').trim();
+                        
+                        if (dialogue.length >= 1 && !isNarrativeText(character)) {
+                            foundCount++;
+                            console.log(`✓ SAID DIALOGUE: "${character}" -> "${dialogue.substring(0, 40)}..."`);
+                            
+                            characters.add(character);
+                            dialogueSections.push({
+                                character: character,
+                                text: dialogue,
+                                line: i + 1,
+                                type: 'attributed_dialogue'
+                            });
+                            continue; // Move to next line
+                        }
+                    }
                     
-                    characters.add(character);
-                    dialogueSections.push({
-                        character: character,
-                        text: dialogue,
-                        line: foundCount,
-                        type: 'pure_dialogue'
-                    });
+                    // PATTERN 3: "Dialogue" said Character (reverse attribution)
+                    const reverseSaidMatch = line.match(/["""''"`']([^"""''"`']{1,})["""''"`'][,.]?\s+([A-Z][a-zA-Z\s]{2,25})\s+(said|asked|replied|whispered|called|shouted|exclaimed|muttered|spoke|answered|continued|added)/i);
+                    if (reverseSaidMatch) {
+                        let dialogue = reverseSaidMatch[1].trim();
+                        const character = reverseSaidMatch[2].trim();
+                        
+                        // Clean up dialogue text
+                        dialogue = dialogue.replace(/^["""''"`'s\s]*/, '').replace(/["""''"`'\s]*$/, '').trim();
+                        
+                        if (dialogue.length >= 1 && !isNarrativeText(character)) {
+                            foundCount++;
+                            console.log(`✓ REVERSE DIALOGUE: "${character}" -> "${dialogue.substring(0, 40)}..."`);
+                            
+                            characters.add(character);
+                            dialogueSections.push({
+                                character: character,
+                                text: dialogue,
+                                line: i + 1,
+                                type: 'reverse_attributed_dialogue'
+                            });
+                            continue; // Move to next line
+                        }
+                    }
+                    
+                    // PATTERN 4: Standalone quotes (will be assigned later using context)
+                    const standaloneMatch = line.match(/^\s*["""''"`']([^"""''"`']{3,})["""''"`']\s*$/);
+                    if (standaloneMatch) {
+                        let dialogue = standaloneMatch[1].trim();
+                        
+                        // Clean up dialogue text
+                        dialogue = dialogue.replace(/^["""''"`'s\s]*/, '').replace(/["""''"`'\s]*$/, '').trim();
+                        
+                        if (dialogue.length >= 3) {
+                            foundCount++;
+                            console.log(`✓ STANDALONE QUOTE: "${dialogue.substring(0, 40)}..."`);
+                            
+                            dialogueSections.push({
+                                character: 'Unknown Speaker', // Will be assigned later
+                                text: dialogue,
+                                line: i + 1,
+                                type: 'standalone_quote'
+                            });
+                        }
+                    }
                 }
                 
-                // PATTERN 2: Character said "Dialogue" (narrative dialogue attribution)
-                const saidPattern = /\b([A-Z][a-zA-Z\s]{2,20})\s+(said|asked|replied|whispered|called|shouted|exclaimed|muttered)[,:]?\s*["""']([^"""']{5,})["""']/gi;
-                
-                console.log('Trying Pattern 2: Character said "Dialogue"');
-                while ((match = saidPattern.exec(content)) !== null && foundCount < 100) {
-                    const character = match[1].trim();
-                    const dialogue = match[3].trim();
-                    
-                    // Strict character name validation - only proper names
-                    if (character.toLowerCase().includes('he ') || character.toLowerCase().includes('she ') ||
-                        character.toLowerCase().includes('the ') || character.toLowerCase().includes('and ') ||
-                        character.toLowerCase().includes('it ') || character.toLowerCase().includes('they ') ||
-                        character.length < 2 || character.length > 25 || 
-                        !/^[A-Z][a-zA-Z\s]*$/.test(character)) {
-                        console.log(`Skipping invalid character: "${character}"`);
-                        continue;
-                    }
-                    
-                    foundCount++;
-                    console.log(`✓ DIALOGUE: "${character}" -> "${dialogue.substring(0, 40)}..."`);
-                    
-                    characters.add(character);
-                    dialogueSections.push({
-                        character: character,
-                        text: dialogue,
-                        line: foundCount,
-                        type: 'attributed_dialogue'
-                    });
+                // Helper function to check if text looks like narrative
+                function isNarrativeText(character) {
+                    const lower = character.toLowerCase();
+                    const narrativeWords = ['he', 'she', 'they', 'it', 'the', 'and', 'but', 'then', 'said', 'asked', 'chapter'];
+                    return narrativeWords.some(word => lower.includes(word)) || 
+                           character.length < 2 || 
+                           character.length > 25 ||
+                           !/^[A-Z][a-zA-Z\s]*$/.test(character);
                 }
                 
                 console.log(`Pattern matching complete. Found ${foundCount} matches.`);
@@ -5834,8 +5894,8 @@ Format as clean, readable text ready for narration.`;
                 if (characters.size > 0 && dialogueSections.length === 0) {
                     console.log('Found characters but no dialogue sections, trying to extract quotes...');
                     
-                    // Find all quoted text in the content
-                    const quoteMatches = content.match(/["""]([^"""]+?)["""]|["']([^"']+?)["']/g);
+                    // Find all quoted text in the content with enhanced pattern matching
+                    const quoteMatches = content.match(/["""''"`']([^"""''"`']+?)["""''"`']/g);
                     if (quoteMatches) {
                         console.log('Found quote matches:', quoteMatches.length);
                         
@@ -5846,7 +5906,9 @@ Format as clean, readable text ready for narration.`;
                         for (let i = 0; i < quoteMatches.length; i++) {
                             const quote = quoteMatches[i];
                             // Remove only the surrounding quotes, preserve internal apostrophes
-                            const cleanQuote = quote.replace(/^["""'"]+|["""'"]+$/g, '').trim();
+                            let cleanQuote = quote.replace(/^["""''"`']+|["""''"`']+$/g, '').trim();
+                            // Additional cleaning for common artifacts
+                            cleanQuote = cleanQuote.replace(/^s\s+/, '').trim(); // Remove leading 's '
                             
                             if (cleanQuote.length > 5) { // Only meaningful dialogue
                                 // Find the position of this quote in the content
