@@ -5744,7 +5744,16 @@ Format as clean, readable text ready for narration.`;
             
             console.log('=== SIMPLE DIALOGUE SCANNER ===');
             console.log('Content length:', content.length);
-            console.log('Content preview:', content.substring(0, 200));
+            console.log('Content preview:', content.substring(0, 500));
+            
+            // DEBUG: Show actual story format
+            const lines = content.split('\n');
+            console.log('=== STORY FORMAT DEBUG ===');
+            lines.slice(0, 20).forEach((line, i) => {
+                if (line.trim()) {
+                    console.log(`Line ${i+1}: "${line}"`);
+                }
+            });
 
             const chapterInfo = hasMultipleChapters() ? 
                 `Scanning ${storyData.chapters.length} chapters for dialogue and characters...` :
