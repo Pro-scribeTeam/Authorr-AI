@@ -5801,34 +5801,34 @@ Format as clean, readable text ready for narration.`;
                     
                     console.log(`Line ${i+1}: "${line.substring(0, 100)}${line.length > 100 ? '...' : ''}"`);
                     
-                    // DEBUG: Test each pattern on every line that has quotes
-                    if (line.includes('"')) {
+                    // DEBUG: Test each pattern on every line that has quotes (including smart quotes)
+                    if (line.includes('"') || line.includes('"') || line.includes('"') || line.includes("'") || line.includes("'")) {
                         console.log(`  🔍 Testing patterns on line with quotes: "${line}"`);
                         
-                        // Test Pattern 1
-                        const test1 = line.match(/"([^"]{3,})"[^A-Z]*?(?:his friend |her friend |)\s*([A-Z][a-zA-Z\s]{2,15})\s+(?:said|asked|replied|whispered|called|shouted|exclaimed|muttered|spoke|answered|continued|added)/i);
+                        // Test Pattern 1 (smart quotes)
+                        const test1 = line.match(/["""]([^"""]{3,})["""][^A-Z]*?(?:his friend |her friend |)\s*([A-Z][a-zA-Z\s]{2,15})\s+(?:said|asked|replied|whispered|called|shouted|exclaimed|muttered|spoke|answered|continued|added)/i);
                         console.log(`  Pattern 1 test:`, test1);
                         
-                        // Test Pattern 2
-                        const test2 = line.match(/([A-Z][a-zA-Z\s]{2,15})\s+(?:chuckled|scoffed|said|asked|replied|whispered|called|shouted|exclaimed|muttered|spoke|answered|continued|added|smiled|laughed|nodded|shook)[^"]*?"([^"]{3,})"/i);
+                        // Test Pattern 2 (smart quotes)
+                        const test2 = line.match(/([A-Z][a-zA-Z\s]{2,15})\s+(?:chuckled|scoffed|said|asked|replied|whispered|called|shouted|exclaimed|muttered|spoke|answered|continued|added|smiled|laughed|nodded|shook)[^"""]*?["""]([^"""]{3,})["""]/i);
                         console.log(`  Pattern 2 test:`, test2);
                         
-                        // Test Pattern 3
-                        const test3 = line.match(/"([^"]{3,})"[?!,.]?\s+([A-Z][a-zA-Z\s]{2,15})\s+(?:interjected|chimed|said|asked|replied|whispered|called|shouted|exclaimed|muttered|spoke|answered|continued|added)/i);
+                        // Test Pattern 3 (smart quotes)
+                        const test3 = line.match(/["""]([^"""]{3,})["""][?!,.]?\s+([A-Z][a-zA-Z\s]{2,15})\s+(?:interjected|chimed|said|asked|replied|whispered|called|shouted|exclaimed|muttered|spoke|answered|continued|added)/i);
                         console.log(`  Pattern 3 test:`, test3);
                         
-                        // Test Pattern 4
-                        const test4 = line.match(/"([^"]{3,})"[,.]?\s+([A-Z][a-zA-Z\s]{2,15})\s+said/i);
+                        // Test Pattern 4 (smart quotes)
+                        const test4 = line.match(/["""]([^"""]{3,})["""][,.]?\s+([A-Z][a-zA-Z\s]{2,15})\s+said/i);
                         console.log(`  Pattern 4 test:`, test4);
                         
-                        // Test simple quote extraction
-                        const testQuotes = line.match(/"([^"]{3,})"/g);
+                        // Test simple quote extraction (smart quotes)
+                        const testQuotes = line.match(/["""]([^"""]{3,})["""]/g);
                         console.log(`  Quote extraction:`, testQuotes);
                     }
                     
-                    // PATTERN 1: "Dialogue," his friend Character said
+                    // PATTERN 1: "Dialogue," his friend Character said (SMART QUOTES)
                     // Matches: "Come on, Michael! Just one kiss," his friend Jake said
-                    const pattern1 = line.match(/"([^"]{3,})"[^A-Z]*?(?:his friend |her friend |)\s*([A-Z][a-zA-Z\s]{2,15})\s+(?:said|asked|replied|whispered|called|shouted|exclaimed|muttered|spoke|answered|continued|added)/i);
+                    const pattern1 = line.match(/["""]([^"""]{3,})["""][^A-Z]*?(?:his friend |her friend |)\s*([A-Z][a-zA-Z\s]{2,15})\s+(?:said|asked|replied|whispered|called|shouted|exclaimed|muttered|spoke|answered|continued|added)/i);
                     if (pattern1) {
                         let dialogue = pattern1[1].trim();
                         const character = pattern1[2].trim();
@@ -5848,9 +5848,9 @@ Format as clean, readable text ready for narration.`;
                         }
                     }
                     
-                    // PATTERN 2: Character chuckled/action, "Dialogue" 
-                    // Matches: Michael chuckled, shaking his head as he stole a glance at the booth... "You know I don't do..."
-                    const pattern2 = line.match(/([A-Z][a-zA-Z\s]{2,15})\s+(?:chuckled|scoffed|said|asked|replied|whispered|called|shouted|exclaimed|muttered|spoke|answered|continued|added|smiled|laughed|nodded|shook)[^"]*?"([^"]{3,})"/i);
+                    // PATTERN 2: Character chuckled/action, "Dialogue" (SMART QUOTES)
+                    // Matches: Michael scoffed, shaking his head. "You know I don't do..."
+                    const pattern2 = line.match(/([A-Z][a-zA-Z\s]{2,15})\s+(?:chuckled|scoffed|said|asked|replied|whispered|called|shouted|exclaimed|muttered|spoke|answered|continued|added|smiled|laughed|nodded|shook)[^"""]*?["""]([^"""]{3,})["""]/i);
                     if (pattern2) {
                         const character = pattern2[1].trim();
                         let dialogue = pattern2[2].trim();
@@ -5870,9 +5870,9 @@ Format as clean, readable text ready for narration.`;
                         }
                     }
                     
-                    // PATTERN 3: "Dialogue?" Character interjected/chimed
-                    // Matches: "Juvenile?" Tessa interjected, her eyes sparkling with mischief
-                    const pattern3 = line.match(/"([^"]{3,})"[?!,.]?\s+([A-Z][a-zA-Z\s]{2,15})\s+(?:interjected|chimed|said|asked|replied|whispered|called|shouted|exclaimed|muttered|spoke|answered|continued|added)/i);
+                    // PATTERN 3: "Dialogue?" Character interjected/chimed (SMART QUOTES)
+                    // Matches: "Well, then, how about we make it interesting?" Sarah chimed in
+                    const pattern3 = line.match(/["""]([^"""]{3,})["""][?!,.]?\s+([A-Z][a-zA-Z\s]{2,15})\s+(?:interjected|chimed|said|asked|replied|whispered|called|shouted|exclaimed|muttered|spoke|answered|continued|added)/i);
                     if (pattern3) {
                         let dialogue = pattern3[1].trim();
                         const character = pattern3[2].trim();
@@ -5892,9 +5892,9 @@ Format as clean, readable text ready for narration.`;
                         }
                     }
                     
-                    // PATTERN 4: Simple "Let's make it interesting," Character said
-                    // Matches: "Let's make it interesting," Jake said, a sly grin spreading across his face
-                    const pattern4 = line.match(/"([^"]{3,})"[,.]?\s+([A-Z][a-zA-Z\s]{2,15})\s+said/i);
+                    // PATTERN 4: Simple "Let's make it interesting," Character said (SMART QUOTES)
+                    // Matches: "Fine," he relented, rolling his eyes
+                    const pattern4 = line.match(/["""]([^"""]{3,})["""][,.]?\s+([A-Z][a-zA-Z\s]{2,15})\s+(?:said|relented|muttered)/i);
                     if (pattern4) {
                         let dialogue = pattern4[1].trim();
                         const character = pattern4[2].trim();
@@ -5914,11 +5914,11 @@ Format as clean, readable text ready for narration.`;
                         }
                     }
                     
-                    // PATTERN 5: Extract all quotes and try to match with any character name in the line
-                    const quotes = line.match(/"([^"]{3,})"/g);
+                    // PATTERN 5: Extract all quotes and try to match with any character name in the line (SMART QUOTES)
+                    const quotes = line.match(/["""]([^"""]{3,})["""]/g);
                     if (quotes) {
                         for (const quote of quotes) {
-                            let dialogue = quote.replace(/"/g, '').trim();
+                            let dialogue = quote.replace(/["""]/g, '').trim();
                             
                             if (dialogue.length >= 3 && isActualDialogue(dialogue)) {
                                 // Try to find any character name in the same line
