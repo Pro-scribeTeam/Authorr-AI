@@ -8,6 +8,12 @@
     <meta name="keywords" content="audiobook creation, AI writing, text to speech, book generation, storytelling, AI narration">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
+    <script type="module">
+        // Import Supabase modules
+        import { storyManager } from './src/story-manager.js';
+        // Make storyManager globally available
+        window.storyManager = storyManager;
+    </script>
     <style>
         /* AUTHORR AI Brand Colors - Cyan, Silver, Black, White */
         :root {
@@ -5742,266 +5748,151 @@ Format as clean, readable text ready for narration.`;
                 return;
             }
             
-            console.log('=== SIMPLE DIALOGUE SCANNER ===');
+            console.log('=== ROBUST DIALOGUE SCANNER WITH SUPABASE ===');
             console.log('Content length:', content.length);
             console.log('Content preview:', content.substring(0, 500));
             
-            // DEBUG: Show actual story format
-            const lines = content.split('\n');
-            console.log('=== STORY FORMAT DEBUG ===');
-            lines.slice(0, 20).forEach((line, i) => {
-                if (line.trim()) {
-                    console.log(`Line ${i+1}: "${line}"`);
-                }
-            });
-
             const chapterInfo = hasMultipleChapters() ? 
                 `Scanning ${storyData.chapters.length} chapters for dialogue and characters...` :
                 'Scanning story for dialogue and characters...';
             
             showLoading(chapterInfo);
             
-            // Add detailed debug information
-            console.log('=== DIALOGUE SCANNING DEBUG ===');
-            console.log('Content source: getAllChaptersText()');
-            console.log('Story chapters count:', storyData.chapters ? storyData.chapters.length : 0);
-            console.log('Content length:', content.length);
-            console.log('First 500 characters:', content.substring(0, 500));
-            console.log('Last 200 characters:', content.substring(Math.max(0, content.length - 200)));
-            console.log('Has quotes ("):', content.includes('"'));
-            console.log('Has smart quotes (" "):', content.includes('"') || content.includes('"'));
-            console.log('Has colons:', content.includes(':'));
-            console.log('Has "said":', content.toLowerCase().includes('said'));
-            
-            // Test with a simple dialogue pattern
-            console.log('Testing dialogue patterns...');
-            const testLine = 'John said, "Hello there!"';
-            const testPattern = /^([A-Z][a-zA-Z\s]+?)[\s,]*(?:said|asked|replied|whispered|shouted|muttered|exclaimed)[\s,]*["""]([^"""]+?)["""](.*)$/i;
-            const testMatch = testLine.match(testPattern);
-            console.log('Test line:', testLine);
-            console.log('Test match:', testMatch);
-
             try {
+                // Use the exact robust dialogue patterns you specified
+                const dialoguePatterns = [
+                    /([A-Z][a-z]+(?:\s[A-Z][a-z]+)*)\s*(?:said|asked|replied|whispered|shouted|called|interrupted)\s*,?\s*[""]([^""]*?)[""]]/gi,
+                    /[""]([^""]*?)[""]\s*,?\s*(?:said|asked|replied|whispered|shouted|called|interrupted)\s*,?\s*([A-Z][a-z]+(?:\s[A-Z][a-z]+)*?)\.?/gi,
+                    /[""]([^""]*?)[""]\s*,?\s*([A-Z][a-z]+(?:\s[A-Z][a-z]+)*?)\s*(?:said|asked|replied|whispered|shouted|called|interrupted)/gi,
+                    /[""]([^""]*?)[""](?=\s+—\s+|(?=.*\b(?:Mia|Jake|Tom|Ethan|Liam|Clara)\b))/gi
+                ];
+
+                let allMatches = [];
+                
+                // Process all patterns exactly as you specified
+                for (const pattern of dialoguePatterns) {
+                    let match;
+                    while ((match = pattern.exec(content)) !== null) {
+                        allMatches.push(match);
+                        console.log("Full match:", match[0]);
+                        console.log("Character:", match[1] || match[2]);
+                        console.log("Dialogue:", match[2] || match[1]);
+                    }
+                }
+                
+                console.log(`Found ${allMatches.length} dialogue matches using robust patterns`);
+                
+                // Process matches and extract characters/dialogue
                 let characters = new Set();
                 let dialogueSections = [];
-                let foundCount = 0;
                 
-                console.log('Starting pattern matching...');
-                
-                // ENHANCED DIALOGUE PATTERNS - More Flexible and Comprehensive
-                console.log('Using enhanced flexible dialogue patterns...');
-                
-                // Split content into lines for line-by-line analysis
-                const lines = content.split('\n');
-                console.log(`Processing ${lines.length} lines...`);
-                
-                for (let i = 0; i < lines.length && foundCount < 200; i++) {
-                    const line = lines[i].trim();
-                    if (!line || line.length < 10) continue; // Skip empty/very short lines
+                allMatches.forEach((match, index) => {
+                    const character = (match[1] || match[2] || 'Unknown Speaker').trim();
+                    const dialogue = (match[2] || match[1] || '').trim();
                     
-                    console.log(`Line ${i+1}: "${line.substring(0, 100)}${line.length > 100 ? '...' : ''}"`);
-                    
-                    // DEBUG: Test each pattern on every line that has quotes (including smart quotes)
-                    if (line.includes('"') || line.includes('"') || line.includes('"') || line.includes("'") || line.includes("'")) {
-                        console.log(`  🔍 Testing patterns on line with quotes: "${line}"`);
+                    if (dialogue && dialogue.length >= 3) {
+                        characters.add(character);
+                        dialogueSections.push({
+                            character: character,
+                            text: dialogue,
+                            match: match[0],
+                            index: index,
+                            type: 'robust_pattern_match'
+                        });
                         
-                        // Test Pattern 1 (smart quotes)
-                        const test1 = line.match(/["""]([^"""]{3,})["""][^A-Z]*?(?:his friend |her friend |)\s*([A-Z][a-zA-Z\s]{2,15})\s+(?:said|asked|replied|whispered|called|shouted|exclaimed|muttered|spoke|answered|continued|added)/i);
-                        console.log(`  Pattern 1 test:`, test1);
-                        
-                        // Test Pattern 2 (smart quotes)
-                        const test2 = line.match(/([A-Z][a-zA-Z\s]{2,15})\s+(?:chuckled|scoffed|said|asked|replied|whispered|called|shouted|exclaimed|muttered|spoke|answered|continued|added|smiled|laughed|nodded|shook)[^"""]*?["""]([^"""]{3,})["""]/i);
-                        console.log(`  Pattern 2 test:`, test2);
-                        
-                        // Test Pattern 3 (smart quotes)
-                        const test3 = line.match(/["""]([^"""]{3,})["""][?!,.]?\s+([A-Z][a-zA-Z\s]{2,15})\s+(?:interjected|chimed|said|asked|replied|whispered|called|shouted|exclaimed|muttered|spoke|answered|continued|added)/i);
-                        console.log(`  Pattern 3 test:`, test3);
-                        
-                        // Test Pattern 4 (smart quotes)
-                        const test4 = line.match(/["""]([^"""]{3,})["""][,.]?\s+([A-Z][a-zA-Z\s]{2,15})\s+said/i);
-                        console.log(`  Pattern 4 test:`, test4);
-                        
-                        // Test simple quote extraction (smart quotes)
-                        const testQuotes = line.match(/["""]([^"""]{3,})["""]/g);
-                        console.log(`  Quote extraction:`, testQuotes);
+                        console.log(`✓ DIALOGUE EXTRACTED: "${character}" -> "${dialogue.substring(0, 40)}..."`);
                     }
-                    
-                    // PATTERN 1: "Dialogue," his friend Character said (SMART QUOTES)
-                    // Matches: "Come on, Michael! Just one kiss," his friend Jake said
-                    const pattern1 = line.match(/["""]([^"""]{3,})["""][^A-Z]*?(?:his friend |her friend |)\s*([A-Z][a-zA-Z\s]{2,15})\s+(?:said|asked|replied|whispered|called|shouted|exclaimed|muttered|spoke|answered|continued|added)/i);
-                    if (pattern1) {
-                        let dialogue = pattern1[1].trim();
-                        const character = pattern1[2].trim();
-                        
-                        if (dialogue.length >= 3 && !isNarrativeText(character) && isActualDialogue(dialogue)) {
-                            foundCount++;
-                            console.log(`✓ PATTERN 1 DIALOGUE: "${character}" -> "${dialogue.substring(0, 40)}..."`);
-                            
-                            characters.add(character);
-                            dialogueSections.push({
-                                character: character,
-                                text: dialogue,
-                                line: i + 1,
-                                type: 'friend_attribution_dialogue'
-                            });
-                            continue;
-                        }
-                    }
-                    
-                    // PATTERN 2: Character chuckled/action, "Dialogue" (SMART QUOTES)
-                    // Matches: Michael scoffed, shaking his head. "You know I don't do..."
-                    const pattern2 = line.match(/([A-Z][a-zA-Z\s]{2,15})\s+(?:chuckled|scoffed|said|asked|replied|whispered|called|shouted|exclaimed|muttered|spoke|answered|continued|added|smiled|laughed|nodded|shook)[^"""]*?["""]([^"""]{3,})["""]/i);
-                    if (pattern2) {
-                        const character = pattern2[1].trim();
-                        let dialogue = pattern2[2].trim();
-                        
-                        if (dialogue.length >= 3 && !isNarrativeText(character) && isActualDialogue(dialogue)) {
-                            foundCount++;
-                            console.log(`✓ PATTERN 2 DIALOGUE: "${character}" -> "${dialogue.substring(0, 40)}..."`);
-                            
-                            characters.add(character);
-                            dialogueSections.push({
-                                character: character,
-                                text: dialogue,
-                                line: i + 1,
-                                type: 'action_then_dialogue'
-                            });
-                            continue;
-                        }
-                    }
-                    
-                    // PATTERN 3: "Dialogue?" Character interjected/chimed (SMART QUOTES)
-                    // Matches: "Well, then, how about we make it interesting?" Sarah chimed in
-                    const pattern3 = line.match(/["""]([^"""]{3,})["""][?!,.]?\s+([A-Z][a-zA-Z\s]{2,15})\s+(?:interjected|chimed|said|asked|replied|whispered|called|shouted|exclaimed|muttered|spoke|answered|continued|added)/i);
-                    if (pattern3) {
-                        let dialogue = pattern3[1].trim();
-                        const character = pattern3[2].trim();
-                        
-                        if (dialogue.length >= 3 && !isNarrativeText(character) && isActualDialogue(dialogue)) {
-                            foundCount++;
-                            console.log(`✓ PATTERN 3 DIALOGUE: "${character}" -> "${dialogue.substring(0, 40)}..."`);
-                            
-                            characters.add(character);
-                            dialogueSections.push({
-                                character: character,
-                                text: dialogue,
-                                line: i + 1,
-                                type: 'dialogue_then_attribution'
-                            });
-                            continue;
-                        }
-                    }
-                    
-                    // PATTERN 4: Simple "Let's make it interesting," Character said (SMART QUOTES)
-                    // Matches: "Fine," he relented, rolling his eyes
-                    const pattern4 = line.match(/["""]([^"""]{3,})["""][,.]?\s+([A-Z][a-zA-Z\s]{2,15})\s+(?:said|relented|muttered)/i);
-                    if (pattern4) {
-                        let dialogue = pattern4[1].trim();
-                        const character = pattern4[2].trim();
-                        
-                        if (dialogue.length >= 3 && !isNarrativeText(character) && isActualDialogue(dialogue)) {
-                            foundCount++;
-                            console.log(`✓ PATTERN 4 DIALOGUE: "${character}" -> "${dialogue.substring(0, 40)}..."`);
-                            
-                            characters.add(character);
-                            dialogueSections.push({
-                                character: character,
-                                text: dialogue,
-                                line: i + 1,
-                                type: 'simple_said_dialogue'
-                            });
-                            continue;
-                        }
-                    }
-                    
-                    // PATTERN 5: Extract all quotes and try to match with any character name in the line (SMART QUOTES)
-                    const quotes = line.match(/["""]([^"""]{3,})["""]/g);
-                    if (quotes) {
-                        for (const quote of quotes) {
-                            let dialogue = quote.replace(/["""]/g, '').trim();
-                            
-                            if (dialogue.length >= 3 && isActualDialogue(dialogue)) {
-                                // Try to find any character name in the same line
-                                const possibleNames = ['Michael', 'Jake', 'Sarah', 'Tessa', 'Luke', 'Lila', 'Tom'];
-                                let assignedCharacter = 'Unknown Speaker';
-                                
-                                for (const name of possibleNames) {
-                                    if (line.toLowerCase().includes(name.toLowerCase())) {
-                                        assignedCharacter = name;
-                                        break;
-                                    }
-                                }
-                                
-                                foundCount++;
-                                console.log(`✓ QUOTE EXTRACTED: "${assignedCharacter}" -> "${dialogue.substring(0, 40)}..."`);
-                                
-                                if (assignedCharacter !== 'Unknown Speaker') {
-                                    characters.add(assignedCharacter);
-                                }
-                                
-                                dialogueSections.push({
-                                    character: assignedCharacter,
-                                    text: dialogue,
-                                    line: i + 1,
-                                    type: 'extracted_quote'
-                                });
-                            }
-                        }
-                    }
-                }
-                
-                console.log(`Pattern matching complete. Found ${foundCount} matches.`);
-                
-                // Enhanced dialogue detection patterns
-                const patterns = {
-                    // Character: "Dialogue"
-                    characterColon: /^([A-Z][a-zA-Z\s]+?):\s*["""]([^"""]+?)["""](.*)$/,
-                    // [Character]: "Dialogue"  
-                    characterBracket: /^\[([^\]]+)\]:\s*["""]([^"""]+?)["""](.*)$/,
-                    // CAPS: "Dialogue"
-                    characterCaps: /^([A-Z][A-Z\s]{1,20}):\s*["""]([^"""]+?)["""](.*)$/,
-                    // "Dialogue" said Character
-                    dialogueSaidCharacter: /^["""]([^"""]+?)["""][\s,]*(?:said|asked|replied|whispered|shouted|muttered|exclaimed)\s+([A-Z][a-zA-Z\s]+?)[\s,]*(.*)$/i,
-                    // Character said, "Dialogue"
-                    characterSaidDialogue: /^([A-Z][a-zA-Z\s]+?)[\s,]*(?:said|asked|replied|whispered|shouted|muttered|exclaimed)[\s,]*["""]([^"""]+?)["""](.*)$/i,
-                    // "Dialogue," Character said
-                    dialogueCharacterSaid: /^["""]([^"""]+?)["""][\s,]*([A-Z][a-zA-Z\s]+?)[\s,]*(?:said|asked|replied|whispered|shouted|muttered|exclaimed)(.*)$/i,
-                    // Narrative with "dialogue"
-                    narrativeDialogue: /^(.*?)([A-Z][a-zA-Z\s]+?)(?:\s+(?:said|asked|replied|whispered|shouted|muttered|exclaimed))?[\s,]*["""]([^"""]+?)["""](.*)$/i,
-                    // "Dialogue" (standalone)
-                    standaloneQuote: /^["""]([^"""]+?)["""](.*)$/,
-                    // Text with "dialogue" in middle (last fallback)
-                    embeddedQuote: /^(.*?)["""]([^"""]+?)["""](.*)$/
-                };
-                
-                // Old pattern matching code removed - using simple patterns above
-                
-                console.log('=== SCAN RESULTS ===');
-                console.log('Characters found:', Array.from(characters));
-                console.log('Dialogue sections found:', dialogueSections.length);
-                
-                // Show first few results for verification
-                dialogueSections.slice(0, 3).forEach((section, i) => {
-                    console.log(`Sample ${i + 1}: ${section.character} -> "${section.text.substring(0, 50)}..."`);
                 });
                 
-                // Try AI detection for characters (even if some patterns matched)
-                console.log('Trying AI character detection...');
-                try {
-                    // Use safe text limits for AI detection
-                    const processableText = getTextWithinLimits(content, 8000); // Smaller limit for character detection
-                    const aiCharacters = await detectCharacters(processableText);
-                    console.log('AI detected characters:', aiCharacters);
-                    if (aiCharacters && Array.isArray(aiCharacters)) {
-                        aiCharacters.forEach(char => {
-                            if (char && char.trim()) {
-                                characters.add(char.trim());
+                // Try to enhance with database character matching if Supabase is available
+                if (window.storyManager) {
+                    try {
+                        const enhancedMatches = await window.storyManager.scanForDialogueWithDatabase(content, 'current_story');
+                        console.log('Enhanced database matches:', enhancedMatches.length);
+                        
+                        // Merge database matches with pattern matches
+                        enhancedMatches.forEach(dbMatch => {
+                            if (dbMatch.confidence >= 0.7) {
+                                characters.add(dbMatch.character);
+                                dialogueSections.push({
+                                    character: dbMatch.character,
+                                    text: dbMatch.dialogue,
+                                    position: dbMatch.position,
+                                    confidence: dbMatch.confidence,
+                                    type: 'database_enhanced'
+                                });
                             }
                         });
+                    } catch (dbError) {
+                        console.log('Database enhancement failed, continuing with pattern matches:', dbError);
                     }
-                } catch (aiError) {
-                    console.log('AI character detection failed:', aiError);
                 }
+                
+                // Try AI detection for additional characters if no patterns matched
+                if (characters.size === 0 || dialogueSections.length === 0) {
+                    console.log('No matches from robust patterns, trying AI detection...');
+                    try {
+                        const processableText = getTextWithinLimits(content, 8000);
+                        const aiCharacters = await detectCharacters(processableText);
+                        console.log('AI detected characters:', aiCharacters);
+                        if (aiCharacters && Array.isArray(aiCharacters)) {
+                            aiCharacters.forEach(char => {
+                                if (char && char.trim()) {
+                                    characters.add(char.trim());
+                                }
+                            });
+                        }
+                    } catch (aiError) {
+                        console.log('AI character detection failed:', aiError);
+                    }
+                }
+                
+                // Assign unassigned dialogue to characters based on context
+                if (characters.size > 0) {
+                    const characterArray = Array.from(characters);
+                    console.log('Assigning unassigned dialogue to characters:', characterArray);
+                    
+                    // Find unassigned quotes
+                    const unassignedQuotes = dialogueSections.filter(d => 
+                        d.character === 'Unknown Speaker' || !d.character
+                    );
+                    console.log(`Found ${unassignedQuotes.length} unassigned quotes`);
+                    
+                    for (const quote of unassignedQuotes) {
+                        // Distribute among characters if no clear match
+                        const leastUsedChar = characterArray.reduce((min, char) => {
+                            const usageCount = dialogueSections.filter(d => d.character === char).length;
+                            const minUsageCount = dialogueSections.filter(d => d.character === min).length;
+                            return usageCount < minUsageCount ? char : min;
+                        });
+                        quote.character = leastUsedChar;
+                        console.log(`✓ DISTRIBUTED: "${quote.text.substring(0, 30)}..." -> ${leastUsedChar}`);
+                    }
+                }
+                
+                // Store results (completely replace, don't append)
+                dialogueData.characters = Array.from(characters);
+                dialogueData.dialogueSections = dialogueSections;
+                
+                console.log('=== STORING NEW RESULTS ===');
+                console.log('Replacing old data with new scan results');
+                
+                console.log('=== FINAL DIALOGUE SCAN RESULTS ===');
+                console.log('Characters found:', dialogueData.characters);
+                console.log('Total dialogue sections:', dialogueData.dialogueSections.length);
+                console.log('Dialogue distribution:');
+                dialogueData.characters.forEach(char => {
+                    const count = dialogueData.dialogueSections.filter(d => d.character === char).length;
+                    console.log(`  - ${char}: ${count} dialogue sections`);
+                });
+                console.log('Dialogue sections preview:');
+                dialogueData.dialogueSections.slice(0, 5).forEach((d, i) => {
+                    console.log(`  ${i+1}. ${d.character}: "${d.text.substring(0, 50)}..."`);  
+                });
+                
+                hideLoading();
+                        
+                console.log(`Found ${allMatches.length} total dialogue matches using robust patterns`);
                 
                 // Assign standalone quotes to characters based on context
                 if (characters.size > 0) {
