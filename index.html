@@ -5914,34 +5914,35 @@ Format as clean, readable text ready for narration.`;
                 }
 
                 
-                // Define comprehensive dialogue patterns
+                // Define comprehensive dialogue patterns (non-global to avoid infinite loops)
                 const dialoguePatterns = [
                     // Pattern 1: Name said, "dialogue"
-                    /([A-Z][a-z]+(?:\s[A-Z][a-z]+)*)\s*(?:said|asked|replied|whispered|shouted|called|interrupted|muttered|exclaimed|continued|added)\s*,?\s*["""]([^"""]*?)["""]/gi,
+                    /([A-Z][a-z]+(?:\s[A-Z][a-z]+)*)\s*(?:said|asked|replied|whispered|shouted|called|interrupted|muttered|exclaimed|continued|added)\s*,?\s*["""]([^"""]*?)["""]/g,
                     
                     // Pattern 2: "dialogue," said Name
-                    /["""]([^"""]*?)["""]\s*,?\s*(?:said|asked|replied|whispered|shouted|called|interrupted|muttered|exclaimed|continued|added)\s*,?\s*([A-Z][a-z]+(?:\s[A-Z][a-z]+)*?)\.?/gi,
+                    /["""]([^"""]*?)["""]\s*,?\s*(?:said|asked|replied|whispered|shouted|called|interrupted|muttered|exclaimed|continued|added)\s*,?\s*([A-Z][a-z]+(?:\s[A-Z][a-z]+)*?)\.?/g,
                     
                     // Pattern 3: "dialogue," Name
-                    /["""]([^"""]*?)["""]\s*,?\s*([A-Z][a-z]+(?:\s[A-Z][a-z]+)*?)\s*(?:said|asked|replied|whispered|shouted|called|interrupted|muttered|exclaimed|continued|added)/gi,
+                    /["""]([^"""]*?)["""]\s*,?\s*([A-Z][a-z]+(?:\s[A-Z][a-z]+)*?)\s*(?:said|asked|replied|whispered|shouted|called|interrupted|muttered|exclaimed|continued|added)/g,
                     
                     // Pattern 4: Character action, "dialogue"
-                    /([A-Z][a-z]+(?:\s[A-Z][a-z]+)*)\s+(?:chuckled|scoffed|smiled|laughed|nodded|shook|sighed|breathed)[^"""]*?["""]([^"""]*?)["""]/gi,
-                    
-                    // Pattern 5: "dialogue" (standalone quotes - will be assigned later)
-                    /["""]([^"""]{3,}?)["""]/gi
+                    /([A-Z][a-z]+(?:\s[A-Z][a-z]+)*)\s+(?:chuckled|scoffed|smiled|laughed|nodded|shook|sighed|breathed)[^"""]*?["""]([^"""]*?)["""]/g
                 ];
                 
                 console.log('Extracting all dialogue matches...');
                 let allMatches = [];
                 
-                // Process each pattern
+                // Process each pattern with loop protection
                 for (let patternIndex = 0; patternIndex < dialoguePatterns.length; patternIndex++) {
                     const pattern = dialoguePatterns[patternIndex];
                     console.log(`Processing pattern ${patternIndex + 1}...`);
                     
                     let match;
-                    while ((match = pattern.exec(content)) !== null && allMatches.length < 200) {
+                    let loopCount = 0;
+                    const maxLoops = 1000; // Prevent infinite loops
+                    
+                    while ((match = pattern.exec(content)) !== null && allMatches.length < 200 && loopCount < maxLoops) {
+                        loopCount++;
                         let character = null;
                         let dialogue = null;
                         
@@ -5984,6 +5985,11 @@ Format as clean, readable text ready for narration.`;
                     
                     // Reset regex lastIndex for next iteration
                     pattern.lastIndex = 0;
+                    console.log(`Pattern ${patternIndex + 1} completed: ${loopCount} iterations`);
+                    
+                    if (loopCount >= maxLoops) {
+                        console.warn(`Pattern ${patternIndex + 1} hit loop limit, stopping to prevent freeze`);
+                    }
                 }
                 
                 console.log(`Total matches found: ${allMatches.length}`);
