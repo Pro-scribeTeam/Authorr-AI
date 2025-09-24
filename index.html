@@ -5786,216 +5786,169 @@ Format as clean, readable text ready for narration.`;
                 let dialogueSections = [];
                 let foundCount = 0;
                 
-                console.log('Starting ROBUST pattern matching based on user feedback...');
+                console.log('Starting pattern matching...');
                 
-                let allMatches = [];
+                // ENHANCED DIALOGUE PATTERNS - More Flexible and Comprehensive
+                console.log('Using enhanced flexible dialogue patterns...');
                 
-                // Pattern 1: Name said, "dialogue"  
-                console.log('Testing Pattern 1: Name said, "dialogue"');
-                const pattern1 = /([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)\s*(?:said|asked|replied|whispered|shouted|called|interrupted|muttered|exclaimed|spoke|answered|continued|added)\s*,?\s*["""]([^"""]*?)["""]/gi;
-                let match1;
-                while ((match1 = pattern1.exec(content)) !== null && foundCount < 200) {
-                    const character = match1[1].trim();
-                    const dialogue = match1[2].trim();
+                // Split content into lines for line-by-line analysis
+                const lines = content.split('\n');
+                console.log(`Processing ${lines.length} lines...`);
+                
+                for (let i = 0; i < lines.length && foundCount < 200; i++) {
+                    const line = lines[i].trim();
+                    if (!line || line.length < 10) continue; // Skip empty/very short lines
                     
-                    if (dialogue.length >= 3 && !isNarrativeText(character) && isActualDialogue(dialogue)) {
-                        foundCount++;
-                        console.log(`✓ PATTERN 1 MATCH: "${character}" -> "${dialogue.substring(0, 40)}..."`);
-                        console.log(`  Full match: "${match1[0]}"`);
+                    console.log(`Line ${i+1}: "${line.substring(0, 100)}${line.length > 100 ? '...' : ''}"`);
+                    
+                    // DEBUG: Test each pattern on every line that has quotes (including smart quotes)
+                    if (line.includes('"') || line.includes('"') || line.includes('"') || line.includes("'") || line.includes("'")) {
+                        console.log(`  🔍 Testing patterns on line with quotes: "${line}"`);
                         
-                        characters.add(character);
-                        allMatches.push({
-                            character: character,
-                            text: dialogue,
-                            type: 'name_said_dialogue',
-                            match: match1[0]
-                        });
+                        // Test Pattern 1 (smart quotes)
+                        const test1 = line.match(/["""]([^"""]{3,})["""][^A-Z]*?(?:his friend |her friend |)\s*([A-Z][a-zA-Z\s]{2,15})\s+(?:said|asked|replied|whispered|called|shouted|exclaimed|muttered|spoke|answered|continued|added)/i);
+                        console.log(`  Pattern 1 test:`, test1);
+                        
+                        // Test Pattern 2 (smart quotes)
+                        const test2 = line.match(/([A-Z][a-zA-Z\s]{2,15})\s+(?:chuckled|scoffed|said|asked|replied|whispered|called|shouted|exclaimed|muttered|spoke|answered|continued|added|smiled|laughed|nodded|shook)[^"""]*?["""]([^"""]{3,})["""]/i);
+                        console.log(`  Pattern 2 test:`, test2);
+                        
+                        // Test Pattern 3 (smart quotes)
+                        const test3 = line.match(/["""]([^"""]{3,})["""][?!,.]?\s+([A-Z][a-zA-Z\s]{2,15})\s+(?:interjected|chimed|said|asked|replied|whispered|called|shouted|exclaimed|muttered|spoke|answered|continued|added)/i);
+                        console.log(`  Pattern 3 test:`, test3);
+                        
+                        // Test Pattern 4 (smart quotes)
+                        const test4 = line.match(/["""]([^"""]{3,})["""][,.]?\s+([A-Z][a-zA-Z\s]{2,15})\s+said/i);
+                        console.log(`  Pattern 4 test:`, test4);
+                        
+                        // Test simple quote extraction (smart quotes)
+                        const testQuotes = line.match(/["""]([^"""]{3,})["""]/g);
+                        console.log(`  Quote extraction:`, testQuotes);
                     }
-                }
-                
-                // Pattern 2: "dialogue," said Name
-                console.log('Testing Pattern 2: "dialogue," said Name');
-                const pattern2 = /["""]([^"""]*?)["""\s]*,?\s*(?:said|asked|replied|whispered|shouted|called|interrupted|muttered|exclaimed|spoke|answered|continued|added)\s*,?\s*([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*?)\.?/gi;
-                let match2;
-                while ((match2 = pattern2.exec(content)) !== null && foundCount < 200) {
-                    const dialogue = match2[1].trim();
-                    const character = match2[2].trim();
                     
-                    if (dialogue.length >= 3 && !isNarrativeText(character) && isActualDialogue(dialogue)) {
-                        foundCount++;
-                        console.log(`✓ PATTERN 2 MATCH: "${character}" -> "${dialogue.substring(0, 40)}..."`);
-                        console.log(`  Full match: "${match2[0]}"`);
+                    // PATTERN 1: "Dialogue," his friend Character said (SMART QUOTES)
+                    // Matches: "Come on, Michael! Just one kiss," his friend Jake said
+                    const pattern1 = line.match(/["""]([^"""]{3,})["""][^A-Z]*?(?:his friend |her friend |)\s*([A-Z][a-zA-Z\s]{2,15})\s+(?:said|asked|replied|whispered|called|shouted|exclaimed|muttered|spoke|answered|continued|added)/i);
+                    if (pattern1) {
+                        let dialogue = pattern1[1].trim();
+                        const character = pattern1[2].trim();
                         
-                        characters.add(character);
-                        allMatches.push({
-                            character: character,
-                            text: dialogue,
-                            type: 'dialogue_said_name',
-                            match: match2[0]
-                        });
-                    }
-                }
-                
-                // Pattern 3: "dialogue," Name
-                console.log('Testing Pattern 3: "dialogue," Name');  
-                const pattern3 = /["""]([^"""]*?)["""\s]*,?\s*([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*?)\s*(?:said|asked|replied|whispered|shouted|called|interrupted|muttered|exclaimed|spoke|answered|continued|added)/gi;
-                let match3;
-                while ((match3 = pattern3.exec(content)) !== null && foundCount < 200) {
-                    const dialogue = match3[1].trim();
-                    const character = match3[2].trim();
-                    
-                    if (dialogue.length >= 3 && !isNarrativeText(character) && isActualDialogue(dialogue)) {
-                        foundCount++;
-                        console.log(`✓ PATTERN 3 MATCH: "${character}" -> "${dialogue.substring(0, 40)}..."`);
-                        console.log(`  Full match: "${match3[0]}"`);
-                        
-                        characters.add(character);
-                        allMatches.push({
-                            character: character,
-                            text: dialogue,
-                            type: 'dialogue_name_said',
-                            match: match3[0]
-                        });
-                    }
-                }
-                
-                // Pattern 4: Simple quotes with character context
-                console.log('Testing Pattern 4: Simple quotes with character context');
-                const pattern4 = /["""]([^"""]*?)["""]/gi;
-                let match4;
-                while ((match4 = pattern4.exec(content)) !== null && foundCount < 200) {
-                    const dialogue = match4[1].trim();
-                    
-                    if (dialogue.length >= 3 && isActualDialogue(dialogue)) {
-                        // Find character context around this quote
-                        const quoteStart = match4.index;
-                        const contextStart = Math.max(0, quoteStart - 200);
-                        const contextEnd = Math.min(content.length, quoteStart + match4[0].length + 200);
-                        const contextText = content.substring(contextStart, contextEnd);
-                        
-                        // Look for character names in context
-                        const knownNames = ['Michael', 'Jake', 'Sarah', 'Tessa', 'Luke', 'Lila', 'Tom', 'Brian', 'Clara', 'Jess'];
-                        let assignedCharacter = 'Unknown Speaker';
-                        
-                        for (const name of knownNames) {
-                            if (contextText.toLowerCase().includes(name.toLowerCase())) {
-                                assignedCharacter = name;
-                                break;
-                            }
+                        if (dialogue.length >= 3 && !isNarrativeText(character) && isActualDialogue(dialogue)) {
+                            foundCount++;
+                            console.log(`✓ PATTERN 1 DIALOGUE: "${character}" -> "${dialogue.substring(0, 40)}..."`);
+                            
+                            characters.add(character);
+                            dialogueSections.push({
+                                character: character,
+                                text: dialogue,
+                                line: i + 1,
+                                type: 'friend_attribution_dialogue'
+                            });
+                            continue;
                         }
-                        
-                        foundCount++;
-                        console.log(`✓ PATTERN 4 MATCH: "${assignedCharacter}" -> "${dialogue.substring(0, 40)}..."`);
-                        console.log(`  Context: "${contextText.substring(0, 100)}..."`);
-                        
-                        if (assignedCharacter !== 'Unknown Speaker') {
-                            characters.add(assignedCharacter);
-                        }
-                        
-                        allMatches.push({
-                            character: assignedCharacter,
-                            text: dialogue,
-                            type: 'contextual_quote',
-                            match: match4[0]
-                        });
                     }
-                }
-                
-                // Store all matches
-                console.log(`Total matches found: ${allMatches.length}`);
-                for (let i = 0; i < allMatches.length; i++) {
-                    const match = allMatches[i];
-                    dialogueSections.push({
-                        character: match.character,
-                        text: match.text,
-                        line: i + 1,
-                        type: match.type
-                    });
-                }
-
-                
-                // Define comprehensive dialogue patterns (non-global to avoid infinite loops)
-                const dialoguePatterns = [
-                    // Pattern 1: Name said, "dialogue"
-                    /([A-Z][a-z]+(?:\s[A-Z][a-z]+)*)\s*(?:said|asked|replied|whispered|shouted|called|interrupted|muttered|exclaimed|continued|added)\s*,?\s*["""]([^"""]*?)["""]/g,
                     
-                    // Pattern 2: "dialogue," said Name
-                    /["""]([^"""]*?)["""]\s*,?\s*(?:said|asked|replied|whispered|shouted|called|interrupted|muttered|exclaimed|continued|added)\s*,?\s*([A-Z][a-z]+(?:\s[A-Z][a-z]+)*?)\.?/g,
-                    
-                    // Pattern 3: "dialogue," Name
-                    /["""]([^"""]*?)["""]\s*,?\s*([A-Z][a-z]+(?:\s[A-Z][a-z]+)*?)\s*(?:said|asked|replied|whispered|shouted|called|interrupted|muttered|exclaimed|continued|added)/g,
-                    
-                    // Pattern 4: Character action, "dialogue"
-                    /([A-Z][a-z]+(?:\s[A-Z][a-z]+)*)\s+(?:chuckled|scoffed|smiled|laughed|nodded|shook|sighed|breathed)[^"""]*?["""]([^"""]*?)["""]/g
-                ];
-                
-                console.log('Extracting all dialogue matches...');
-                let allMatches = [];
-                
-                // Process each pattern with loop protection
-                for (let patternIndex = 0; patternIndex < dialoguePatterns.length; patternIndex++) {
-                    const pattern = dialoguePatterns[patternIndex];
-                    console.log(`Processing pattern ${patternIndex + 1}...`);
-                    
-                    let match;
-                    let loopCount = 0;
-                    const maxLoops = 1000; // Prevent infinite loops
-                    
-                    while ((match = pattern.exec(content)) !== null && allMatches.length < 200 && loopCount < maxLoops) {
-                        loopCount++;
-                        let character = null;
-                        let dialogue = null;
+                    // PATTERN 2: Character chuckled/action, "Dialogue" (SMART QUOTES)
+                    // Matches: Michael scoffed, shaking his head. "You know I don't do..."
+                    const pattern2 = line.match(/([A-Z][a-zA-Z\s]{2,15})\s+(?:chuckled|scoffed|said|asked|replied|whispered|called|shouted|exclaimed|muttered|spoke|answered|continued|added|smiled|laughed|nodded|shook)[^"""]*?["""]([^"""]{3,})["""]/i);
+                    if (pattern2) {
+                        const character = pattern2[1].trim();
+                        let dialogue = pattern2[2].trim();
                         
-                        if (patternIndex < 4) { // Patterns 1-4 have character attribution
-                            if (patternIndex === 0 || patternIndex === 3) { // Character first, dialogue second
-                                character = match[1]?.trim();
-                                dialogue = match[2]?.trim();
-                            } else { // Dialogue first, character second
-                                dialogue = match[1]?.trim();
-                                character = match[2]?.trim();
-                            }
-                        } else { // Pattern 5 - standalone quotes
-                            dialogue = match[1]?.trim();
-                            character = 'Unknown Speaker'; // Will be assigned later
+                        if (dialogue.length >= 3 && !isNarrativeText(character) && isActualDialogue(dialogue)) {
+                            foundCount++;
+                            console.log(`✓ PATTERN 2 DIALOGUE: "${character}" -> "${dialogue.substring(0, 40)}..."`);
+                            
+                            characters.add(character);
+                            dialogueSections.push({
+                                character: character,
+                                text: dialogue,
+                                line: i + 1,
+                                type: 'action_then_dialogue'
+                            });
+                            continue;
                         }
+                    }
+                    
+                    // PATTERN 3: "Dialogue?" Character interjected/chimed (SMART QUOTES)
+                    // Matches: "Well, then, how about we make it interesting?" Sarah chimed in
+                    const pattern3 = line.match(/["""]([^"""]{3,})["""][?!,.]?\s+([A-Z][a-zA-Z\s]{2,15})\s+(?:interjected|chimed|said|asked|replied|whispered|called|shouted|exclaimed|muttered|spoke|answered|continued|added)/i);
+                    if (pattern3) {
+                        let dialogue = pattern3[1].trim();
+                        const character = pattern3[2].trim();
                         
-                        if (dialogue && dialogue.length >= 3 && isActualDialogue(dialogue)) {
-                            if (character && !isNarrativeText(character)) {
-                                foundCount++;
-                                console.log(`✓ PATTERN ${patternIndex + 1} DIALOGUE: "${character}" -> "${dialogue.substring(0, 40)}..."`);
-                                console.log(`  Full match: "${match[0]}"`);
+                        if (dialogue.length >= 3 && !isNarrativeText(character) && isActualDialogue(dialogue)) {
+                            foundCount++;
+                            console.log(`✓ PATTERN 3 DIALOGUE: "${character}" -> "${dialogue.substring(0, 40)}..."`);
+                            
+                            characters.add(character);
+                            dialogueSections.push({
+                                character: character,
+                                text: dialogue,
+                                line: i + 1,
+                                type: 'dialogue_then_attribution'
+                            });
+                            continue;
+                        }
+                    }
+                    
+                    // PATTERN 4: Simple "Let's make it interesting," Character said (SMART QUOTES)
+                    // Matches: "Fine," he relented, rolling his eyes
+                    const pattern4 = line.match(/["""]([^"""]{3,})["""][,.]?\s+([A-Z][a-zA-Z\s]{2,15})\s+(?:said|relented|muttered)/i);
+                    if (pattern4) {
+                        let dialogue = pattern4[1].trim();
+                        const character = pattern4[2].trim();
+                        
+                        if (dialogue.length >= 3 && !isNarrativeText(character) && isActualDialogue(dialogue)) {
+                            foundCount++;
+                            console.log(`✓ PATTERN 4 DIALOGUE: "${character}" -> "${dialogue.substring(0, 40)}..."`);
+                            
+                            characters.add(character);
+                            dialogueSections.push({
+                                character: character,
+                                text: dialogue,
+                                line: i + 1,
+                                type: 'simple_said_dialogue'
+                            });
+                            continue;
+                        }
+                    }
+                    
+                    // PATTERN 5: Extract all quotes and try to match with any character name in the line (SMART QUOTES)
+                    const quotes = line.match(/["""]([^"""]{3,})["""]/g);
+                    if (quotes) {
+                        for (const quote of quotes) {
+                            let dialogue = quote.replace(/["""]/g, '').trim();
+                            
+                            if (dialogue.length >= 3 && isActualDialogue(dialogue)) {
+                                // Try to find any character name in the same line
+                                const possibleNames = ['Michael', 'Jake', 'Sarah', 'Tessa', 'Luke', 'Lila', 'Tom'];
+                                let assignedCharacter = 'Unknown Speaker';
                                 
-                                characters.add(character);
-                                allMatches.push({
-                                    character: character,
+                                for (const name of possibleNames) {
+                                    if (line.toLowerCase().includes(name.toLowerCase())) {
+                                        assignedCharacter = name;
+                                        break;
+                                    }
+                                }
+                                
+                                foundCount++;
+                                console.log(`✓ QUOTE EXTRACTED: "${assignedCharacter}" -> "${dialogue.substring(0, 40)}..."`);
+                                
+                                if (assignedCharacter !== 'Unknown Speaker') {
+                                    characters.add(assignedCharacter);
+                                }
+                                
+                                dialogueSections.push({
+                                    character: assignedCharacter,
                                     text: dialogue,
-                                    type: `pattern_${patternIndex + 1}`,
-                                    fullMatch: match[0]
-                                });
-                            } else if (patternIndex === 4) { // Standalone quotes
-                                allMatches.push({
-                                    character: 'Unknown Speaker',
-                                    text: dialogue,
-                                    type: 'standalone_quote',
-                                    fullMatch: match[0]
+                                    line: i + 1,
+                                    type: 'extracted_quote'
                                 });
                             }
                         }
                     }
-                    
-                    // Reset regex lastIndex for next iteration
-                    pattern.lastIndex = 0;
-                    console.log(`Pattern ${patternIndex + 1} completed: ${loopCount} iterations`);
-                    
-                    if (loopCount >= maxLoops) {
-                        console.warn(`Pattern ${patternIndex + 1} hit loop limit, stopping to prevent freeze`);
-                    }
                 }
-                
-                console.log(`Total matches found: ${allMatches.length}`);
-                
-                // Add all matches to dialogueSections
-                dialogueSections.push(...allMatches);
                 
                 console.log(`Pattern matching complete. Found ${foundCount} matches.`);
                 
@@ -6050,76 +6003,67 @@ Format as clean, readable text ready for narration.`;
                     console.log('AI character detection failed:', aiError);
                 }
                 
-                // Enhanced character assignment for standalone quotes
+                // Assign standalone quotes to characters based on context
                 if (characters.size > 0) {
                     const characterArray = Array.from(characters);
                     console.log('Assigning standalone quotes to characters:', characterArray);
                     
-                    // Add common character names that might be in the story
-                    const allPossibleNames = [...characterArray, 'Michael', 'Jake', 'Sarah', 'Tessa', 'Luke', 'Clara', 'Brian', 'Jess', 'Lila', 'Tom'];
-                    const uniqueNames = [...new Set(allPossibleNames)];
-                    
+                    // Find standalone quotes and assign them to characters
                     const standaloneQuotes = dialogueSections.filter(d => d.character === 'Unknown Speaker');
                     console.log(`Found ${standaloneQuotes.length} standalone quotes to assign`);
                     
                     for (const quote of standaloneQuotes) {
+                        const quoteLine = lines[quote.line - 1];
+                        const prevLine = quote.line > 1 ? lines[quote.line - 2] : '';
+                        const nextLine = quote.line < lines.length ? lines[quote.line] : '';
+                        
+                        let assignedCharacter = 'Unknown Speaker';
                         let bestMatch = null;
                         let bestScore = 0;
                         
-                        // Search for character names in the surrounding context of the quote
-                        const quoteText = quote.fullMatch;
-                        const quoteIndex = content.indexOf(quoteText);
+                        // Check previous and next lines for character names
+                        const contextText = (prevLine + ' ' + quoteLine + ' ' + nextLine).toLowerCase();
                         
-                        if (quoteIndex !== -1) {
-                            const contextStart = Math.max(0, quoteIndex - 200);
-                            const contextEnd = Math.min(content.length, quoteIndex + quoteText.length + 200);
-                            const contextText = content.substring(contextStart, contextEnd).toLowerCase();
+                        for (const character of characterArray) {
+                            const charLower = character.toLowerCase();
+                            let score = 0;
                             
-                            for (const character of uniqueNames) {
-                                const charLower = character.toLowerCase();
-                                let score = 0;
+                            // Look for character name in context
+                            if (contextText.includes(charLower)) {
+                                score = 50;
                                 
-                                // Look for character name in context
-                                if (contextText.includes(charLower)) {
-                                    const charIndex = contextText.indexOf(charLower);
-                                    const quoteRelativeIndex = quoteIndex - contextStart;
-                                    const distance = Math.abs(charIndex - quoteRelativeIndex);
-                                    
-                                    // Closer proximity gets higher score
-                                    score = Math.max(0, 100 - distance / 2);
-                                    
-                                    // Bonus for dialogue attribution words
-                                    if (contextText.includes(charLower + ' said') || 
-                                        contextText.includes(charLower + ' asked') ||
-                                        contextText.includes(charLower + ' replied') ||
-                                        contextText.includes('said ' + charLower) ||
-                                        contextText.includes('asked ' + charLower)) {
-                                        score += 50;
-                                    }
+                                // Bonus for being in the same line
+                                if (quoteLine.toLowerCase().includes(charLower)) {
+                                    score += 30;
                                 }
                                 
-                                if (score > bestScore) {
-                                    bestScore = score;
-                                    bestMatch = character;
+                                // Bonus for action words near the character
+                                if (contextText.includes(charLower + ' said') || 
+                                    contextText.includes(charLower + ' asked') ||
+                                    contextText.includes(charLower + ' scoffed') ||
+                                    contextText.includes(charLower + ' chimed')) {
+                                    score += 40;
                                 }
+                            }
+                            
+                            if (score > bestScore) {
+                                bestScore = score;
+                                bestMatch = character;
                             }
                         }
                         
-                        if (bestMatch && bestScore > 20) {
+                        if (bestMatch && bestScore > 30) {
                             quote.character = bestMatch;
-                            characters.add(bestMatch); // Add to character list if not already there
                             console.log(`✓ ASSIGNED: "${quote.text.substring(0, 30)}..." -> ${bestMatch} (score: ${bestScore})`);
                         } else {
-                            // Distribute evenly among detected characters
-                            if (characterArray.length > 0) {
-                                const leastUsedChar = characterArray.reduce((min, char) => {
-                                    const usageCount = dialogueSections.filter(d => d.character === char).length;
-                                    const minUsageCount = dialogueSections.filter(d => d.character === min).length;
-                                    return usageCount < minUsageCount ? char : min;
-                                });
-                                quote.character = leastUsedChar;
-                                console.log(`✓ DISTRIBUTED: "${quote.text.substring(0, 30)}..." -> ${leastUsedChar} (evenly distributed)`);
-                            }
+                            // Distribute among characters if no clear match
+                            const leastUsedChar = characterArray.reduce((min, char) => {
+                                const usageCount = dialogueSections.filter(d => d.character === char).length;
+                                const minUsageCount = dialogueSections.filter(d => d.character === min).length;
+                                return usageCount < minUsageCount ? char : min;
+                            });
+                            quote.character = leastUsedChar;
+                            console.log(`✓ DISTRIBUTED: "${quote.text.substring(0, 30)}..." -> ${leastUsedChar} (least used)`);
                         }
                     }
                 }
