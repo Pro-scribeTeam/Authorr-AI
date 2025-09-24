@@ -5746,11 +5746,55 @@ Format as clean, readable text ready for narration.`;
             if (dialogueList) dialogueList.innerHTML = '';
             
             // Get content from all chapters (force refresh)
-            const content = getAllChaptersText();
+            let content = getAllChaptersText();
             
             if (!content.trim()) {
-                showNotification('No story content found. Please generate chapters or write content first.', 'warning');
-                return;
+                // Add sample content for testing dialogue patterns
+                content = `
+=== Sample Story for Testing ===
+
+Michael looked at his friend Jake and sighed. "I don't think this is going to work," he said nervously.
+
+"Come on, don't give up so easily," Jake replied with a grin. "We've come this far already."
+
+Sarah walked into the room and saw the two of them arguing. "What's all the commotion about?" she asked, crossing her arms.
+
+"Nothing important," Michael muttered, avoiding eye contact.
+
+Jake laughed. "He's just being dramatic as usual. We're planning something amazing!"
+
+"Well, whatever it is," Sarah said, "count me in. I love a good adventure."
+
+The old man in the corner spoke softly, "Adventure often finds those who seek it least."
+
+"Who was that?" Sarah whispered to Michael.
+
+"I have no idea," he whispered back, "but he's been sitting there all morning."
+
+Tom burst through the door. "Did someone mention adventure? Because I have news!"
+
+"What kind of news?" asked Jake eagerly.
+
+"The kind that changes everything," Tom said with a mysterious smile. "Are you all ready for this?"
+
+Clara appeared behind Tom, shaking her head. "Don't listen to him. He's been like this all week."
+
+"I heard that!" Tom protested. "And for your information, this is completely different."
+
+"Sure it is," Clara replied sarcastically. "Just like last time when you said you found buried treasure."
+
+Ethan joined the group, looking concerned. "Did I miss something important again?"
+
+"Only Tom's latest grand scheme," Mia said as she entered the room. "But don't worry, it's probably nothing serious."
+
+"Hey!" Tom exclaimed. "This time it's real. I have proof!"
+
+"Prove it then," Liam challenged from the doorway.
+
+The room fell silent as everyone waited for Tom's response.
+`;
+                console.log('Using sample content for dialogue testing');
+                showNotification('No story content found. Using sample content to test dialogue patterns.', 'info');
             }
             
             console.log('=== ROBUST DIALOGUE SCANNER WITH SUPABASE ===');
