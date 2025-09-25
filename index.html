@@ -5667,6 +5667,55 @@ Format as clean, readable text ready for narration.`;
             console.log('All preview content and dialogue data forcibly cleared');
         }
 
+        // Update story generation status indicators
+        function updateStoryStatus() {
+            const hasTitle = storyData.title && storyData.title.length > 0;
+            const hasChapters = storyData.chapters && storyData.chapters.length > 0;
+            const hasContent = storyData.combinedContent && storyData.combinedContent.length > 0;
+            
+            // Update status indicators
+            const titleStatus = document.getElementById('titleStatus');
+            const chaptersStatus = document.getElementById('chaptersStatus');
+            const contentStatus = document.getElementById('contentStatus');
+            
+            if (titleStatus) {
+                titleStatus.className = hasTitle ? 'text-green-400' : 'text-gray-400';
+                titleStatus.textContent = hasTitle ? '✓' : '○';
+            }
+            
+            if (chaptersStatus) {
+                chaptersStatus.className = hasChapters ? 'text-green-400' : 'text-gray-400';
+                chaptersStatus.textContent = hasChapters ? '✓' : '○';
+            }
+            
+            if (contentStatus) {
+                contentStatus.className = hasContent ? 'text-green-400' : 'text-gray-400';
+                contentStatus.textContent = hasContent ? '✓' : '○';
+            }
+            
+            // Update button states
+            const scanBtn = document.getElementById('scanDialogueBtn');
+            const generateNarrationBtn = document.getElementById('generateNarrationBtn');
+            
+            if (scanBtn) {
+                scanBtn.disabled = !hasContent;
+                if (hasContent) {
+                    scanBtn.classList.remove('opacity-50');
+                } else {
+                    scanBtn.classList.add('opacity-50');
+                }
+            }
+            
+            if (generateNarrationBtn) {
+                generateNarrationBtn.disabled = !hasContent;
+                if (hasContent) {
+                    generateNarrationBtn.classList.remove('opacity-50');
+                } else {
+                    generateNarrationBtn.classList.add('opacity-50');
+                }
+            }
+        }
+
         // Helper function to check if text looks like narrative
         function isNarrativeText(character) {
             const lower = character.toLowerCase();
