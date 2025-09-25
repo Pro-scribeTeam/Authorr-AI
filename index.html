@@ -5748,7 +5748,10 @@ Format as clean, readable text ready for narration.`;
             // Get content from all chapters (force refresh)
             let content = getAllChaptersText();
             
-            if (!content.trim()) {
+            // Check if current content has dialogue - if not, use sample content for testing
+            const hasDialogue = content.includes('"') || content.includes('"') || content.includes('"');
+            
+            if (!content.trim() || !hasDialogue) {
                 // Add sample content for testing dialogue patterns
                 content = `
 === Sample Story for Testing ===
@@ -5794,7 +5797,11 @@ Ethan joined the group, looking concerned. "Did I miss something important again
 The room fell silent as everyone waited for Tom's response.
 `;
                 console.log('Using sample content for dialogue testing');
-                showNotification('No story content found. Using sample content to test dialogue patterns.', 'info');
+                if (!content.trim()) {
+                    showNotification('No story content found. Using sample content to test dialogue patterns.', 'info');
+                } else {
+                    showNotification('Current story has no dialogue. Using sample content to test dialogue patterns.', 'info');
+                }
             }
             
             console.log('=== ROBUST DIALOGUE SCANNER WITH SUPABASE ===');
@@ -5810,10 +5817,10 @@ The room fell silent as everyone waited for Tom's response.
             try {
                 // Use the exact robust dialogue patterns you specified
                 const dialoguePatterns = [
-                    /([A-Z][a-z]+(?:\s[A-Z][a-z]+)*)\s*(?:said|asked|replied|whispered|shouted|called|interrupted)\s*,?\s*[""]([^""]*?)[""]/gi,
-                    /[""]([^""]*?)[""]\s*,?\s*(?:said|asked|replied|whispered|shouted|called|interrupted)\s*,?\s*([A-Z][a-z]+(?:\s[A-Z][a-z]+)*?)\.?/gi,
-                    /[""]([^""]*?)[""]\s*,?\s*([A-Z][a-z]+(?:\s[A-Z][a-z]+)*?)\s*(?:said|asked|replied|whispered|shouted|called|interrupted)/gi,
-                    /[""]([^""]*?)[""](?=\s+—\s+|(?=.*\b(?:Mia|Jake|Tom|Ethan|Liam|Clara)\b))/gi
+                    /([A-Z][a-z]+(?:\s[A-Z][a-z]+)*)\s*(?:said|asked|replied|whispered|shouted|called|interrupted)\s*,?\s*["""]([^"""]*?)["""]/gi,
+                    /["""]([^"""]*?)["""]\s*,?\s*(?:said|asked|replied|whispered|shouted|called|interrupted)\s*,?\s*([A-Z][a-z]+(?:\s[A-Z][a-z]+)*?)\.?/gi,
+                    /["""]([^"""]*?)["""]\s*,?\s*([A-Z][a-z]+(?:\s[A-Z][a-z]+)*?)\s*(?:said|asked|replied|whispered|shouted|called|interrupted)/gi,
+                    /["""]([^"""]*?)["""](?=\s+—\s+|(?=.*\b(?:Mia|Jake|Tom|Ethan|Liam|Clara)\b))/gi
                 ];
 
                 let allMatches = [];
