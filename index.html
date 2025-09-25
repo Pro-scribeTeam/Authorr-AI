@@ -5805,8 +5805,9 @@ The room fell silent as everyone waited for Tom's response.
             }
             
             console.log('=== ROBUST DIALOGUE SCANNER WITH SUPABASE ===');
-            console.log('Content length:', content.length);
+            console.log('Content length:', content.length, 'characters');
             console.log('Content preview:', content.substring(0, 500));
+            console.log('🔍 FULL CONTENT will be scanned - no truncation for dialogue patterns');
             
             const chapterInfo = hasMultipleChapters() ? 
                 `Scanning ${storyData.chapters.length} chapters for dialogue and characters...` :
@@ -5826,14 +5827,18 @@ The room fell silent as everyone waited for Tom's response.
                 let allMatches = [];
                 
                 // Process all patterns exactly as you specified
+                console.log(`🔍 Scanning FULL CONTENT (${content.length} chars) with ${dialoguePatterns.length} robust patterns...`);
                 for (const pattern of dialoguePatterns) {
                     let match;
+                    let patternMatches = 0;
                     while ((match = pattern.exec(content)) !== null) {
+                        patternMatches++;
                         allMatches.push(match);
-                        console.log("Full match:", match[0]);
+                        console.log(`✓ Pattern ${dialoguePatterns.indexOf(pattern) + 1} Match ${patternMatches}:`, match[0]);
                         console.log("Character:", match[1] || match[2]);
                         console.log("Dialogue:", match[2] || match[1]);
                     }
+                    console.log(`Pattern ${dialoguePatterns.indexOf(pattern) + 1} found ${patternMatches} matches`);
                 }
                 
                 console.log(`Found ${allMatches.length} dialogue matches using robust patterns`);
