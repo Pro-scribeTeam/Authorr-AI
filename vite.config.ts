@@ -5,7 +5,11 @@ export default defineConfig({
   server: {
     host: '0.0.0.0',
     port: 8080,
-    allowedHosts: 'all'
+    allowedHosts: [
+      '8080-icceg3y944sc6o8xsyey5-6532622b.e2b.dev',
+      'localhost',
+      '127.0.0.1'
+    ]
   },
   plugins: [
     {
