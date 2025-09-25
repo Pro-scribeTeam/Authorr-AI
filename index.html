@@ -6875,9 +6875,17 @@ The room fell silent as everyone waited for Tom's response.
                         <div class="bg-theme-primary p-3 rounded-lg mb-3 text-sm">
                             📊 <strong>Generation Summary:</strong> ${audioFiles.length} successful, ${failedSegments.length} failed
                         </div>
-                        <button onclick="downloadAllMultiVoiceAudio()" class="btn-primary px-6 py-2 rounded-lg">
-                            <i class="fas fa-download mr-2"></i>Download All Audio Segments
-                        </button>
+                        <div class="space-y-2">
+                            <button onclick="combineAllAudioSegments()" class="btn-primary px-6 py-2 rounded-lg w-full">
+                                <i class="fas fa-magic mr-2"></i>Combine Into Final Audiobook
+                            </button>
+                            <button onclick="openAudioDAW()" class="btn-secondary px-6 py-2 rounded-lg w-full">
+                                <i class="fas fa-sliders-h mr-2"></i>Open Audio DAW
+                            </button>
+                            <button onclick="downloadAllMultiVoiceAudio()" class="btn-outline px-6 py-2 rounded-lg w-full">
+                                <i class="fas fa-download mr-2"></i>Download Individual Segments
+                            </button>
+                        </div>
                     </div>
                 </div>
             `;
@@ -7110,6 +7118,963 @@ The room fell silent as everyone waited for Tom's response.
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
+        }
+
+        // =====================================================
+        // COMPREHENSIVE AUDIO DAW SYSTEM
+        // =====================================================
+        
+        let audioDAW = {
+            context: null,
+            tracks: [],
+            isPlaying: false,
+            currentTime: 0,
+            timeline: null,
+            canvas: null,
+            ctx: null
+        };
+
+        // Combine all audio segments into final audiobook
+        async function combineAllAudioSegments() {
+            const audioElements = document.querySelectorAll('#narrationResults audio');
+            if (audioElements.length === 0) {
+                showNotification('No audio segments found to combine.', 'warning');
+                return;
+            }
+
+            showLoading('Combining audio segments into final audiobook...');
+
+            try {
+                // Initialize Web Audio API
+                if (!audioDAW.context) {
+                    audioDAW.context = new (window.AudioContext || window.webkitAudioContext)();
+                }
+
+                const audioBuffers = [];
+                let totalDuration = 0;
+
+                // Load and decode all audio segments
+                for (let i = 0; i < audioElements.length; i++) {
+                    const audioElement = audioElements[i];
+                    const audioUrl = audioElement.querySelector('source').src;
+                    
+                    updateLoadingText(`Loading segment ${i + 1}/${audioElements.length}...`);
+                    
+                    try {
+                        const response = await fetch(audioUrl);
+                        const arrayBuffer = await response.arrayBuffer();
+                        const audioBuffer = await audioDAW.context.decodeAudioData(arrayBuffer);
+                        
+                        audioBuffers.push(audioBuffer);
+                        totalDuration += audioBuffer.duration;
+                    } catch (error) {
+                        console.error(`Failed to load segment ${i + 1}:`, error);
+                        showNotification(`Warning: Could not load segment ${i + 1}`, 'warning');
+                    }
+                }
+
+                if (audioBuffers.length === 0) {
+                    throw new Error('No audio segments could be loaded');
+                }
+
+                updateLoadingText('Combining audio segments...');
+
+                // Create combined audio buffer
+                const sampleRate = audioBuffers[0].sampleRate;
+                const numberOfChannels = audioBuffers[0].numberOfChannels;
+                const totalSamples = Math.floor(totalDuration * sampleRate);
+                
+                const combinedBuffer = audioDAW.context.createBuffer(numberOfChannels, totalSamples, sampleRate);
+
+                let currentOffset = 0;
+                for (const buffer of audioBuffers) {
+                    for (let channel = 0; channel < numberOfChannels; channel++) {
+                        const channelData = combinedBuffer.getChannelData(channel);
+                        const sourceData = buffer.getChannelData(channel);
+                        
+                        for (let i = 0; i < sourceData.length; i++) {
+                            if (currentOffset + i < totalSamples) {
+                                channelData[currentOffset + i] = sourceData[i];
+                            }
+                        }
+                    }
+                    currentOffset += buffer.length;
+                }
+
+                // Convert to downloadable format
+                updateLoadingText('Encoding final audiobook...');
+                const audioBlob = await audioBufferToBlob(combinedBuffer);
+                
+                // Create download
+                const bookTitle = document.getElementById('bookTitle')?.value || 'Audiobook';
+                const fileName = `${bookTitle.replace(/[^a-zA-Z0-9]/g, '_')}_Complete.wav`;
+                
+                const downloadUrl = URL.createObjectURL(audioBlob);
+                const link = document.createElement('a');
+                link.href = downloadUrl;
+                link.download = fileName;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+
+                hideLoading();
+                showNotification(`✅ Final audiobook created! Duration: ${formatTime(totalDuration)}`, 'success');
+                
+                // Also offer to open in DAW
+                setTimeout(() => {
+                    if (confirm('Would you like to open the combined audio in the Audio DAW for further editing?')) {
+                        openAudioDAW();
+                    }
+                }, 1000);
+
+            } catch (error) {
+                console.error('Audio combination error:', error);
+                hideLoading();
+                showNotification(`Failed to combine audio: ${error.message}`, 'error');
+            }
+        }
+
+        // Convert AudioBuffer to Blob (WAV format)
+        async function audioBufferToBlob(audioBuffer) {
+            return audioBufferToWavBlob(audioBuffer);
+        }
+
+        // Convert AudioBuffer to WAV Blob
+        function audioBufferToWavBlob(audioBuffer) {
+            const numberOfChannels = audioBuffer.numberOfChannels;
+            const sampleRate = audioBuffer.sampleRate;
+            const length = audioBuffer.length;
+            
+            const arrayBuffer = new ArrayBuffer(44 + length * numberOfChannels * 2);
+            const view = new DataView(arrayBuffer);
+            
+            // WAV header
+            const writeString = (offset, string) => {
+                for (let i = 0; i < string.length; i++) {
+                    view.setUint8(offset + i, string.charCodeAt(i));
+                }
+            };
+            
+            writeString(0, 'RIFF');
+            view.setUint32(4, 36 + length * numberOfChannels * 2, true);
+            writeString(8, 'WAVE');
+            writeString(12, 'fmt ');
+            view.setUint32(16, 16, true);
+            view.setUint16(20, 1, true);
+            view.setUint16(22, numberOfChannels, true);
+            view.setUint32(24, sampleRate, true);
+            view.setUint32(28, sampleRate * numberOfChannels * 2, true);
+            view.setUint16(32, numberOfChannels * 2, true);
+            view.setUint16(34, 16, true);
+            writeString(36, 'data');
+            view.setUint32(40, length * numberOfChannels * 2, true);
+            
+            // Convert audio data
+            let offset = 44;
+            for (let i = 0; i < length; i++) {
+                for (let channel = 0; channel < numberOfChannels; channel++) {
+                    const sample = audioBuffer.getChannelData(channel)[i];
+                    const intSample = Math.max(-1, Math.min(1, sample)) * 0x7FFF;
+                    view.setInt16(offset, intSample, true);
+                    offset += 2;
+                }
+            }
+            
+            return new Blob([arrayBuffer], { type: 'audio/wav' });
+        }
+
+        // Format time in minutes:seconds
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        // Open the comprehensive Audio DAW
+        function openAudioDAW() {
+            // Create DAW modal
+            const dawModal = document.createElement('div');
+            dawModal.id = 'audioDAWModal';
+            dawModal.className = 'fixed inset-0 bg-black bg-opacity-90 flex flex-col z-50';
+            dawModal.innerHTML = `
+                <div class="flex-1 flex flex-col">
+                    <!-- DAW Header -->
+                    <div class="bg-gray-900 p-4 border-b border-cyan-500">
+                        <div class="flex items-center justify-between">
+                            <h2 class="text-xl font-bold text-cyan-400">
+                                <i class="fas fa-sliders-h mr-2"></i>Professional Audio DAW
+                            </h2>
+                            <div class="flex items-center space-x-4">
+                                <button onclick="playDAWAudio()" id="dawPlayBtn" class="bg-green-600 hover:bg-green-500 px-4 py-2 rounded">
+                                    <i class="fas fa-play"></i> Play
+                                </button>
+                                <button onclick="stopDAWAudio()" class="bg-red-600 hover:bg-red-500 px-4 py-2 rounded">
+                                    <i class="fas fa-stop"></i> Stop
+                                </button>
+                                <button onclick="exportFinalAudiobook()" class="bg-cyan-600 hover:bg-cyan-500 px-4 py-2 rounded">
+                                    <i class="fas fa-download mr-2"></i>Export Final
+                                </button>
+                                <button onclick="closeAudioDAW()" class="bg-gray-600 hover:bg-gray-500 px-4 py-2 rounded">
+                                    <i class="fas fa-times"></i> Close
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- DAW Main Interface -->
+                    <div class="flex-1 flex">
+                        <!-- Track Controls Panel -->
+                        <div class="w-80 bg-gray-800 border-r border-cyan-500 p-4 overflow-y-auto">
+                            <h3 class="text-lg font-semibold text-cyan-400 mb-4">
+                                <i class="fas fa-mixer mr-2"></i>Mixer Panel
+                            </h3>
+                            
+                            <!-- Narration Track -->
+                            <div class="bg-gray-700 rounded-lg p-4 mb-4">
+                                <div class="flex items-center justify-between mb-3">
+                                    <span class="font-medium text-white">🎙️ Narration</span>
+                                    <div class="flex items-center space-x-2">
+                                        <div id="narrationLED" class="w-3 h-3 rounded-full bg-gray-500"></div>
+                                        <button onclick="muteTrack('narration')" class="text-gray-400 hover:text-white">
+                                            <i class="fas fa-volume-mute"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="space-y-2">
+                                    <label class="block text-xs text-gray-400">Volume</label>
+                                    <input type="range" id="narrationVolume" min="0" max="100" value="80" 
+                                           class="w-full" onchange="updateTrackVolume('narration', this.value)">
+                                    <span id="narrationVolumeLabel" class="text-xs text-cyan-400">80%</span>
+                                </div>
+                                <div class="mt-3">
+                                    <label class="block text-xs text-gray-400 mb-1">Upload Audio</label>
+                                    <input type="file" accept="audio/*" onchange="loadAudioTrack('narration', this.files[0])" 
+                                           class="w-full text-xs bg-gray-600 border border-gray-500 rounded px-2 py-1">
+                                </div>
+                            </div>
+
+                            <!-- Music Track -->
+                            <div class="bg-gray-700 rounded-lg p-4 mb-4">
+                                <div class="flex items-center justify-between mb-3">
+                                    <span class="font-medium text-white">🎵 Background Music</span>
+                                    <div class="flex items-center space-x-2">
+                                        <div id="musicLED" class="w-3 h-3 rounded-full bg-gray-500"></div>
+                                        <button onclick="muteTrack('music')" class="text-gray-400 hover:text-white">
+                                            <i class="fas fa-volume-mute"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="space-y-2">
+                                    <label class="block text-xs text-gray-400">Volume</label>
+                                    <input type="range" id="musicVolume" min="0" max="100" value="30" 
+                                           class="w-full" onchange="updateTrackVolume('music', this.value)">
+                                    <span id="musicVolumeLabel" class="text-xs text-cyan-400">30%</span>
+                                </div>
+                                <div class="mt-3">
+                                    <label class="block text-xs text-gray-400 mb-1">Upload Music</label>
+                                    <input type="file" accept="audio/*" onchange="loadAudioTrack('music', this.files[0])" 
+                                           class="w-full text-xs bg-gray-600 border border-gray-500 rounded px-2 py-1">
+                                </div>
+                            </div>
+
+                            <!-- Sound Effects Track -->
+                            <div class="bg-gray-700 rounded-lg p-4 mb-4">
+                                <div class="flex items-center justify-between mb-3">
+                                    <span class="font-medium text-white">🔊 Sound FX</span>
+                                    <div class="flex items-center space-x-2">
+                                        <div id="sfxLED" class="w-3 h-3 rounded-full bg-gray-500"></div>
+                                        <button onclick="muteTrack('sfx')" class="text-gray-400 hover:text-white">
+                                            <i class="fas fa-volume-mute"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="space-y-2">
+                                    <label class="block text-xs text-gray-400">Volume</label>
+                                    <input type="range" id="sfxVolume" min="0" max="100" value="50" 
+                                           class="w-full" onchange="updateTrackVolume('sfx', this.value)">
+                                    <span id="sfxVolumeLabel" class="text-xs text-cyan-400">50%</span>
+                                </div>
+                                <div class="mt-3">
+                                    <label class="block text-xs text-gray-400 mb-1">Upload Sound FX</label>
+                                    <input type="file" accept="audio/*" onchange="loadAudioTrack('sfx', this.files[0])" 
+                                           class="w-full text-xs bg-gray-600 border border-gray-500 rounded px-2 py-1">
+                                </div>
+                            </div>
+
+                            <!-- Master Controls -->
+                            <div class="bg-cyan-900 rounded-lg p-4">
+                                <h4 class="font-medium text-cyan-400 mb-3">🎛️ Master Output</h4>
+                                <div class="space-y-2">
+                                    <label class="block text-xs text-gray-400">Master Volume</label>
+                                    <input type="range" id="masterVolume" min="0" max="100" value="100" 
+                                           class="w-full" onchange="updateMasterVolume(this.value)">
+                                    <span id="masterVolumeLabel" class="text-xs text-cyan-400">100%</span>
+                                </div>
+                                <div class="mt-4 grid grid-cols-5 gap-1">
+                                    <div id="masterMeter1" class="h-2 bg-gray-600 rounded"></div>
+                                    <div id="masterMeter2" class="h-2 bg-gray-600 rounded"></div>
+                                    <div id="masterMeter3" class="h-2 bg-gray-600 rounded"></div>
+                                    <div id="masterMeter4" class="h-2 bg-gray-600 rounded"></div>
+                                    <div id="masterMeter5" class="h-2 bg-gray-600 rounded"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Timeline Area -->
+                        <div class="flex-1 flex flex-col">
+                            <!-- Timeline Header -->
+                            <div class="bg-gray-800 p-3 border-b border-gray-600">
+                                <div class="flex items-center justify-between">
+                                    <div class="text-sm text-gray-400">
+                                        Timeline: <span id="timelinePosition">00:00</span> / <span id="timelineDuration">00:00</span>
+                                    </div>
+                                    <div class="flex items-center space-x-2">
+                                        <button onclick="zoomTimelineIn()" class="text-gray-400 hover:text-white">
+                                            <i class="fas fa-search-plus"></i>
+                                        </button>
+                                        <button onclick="zoomTimelineOut()" class="text-gray-400 hover:text-white">
+                                            <i class="fas fa-search-minus"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Canvas Timeline -->
+                            <div class="flex-1 relative bg-gray-900">
+                                <canvas id="audioTimeline" class="w-full h-full cursor-crosshair" 
+                                        onmousedown="startDragging(event)" 
+                                        onmousemove="handleDrag(event)" 
+                                        onmouseup="stopDragging(event)">
+                                </canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Footer -->
+                    <div class="bg-gray-900 p-3 border-t border-cyan-500">
+                        <div class="flex items-center justify-between text-sm text-gray-400">
+                            <div>Drag audio files onto timeline tracks | Use volume controls to mix | Export when ready</div>
+                            <div id="dawStatus">Ready</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(dawModal);
+            initializeAudioDAW();
+        }
+
+        // Initialize the Audio DAW
+        function initializeAudioDAW() {
+            // Initialize Web Audio Context
+            if (!audioDAW.context) {
+                audioDAW.context = new (window.AudioContext || window.webkitAudioContext)();
+            }
+
+            // Initialize tracks
+            audioDAW.tracks = {
+                narration: { buffer: null, source: null, gainNode: null, volume: 0.8, muted: false },
+                music: { buffer: null, source: null, gainNode: null, volume: 0.3, muted: false },
+                sfx: { buffer: null, source: null, gainNode: null, volume: 0.5, muted: false }
+            };
+
+            // Initialize canvas
+            const canvas = document.getElementById('audioTimeline');
+            audioDAW.canvas = canvas;
+            audioDAW.ctx = canvas.getContext('2d');
+            
+            // Set canvas size
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+
+            // Create master gain node
+            audioDAW.masterGain = audioDAW.context.createGain();
+            audioDAW.masterGain.connect(audioDAW.context.destination);
+
+            // Create gain nodes for each track
+            Object.keys(audioDAW.tracks).forEach(trackName => {
+                const track = audioDAW.tracks[trackName];
+                track.gainNode = audioDAW.context.createGain();
+                track.gainNode.connect(audioDAW.masterGain);
+                track.gainNode.gain.value = track.volume;
+            });
+
+            // Auto-load narration if available
+            loadExistingNarration();
+            
+            drawTimeline();
+            
+            // Initialize drag and drop for timeline
+            initializeTimelineDragDrop();
+            
+            document.getElementById('dawStatus').textContent = 'DAW Initialized - Ready to mix';
+        }
+
+        // Auto-load existing narration into DAW
+        function loadExistingNarration() {
+            const audioElements = document.querySelectorAll('#narrationResults audio');
+            if (audioElements.length > 0) {
+                document.getElementById('dawStatus').textContent = 'Loading narration...';
+                
+                // For demonstration, load the first audio element
+                const firstAudio = audioElements[0];
+                const audioUrl = firstAudio.querySelector('source').src;
+                
+                fetch(audioUrl)
+                    .then(response => response.arrayBuffer())
+                    .then(arrayBuffer => audioDAW.context.decodeAudioData(arrayBuffer))
+                    .then(audioBuffer => {
+                        audioDAW.tracks.narration.buffer = audioBuffer;
+                        drawTimeline();
+                        document.getElementById('dawStatus').textContent = `Narration loaded (${formatTime(audioBuffer.duration)})`;
+                    })
+                    .catch(error => {
+                        console.error('Failed to load narration:', error);
+                        document.getElementById('dawStatus').textContent = 'Ready - Upload audio files';
+                    });
+            }
+        }
+
+        // Load audio track from file upload
+        async function loadAudioTrack(trackName, file) {
+            if (!file) return;
+            
+            try {
+                document.getElementById('dawStatus').textContent = `Loading ${trackName}...`;
+                
+                const arrayBuffer = await file.arrayBuffer();
+                const audioBuffer = await audioDAW.context.decodeAudioData(arrayBuffer);
+                
+                audioDAW.tracks[trackName].buffer = audioBuffer;
+                drawTimeline();
+                
+                document.getElementById('dawStatus').textContent = `${trackName} loaded (${formatTime(audioBuffer.duration)})`;
+                showNotification(`✅ ${trackName.charAt(0).toUpperCase() + trackName.slice(1)} track loaded successfully`, 'success');
+                
+            } catch (error) {
+                console.error(`Failed to load ${trackName}:`, error);
+                document.getElementById('dawStatus').textContent = `Failed to load ${trackName}`;
+                showNotification(`Failed to load ${trackName}: ${error.message}`, 'error');
+            }
+        }
+
+        // Update track volume
+        function updateTrackVolume(trackName, value) {
+            const volume = parseInt(value) / 100;
+            const track = audioDAW.tracks[trackName];
+            
+            if (track && track.gainNode) {
+                track.volume = volume;
+                track.gainNode.gain.value = track.muted ? 0 : volume;
+            }
+            
+            // Update label
+            const label = document.getElementById(`${trackName}VolumeLabel`);
+            if (label) {
+                label.textContent = `${value}%`;
+            }
+            
+            updateLEDIndicator(trackName, volume);
+        }
+
+        // Update master volume
+        function updateMasterVolume(value) {
+            const volume = parseInt(value) / 100;
+            
+            if (audioDAW.masterGain) {
+                audioDAW.masterGain.gain.value = volume;
+            }
+            
+            const label = document.getElementById('masterVolumeLabel');
+            if (label) {
+                label.textContent = `${value}%`;
+            }
+            
+            updateMasterMeter(volume);
+        }
+
+        // Mute/unmute track
+        function muteTrack(trackName) {
+            const track = audioDAW.tracks[trackName];
+            if (track && track.gainNode) {
+                track.muted = !track.muted;
+                track.gainNode.gain.value = track.muted ? 0 : track.volume;
+                
+                // Update LED indicator
+                updateLEDIndicator(trackName, track.muted ? 0 : track.volume);
+            }
+        }
+
+        // Update LED indicators
+        function updateLEDIndicator(trackName, volume) {
+            const led = document.getElementById(`${trackName}LED`);
+            if (led) {
+                if (volume > 0.7) {
+                    led.className = 'w-3 h-3 rounded-full bg-green-400 animate-pulse';
+                } else if (volume > 0.3) {
+                    led.className = 'w-3 h-3 rounded-full bg-yellow-400';
+                } else if (volume > 0) {
+                    led.className = 'w-3 h-3 rounded-full bg-red-400';
+                } else {
+                    led.className = 'w-3 h-3 rounded-full bg-gray-500';
+                }
+            }
+        }
+
+        // Update master meter
+        function updateMasterMeter(volume) {
+            for (let i = 1; i <= 5; i++) {
+                const meter = document.getElementById(`masterMeter${i}`);
+                if (meter) {
+                    if (volume >= (i / 5)) {
+                        if (i >= 4) {
+                            meter.className = 'h-2 bg-red-500 rounded animate-pulse';
+                        } else if (i >= 3) {
+                            meter.className = 'h-2 bg-yellow-500 rounded';
+                        } else {
+                            meter.className = 'h-2 bg-green-500 rounded';
+                        }
+                    } else {
+                        meter.className = 'h-2 bg-gray-600 rounded';
+                    }
+                }
+            }
+        }
+
+        // Play DAW audio
+        async function playDAWAudio() {
+            if (audioDAW.isPlaying) return;
+            
+            try {
+                if (audioDAW.context.state === 'suspended') {
+                    await audioDAW.context.resume();
+                }
+                
+                audioDAW.isPlaying = true;
+                const playBtn = document.getElementById('dawPlayBtn');
+                if (playBtn) {
+                    playBtn.innerHTML = '<i class="fas fa-pause"></i> Pause';
+                    playBtn.onclick = pauseDAWAudio;
+                }
+                
+                // Create and connect source nodes for each track with audio
+                Object.keys(audioDAW.tracks).forEach(trackName => {
+                    const track = audioDAW.tracks[trackName];
+                    if (track.buffer && track.gainNode) {
+                        track.source = audioDAW.context.createBufferSource();
+                        track.source.buffer = track.buffer;
+                        track.source.connect(track.gainNode);
+                        track.source.start(0, audioDAW.currentTime);
+                        
+                        // Set up ended event
+                        track.source.addEventListener('ended', () => {
+                            if (audioDAW.isPlaying) {
+                                stopDAWAudio();
+                            }
+                        });
+                    }
+                });
+                
+                document.getElementById('dawStatus').textContent = 'Playing...';
+                
+                // Start timeline animation
+                animateTimeline();
+                
+            } catch (error) {
+                console.error('Playback error:', error);
+                stopDAWAudio();
+                showNotification(`Playback error: ${error.message}`, 'error');
+            }
+        }
+
+        // Pause DAW audio
+        function pauseDAWAudio() {
+            if (!audioDAW.isPlaying) return;
+            
+            // Stop all sources
+            Object.keys(audioDAW.tracks).forEach(trackName => {
+                const track = audioDAW.tracks[trackName];
+                if (track.source) {
+                    try {
+                        track.source.stop();
+                    } catch (e) {}
+                    track.source = null;
+                }
+            });
+            
+            audioDAW.isPlaying = false;
+            
+            const playBtn = document.getElementById('dawPlayBtn');
+            if (playBtn) {
+                playBtn.innerHTML = '<i class="fas fa-play"></i> Play';
+                playBtn.onclick = playDAWAudio;
+            }
+            
+            document.getElementById('dawStatus').textContent = 'Paused';
+        }
+
+        // Stop DAW audio
+        function stopDAWAudio() {
+            audioDAW.isPlaying = false;
+            audioDAW.currentTime = 0;
+            
+            // Stop all sources
+            Object.keys(audioDAW.tracks).forEach(trackName => {
+                const track = audioDAW.tracks[trackName];
+                if (track.source) {
+                    try {
+                        track.source.stop();
+                    } catch (e) {}
+                    track.source = null;
+                }
+            });
+            
+            const playBtn = document.getElementById('dawPlayBtn');
+            if (playBtn) {
+                playBtn.innerHTML = '<i class="fas fa-play"></i> Play';
+                playBtn.onclick = playDAWAudio;
+            }
+            
+            document.getElementById('dawStatus').textContent = 'Stopped';
+            drawTimeline();
+        }
+
+        // Animate timeline during playback
+        function animateTimeline() {
+            if (!audioDAW.isPlaying) return;
+            
+            drawTimeline();
+            requestAnimationFrame(animateTimeline);
+        }
+
+        // Draw timeline with waveforms and playback position
+        function drawTimeline() {
+            if (!audioDAW.ctx || !audioDAW.canvas) return;
+            
+            const canvas = audioDAW.canvas;
+            const ctx = audioDAW.ctx;
+            const width = canvas.width;
+            const height = canvas.height;
+            
+            // Clear canvas
+            ctx.fillStyle = '#1f2937';
+            ctx.fillRect(0, 0, width, height);
+            
+            // Draw grid lines
+            ctx.strokeStyle = '#374151';
+            ctx.lineWidth = 1;
+            for (let i = 0; i < width; i += 50) {
+                ctx.beginPath();
+                ctx.moveTo(i, 0);
+                ctx.lineTo(i, height);
+                ctx.stroke();
+            }
+            
+            // Draw track waveforms
+            const trackHeight = height / 3;
+            let yOffset = 0;
+            
+            Object.keys(audioDAW.tracks).forEach((trackName, index) => {
+                const track = audioDAW.tracks[trackName];
+                if (track.buffer) {
+                    drawWaveform(ctx, track.buffer, 0, yOffset, width, trackHeight, getTrackColor(trackName));
+                }
+                yOffset += trackHeight;
+            });
+            
+            // Draw playback position
+            if (audioDAW.isPlaying) {
+                const maxDuration = Math.max(...Object.values(audioDAW.tracks)
+                    .filter(t => t.buffer)
+                    .map(t => t.buffer.duration));
+                
+                if (maxDuration > 0) {
+                    const playbackX = (audioDAW.currentTime / maxDuration) * width;
+                    ctx.strokeStyle = '#ef4444';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(playbackX, 0);
+                    ctx.lineTo(playbackX, height);
+                    ctx.stroke();
+                }
+                
+                // Update current time (simulate playback progress)
+                audioDAW.currentTime += 0.016; // ~60fps
+            }
+            
+            // Draw time markers
+            ctx.fillStyle = '#9ca3af';
+            ctx.font = '10px Arial';
+            for (let i = 0; i < width; i += 100) {
+                const timeSeconds = (i / width) * getMaxTrackDuration();
+                ctx.fillText(formatTime(timeSeconds), i + 2, 12);
+            }
+        }
+
+        // Draw waveform visualization
+        function drawWaveform(ctx, buffer, x, y, width, height, color) {
+            const data = buffer.getChannelData(0);
+            const samples = data.length;
+            const samplesPerPixel = samples / width;
+            
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            
+            for (let i = 0; i < width; i++) {
+                const startSample = Math.floor(i * samplesPerPixel);
+                const endSample = Math.floor((i + 1) * samplesPerPixel);
+                
+                let min = 1, max = -1;
+                for (let j = startSample; j < endSample && j < samples; j++) {
+                    if (data[j] < min) min = data[j];
+                    if (data[j] > max) max = data[j];
+                }
+                
+                const minY = y + height/2 + (min * height/4);
+                const maxY = y + height/2 + (max * height/4);
+                
+                ctx.moveTo(x + i, minY);
+                ctx.lineTo(x + i, maxY);
+            }
+            
+            ctx.stroke();
+        }
+
+        // Get track color for visualization
+        function getTrackColor(trackName) {
+            const colors = {
+                'narration': '#3b82f6', // Blue
+                'music': '#10b981',      // Green
+                'sfx': '#f59e0b'         // Orange
+            };
+            return colors[trackName] || '#6b7280';
+        }
+
+        // Get maximum duration across all tracks
+        function getMaxTrackDuration() {
+            return Math.max(...Object.values(audioDAW.tracks)
+                .filter(t => t.buffer)
+                .map(t => t.buffer.duration), 0);
+        }
+
+        // Export final audiobook with metadata
+        async function exportFinalAudiobook() {
+            try {
+                document.getElementById('dawStatus').textContent = 'Exporting final audiobook...';
+                showLoading('Creating final audiobook with cover art and metadata...');
+                
+                // Check if we have audio to export
+                const tracksWithAudio = Object.values(audioDAW.tracks).filter(t => t.buffer);
+                if (tracksWithAudio.length === 0) {
+                    throw new Error('No audio tracks loaded to export');
+                }
+                
+                // Get maximum duration
+                const maxDuration = getMaxTrackDuration();
+                if (maxDuration === 0) {
+                    throw new Error('No valid audio found');
+                }
+                
+                // Create final mix buffer
+                const sampleRate = audioDAW.context.sampleRate;
+                const totalSamples = Math.floor(maxDuration * sampleRate);
+                const finalBuffer = audioDAW.context.createBuffer(2, totalSamples, sampleRate);
+                
+                // Mix all tracks together
+                Object.keys(audioDAW.tracks).forEach(trackName => {
+                    const track = audioDAW.tracks[trackName];
+                    if (track.buffer && !track.muted) {
+                        const volume = track.volume;
+                        const channels = Math.min(track.buffer.numberOfChannels, 2);
+                        
+                        for (let channel = 0; channel < channels; channel++) {
+                            const sourceData = track.buffer.getChannelData(channel);
+                            const targetData = finalBuffer.getChannelData(channel);
+                            
+                            for (let i = 0; i < Math.min(sourceData.length, totalSamples); i++) {
+                                targetData[i] += sourceData[i] * volume;
+                            }
+                        }
+                    }
+                });
+                
+                // Convert to WAV format
+                const wavData = encodeWAV(finalBuffer);
+                
+                // Create blob and download
+                const blob = new Blob([wavData], { type: 'audio/wav' });
+                const url = URL.createObjectURL(blob);
+                
+                // Create download link with metadata
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${storyData.title || 'Audiobook'}_Final_Mix_${new Date().toISOString().slice(0, 10)}.wav`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                
+                URL.revokeObjectURL(url);
+                hideLoading();
+                
+                document.getElementById('dawStatus').textContent = `Exported: ${formatTime(maxDuration)}`;
+                showNotification(`✅ Final audiobook exported successfully! Duration: ${formatTime(maxDuration)}`, 'success');
+                
+                // Generate cover art and enhanced metadata
+                setTimeout(() => {
+                    generateCoverArt();
+                }, 1000);
+                
+            } catch (error) {
+                console.error('Export error:', error);
+                hideLoading();
+                document.getElementById('dawStatus').textContent = 'Export failed';
+                showNotification(`Export failed: ${error.message}`, 'error');
+            }
+        }
+
+        // Encode audio buffer to WAV format
+        function encodeWAV(buffer) {
+            const length = buffer.length;
+            const channels = buffer.numberOfChannels;
+            const sampleRate = buffer.sampleRate;
+            const arrayBuffer = new ArrayBuffer(44 + length * channels * 2);
+            const view = new DataView(arrayBuffer);
+            
+            // WAV header
+            const writeString = (offset, string) => {
+                for (let i = 0; i < string.length; i++) {
+                    view.setUint8(offset + i, string.charCodeAt(i));
+                }
+            };
+            
+            writeString(0, 'RIFF');
+            view.setUint32(4, 36 + length * channels * 2, true);
+            writeString(8, 'WAVE');
+            writeString(12, 'fmt ');
+            view.setUint32(16, 16, true);
+            view.setUint16(20, 1, true);
+            view.setUint16(22, channels, true);
+            view.setUint32(24, sampleRate, true);
+            view.setUint32(28, sampleRate * channels * 2, true);
+            view.setUint16(32, channels * 2, true);
+            view.setUint16(34, 16, true);
+            writeString(36, 'data');
+            view.setUint32(40, length * channels * 2, true);
+            
+            // Convert float samples to 16-bit PCM
+            const offset = 44;
+            for (let i = 0; i < length; i++) {
+                for (let channel = 0; channel < channels; channel++) {
+                    const sample = Math.max(-1, Math.min(1, buffer.getChannelData(channel)[i]));
+                    view.setInt16(offset + (i * channels + channel) * 2, sample < 0 ? sample * 0x8000 : sample * 0x7FFF, true);
+                }
+            }
+            
+            return arrayBuffer;
+        }
+
+        // Generate cover art for the audiobook
+        function generateCoverArt() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 600;
+            canvas.height = 600;
+            const ctx = canvas.getContext('2d');
+            
+            // Create gradient background
+            const gradient = ctx.createLinearGradient(0, 0, 600, 600);
+            gradient.addColorStop(0, '#1e3a8a');
+            gradient.addColorStop(0.5, '#3b82f6');
+            gradient.addColorStop(1, '#1e40af');
+            
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, 600, 600);
+            
+            // Add title
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 48px Arial';
+            ctx.textAlign = 'center';
+            const title = storyData.title || 'AI Generated Audiobook';
+            ctx.fillText(title, 300, 150);
+            
+            // Add subtitle
+            ctx.font = '24px Arial';
+            ctx.fillText('Created with AUTHORR AI', 300, 200);
+            
+            // Add decorative elements
+            ctx.strokeStyle = '#78e3fe';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.arc(300, 350, 150, 0, 2 * Math.PI);
+            ctx.stroke();
+            
+            // Add audio wave decoration
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            for (let x = 100; x < 500; x += 20) {
+                const y = 450 + Math.sin(x * 0.05) * 30;
+                if (x === 100) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+            
+            // Convert to blob and download
+            canvas.toBlob(blob => {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${storyData.title || 'Audiobook'}_Cover.png`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                showNotification('📸 Cover art generated and downloaded!', 'success');
+            }, 'image/png');
+        }
+
+        // Close DAW modal
+        function closeAudioDAW() {
+            stopDAWAudio();
+            const modal = document.getElementById('audioDAWModal');
+            if (modal) {
+                modal.remove();
+            }
+        }
+
+        // Add drag and drop functionality for timeline
+        function initializeTimelineDragDrop() {
+            const canvas = audioDAW.canvas;
+            if (!canvas) return;
+            
+            let isDragging = false;
+            let dragStartX = 0;
+            
+            canvas.addEventListener('mousedown', (e) => {
+                isDragging = true;
+                dragStartX = e.offsetX;
+                canvas.style.cursor = 'grabbing';
+            });
+            
+            canvas.addEventListener('mousemove', (e) => {
+                if (isDragging) {
+                    const maxDuration = getMaxTrackDuration();
+                    const newTime = (e.offsetX / canvas.width) * maxDuration;
+                    audioDAW.currentTime = Math.max(0, Math.min(newTime, maxDuration));
+                    drawTimeline();
+                }
+            });
+            
+            canvas.addEventListener('mouseup', () => {
+                isDragging = false;
+                canvas.style.cursor = 'pointer';
+            });
+            
+            canvas.addEventListener('mouseleave', () => {
+                isDragging = false;
+                canvas.style.cursor = 'pointer';
+            });
         }
 
         // Initialize on page load
