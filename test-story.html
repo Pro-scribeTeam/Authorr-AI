@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Story for Audio DAW</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background: #1f2937; color: white; }
+        .test-section { margin: 20px 0; padding: 15px; background: #374151; border-radius: 8px; }
+        button { background: #3b82f6; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; }
+        button:hover { background: #2563eb; }
+        textarea { width: 100%; height: 200px; margin: 10px 0; }
+        .story-content { background: #111827; padding: 15px; border-radius: 5px; font-size: 14px; line-height: 1.6; }
+    </style>
+</head>
+<body>
+    <h1>🎵 Audio DAW Test Story</h1>
+    
+    <div class="test-section">
+        <h2>📖 Sample Story with Dialogue</h2>
+        <p>Copy this story content into the main AUTHORR AI application to test the Audio DAW:</p>
+        
+        <div class="story-content">
+            <strong>Chapter 1: The Meeting</strong><br><br>
+            
+            Sarah walked into the coffee shop, nervously adjusting her briefcase strap.<br><br>
+            
+            "Welcome to Moonlight Café," called out the barista cheerfully. "What can I get you today?"<br><br>
+            
+            "I'll have a large coffee, black," Sarah replied, scanning the room for her mysterious contact.<br><br>
+            
+            A tall man in a dark coat approached her table. "Sarah? I'm Agent Johnson. We need to talk."<br><br>
+            
+            "About what exactly?" Sarah asked, her voice trembling slightly.<br><br>
+            
+            "The files you discovered," Johnson said quietly. "They're more important than you realize."<br><br>
+            
+            Sarah felt her heart racing. "I don't know what you're talking about."<br><br>
+            
+            "Let's not play games," Johnson insisted. "Lives are at stake."<br><br>
+            
+            The barista interrupted their conversation. "Excuse me, but we're closing in five minutes."<br><br>
+            
+            Johnson stood up abruptly. "This conversation isn't over, Sarah. We'll be in touch."<br><br>
+        </div>
+        
+        <button onclick="copyStory()">📋 Copy Story to Clipboard</button>
+    </div>
+    
+    <div class="test-section">
+        <h2>🔧 Testing Instructions</h2>
+        <ol>
+            <li><strong>Copy the story above</strong> using the button</li>
+            <li><strong>Open the main app:</strong> <a href="../index.html" target="_blank" style="color: #3b82f6;">Open AUTHORR AI</a></li>
+            <li><strong>Paste the story</strong> into the "Content Editor" textarea</li>
+            <li><strong>Click "Scan Story for Dialogue"</strong> - should detect 4 characters with dialogue</li>
+            <li><strong>Set your OpenAI API key</strong> in Settings</li>
+            <li><strong>Click "Generate Multi-Voice Narration"</strong> - creates individual audio segments</li>
+            <li><strong>Click "Combine Into Final Audiobook"</strong> - uses Web Audio API to merge segments</li>
+            <li><strong>Click "Open Audio DAW"</strong> - launches the professional mixer interface</li>
+            <li><strong>Upload additional tracks:</strong> music, sound effects (optional)</li>
+            <li><strong>Mix and adjust volumes</strong> using the sliders and LED indicators</li>
+            <li><strong>Click "Export Final"</strong> - downloads WAV file + cover art</li>
+        </ol>
+    </div>
+
+    <div class="test-section">
+        <h2>🎵 Expected Audio DAW Features</h2>
+        <ul>
+            <li>✅ <strong>Professional Mixer Panel</strong> - Volume sliders for narration, music, SFX</li>
+            <li>✅ <strong>LED Indicators</strong> - Real-time volume level feedback with color coding</li>
+            <li>✅ <strong>Waveform Timeline</strong> - Visual representation of loaded audio tracks</li>
+            <li>✅ <strong>Drag-and-Drop Timeline</strong> - Click and drag to scrub playback position</li>
+            <li>✅ <strong>Play/Pause/Stop Controls</strong> - Professional transport controls</li>
+            <li>✅ <strong>Master Volume Meter</strong> - 5-level audio meter with red/yellow/green</li>
+            <li>✅ <strong>Mute/Unmute</strong> - Individual track muting capabilities</li>
+            <li>✅ <strong>File Upload</strong> - Drag and drop audio files for each track</li>
+            <li>✅ <strong>Final Export</strong> - WAV encoding with proper audio headers</li>
+            <li>✅ <strong>Cover Art Generation</strong> - Automatic audiobook cover creation</li>
+        </ul>
+    </div>
+
+    <script>
+        function copyStory() {
+            const storyContent = `Chapter 1: The Meeting
+
+Sarah walked into the coffee shop, nervously adjusting her briefcase strap.
+
+"Welcome to Moonlight Café," called out the barista cheerfully. "What can I get you today?"
+
+"I'll have a large coffee, black," Sarah replied, scanning the room for her mysterious contact.
+
+A tall man in a dark coat approached her table. "Sarah? I'm Agent Johnson. We need to talk."
+
+"About what exactly?" Sarah asked, her voice trembling slightly.
+
+"The files you discovered," Johnson said quietly. "They're more important than you realize."
+
+Sarah felt her heart racing. "I don't know what you're talking about."
+
+"Let's not play games," Johnson insisted. "Lives are at stake."
+
+The barista interrupted their conversation. "Excuse me, but we're closing in five minutes."
+
+Johnson stood up abruptly. "This conversation isn't over, Sarah. We'll be in touch."`;
+
+            navigator.clipboard.writeText(storyContent).then(() => {
+                alert('✅ Story copied to clipboard! Now paste it into the main AUTHORR AI app.');
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+                // Fallback for older browsers
+                const textarea = document.createElement('textarea');
+                textarea.value = storyContent;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                alert('✅ Story copied to clipboard! Now paste it into the main AUTHORR AI app.');
+            });
+        }
+    </script>
+</body>
+</html>

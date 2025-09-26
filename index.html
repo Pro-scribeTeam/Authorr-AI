@@ -6868,6 +6868,80 @@ The room fell silent as everyone waited for Tom's response.
             console.log(`✅ Audio blob received: ${blob.size} bytes, type: ${blob.type}`);
             return blob;
         }
+        
+        // DEBUG: Simple TTS test function for console testing
+        async function debugTestTTS() {
+            console.log('🧪 Starting TTS Debug Test...');
+            try {
+                const testText = "Hello, this is a test of the text to speech system.";
+                const testVoice = "alloy";
+                
+                console.log(`Testing with text: "${testText}"`);
+                console.log(`Testing with voice: "${testVoice}"`);
+                
+                const blob = await generateOpenAIAudio(testText, testVoice);
+                
+                if (blob && blob.size > 0) {
+                    console.log('🎉 TTS Test SUCCESSFUL!');
+                    console.log(`Blob size: ${blob.size} bytes`);
+                    console.log(`Blob type: ${blob.type}`);
+                    
+                    // Create audio element to test playback
+                    const audio = document.createElement('audio');
+                    audio.controls = true;
+                    audio.src = URL.createObjectURL(blob);
+                    document.body.appendChild(audio);
+                    console.log('🎵 Audio element added to page - check for audio controls');
+                    
+                    return blob;
+                } else {
+                    console.log('❌ TTS Test FAILED - No blob or empty blob');
+                    return null;
+                }
+            } catch (error) {
+                console.error('❌ TTS Test FAILED with error:', error);
+                return null;
+            }
+        }
+        
+        // DEBUG: Test complete multi-voice pipeline with simple content
+        async function debugTestMultiVoice() {
+            console.log('🧪 Starting Multi-Voice Debug Test...');
+            
+            // Set up test story content
+            const testContent = `Sarah walked into the coffee shop.
+
+"Welcome!" called the barista.
+
+"Thanks," Sarah replied.`;
+            
+            // Set up minimal dialogue data
+            window.dialogueData = {
+                characters: ['Sarah', 'Barista', 'Narrator'],
+                voiceAssignments: {
+                    'Sarah': 'openai_nova',
+                    'Barista': 'openai_echo', 
+                    'Narrator': 'openai_alloy'
+                },
+                dialogueSections: [
+                    { character: 'Sarah', text: 'Thanks', line: 3 }
+                ]
+            };
+            
+            // Set test content
+            window.storyData = window.storyData || {};
+            window.storyData.currentContent = testContent;
+            
+            console.log('Test setup complete. Dialogue data:', dialogueData);
+            
+            // Call the multi-voice function
+            try {
+                await generateMultiVoiceNarration();
+                console.log('🎉 Multi-voice test completed - check results above');
+            } catch (error) {
+                console.error('❌ Multi-voice test failed:', error);
+            }
+        }
 
         function displayMultiVoiceResults(audioFiles, assignments, failedSegments = []) {
             const narrationResults = document.getElementById('narrationResults');
