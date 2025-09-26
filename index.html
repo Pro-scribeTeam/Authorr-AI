@@ -6623,19 +6623,37 @@ The room fell silent as everyone waited for Tom's response.
             
             console.log('Voice assignments:', assignments);
             console.log('Characters found:', characters);
-            console.log('Dialogue data:', dialogueData);
+            console.log('Full dialogue data:', dialogueData);
+            
+            // Check if dialogue scanning was done first
+            if (!characters || characters.length === 0) {
+                console.log('❌ No characters found - dialogue scanning not done');
+                showNotification('Please scan story for dialogue first to identify characters.', 'error');
+                return;
+            }
             
             if (Object.keys(assignments).length === 0) {
                 console.log('❌ No voice assignments found');
-                showNotification('Please assign voices to characters first.', 'warning');
+                console.log('Available characters that need voice assignment:', characters);
+                showNotification(`Please assign voices to characters first. Found characters: ${characters.join(', ')}, Narrator`, 'warning');
                 return;
             }
 
             if (!assignments['Narrator']) {
                 console.log('❌ No narrator voice assigned');
-                showNotification('Please assign a narrator voice.', 'warning');
+                console.log('Current assignments:', Object.keys(assignments));
+                showNotification('Please assign a narrator voice. Scroll down to the "Narrator" section and select a voice.', 'warning');
                 return;
             }
+            
+            // Check if API key is available
+            const apiKey = getOpenAIApiKey();
+            if (!apiKey) {
+                console.log('❌ No OpenAI API key found');
+                showNotification('Please configure your OpenAI API key in Settings first.', 'error');
+                return;
+            }
+            console.log('✅ OpenAI API key found');
             
             console.log('✅ Voice assignments validated');
             showLoading('Generating multi-voice narration...');
