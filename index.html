@@ -4759,13 +4759,7 @@ Return the COMPLETE text with DRAMATICALLY humanized writing that's obviously di
         }
 
         // Helper function to get OpenAI API key
-        function getOpenAIApiKey() {
-            const storedKey = localStorage.getItem('openaiApiKey');
-            if (!storedKey || storedKey.startsWith('••••')) {
-                return null;
-            }
-            return storedKey;
-        }
+        // Note: getOpenAIApiKey function is defined later in the file
 
         // OpenAI GPT-4 Writing Assistance Functions
         async function generateChapterPlan() {
@@ -5413,14 +5407,19 @@ Format as clean, readable text ready for narration.`;
             }
         }
 
-        // Enhanced getOpenAIApiKey function
+        // Enhanced getOpenAI ApiKey function  
         function getOpenAIApiKey() {
             const storedKey = localStorage.getItem('openaiApiKey');
-            if (storedKey && storedKey.startsWith('••••')) {
-                // If the key is masked, we need the user to re-enter it
-                showNotification('Please re-enter your API key in the Config section', 'error');
+            if (!storedKey) {
+                console.log('❌ No OpenAI API key in localStorage');
                 return null;
             }
+            if (storedKey.startsWith('••••')) {
+                console.log('❌ OpenAI API key is masked - user needs to re-enter it');
+                // Don't show notification during generation, just return null
+                return null;
+            }
+            console.log('✅ OpenAI API key retrieved successfully');
             return storedKey;
         }
 
