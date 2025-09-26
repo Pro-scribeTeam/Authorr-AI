@@ -1107,6 +1107,9 @@
                             </button>
                         </div>
                     </div>
+                    
+                    <!-- Multi-Voice Narration Results -->
+                    <div id="narrationResults" class="mt-4"></div>
                 </div>
                 
                 <!-- High-Tech Voice Cloning Station -->
@@ -5956,6 +5959,9 @@ The room fell silent as everyone waited for Tom's response.
                 
                 console.log(`Found ${allMatches.length} dialogue matches using robust patterns`);
                 
+                // Split content into lines for fallback processing
+                const lines = content.split('\n');
+                
                 // Process matches and extract characters/dialogue
                 let characters = new Set();
                 let dialogueSections = [];
@@ -5968,13 +5974,23 @@ The room fell silent as everyone waited for Tom's response.
                         // Validate character name - must be actual names, not dialogue text
                         if (isValidCharacterName(character)) {
                             characters.add(character);
+                            // Find line number for this dialogue
+                            let lineNumber = null;
+                            for (let i = 0; i < lines.length; i++) {
+                                if (lines[i].includes(dialogue) || lines[i].includes(match[0])) {
+                                    lineNumber = i + 1;
+                                    break;
+                                }
+                            }
+                            
                             dialogueSections.push({
                                 character: character,
                                 text: dialogue,
                                 match: match[0],
                                 index: index,
-                            type: 'robust_pattern_match'
-                        });
+                                line: lineNumber,
+                                type: 'robust_pattern_match'
+                            });
                         
                             console.log(`✓ DIALOGUE EXTRACTED: "${character}" -> "${dialogue.substring(0, 40)}..."`);
                         } else {
@@ -6010,8 +6026,6 @@ The room fell silent as everyone waited for Tom's response.
                 // If we still don't have enough matches, try fallback patterns on lines
                 if (allMatches.length === 0) {
                     console.log('No robust pattern matches found, trying fallback line-by-line patterns...');
-                    
-                    const lines = content.split('\\n');
                     for (let i = 0; i < lines.length; i++) {
                         const line = lines[i].trim();
                         if (!line || line.length < 10) continue;
@@ -6173,9 +6187,20 @@ The room fell silent as everyone waited for Tom's response.
                     console.log(`Found ${standaloneQuotes.length} standalone quotes to assign`);
                     
                     for (const quote of standaloneQuotes) {
-                        const quoteLine = lines[quote.line - 1];
-                        const prevLine = quote.line > 1 ? lines[quote.line - 2] : '';
-                        const nextLine = quote.line < lines.length ? lines[quote.line] : '';
+                        // Handle case where quote.line might not exist
+                        if (!quote.line) {
+                            // Try to find the line by searching for the quote text
+                            for (let i = 0; i < lines.length; i++) {
+                                if (lines[i].includes(quote.text)) {
+                                    quote.line = i + 1;
+                                    break;
+                                }
+                            }
+                        }
+                        
+                        const quoteLine = quote.line ? lines[quote.line - 1] : '';
+                        const prevLine = (quote.line && quote.line > 1) ? lines[quote.line - 2] : '';
+                        const nextLine = (quote.line && quote.line < lines.length) ? lines[quote.line] : '';
                         
                         let assignedCharacter = 'Unknown Speaker';
                         let bestMatch = null;
@@ -7027,6 +7052,29 @@ The room fell silent as everyone waited for Tom's response.
                 console.log('🎉 Multi-voice test completed - check results above');
             } catch (error) {
                 console.error('❌ Multi-voice test failed:', error);
+            }
+        }
+        
+        // DEBUG: Simple test to see what happens when generateSegmentAudio fails
+        async function debugTestSegmentGeneration() {
+            console.log('🧪 Testing individual segment generation...');
+            
+            const testSegment = {
+                type: 'dialogue',
+                text: 'Hello, this is a test.',
+                voice: 'openai_alloy',
+                character: 'TestCharacter'
+            };
+            
+            console.log('Testing segment:', testSegment);
+            
+            try {
+                const result = await generateSegmentAudio(testSegment);
+                console.log('✅ Segment generation result:', result);
+                return result;
+            } catch (error) {
+                console.error('❌ Segment generation failed:', error);
+                return null;
             }
         }
 
