@@ -430,6 +430,225 @@
           }
         }
 
+        /* Professional DAW Fader Styling */
+        .daw-fader-container {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          width: 60px;
+          height: 300px;
+          margin: 10px auto;
+          position: relative;
+        }
+
+        .daw-fader-track {
+          width: 8px;
+          height: 240px;
+          background: linear-gradient(to bottom, 
+            #ff4444 0%, #ff4444 10%,     /* Red zone +10dB to +5dB */
+            #ffaa44 10%, #ffaa44 15%,    /* Orange zone +5dB to 0dB */
+            #666 15%, #666 65%,          /* Gray zone 0dB to -20dB */
+            #333 65%, #333 100%          /* Dark zone -20dB to -∞ */
+          );
+          border-radius: 4px;
+          position: relative;
+          box-shadow: inset 0 0 3px rgba(0,0,0,0.5);
+        }
+
+        .daw-fader-handle {
+          width: 24px;
+          height: 16px;
+          background: linear-gradient(to bottom, 
+            #f0f0f0 0%, 
+            #e0e0e0 20%, 
+            #d0d0d0 40%, 
+            #c0c0c0 60%, 
+            #b0b0b0 80%, 
+            #a0a0a0 100%
+          );
+          border: 1px solid #999;
+          border-radius: 2px;
+          position: absolute;
+          left: -8px;
+          cursor: pointer;
+          box-shadow: 
+            0 1px 3px rgba(0,0,0,0.4),
+            inset 0 1px 0 rgba(255,255,255,0.3);
+          transition: all 0.1s ease;
+        }
+
+        .daw-fader-handle:hover {
+          background: linear-gradient(to bottom, 
+            #ffffff 0%, 
+            #f0f0f0 20%, 
+            #e0e0e0 40%, 
+            #d0d0d0 60%, 
+            #c0c0c0 80%, 
+            #b0b0b0 100%
+          );
+          box-shadow: 
+            0 2px 4px rgba(0,0,0,0.5),
+            inset 0 1px 0 rgba(255,255,255,0.4);
+        }
+
+        .daw-fader-handle:active {
+          background: linear-gradient(to bottom, 
+            #e0e0e0 0%, 
+            #d0d0d0 20%, 
+            #c0c0c0 40%, 
+            #b0b0b0 60%, 
+            #a0a0a0 80%, 
+            #909090 100%
+          );
+          box-shadow: 
+            inset 0 1px 3px rgba(0,0,0,0.4),
+            0 1px 2px rgba(0,0,0,0.3);
+        }
+
+        .daw-fader-scale {
+          position: absolute;
+          right: -30px;
+          top: 0;
+          height: 240px;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          font-size: 9px;
+          color: #999;
+          font-family: 'Courier New', monospace;
+        }
+
+        .daw-fader-scale-mark {
+          position: relative;
+          text-align: left;
+          line-height: 1;
+        }
+
+        .daw-fader-scale-mark::before {
+          content: '';
+          position: absolute;
+          left: -12px;
+          top: 50%;
+          width: 8px;
+          height: 1px;
+          background: #666;
+          transform: translateY(-50%);
+        }
+
+        .daw-fader-scale-mark.major::before {
+          width: 12px;
+          background: #aaa;
+        }
+
+        .daw-fader-value {
+          margin-top: 8px;
+          font-size: 10px;
+          color: #00bcd4;
+          text-align: center;
+          font-weight: bold;
+          min-height: 12px;
+        }
+
+        .daw-fader-label {
+          margin-bottom: 8px;
+          font-size: 11px;
+          color: #ccc;
+          text-align: center;
+          font-weight: bold;
+        }
+
+        /* Hide default range slider */
+        .daw-fader-input {
+          display: none;
+        }
+
+        /* LED Indicator */
+        .daw-led {
+          width: 12px;
+          height: 12px;
+          border-radius: 50%;
+          margin: 4px auto;
+          transition: all 0.2s ease;
+          box-shadow: 
+            inset 0 1px 2px rgba(0,0,0,0.3),
+            0 0 4px rgba(0,255,0,0.3);
+        }
+
+        .daw-led.active {
+          background: #00ff00;
+          box-shadow: 
+            inset 0 1px 2px rgba(0,0,0,0.3),
+            0 0 8px rgba(0,255,0,0.8),
+            0 0 16px rgba(0,255,0,0.4);
+        }
+
+        .daw-led.inactive {
+          background: #333;
+          box-shadow: 
+            inset 0 1px 2px rgba(0,0,0,0.5);
+        }
+
+        /* Enhanced track containers */
+        .daw-track-container {
+          background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%);
+          border: 1px solid #444;
+          border-radius: 8px;
+          padding: 16px;
+          margin-bottom: 12px;
+          box-shadow: 
+            0 4px 8px rgba(0,0,0,0.3),
+            inset 0 1px 0 rgba(255,255,255,0.1);
+        }
+
+        /* Fix scrolling issues for GitHub Pages deployment */
+        html {
+          scroll-behavior: smooth;
+          height: 100%;
+          overflow-y: auto;
+        }
+
+        body {
+          height: 100%;
+          min-height: 100vh;
+          overflow-y: auto;
+          overflow-x: hidden;
+          position: relative;
+        }
+
+        .container {
+          width: 100%;
+          max-width: 100%;
+          overflow-x: hidden;
+        }
+
+        /* Ensure modals can scroll */
+        .modal-overlay {
+          overflow-y: auto;
+          height: 100vh;
+          display: flex;
+          align-items: flex-start;
+          padding: 20px 0;
+        }
+
+        .modal-content {
+          max-height: calc(100vh - 40px);
+          overflow-y: auto;
+        }
+
+        /* Timeline container scrolling */
+        .timeline-container {
+          overflow-x: auto;
+          overflow-y: hidden;
+          width: 100%;
+        }
+
+        /* DAW track scrolling */
+        .daw-tracks-container {
+          max-height: 70vh;
+          overflow-y: auto;
+          overflow-x: hidden;
+        }
+
         /* Responsive Design */
         @media (max-width: 768px) {
           .mobile-stack { flex-direction: column; }
@@ -437,6 +656,9 @@
           .mobile-text-sm { font-size: 14px; }
           .sound-wave-container { padding: 15px; }
           .wave-bar { width: 6px; height: 16px; }
+          .daw-fader-container { width: 50px; height: 250px; }
+          .daw-fader-track { height: 200px; }
+          .daw-fader-scale { right: -25px; height: 200px; }
         }
     </style>
 </head>
@@ -7685,7 +7907,7 @@ Format as clean, readable text ready for narration.`;
                     <!-- DAW Main Interface -->
                     <div class="flex-1 flex">
                         <!-- Track Controls Panel -->
-                        <div class="w-80 bg-gray-800 border-r border-cyan-500 p-4 overflow-y-auto">
+                        <div class="w-80 bg-gray-800 border-r border-cyan-500 p-4 daw-tracks-container">
                             <h3 class="text-lg font-semibold text-cyan-400 mb-4">
                                 <i class="fas fa-mixer mr-2"></i>Mixer Panel
                             </h3>
@@ -7701,11 +7923,10 @@ Format as clean, readable text ready for narration.`;
                                         </button>
                                     </div>
                                 </div>
-                                <div class="space-y-1">
-                                    <label class="block text-xs text-gray-400">Volume</label>
-                                    <input type="range" id="narrationVolume" min="0" max="150" value="120" 
-                                           class="w-full" onchange="updateTrackVolume('narration', this.value)">
-                                    <span id="narrationVolumeLabel" class="text-xs text-cyan-400">120%</span>
+                                <div class="flex justify-center">
+                                    <div id="narrationFaderContainer" class="daw-fader-container">
+                                        <!-- Professional fader will be inserted here by JavaScript -->
+                                    </div>
                                 </div>
                                 <div class="text-xs text-green-400 mt-2" id="narrationStatus">Auto-loaded from generation</div>
                             </div>
@@ -7721,11 +7942,10 @@ Format as clean, readable text ready for narration.`;
                                         </button>
                                     </div>
                                 </div>
-                                <div class="space-y-1">
-                                    <label class="block text-xs text-gray-400">Volume</label>
-                                    <input type="range" id="music1Volume" min="0" max="150" value="60" 
-                                           class="w-full" onchange="updateTrackVolume('music1', this.value)">
-                                    <span id="music1VolumeLabel" class="text-xs text-cyan-400">60%</span>
+                                <div class="flex justify-center">
+                                    <div id="music1FaderContainer" class="daw-fader-container">
+                                        <!-- Professional fader will be inserted here by JavaScript -->
+                                    </div>
                                 </div>
                                 <div class="mt-2">
                                     <input type="file" accept="audio/*" onchange="loadAudioTrack('music1', this.files[0])" 
@@ -7747,11 +7967,10 @@ Format as clean, readable text ready for narration.`;
                                         </button>
                                     </div>
                                 </div>
-                                <div class="space-y-1">
-                                    <label class="block text-xs text-gray-400">Volume</label>
-                                    <input type="range" id="music2Volume" min="0" max="150" value="60" 
-                                           class="w-full" onchange="updateTrackVolume('music2', this.value)">
-                                    <span id="music2VolumeLabel" class="text-xs text-cyan-400">60%</span>
+                                <div class="flex justify-center">
+                                    <div id="music2FaderContainer" class="daw-fader-container">
+                                        <!-- Professional fader will be inserted here by JavaScript -->
+                                    </div>
                                 </div>
                                 <div class="mt-2">
                                     <input type="file" accept="audio/*" onchange="loadAudioTrack('music2', this.files[0])" 
@@ -7773,11 +7992,10 @@ Format as clean, readable text ready for narration.`;
                                         </button>
                                     </div>
                                 </div>
-                                <div class="space-y-1">
-                                    <label class="block text-xs text-gray-400">Volume</label>
-                                    <input type="range" id="sfx1Volume" min="0" max="150" value="80" 
-                                           class="w-full" onchange="updateTrackVolume('sfx1', this.value)">
-                                    <span id="sfx1VolumeLabel" class="text-xs text-cyan-400">80%</span>
+                                <div class="flex justify-center">
+                                    <div id="sfx1FaderContainer" class="daw-fader-container">
+                                        <!-- Professional fader will be inserted here by JavaScript -->
+                                    </div>
                                 </div>
                                 <div class="mt-2">
                                     <input type="file" accept="audio/*" onchange="loadAudioTrack('sfx1', this.files[0])" 
@@ -7799,11 +8017,10 @@ Format as clean, readable text ready for narration.`;
                                         </button>
                                     </div>
                                 </div>
-                                <div class="space-y-1">
-                                    <label class="block text-xs text-gray-400">Volume</label>
-                                    <input type="range" id="sfx2Volume" min="0" max="150" value="80" 
-                                           class="w-full" onchange="updateTrackVolume('sfx2', this.value)">
-                                    <span id="sfx2VolumeLabel" class="text-xs text-cyan-400">80%</span>
+                                <div class="flex justify-center">
+                                    <div id="sfx2FaderContainer" class="daw-fader-container">
+                                        <!-- Professional fader will be inserted here by JavaScript -->
+                                    </div>
                                 </div>
                                 <div class="mt-2">
                                     <input type="file" accept="audio/*" onchange="loadAudioTrack('sfx2', this.files[0])" 
@@ -7817,11 +8034,10 @@ Format as clean, readable text ready for narration.`;
                             <!-- Master Controls -->
                             <div class="bg-cyan-900 rounded-lg p-4">
                                 <h4 class="font-medium text-cyan-400 mb-3">🎛️ Master Output</h4>
-                                <div class="space-y-2">
-                                    <label class="block text-xs text-gray-400">Master Volume</label>
-                                    <input type="range" id="masterVolume" min="0" max="150" value="130" 
-                                           class="w-full" onchange="updateMasterVolume(this.value)">
-                                    <span id="masterVolumeLabel" class="text-xs text-cyan-400">130%</span>
+                                <div class="flex justify-center">
+                                    <div id="masterFaderContainer" class="daw-fader-container">
+                                        <!-- Professional master fader will be inserted here by JavaScript -->
+                                    </div>
                                 </div>
                                 <div class="mt-3">
                                     <button onclick="normalizeAllTracks()" class="w-full bg-cyan-700 hover:bg-cyan-600 px-3 py-1 rounded text-xs">
@@ -7903,6 +8119,213 @@ Format as clean, readable text ready for narration.`;
 
             document.body.appendChild(dawModal);
             initializeAudioDAW();
+        }
+
+        // Professional DAW Fader Functions
+        
+        // Convert percentage to dB scale (professional audio scale)
+        function percentageToDb(percentage) {
+            if (percentage === 0) return -Infinity;
+            // 100% = 0dB, 150% = +10dB, 50% = -20dB
+            const normalizedValue = percentage / 100;
+            if (normalizedValue >= 1) {
+                return 20 * Math.log10(normalizedValue); // Above 0dB
+            } else {
+                return 20 * Math.log10(normalizedValue); // Below 0dB
+            }
+        }
+
+        // Convert dB to percentage
+        function dbToPercentage(db) {
+            if (db === -Infinity) return 0;
+            return Math.pow(10, db / 20) * 100;
+        }
+
+        // Create professional fader element
+        function createProfessionalFader(trackName, initialValue, onchange) {
+            const container = document.createElement('div');
+            container.className = 'daw-fader-container';
+            
+            // Create scale labels
+            const scaleLabels = ['+10', '+5', '0', '-5', '-10', '-20', '-30', '-∞'];
+            const scaleValues = [10, 5, 0, -5, -10, -20, -30, -Infinity];
+            
+            container.innerHTML = `
+                <div class="daw-fader-label">${trackName.toUpperCase()}</div>
+                <div class="daw-led inactive" id="${trackName}LED"></div>
+                <div class="daw-fader-track" id="${trackName}FaderTrack">
+                    <div class="daw-fader-handle" id="${trackName}FaderHandle"></div>
+                    <div class="daw-fader-scale">
+                        ${scaleLabels.map(label => 
+                            `<div class="daw-fader-scale-mark major">${label}</div>`
+                        ).join('')}
+                    </div>
+                </div>
+                <div class="daw-fader-value" id="${trackName}FaderValue">${initialValue}%</div>
+                <input type="range" class="daw-fader-input" id="${trackName}Volume" 
+                       min="0" max="150" value="${initialValue}" 
+                       onchange="${onchange}('${trackName}', this.value)">
+            `;
+
+            // Set up fader interaction
+            setupFaderInteraction(trackName, initialValue);
+            
+            return container;
+        }
+
+        // Setup mouse interaction for professional fader
+        function setupFaderInteraction(trackName, initialValue) {
+            setTimeout(() => {
+                const track = document.getElementById(trackName + 'FaderTrack');
+                const handle = document.getElementById(trackName + 'FaderHandle');
+                const valueDisplay = document.getElementById(trackName + 'FaderValue');
+                const hiddenInput = document.getElementById(trackName + 'Volume');
+                
+                if (!track || !handle) return;
+
+                let isDragging = false;
+                let trackRect;
+
+                // Position handle based on initial value
+                updateFaderPosition(trackName, initialValue);
+
+                const startDrag = (e) => {
+                    e.preventDefault();
+                    isDragging = true;
+                    trackRect = track.getBoundingClientRect();
+                    document.addEventListener('mousemove', drag);
+                    document.addEventListener('mouseup', stopDrag);
+                    handle.style.cursor = 'grabbing';
+                };
+
+                const drag = (e) => {
+                    if (!isDragging) return;
+                    
+                    const y = e.clientY - trackRect.top;
+                    const trackHeight = trackRect.height;
+                    const percentage = Math.max(0, Math.min(150, 150 * (1 - y / trackHeight)));
+                    
+                    // Update hidden input
+                    hiddenInput.value = percentage;
+                    
+                    // Update visual position
+                    updateFaderPosition(trackName, percentage);
+                    
+                    // Update value display
+                    const db = percentageToDb(percentage);
+                    valueDisplay.textContent = db === -Infinity ? '-∞ dB' : `${db.toFixed(1)} dB`;
+                    
+                    // Call the onchange function
+                    if (trackName === 'master') {
+                        updateMasterVolume(percentage);
+                    } else {
+                        updateTrackVolume(trackName, percentage);
+                    }
+                };
+
+                const stopDrag = () => {
+                    isDragging = false;
+                    handle.style.cursor = 'pointer';
+                    document.removeEventListener('mousemove', drag);
+                    document.removeEventListener('mouseup', stopDrag);
+                };
+
+                // Mouse events
+                handle.addEventListener('mousedown', startDrag);
+                
+                // Click on track to jump to position
+                track.addEventListener('click', (e) => {
+                    if (e.target === handle) return;
+                    
+                    trackRect = track.getBoundingClientRect();
+                    const y = e.clientY - trackRect.top;
+                    const trackHeight = trackRect.height;
+                    const percentage = Math.max(0, Math.min(150, 150 * (1 - y / trackHeight)));
+                    
+                    hiddenInput.value = percentage;
+                    updateFaderPosition(trackName, percentage);
+                    
+                    const db = percentageToDb(percentage);
+                    valueDisplay.textContent = db === -Infinity ? '-∞ dB' : `${db.toFixed(1)} dB`;
+                    
+                    if (trackName === 'master') {
+                        updateMasterVolume(percentage);
+                    } else {
+                        updateTrackVolume(trackName, percentage);
+                    }
+                });
+            }, 100);
+        }
+
+        // Update fader visual position
+        function updateFaderPosition(trackName, percentage) {
+            const handle = document.getElementById(trackName + 'FaderHandle');
+            const valueDisplay = document.getElementById(trackName + 'FaderValue');
+            
+            if (handle) {
+                // Calculate position (inverted - 0% at bottom, 150% at top)
+                const position = (1 - percentage / 150) * 224; // 224px = 240px track height - 16px handle height
+                handle.style.top = Math.max(0, Math.min(224, position)) + 'px';
+            }
+            
+            if (valueDisplay) {
+                const db = percentageToDb(percentage);
+                valueDisplay.textContent = db === -Infinity ? '-∞ dB' : `${db.toFixed(1)} dB`;
+            }
+        }
+
+        // Update LED indicators based on audio activity
+        function updateLEDIndicator(trackName, isActive) {
+            const led = document.getElementById(trackName + 'LED');
+            if (led) {
+                led.className = isActive ? 'daw-led active' : 'daw-led inactive';
+            }
+        }
+
+        // Create all professional faders
+        function createAllProfessionalFaders() {
+            console.log('🎚️ Creating professional DAW faders...');
+            
+            // Fader configurations: [trackName, containerId, initialValue, label]
+            const faderConfigs = [
+                ['narration', 'narrationFaderContainer', 120, 'NARR'],
+                ['music1', 'music1FaderContainer', 60, 'MUS1'],
+                ['music2', 'music2FaderContainer', 60, 'MUS2'],
+                ['sfx1', 'sfx1FaderContainer', 80, 'SFX1'],
+                ['sfx2', 'sfx2FaderContainer', 80, 'SFX2'],
+                ['master', 'masterFaderContainer', 130, 'MSTR']
+            ];
+
+            faderConfigs.forEach(([trackName, containerId, initialValue, label]) => {
+                const container = document.getElementById(containerId);
+                if (container) {
+                    container.innerHTML = createProfessionalFaderHTML(trackName, initialValue, label);
+                    setupFaderInteraction(trackName, initialValue);
+                }
+            });
+
+            console.log('✅ Professional faders created successfully');
+        }
+
+        // Create professional fader HTML structure
+        function createProfessionalFaderHTML(trackName, initialValue, label) {
+            const scaleLabels = ['+10', '+5', '0', '-5', '-10', '-20', '-30', '-∞'];
+            
+            return `
+                <div class="daw-fader-label">${label}</div>
+                <div class="daw-led inactive" id="${trackName}LED"></div>
+                <div class="daw-fader-track" id="${trackName}FaderTrack">
+                    <div class="daw-fader-handle" id="${trackName}FaderHandle"></div>
+                    <div class="daw-fader-scale">
+                        ${scaleLabels.map((label, index) => 
+                            `<div class="daw-fader-scale-mark major">${label}</div>`
+                        ).join('')}
+                    </div>
+                </div>
+                <div class="daw-fader-value" id="${trackName}FaderValue">${initialValue}%</div>
+                <input type="range" class="daw-fader-input" id="${trackName}Volume" 
+                       min="0" max="150" value="${initialValue}">
+            `;
         }
 
         // Initialize the Enhanced Audio DAW
@@ -8033,8 +8456,10 @@ Format as clean, readable text ready for narration.`;
             // Setup drag and drop functionality
             setupDragAndDrop();
             
+            // Create professional faders
+            createAllProfessionalFaders();
+            
             // Update UI elements
-            updateVolumeLabels();
             updateTimelinePosition();
             
             document.getElementById('dawStatus').textContent = 'Enhanced DAW Ready - Drag audio to tracks';
@@ -8145,13 +8570,17 @@ Format as clean, readable text ready for narration.`;
                 track.gainNode.gain.value = track.muted ? 0 : volume;
             }
             
-            // Update label
+            // Update legacy label (if exists)
             const label = document.getElementById(`${trackName}VolumeLabel`);
             if (label) {
                 label.textContent = `${value}%`;
             }
             
-            updateLEDIndicator(trackName, volume);
+            // Update professional fader position and value
+            updateFaderPosition(trackName, parseInt(value));
+            
+            // Update LED indicator
+            updateLEDIndicator(trackName, volume > 0 && !track.muted);
         }
 
         // Enhanced master volume control with louder output
@@ -8164,12 +8593,18 @@ Format as clean, readable text ready for narration.`;
                 audioDAW.masterGain.gain.setValueAtTime(enhancedVolume, audioDAW.context.currentTime);
             }
             
+            // Update legacy label (if exists)
             const label = document.getElementById('masterVolumeLabel');
             if (label) {
                 label.textContent = `${value}%`;
             }
             
+            // Update professional master fader
+            updateFaderPosition('master', parseInt(value));
+            
+            // Update meters and LED
             updateMasterMeters(volume);
+            updateLEDIndicator('master', volume > 0);
         }
         
         // Update master level meters
