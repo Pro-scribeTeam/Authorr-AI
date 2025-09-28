@@ -6127,138 +6127,23 @@ The room fell silent as everyone waited for Tom's response.
                 
                 hideLoading();
                         
-                console.log(`Found ${allMatches.length} dialogue matches using robust patterns`);
+                // Final processing - deduplicate and clean up results
+                const uniqueDialogue = new Map();
                 
-                // If robust patterns didn't find much, try additional quote extraction
-                if (allMatches.length < 3) {
-                    console.log('Limited matches from robust patterns, trying additional quote extraction...');
-                    
-                    // Extract all quotes and try to assign to characters
-                    const quoteMatches = content.match(/["""]([^"""]{3,})["""]/g);
-                    if (quoteMatches) {
-                        console.log(`Found ${quoteMatches.length} quotes to process`);
-                        
-                        quoteMatches.forEach((quote, index) => {
-                            const dialogue = quote.replace(/["""]/g, '').trim();
-                            if (dialogue.length >= 3) {
-                                // Try to find character context around this quote
-                                const quoteIndex = content.indexOf(quote);
-                                const contextBefore = content.substring(Math.max(0, quoteIndex - 100), quoteIndex);
-                                const contextAfter = content.substring(quoteIndex + quote.length, quoteIndex + quote.length + 100);
-                                const fullContext = contextBefore + ' ' + contextAfter;
-                                
-                                // Look for character names in context
-                                const characterNames = ['Michael', 'Jake', 'Sarah', 'Tom', 'Ethan', 'Liam', 'Clara', 'Mia', 'Alex', 'Emma', 'John', 'Mary'];
-                                let foundCharacter = null;
-                                
-                                for (const name of characterNames) {
-                                    if (fullContext.toLowerCase().includes(name.toLowerCase())) {
-                                        foundCharacter = name;
-                                        break;
-                                    }
-                                }
-                                
-                                if (!foundCharacter) {
-                                    // Assign to a rotating character if no specific match
-                                    foundCharacter = characterNames[index % characterNames.length];
-                                }
-                                
-                                characters.add(foundCharacter);
-                                dialogueSections.push({
-                                    character: foundCharacter,
-                                    text: dialogue,
-                                    index: index,
-                                    type: 'quote_extraction'
-                                });
-                                
-                                console.log(`✓ EXTRACTED QUOTE: "${foundCharacter}" -> "${dialogue.substring(0, 40)}..."`);
-                            }
-                        });
+                // Remove duplicates by dialogue text
+                dialogueSections.forEach(section => {
+                    const key = section.text.toLowerCase().trim();
+                    if (!uniqueDialogue.has(key) || section.type === 'robust_pattern_match') {
+                        uniqueDialogue.set(key, section);
                     }
-                }
+                });
                 
-                // Assign standalone quotes to characters based on context
-                if (characters.size > 0) {
-                    const characterArray = Array.from(characters);
-                    console.log('Assigning standalone quotes to characters:', characterArray);
-                    
-                    // Find standalone quotes and assign them to characters
-                    const standaloneQuotes = dialogueSections.filter(d => d.character === 'Unknown Speaker');
-                    console.log(`Found ${standaloneQuotes.length} standalone quotes to assign`);
-                    
-                    for (const quote of standaloneQuotes) {
-                        // Handle case where quote.line might not exist
-                        if (!quote.line) {
-                            // Try to find the line by searching for the quote text
-                            for (let i = 0; i < lines.length; i++) {
-                                if (lines[i].includes(quote.text)) {
-                                    quote.line = i + 1;
-                                    break;
-                                }
-                            }
-                        }
-                        
-                        const quoteLine = quote.line ? lines[quote.line - 1] : '';
-                        const prevLine = (quote.line && quote.line > 1) ? lines[quote.line - 2] : '';
-                        const nextLine = (quote.line && quote.line < lines.length) ? lines[quote.line] : '';
-                        
-                        let assignedCharacter = 'Unknown Speaker';
-                        let bestMatch = null;
-                        let bestScore = 0;
-                        
-                        // Check previous and next lines for character names
-                        const contextText = (prevLine + ' ' + quoteLine + ' ' + nextLine).toLowerCase();
-                        
-                        for (const character of characterArray) {
-                            const charLower = character.toLowerCase();
-                            let score = 0;
-                            
-                            // Look for character name in context
-                            if (contextText.includes(charLower)) {
-                                score = 50;
-                                
-                                // Bonus for being in the same line
-                                if (quoteLine.toLowerCase().includes(charLower)) {
-                                    score += 30;
-                                }
-                                
-                                // Bonus for action words near the character
-                                if (contextText.includes(charLower + ' said') || 
-                                    contextText.includes(charLower + ' asked') ||
-                                    contextText.includes(charLower + ' scoffed') ||
-                                    contextText.includes(charLower + ' chimed')) {
-                                    score += 40;
-                                }
-                            }
-                            
-                            if (score > bestScore) {
-                                bestScore = score;
-                                bestMatch = character;
-                            }
-                        }
-                        
-                        if (bestMatch && bestScore > 30) {
-                            quote.character = bestMatch;
-                            console.log(`✓ ASSIGNED: "${quote.text.substring(0, 30)}..." -> ${bestMatch} (score: ${bestScore})`);
-                        } else {
-                            // Distribute among characters if no clear match
-                            const leastUsedChar = characterArray.reduce((min, char) => {
-                                const usageCount = dialogueSections.filter(d => d.character === char).length;
-                                const minUsageCount = dialogueSections.filter(d => d.character === min).length;
-                                return usageCount < minUsageCount ? char : min;
-                            });
-                            quote.character = leastUsedChar;
-                            console.log(`✓ DISTRIBUTED: "${quote.text.substring(0, 30)}..." -> ${leastUsedChar} (least used)`);
-                        }
-                    }
-                }
+                // Convert back to array
+                dialogueSections = Array.from(uniqueDialogue.values());
                 
-                // Store results (completely replace, don't append)
+                // Store final results
                 dialogueData.characters = Array.from(characters);
                 dialogueData.dialogueSections = dialogueSections;
-                
-                console.log('=== STORING NEW RESULTS ===');
-                console.log('Replacing old data with new scan results');
                 
                 console.log('=== FINAL DIALOGUE SCAN RESULTS ===');
                 console.log('Characters found:', dialogueData.characters);
@@ -7158,7 +7043,10 @@ The room fell silent as everyone waited for Tom's response.
                             📊 <strong>Generation Summary:</strong> ${audioFiles.length} successful, ${failedSegments.length} failed
                         </div>
                         <div class="space-y-2">
-                            <button onclick="combineAllAudioSegments()" class="btn-primary px-6 py-2 rounded-lg w-full">
+                            <button onclick="createStereoMix()" class="btn-primary px-6 py-2 rounded-lg w-full">
+                                <i class="fas fa-headphones mr-2"></i>Create Stereo Mix (Characters Positioned)
+                            </button>
+                            <button onclick="combineAllAudioSegments()" class="btn-secondary px-6 py-2 rounded-lg w-full">
                                 <i class="fas fa-magic mr-2"></i>Combine Into Final Audiobook
                             </button>
                             <button onclick="openAudioDAW()" class="btn-secondary px-6 py-2 rounded-lg w-full">
@@ -7513,6 +7401,154 @@ The room fell silent as everyone waited for Tom's response.
                 console.error('Audio combination error:', error);
                 hideLoading();
                 showNotification(`Failed to combine audio: ${error.message}`, 'error');
+            }
+        }
+
+        // NEW: Create stereo mix with character voice positioning
+        async function createStereoMix() {
+            const audioElements = document.querySelectorAll('#narrationResults audio');
+            if (audioElements.length === 0) {
+                showNotification('No audio segments found to mix', 'error');
+                return;
+            }
+
+            showLoading('Creating stereo mix with character positioning...');
+
+            try {
+                // Initialize Web Audio API
+                if (!audioDAW.context) {
+                    audioDAW.context = new (window.AudioContext || window.webkitAudioContext)();
+                }
+
+                const audioBuffers = [];
+                const characterPositions = new Map();
+                let totalDuration = 0;
+
+                // Assign stereo positions to characters
+                const characters = Array.from(new Set(Array.from(audioElements).map((audio, index) => {
+                    const segment = document.querySelectorAll('#narrationResults .font-semibold.text-cyan-400')[index];
+                    return segment ? segment.textContent : 'Unknown';
+                })));
+                
+                // Position characters across stereo field
+                characters.forEach((char, index) => {
+                    if (char === 'Narrator') {
+                        characterPositions.set(char, 0); // Center
+                    } else {
+                        // Alternate characters left (-0.7) and right (0.7)
+                        characterPositions.set(char, index % 2 === 0 ? -0.7 : 0.7);
+                    }
+                });
+
+                console.log('Character stereo positions:', Object.fromEntries(characterPositions));
+
+                // Load and decode all audio segments with positioning
+                for (let i = 0; i < audioElements.length; i++) {
+                    const audioElement = audioElements[i];
+                    const audioUrl = audioElement.querySelector('source').src;
+                    const character = document.querySelectorAll('#narrationResults .font-semibold.text-cyan-400')[i]?.textContent || 'Unknown';
+                    const position = characterPositions.get(character) || 0;
+                    
+                    updateLoadingText(`Loading ${character} (${i + 1}/${audioElements.length})...`);
+                    
+                    try {
+                        const response = await fetch(audioUrl);
+                        const arrayBuffer = await response.arrayBuffer();
+                        const audioBuffer = await audioDAW.context.decodeAudioData(arrayBuffer);
+                        
+                        audioBuffers.push({
+                            buffer: audioBuffer,
+                            character: character,
+                            position: position
+                        });
+                        totalDuration += audioBuffer.duration;
+                        
+                        console.log(`✅ Loaded ${character} with position ${position}`);
+                    } catch (error) {
+                        console.error(`Failed to load segment ${i + 1}:`, error);
+                        showNotification(`Warning: Could not load ${character} segment`, 'warning');
+                    }
+                }
+
+                if (audioBuffers.length === 0) {
+                    throw new Error('No audio segments could be loaded');
+                }
+
+                updateLoadingText('Creating stereo mix...');
+
+                // Create stereo mix buffer (force 2 channels for proper stereo)
+                const sampleRate = audioBuffers[0].buffer.sampleRate;
+                const totalSamples = Math.floor(totalDuration * sampleRate);
+                const stereoBuffer = audioDAW.context.createBuffer(2, totalSamples, sampleRate);
+                
+                const leftChannel = stereoBuffer.getChannelData(0);
+                const rightChannel = stereoBuffer.getChannelData(1);
+
+                let currentOffset = 0;
+                for (const {buffer, character, position} of audioBuffers) {
+                    // Calculate left/right gains based on position (-1 = full left, 1 = full right, 0 = center)
+                    const leftGain = position <= 0 ? 1 : 1 - position;
+                    const rightGain = position >= 0 ? 1 : 1 + position;
+                    
+                    console.log(`Mixing ${character}: position=${position}, leftGain=${leftGain.toFixed(2)}, rightGain=${rightGain.toFixed(2)}`);
+                    
+                    // Mix source audio into stereo channels with positioning
+                    const sourceChannel = buffer.getChannelData(0); // Use first channel of source
+                    
+                    for (let i = 0; i < sourceChannel.length && currentOffset + i < totalSamples; i++) {
+                        const sample = sourceChannel[i];
+                        leftChannel[currentOffset + i] += sample * leftGain;
+                        rightChannel[currentOffset + i] += sample * rightGain;
+                    }
+                    
+                    currentOffset += buffer.length;
+                }
+
+                // Normalize to prevent clipping
+                let maxSample = 0;
+                for (let i = 0; i < totalSamples; i++) {
+                    maxSample = Math.max(maxSample, Math.abs(leftChannel[i]), Math.abs(rightChannel[i]));
+                }
+                
+                if (maxSample > 0.95) {
+                    const normalizeFactor = 0.95 / maxSample;
+                    for (let i = 0; i < totalSamples; i++) {
+                        leftChannel[i] *= normalizeFactor;
+                        rightChannel[i] *= normalizeFactor;
+                    }
+                    console.log(`Normalized audio by factor ${normalizeFactor.toFixed(3)}`);
+                }
+
+                // Convert to downloadable format
+                updateLoadingText('Encoding stereo audiobook...');
+                const audioBlob = await audioBufferToWavBlob(stereoBuffer);
+                
+                // Create download
+                const bookTitle = document.getElementById('bookTitle')?.value || 'Audiobook';
+                const fileName = `${bookTitle.replace(/[^a-zA-Z0-9]/g, '_')}_Stereo_Mix.wav`;
+                
+                const downloadUrl = URL.createObjectURL(audioBlob);
+                const link = document.createElement('a');
+                link.href = downloadUrl;
+                link.download = fileName;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+
+                hideLoading();
+                showNotification(`✅ Stereo mix created! Characters positioned across stereo field. Duration: ${formatTime(totalDuration)}`, 'success');
+                
+                console.log('Stereo mix complete:', {
+                    duration: totalDuration,
+                    channels: 2,
+                    sampleRate: sampleRate,
+                    characterPositions: Object.fromEntries(characterPositions)
+                });
+
+            } catch (error) {
+                console.error('Stereo mix error:', error);
+                hideLoading();
+                showNotification(`Failed to create stereo mix: ${error.message}`, 'error');
             }
         }
 
