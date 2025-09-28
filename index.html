@@ -8118,7 +8118,11 @@ Format as clean, readable text ready for narration.`;
             `;
 
             document.body.appendChild(dawModal);
-            initializeAudioDAW();
+            
+            // Wait for DOM to be ready then initialize
+            setTimeout(() => {
+                initializeAudioDAW();
+            }, 100);
         }
 
         // Professional DAW Fader Functions
@@ -8286,25 +8290,46 @@ Format as clean, readable text ready for narration.`;
         function createAllProfessionalFaders() {
             console.log('🎚️ Creating professional DAW faders...');
             
-            // Fader configurations: [trackName, containerId, initialValue, label]
+            // Fader configurations: [trackName, containerId, initialValue, label, callback]
             const faderConfigs = [
-                ['narration', 'narrationFaderContainer', 120, 'NARR'],
-                ['music1', 'music1FaderContainer', 60, 'MUS1'],
-                ['music2', 'music2FaderContainer', 60, 'MUS2'],
-                ['sfx1', 'sfx1FaderContainer', 80, 'SFX1'],
-                ['sfx2', 'sfx2FaderContainer', 80, 'SFX2'],
-                ['master', 'masterFaderContainer', 130, 'MSTR']
+                ['narration', 'narrationFaderContainer', 120, 'NARR', 'updateTrackVolume'],
+                ['music1', 'music1FaderContainer', 60, 'MUS1', 'updateTrackVolume'],
+                ['music2', 'music2FaderContainer', 60, 'MUS2', 'updateTrackVolume'],
+                ['sfx1', 'sfx1FaderContainer', 80, 'SFX1', 'updateTrackVolume'],
+                ['sfx2', 'sfx2FaderContainer', 80, 'SFX2', 'updateTrackVolume'],
+                ['master', 'masterFaderContainer', 130, 'MSTR', 'updateMasterVolume']
             ];
 
-            faderConfigs.forEach(([trackName, containerId, initialValue, label]) => {
+            let fadersCreated = 0;
+
+            faderConfigs.forEach(([trackName, containerId, initialValue, label, callback]) => {
                 const container = document.getElementById(containerId);
                 if (container) {
-                    container.innerHTML = createProfessionalFaderHTML(trackName, initialValue, label);
-                    setupFaderInteraction(trackName, initialValue);
+                    console.log(`✅ Creating fader for ${trackName}`);
+                    
+                    // Try professional fader first, fallback to simple if it fails
+                    try {
+                        container.innerHTML = createProfessionalFaderHTML(trackName, initialValue, label);
+                        setupFaderInteraction(trackName, initialValue);
+                        fadersCreated++;
+                    } catch (error) {
+                        console.warn(`⚠️ Professional fader failed for ${trackName}, using simple fader:`, error);
+                        // Create simple working fader as fallback
+                        container.innerHTML = `
+                            <div style="text-align: center; color: #ccc; font-size: 11px; margin-bottom: 5px;">${label}</div>
+                            <input type="range" id="${trackName}Volume" min="0" max="150" value="${initialValue}" 
+                                   style="writing-mode: bt-lr; -webkit-appearance: slider-vertical; width: 30px; height: 150px;"
+                                   oninput="${callback}('${trackName}', this.value)">
+                            <div id="${trackName}VolumeLabel" style="color: #00bcd4; font-size: 10px; text-align: center; margin-top: 5px;">${initialValue}%</div>
+                        `;
+                        fadersCreated++;
+                    }
+                } else {
+                    console.error(`❌ Container not found: ${containerId}`);
                 }
             });
 
-            console.log('✅ Professional faders created successfully');
+            console.log(`✅ ${fadersCreated} faders created successfully`);
         }
 
         // Create professional fader HTML structure
@@ -8957,6 +8982,8 @@ Format as clean, readable text ready for narration.`;
         function stopAllAudioSources() {
             Object.keys(audioDAW.tracks).forEach(trackName => {
                 const track = audioDAW.tracks[trackName];
+                
+                // Stop single source
                 if (track.source) {
                     try {
                         track.source.stop();
@@ -8964,6 +8991,18 @@ Format as clean, readable text ready for narration.`;
                         console.warn(`Error stopping ${trackName}:`, e);
                     }
                     track.source = null;
+                }
+                
+                // Stop multiple sources (for narration parts)
+                if (track.sources && Array.isArray(track.sources)) {
+                    track.sources.forEach((source, index) => {
+                        try {
+                            source.stop();
+                        } catch (e) {
+                            console.warn(`Error stopping ${trackName} source ${index}:`, e);
+                        }
+                    });
+                    track.sources = [];
                 }
             });
         }
@@ -9008,7 +9047,6 @@ Format as clean, readable text ready for narration.`;
         // Update current playback time
         function updateCurrentTime() {
             if (audioDAW.isPlaying && audioDAW.playbackStartTime > 0) {
-                // AudioContext.currentTime is already in seconds, no need to divide by 1000
                 const elapsed = audioDAW.context.currentTime - audioDAW.playbackStartTime;
                 audioDAW.currentTime = Math.max(0, elapsed);
                 
@@ -9020,10 +9058,16 @@ Format as clean, readable text ready for narration.`;
                 }
                 
                 // Update timeline position display
-                updateTimelinePosition();
+                const timelinePos = document.getElementById('timelinePosition');
+                if (timelinePos) {
+                    timelinePos.textContent = formatTime(audioDAW.currentTime);
+                }
                 
-                // Debug logging for timeline sync
-                console.log(`⏰ Timeline sync: ${formatTime(audioDAW.currentTime)} / ${formatTime(totalDuration)}`);
+                // Update total duration display
+                const totalDisplay = document.getElementById('timelineDuration');
+                if (totalDisplay) {
+                    totalDisplay.textContent = formatTime(getMaxTrackDuration());
+                }
             }
         }
 
@@ -9369,10 +9413,17 @@ Format as clean, readable text ready for narration.`;
 
         function handleAudioDrop(event, trackName) {
             event.preventDefault();
-            const audioSrc = event.dataTransfer.getData('audio/src') || event.dataTransfer.getData('text/plain');
+            console.log('🎵 Audio drop detected on', trackName);
             
-            if (audioSrc && trackName) {
-                loadAudioToTrack(audioSrc, trackName, 0); // Start at beginning by default
+            const audioSrc = event.dataTransfer.getData('audio/src') || event.dataTransfer.getData('text/plain');
+            console.log('🎵 Audio source:', audioSrc);
+            
+            if (audioSrc && trackName && (audioSrc.includes('blob:') || audioSrc.includes('http'))) {
+                console.log('🎵 Loading audio to track:', trackName);
+                loadAudioToTrack(audioSrc, trackName, 0);
+            } else {
+                console.warn('⚠️ Invalid audio source or track name');
+                showNotification('Invalid audio file for drag and drop', 'warning');
             }
         }
 
