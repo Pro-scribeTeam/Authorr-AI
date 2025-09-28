@@ -5996,13 +5996,16 @@ The room fell silent as everyone waited for Tom's response.
             showLoading(chapterInfo);
             
             try {
-                // Enhanced dialogue patterns - 5 comprehensive patterns
+                // Enhanced dialogue patterns - 6 comprehensive patterns
                 const dialoguePatterns = [
                     // Pattern 1: Character said/asked + dialogue - "Jake said, 'Hello world'"
                     /([A-Z][a-zA-Z\s\-']{1,24})\s+(?:said|asked|replied|whispered|shouted|called|exclaimed|muttered|declared|announced|continued|interrupted|added|noted|observed|remarked|stated|explained|suggested|wondered|insisted|argued|protested|complained|sighed|laughed|chuckled|grinned|smiled|frowned|nodded|shook\s+(?:his|her)\s+head|paused|hesitated|stammered|stuttered)\s*,?\s*["""]([^"""]{3,500}?)["""]/gi,
                     
-                    // Pattern 2: Dialogue + said Character - "'Hello world,' said Jake" or "'Hello world,' Jake said"
+                    // Pattern 2A: Dialogue + said Character - "'Hello world,' said Jake"
                     /["""]([^"""]{3,500}?)["""][,.\s]*(?:said|asked|replied|whispered|shouted|called|exclaimed|muttered|declared|announced|continued|interrupted|added|noted|observed|remarked|stated|explained|suggested|wondered|insisted|argued|protested|complained|sighed|laughed|chuckled|grinned|smiled|frowned|nodded|shook\s+(?:his|her)\s+head|paused|hesitated|stammered|stuttered)\s+([A-Z][a-zA-Z\s\-']{1,24})/gi,
+                    
+                    // Pattern 2B: Dialogue + Character said - "'Hello world,' Jake said"
+                    /["""]([^"""]{3,500}?)["""][,.\s]*([A-Z][a-zA-Z\s\-']{1,24})\s+(?:said|asked|replied|whispered|shouted|called|exclaimed|muttered|declared|announced|continued|interrupted|added|noted|observed|remarked|stated|explained|suggested|wondered|insisted|argued|protested|complained|sighed|laughed|chuckled|grinned|smiled|frowned|nodded|shook\s+(?:his|her)\s+head|paused|hesitated|stammered|stuttered)/gi,
                     
                     // Pattern 3: Character colon dialogue - "Jake: 'Hello world'" or just "Jake: Hello world"
                     /^([A-Z][a-zA-Z\s\-']{1,24})\s*:\s*["""]?([^"""]{3,500}?)[""".]?$/gmi,
@@ -6044,25 +6047,31 @@ The room fell silent as everyone waited for Tom's response.
                                 console.log(`📝 Pattern 1 - Character: "${character}", Dialogue: "${dialogue?.substring(0, 50)}..."`);
                                 break;
                                 
-                            case 1: // Pattern 2: Dialogue first, then character
+                            case 1: // Pattern 2A: Dialogue first, then said character
                                 dialogue = match[1]?.trim();
                                 character = match[2]?.trim();
-                                console.log(`📝 Pattern 2 - Dialogue: "${dialogue?.substring(0, 50)}...", Character: "${character}"`);
+                                console.log(`📝 Pattern 2A - Dialogue: "${dialogue?.substring(0, 50)}...", Character: "${character}"`);
                                 break;
                                 
-                            case 2: // Pattern 3: Character colon format
+                            case 2: // Pattern 2B: Dialogue first, then character said
+                                dialogue = match[1]?.trim();
+                                character = match[2]?.trim();
+                                console.log(`📝 Pattern 2B - Dialogue: "${dialogue?.substring(0, 50)}...", Character: "${character}"`);
+                                break;
+                                
+                            case 3: // Pattern 3: Character colon format
                                 character = match[1]?.trim();
                                 dialogue = match[2]?.trim();
                                 console.log(`📝 Pattern 3 - Character: "${character}", Dialogue: "${dialogue?.substring(0, 50)}..."`);
                                 break;
                                 
-                            case 3: // Pattern 4: Standalone dialogue - try to find character from context
+                            case 4: // Pattern 4: Standalone dialogue - try to find character from context
                                 dialogue = match[1]?.trim();
                                 character = extractCharacterFromContext(match, content, lines);
                                 console.log(`📝 Pattern 4 - Dialogue: "${dialogue?.substring(0, 50)}...", Context Character: "${character}"`);
                                 break;
                                 
-                            case 4: // Pattern 5: Dialogue with action tags
+                            case 5: // Pattern 5: Dialogue with action tags
                                 dialogue = match[1]?.trim();
                                 character = match[2]?.trim();
                                 console.log(`📝 Pattern 5 - Dialogue: "${dialogue?.substring(0, 50)}...", Character: "${character}"`);
