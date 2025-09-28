@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Dialogue Data Clearing</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white p-8">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-3xl font-bold mb-8">🧹 Test Dialogue Data Clearing</h1>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <!-- Story 1 -->
+            <div class="bg-gray-800 p-4 rounded">
+                <h2 class="text-xl mb-4">📖 Story 1 - Fantasy Characters</h2>
+                <textarea id="story1" class="w-full h-32 bg-gray-700 text-white p-3 rounded text-sm">
+Aragorn drew his sword and faced the orc. "You shall not pass," he declared with determination.
+
+"We will see about that," Gandalf said, raising his staff. "I have powers you cannot imagine."
+
+Legolas notched an arrow. "The elf will help you, my friend," he whispered to Aragorn.
+                </textarea>
+                <button onclick="testStory(1)" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded mt-2">
+                    Scan Story 1
+                </button>
+            </div>
+            
+            <!-- Story 2 -->
+            <div class="bg-gray-800 p-4 rounded">
+                <h2 class="text-xl mb-4">📖 Story 2 - Modern Characters</h2>
+                <textarea id="story2" class="w-full h-32 bg-gray-700 text-white p-3 rounded text-sm">
+Jessica looked at her phone and sighed. "I can't believe he actually texted me," she said nervously.
+
+"Don't overthink it," Marcus replied with a grin. "Just text him back already."
+
+Emma walked over to them. "What's all the drama about?" she asked, crossing her arms.
+                </textarea>
+                <button onclick="testStory(2)" class="bg-green-600 hover:bg-green-700 px-4 py-2 rounded mt-2">
+                    Scan Story 2
+                </button>
+            </div>
+        </div>
+
+        <div class="mb-6">
+            <button onclick="clearAll()" class="bg-red-600 hover:bg-red-700 px-6 py-3 rounded font-semibold">
+                🧹 Manual Clear All Data
+            </button>
+        </div>
+
+        <div id="results" class="bg-gray-800 p-6 rounded">
+            <h3 class="text-lg font-bold mb-4">📊 Current Dialogue Data State:</h3>
+            <div id="output">No data scanned yet</div>
+        </div>
+
+        <div class="mt-6 bg-gray-700 p-4 rounded">
+            <h3 class="text-lg font-bold mb-2">🧪 Test Instructions:</h3>
+            <ol class="list-decimal list-inside space-y-2 text-sm">
+                <li>Click "Scan Story 1" - Should show Aragorn, Gandalf, Legolas</li>
+                <li>Click "Scan Story 2" - Should ONLY show Jessica, Marcus, Emma (no old characters)</li>
+                <li>Click "Scan Story 1" again - Should ONLY show Aragorn, Gandalf, Legolas (no Jessica/Marcus/Emma)</li>
+                <li>If old characters persist, the caching bug is still present</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        // Mock dialogue data object (similar to the real app)
+        let dialogueData = {
+            characters: [],
+            dialogueSections: [],
+            voiceAssignments: {}
+        };
+
+        // Enhanced isValidCharacterName function
+        function isValidCharacterName(name) {
+            if (!name || typeof name !== 'string') return false;
+            
+            const cleaned = name.trim();
+            console.log(`🔍 Validating character name: "${cleaned}"`);
+            
+            if (cleaned.length < 2 || cleaned.length > 25) {
+                console.log(`❌ Invalid length: ${cleaned.length} chars`);
+                return false;
+            }
+            
+            if (!/^[A-Z][a-zA-Z\s\-']*$/.test(cleaned)) {
+                console.log(`❌ Invalid format: "${cleaned}"`);
+                return false;
+            }
+            
+            const words = cleaned.split(/\s+/);
+            for (const word of words) {
+                if (word.length < 1) continue;
+                
+                if (!/^[A-Z]/.test(word)) {
+                    console.log(`❌ Word doesn't start with capital: "${word}"`);
+                    return false;
+                }
+                
+                const invalidWords = [
+                    'What', 'How', 'Why', 'When', 'Where', 'Who',
+                    'Come', 'Well', 'Sure', 'Only', 'The', 'And', 'But', 'Then', 'There', 'This', 'That',
+                    'Chapter', 'Said', 'Asked', 'Replied', 'Whispered', 'Shouted', 'Called',
+                    'He', 'She', 'They', 'It', 'His', 'Her', 'Their', 'Its',
+                    'Kind', 'All', 'Whatever', 'Was', 'Were', 'Been', 'Being'
+                ];
+                
+                if (invalidWords.includes(word)) {
+                    console.log(`❌ Contains invalid word: "${word}"`);
+                    return false;
+                }
+            }
+            
+            console.log(`✅ Valid character name: "${cleaned}"`);
+            return true;
+        }
+
+        // Simulate the clearAllDialogueData function from the real app
+        function clearAllDialogueData(force = false) {
+            console.log('🧹 CLEARING ALL DIALOGUE DATA' + (force ? ' (FORCED)' : ''));
+            
+            // Clear data objects
+            dialogueData.characters = [];
+            dialogueData.dialogueSections = [];
+            dialogueData.voiceAssignments = {};
+            
+            console.log('✅ ALL DIALOGUE DATA CLEARED');
+        }
+
+        // Simplified dialogue scanning function 
+        function scanDialogue(content) {
+            console.log('🔍 Starting dialogue scan...');
+            
+            // STEP 1: Clear all old data first
+            clearAllDialogueData(true);
+            
+            console.log('📝 Scanning content:', content.substring(0, 100) + '...');
+            
+            const dialoguePatterns = [
+                // Pattern 1: Character said + dialogue
+                /([A-Z][a-zA-Z\s\-']{1,24})\s+(?:said|asked|replied|whispered|shouted|called|exclaimed|muttered|declared|announced|continued|interrupted|added|noted|observed|remarked|stated|explained|suggested|wondered|insisted|argued|protested|complained|sighed|laughed|chuckled|grinned|smiled|frowned|nodded|shook\s+(?:his|her)\s+head|paused|hesitated|stammered|stuttered)\s*,?\s*["""]([^"""]{3,500}?)["""]/gi,
+                
+                // Pattern 2B: Dialogue + Character said
+                /["""]([^"""]{3,500}?)["""][,.\s]*([A-Z][a-zA-Z\s\-']{1,24})\s+(?:said|asked|replied|whispered|shouted|called|exclaimed|muttered|declared|announced|continued|interrupted|added|noted|observed|remarked|stated|explained|suggested|wondered|insisted|argued|protested|complained|sighed|laughed|chuckled|grinned|smiled|frowned|nodded|shook\s+(?:his|her)\s+head|paused|hesitated|stammered|stuttered)/gi,
+                
+                // Pattern 4: Standalone dialogue
+                /["""]([^"""]{10,300}?)["""]/gi
+            ];
+
+            let allMatches = [];
+            const characters = new Set();
+            const dialogueSections = [];
+            
+            for (let patternIndex = 0; patternIndex < dialoguePatterns.length; patternIndex++) {
+                const pattern = dialoguePatterns[patternIndex];
+                let match;
+                
+                pattern.lastIndex = 0;
+                
+                while ((match = pattern.exec(content)) !== null) {
+                    let character = null;
+                    let dialogue = null;
+                    
+                    switch (patternIndex) {
+                        case 0: // Pattern 1: Character first, then dialogue
+                            character = match[1]?.trim();
+                            dialogue = match[2]?.trim();
+                            break;
+                        case 1: // Pattern 2B: Dialogue first, then character said
+                            dialogue = match[1]?.trim();
+                            character = match[2]?.trim();
+                            break;
+                        case 2: // Pattern 4: Standalone dialogue
+                            dialogue = match[1]?.trim();
+                            character = 'Unknown Speaker';
+                            break;
+                    }
+                    
+                    if (dialogue && dialogue.length >= 3) {
+                        if (character && isValidCharacterName(character)) {
+                            characters.add(character);
+                            dialogueSections.push({
+                                character: character,
+                                dialogue: dialogue,
+                                pattern: patternIndex + 1
+                            });
+                            console.log(`✅ Found: "${character}" -> "${dialogue.substring(0, 30)}..."`);
+                        }
+                    }
+                    
+                    if (pattern.lastIndex === match.index) {
+                        pattern.lastIndex++;
+                    }
+                }
+            }
+            
+            // Store results
+            dialogueData.characters = Array.from(characters);
+            dialogueData.dialogueSections = dialogueSections;
+            
+            console.log('📊 Final results:', {
+                characters: dialogueData.characters,
+                dialogueCount: dialogueData.dialogueSections.length
+            });
+            
+            return {
+                characters: Array.from(characters),
+                dialogueSections: dialogueSections
+            };
+        }
+
+        function testStory(storyNumber) {
+            console.log(`🧪 Testing Story ${storyNumber}...`);
+            
+            const content = document.getElementById(`story${storyNumber}`).value;
+            const results = scanDialogue(content);
+            
+            updateDisplay(results, storyNumber);
+        }
+
+        function updateDisplay(results, storyNumber) {
+            const outputDiv = document.getElementById('output');
+            
+            const timestamp = new Date().toLocaleTimeString();
+            
+            let html = `
+                <div class="mb-4 p-4 border-l-4 border-blue-500 bg-gray-700">
+                    <h4 class="font-bold text-blue-400">📊 Story ${storyNumber} Results (${timestamp})</h4>
+                    <p><strong>Characters found:</strong> ${results.characters.length}</p>
+                    <p><strong>Character list:</strong> ${results.characters.join(', ') || 'None'}</p>
+                    <p><strong>Dialogue sections:</strong> ${results.dialogueSections.length}</p>
+                </div>
+                
+                <div class="mb-4">
+                    <h4 class="font-bold mb-2">🔍 Current Data State Check:</h4>
+                    <div class="bg-gray-700 p-3 rounded">
+                        <p><strong>dialogueData.characters:</strong> [${dialogueData.characters.join(', ')}]</p>
+                        <p><strong>dialogueData.dialogueSections.length:</strong> ${dialogueData.dialogueSections.length}</p>
+                    </div>
+                </div>
+                
+                <div class="space-y-2">
+            `;
+            
+            results.dialogueSections.forEach((section, index) => {
+                html += `
+                    <div class="bg-gray-700 p-3 rounded">
+                        <div class="text-green-400">✅ Pattern ${section.pattern}: "${section.character}"</div>
+                        <div class="text-gray-300 text-sm ml-6">"${section.dialogue}"</div>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            
+            outputDiv.innerHTML = html;
+            
+            // Test validation
+            const expectedCharacters = {
+                1: ['Aragorn', 'Gandalf', 'Legolas'],
+                2: ['Jessica', 'Marcus', 'Emma']
+            };
+            
+            const expected = expectedCharacters[storyNumber] || [];
+            const found = results.characters;
+            
+            const hasOnlyExpected = found.every(char => expected.includes(char));
+            const hasAllExpected = expected.every(char => found.includes(char));
+            const hasOldData = storyNumber === 1 ? 
+                found.some(char => ['Jessica', 'Marcus', 'Emma'].includes(char)) :
+                found.some(char => ['Aragorn', 'Gandalf', 'Legolas'].includes(char));
+            
+            let validationHtml = `
+                <div class="mt-4 p-4 border-l-4 ${hasOldData ? 'border-red-500 bg-red-900' : 'border-green-500 bg-green-900'}">
+                    <h4 class="font-bold ${hasOldData ? 'text-red-400' : 'text-green-400'}">
+                        ${hasOldData ? '❌ CACHE BUG DETECTED' : '✅ CLEARING WORKS'}
+                    </h4>
+            `;
+            
+            if (hasOldData) {
+                validationHtml += `<p class="text-red-300">Old characters from previous story are still present!</p>`;
+            } else {
+                validationHtml += `<p class="text-green-300">Only current story characters found - clearing working correctly!</p>`;
+            }
+            
+            validationHtml += '</div>';
+            
+            outputDiv.innerHTML += validationHtml;
+        }
+
+        function clearAll() {
+            console.log('🧹 Manual clear triggered...');
+            clearAllDialogueData(true);
+            
+            document.getElementById('output').innerHTML = `
+                <div class="text-center text-gray-400">
+                    🧹 All dialogue data manually cleared
+                </div>
+            `;
+        }
+
+        // Auto-run initial message
+        window.addEventListener('load', function() {
+            console.log('🚀 Dialogue clearing test page loaded');
+        });
+    </script>
+</body>
+</html>

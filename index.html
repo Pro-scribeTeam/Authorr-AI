@@ -7328,12 +7328,23 @@ Format as clean, readable text ready for narration.`;
         
         let audioDAW = {
             context: null,
-            tracks: [],
+            tracks: {},
             isPlaying: false,
             currentTime: 0,
+            totalDuration: 0,
             timeline: null,
             canvas: null,
-            ctx: null
+            ctx: null,
+            playbackRate: 1,
+            zoomLevel: 1,
+            isDragging: false,
+            dragStartX: 0,
+            timelineWidth: 0,
+            masterGain: null,
+            playbackStartTime: 0,
+            animationId: null,
+            multiPartBuffers: [],  // For storing multi-part narration
+            trackElements: {}      // For storing draggable track elements
         };
 
         // Combine all audio segments into final audiobook
@@ -7680,8 +7691,8 @@ Format as clean, readable text ready for narration.`;
                             </h3>
                             
                             <!-- Narration Track -->
-                            <div class="bg-gray-700 rounded-lg p-4 mb-4">
-                                <div class="flex items-center justify-between mb-3">
+                            <div class="bg-gray-700 rounded-lg p-4 mb-3">
+                                <div class="flex items-center justify-between mb-2">
                                     <span class="font-medium text-white">🎙️ Narration</span>
                                     <div class="flex items-center space-x-2">
                                         <div id="narrationLED" class="w-3 h-3 rounded-full bg-gray-500"></div>
@@ -7690,64 +7701,116 @@ Format as clean, readable text ready for narration.`;
                                         </button>
                                     </div>
                                 </div>
-                                <div class="space-y-2">
+                                <div class="space-y-1">
                                     <label class="block text-xs text-gray-400">Volume</label>
-                                    <input type="range" id="narrationVolume" min="0" max="100" value="80" 
+                                    <input type="range" id="narrationVolume" min="0" max="150" value="120" 
                                            class="w-full" onchange="updateTrackVolume('narration', this.value)">
-                                    <span id="narrationVolumeLabel" class="text-xs text-cyan-400">80%</span>
+                                    <span id="narrationVolumeLabel" class="text-xs text-cyan-400">120%</span>
                                 </div>
-                                <div class="mt-3">
-                                    <label class="block text-xs text-gray-400 mb-1">Upload Audio</label>
-                                    <input type="file" accept="audio/*" onchange="loadAudioTrack('narration', this.files[0])" 
-                                           class="w-full text-xs bg-gray-600 border border-gray-500 rounded px-2 py-1">
-                                </div>
+                                <div class="text-xs text-green-400 mt-2" id="narrationStatus">Auto-loaded from generation</div>
                             </div>
 
-                            <!-- Music Track -->
-                            <div class="bg-gray-700 rounded-lg p-4 mb-4">
-                                <div class="flex items-center justify-between mb-3">
-                                    <span class="font-medium text-white">🎵 Background Music</span>
+                            <!-- Music Track 1 -->
+                            <div class="bg-gray-700 rounded-lg p-4 mb-3" data-track="music1">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="font-medium text-white">🎵 Music 1</span>
                                     <div class="flex items-center space-x-2">
-                                        <div id="musicLED" class="w-3 h-3 rounded-full bg-gray-500"></div>
-                                        <button onclick="muteTrack('music')" class="text-gray-400 hover:text-white">
+                                        <div id="music1LED" class="w-3 h-3 rounded-full bg-gray-500"></div>
+                                        <button onclick="muteTrack('music1')" class="text-gray-400 hover:text-white">
                                             <i class="fas fa-volume-mute"></i>
                                         </button>
                                     </div>
                                 </div>
-                                <div class="space-y-2">
+                                <div class="space-y-1">
                                     <label class="block text-xs text-gray-400">Volume</label>
-                                    <input type="range" id="musicVolume" min="0" max="100" value="30" 
-                                           class="w-full" onchange="updateTrackVolume('music', this.value)">
-                                    <span id="musicVolumeLabel" class="text-xs text-cyan-400">30%</span>
+                                    <input type="range" id="music1Volume" min="0" max="150" value="60" 
+                                           class="w-full" onchange="updateTrackVolume('music1', this.value)">
+                                    <span id="music1VolumeLabel" class="text-xs text-cyan-400">60%</span>
                                 </div>
-                                <div class="mt-3">
-                                    <label class="block text-xs text-gray-400 mb-1">Upload Music</label>
-                                    <input type="file" accept="audio/*" onchange="loadAudioTrack('music', this.files[0])" 
+                                <div class="mt-2">
+                                    <input type="file" accept="audio/*" onchange="loadAudioTrack('music1', this.files[0])" 
                                            class="w-full text-xs bg-gray-600 border border-gray-500 rounded px-2 py-1">
+                                    <div class="track-info mt-1 text-xs text-gray-400 min-h-[20px] p-1 border-dashed border border-gray-600 rounded bg-gray-800">
+                                        <small>Drop audio here or use file input</small>
+                                    </div>
                                 </div>
                             </div>
 
-                            <!-- Sound Effects Track -->
-                            <div class="bg-gray-700 rounded-lg p-4 mb-4">
-                                <div class="flex items-center justify-between mb-3">
-                                    <span class="font-medium text-white">🔊 Sound FX</span>
+                            <!-- Music Track 2 -->
+                            <div class="bg-gray-700 rounded-lg p-4 mb-3" data-track="music2">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="font-medium text-white">🎵 Music 2</span>
                                     <div class="flex items-center space-x-2">
-                                        <div id="sfxLED" class="w-3 h-3 rounded-full bg-gray-500"></div>
-                                        <button onclick="muteTrack('sfx')" class="text-gray-400 hover:text-white">
+                                        <div id="music2LED" class="w-3 h-3 rounded-full bg-gray-500"></div>
+                                        <button onclick="muteTrack('music2')" class="text-gray-400 hover:text-white">
                                             <i class="fas fa-volume-mute"></i>
                                         </button>
                                     </div>
                                 </div>
-                                <div class="space-y-2">
+                                <div class="space-y-1">
                                     <label class="block text-xs text-gray-400">Volume</label>
-                                    <input type="range" id="sfxVolume" min="0" max="100" value="50" 
-                                           class="w-full" onchange="updateTrackVolume('sfx', this.value)">
-                                    <span id="sfxVolumeLabel" class="text-xs text-cyan-400">50%</span>
+                                    <input type="range" id="music2Volume" min="0" max="150" value="60" 
+                                           class="w-full" onchange="updateTrackVolume('music2', this.value)">
+                                    <span id="music2VolumeLabel" class="text-xs text-cyan-400">60%</span>
                                 </div>
-                                <div class="mt-3">
-                                    <label class="block text-xs text-gray-400 mb-1">Upload Sound FX</label>
-                                    <input type="file" accept="audio/*" onchange="loadAudioTrack('sfx', this.files[0])" 
+                                <div class="mt-2">
+                                    <input type="file" accept="audio/*" onchange="loadAudioTrack('music2', this.files[0])" 
                                            class="w-full text-xs bg-gray-600 border border-gray-500 rounded px-2 py-1">
+                                    <div class="track-info mt-1 text-xs text-gray-400 min-h-[20px] p-1 border-dashed border border-gray-600 rounded bg-gray-800">
+                                        <small>Drop audio here or use file input</small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Sound Effects Track 1 -->
+                            <div class="bg-gray-700 rounded-lg p-4 mb-3" data-track="sfx1">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="font-medium text-white">🔊 SFX 1</span>
+                                    <div class="flex items-center space-x-2">
+                                        <div id="sfx1LED" class="w-3 h-3 rounded-full bg-gray-500"></div>
+                                        <button onclick="muteTrack('sfx1')" class="text-gray-400 hover:text-white">
+                                            <i class="fas fa-volume-mute"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="space-y-1">
+                                    <label class="block text-xs text-gray-400">Volume</label>
+                                    <input type="range" id="sfx1Volume" min="0" max="150" value="80" 
+                                           class="w-full" onchange="updateTrackVolume('sfx1', this.value)">
+                                    <span id="sfx1VolumeLabel" class="text-xs text-cyan-400">80%</span>
+                                </div>
+                                <div class="mt-2">
+                                    <input type="file" accept="audio/*" onchange="loadAudioTrack('sfx1', this.files[0])" 
+                                           class="w-full text-xs bg-gray-600 border border-gray-500 rounded px-2 py-1">
+                                    <div class="track-info mt-1 text-xs text-gray-400 min-h-[20px] p-1 border-dashed border border-gray-600 rounded bg-gray-800">
+                                        <small>Drop audio here or use file input</small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Sound Effects Track 2 -->
+                            <div class="bg-gray-700 rounded-lg p-4 mb-3" data-track="sfx2">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="font-medium text-white">🔊 SFX 2</span>
+                                    <div class="flex items-center space-x-2">
+                                        <div id="sfx2LED" class="w-3 h-3 rounded-full bg-gray-500"></div>
+                                        <button onclick="muteTrack('sfx2')" class="text-gray-400 hover:text-white">
+                                            <i class="fas fa-volume-mute"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="space-y-1">
+                                    <label class="block text-xs text-gray-400">Volume</label>
+                                    <input type="range" id="sfx2Volume" min="0" max="150" value="80" 
+                                           class="w-full" onchange="updateTrackVolume('sfx2', this.value)">
+                                    <span id="sfx2VolumeLabel" class="text-xs text-cyan-400">80%</span>
+                                </div>
+                                <div class="mt-2">
+                                    <input type="file" accept="audio/*" onchange="loadAudioTrack('sfx2', this.files[0])" 
+                                           class="w-full text-xs bg-gray-600 border border-gray-500 rounded px-2 py-1">
+                                    <div class="track-info mt-1 text-xs text-gray-400 min-h-[20px] p-1 border-dashed border border-gray-600 rounded bg-gray-800">
+                                        <small>Drop audio here or use file input</small>
+                                    </div>
                                 </div>
                             </div>
 
@@ -7756,11 +7819,19 @@ Format as clean, readable text ready for narration.`;
                                 <h4 class="font-medium text-cyan-400 mb-3">🎛️ Master Output</h4>
                                 <div class="space-y-2">
                                     <label class="block text-xs text-gray-400">Master Volume</label>
-                                    <input type="range" id="masterVolume" min="0" max="100" value="100" 
+                                    <input type="range" id="masterVolume" min="0" max="150" value="130" 
                                            class="w-full" onchange="updateMasterVolume(this.value)">
-                                    <span id="masterVolumeLabel" class="text-xs text-cyan-400">100%</span>
+                                    <span id="masterVolumeLabel" class="text-xs text-cyan-400">130%</span>
                                 </div>
-                                <div class="mt-4 grid grid-cols-5 gap-1">
+                                <div class="mt-3">
+                                    <button onclick="normalizeAllTracks()" class="w-full bg-cyan-700 hover:bg-cyan-600 px-3 py-1 rounded text-xs">
+                                        🔊 Normalize Audio
+                                    </button>
+                                </div>
+                                <div class="mt-3 text-xs text-gray-400">
+                                    Parts: <span id="narrationParts">0</span> | Total: <span id="totalDurationDisplay">00:00</span>
+                                </div>
+                                <div class="mt-3 grid grid-cols-5 gap-1">
                                     <div id="masterMeter1" class="h-2 bg-gray-600 rounded"></div>
                                     <div id="masterMeter2" class="h-2 bg-gray-600 rounded"></div>
                                     <div id="masterMeter3" class="h-2 bg-gray-600 rounded"></div>
@@ -7775,27 +7846,44 @@ Format as clean, readable text ready for narration.`;
                             <!-- Timeline Header -->
                             <div class="bg-gray-800 p-3 border-b border-gray-600">
                                 <div class="flex items-center justify-between">
-                                    <div class="text-sm text-gray-400">
-                                        Timeline: <span id="timelinePosition">00:00</span> / <span id="timelineDuration">00:00</span>
+                                    <div class="text-lg font-bold text-cyan-400">
+                                        <span id="timelinePosition">00:00</span> / <span id="timelineDuration">00:00</span>
                                     </div>
-                                    <div class="flex items-center space-x-2">
-                                        <button onclick="zoomTimelineIn()" class="text-gray-400 hover:text-white">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="text-xs text-gray-400">
+                                            Zoom: <span id="zoomLevel">100%</span>
+                                        </div>
+                                        <button onclick="seekToStart()" class="text-gray-400 hover:text-cyan-400 p-1" title="Go to start">
+                                            <i class="fas fa-step-backward"></i>
+                                        </button>
+                                        <button onclick="zoomTimelineOut()" class="text-gray-400 hover:text-cyan-400 p-1" title="Zoom out">
+                                            <i class="fas fa-search-minus"></i>
+                                        </button>
+                                        <button onclick="zoomTimelineIn()" class="text-gray-400 hover:text-cyan-400 p-1" title="Zoom in">
                                             <i class="fas fa-search-plus"></i>
                                         </button>
-                                        <button onclick="zoomTimelineOut()" class="text-gray-400 hover:text-white">
-                                            <i class="fas fa-search-minus"></i>
+                                        <button onclick="fitToView()" class="text-gray-400 hover:text-cyan-400 p-1" title="Fit to view">
+                                            <i class="fas fa-expand-arrows-alt"></i>
                                         </button>
                                     </div>
                                 </div>
                             </div>
 
                             <!-- Canvas Timeline -->
-                            <div class="flex-1 relative bg-gray-900">
+                            <div class="flex-1 relative bg-gray-900 min-h-96">
                                 <canvas id="audioTimeline" class="w-full h-full cursor-crosshair" 
-                                        onmousedown="startDragging(event)" 
-                                        onmousemove="handleDrag(event)" 
-                                        onmouseup="stopDragging(event)">
+                                        onmousedown="startTimelineDrag(event)" 
+                                        onmousemove="handleTimelineDrag(event)" 
+                                        onmouseup="stopTimelineDrag(event)"
+                                        onwheel="handleTimelineZoom(event)">
                                 </canvas>
+                                <!-- Playhead -->
+                                <div id="playhead" class="absolute top-0 w-0.5 bg-cyan-400 opacity-80 pointer-events-none" 
+                                     style="height: 100%; left: 0px; transition: left 0.1s ease;"></div>
+                                <!-- Track Drop Zones -->
+                                <div id="trackDropZones" class="absolute inset-0 pointer-events-none">
+                                    <!-- Will be populated dynamically -->
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -7803,8 +7891,11 @@ Format as clean, readable text ready for narration.`;
                     <!-- Footer -->
                     <div class="bg-gray-900 p-3 border-t border-cyan-500">
                         <div class="flex items-center justify-between text-sm text-gray-400">
-                            <div>Drag audio files onto timeline tracks | Use volume controls to mix | Export when ready</div>
-                            <div id="dawStatus">Ready</div>
+                            <div>🎵 Drag audio files onto tracks | 🎚️ Adjust levels | ⏯️ Click timeline to seek | 📤 Export final mix</div>
+                            <div class="flex items-center space-x-4">
+                                <div>Status: <span id="dawStatus" class="text-cyan-400">Ready</span></div>
+                                <div>BPM: <span class="text-green-400">120</span></div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -7814,34 +7905,115 @@ Format as clean, readable text ready for narration.`;
             initializeAudioDAW();
         }
 
-        // Initialize the Audio DAW
+        // Initialize the Enhanced Audio DAW
         function initializeAudioDAW() {
-            // Initialize Web Audio Context
+            console.log('🎚️ Initializing Enhanced Audio DAW...');
+            
+            // Initialize Web Audio Context with higher sample rate for quality
             if (!audioDAW.context) {
-                audioDAW.context = new (window.AudioContext || window.webkitAudioContext)();
+                audioDAW.context = new (window.AudioContext || window.webkitAudioContext)({
+                    sampleRate: 48000
+                });
             }
 
-            // Initialize tracks
+            // Resume context if suspended (browser policy)
+            if (audioDAW.context.state === 'suspended') {
+                audioDAW.context.resume();
+            }
+
+            // Initialize enhanced track system with 5 tracks total
             audioDAW.tracks = {
-                narration: { buffer: null, source: null, gainNode: null, volume: 0.8, muted: false },
-                music: { buffer: null, source: null, gainNode: null, volume: 0.3, muted: false },
-                sfx: { buffer: null, source: null, gainNode: null, volume: 0.5, muted: false }
+                narration: { 
+                    buffer: null, 
+                    buffers: [], // For multi-part support
+                    source: null, 
+                    gainNode: null, 
+                    volume: 1.2,  // Increased default volume
+                    muted: false, 
+                    color: '#22d3ee',
+                    type: 'narration'
+                },
+                music1: { 
+                    buffer: null, 
+                    source: null, 
+                    gainNode: null, 
+                    volume: 0.6, 
+                    muted: false, 
+                    color: '#fb7185',
+                    type: 'music',
+                    startTime: 0,
+                    trimStart: 0,
+                    trimEnd: null
+                },
+                music2: { 
+                    buffer: null, 
+                    source: null, 
+                    gainNode: null, 
+                    volume: 0.6, 
+                    muted: false, 
+                    color: '#a78bfa',
+                    type: 'music',
+                    startTime: 0,
+                    trimStart: 0,
+                    trimEnd: null
+                },
+                sfx1: { 
+                    buffer: null, 
+                    source: null, 
+                    gainNode: null, 
+                    volume: 0.8, 
+                    muted: false, 
+                    color: '#34d399',
+                    type: 'sfx',
+                    startTime: 0,
+                    trimStart: 0,
+                    trimEnd: null
+                },
+                sfx2: { 
+                    buffer: null, 
+                    source: null, 
+                    gainNode: null, 
+                    volume: 0.8, 
+                    muted: false, 
+                    color: '#fbbf24',
+                    type: 'sfx',
+                    startTime: 0,
+                    trimStart: 0,
+                    trimEnd: null
+                }
             };
 
-            // Initialize canvas
+            // Initialize canvas with proper sizing
             const canvas = document.getElementById('audioTimeline');
             audioDAW.canvas = canvas;
             audioDAW.ctx = canvas.getContext('2d');
             
-            // Set canvas size
-            canvas.width = canvas.offsetWidth;
-            canvas.height = canvas.offsetHeight;
+            // Set high-DPI canvas
+            const rect = canvas.getBoundingClientRect();
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+            canvas.style.width = rect.width + 'px';
+            canvas.style.height = rect.height + 'px';
+            audioDAW.ctx.scale(dpr, dpr);
+            audioDAW.timelineWidth = rect.width;
 
-            // Create master gain node
+            // Create master gain node with boost
             audioDAW.masterGain = audioDAW.context.createGain();
-            audioDAW.masterGain.connect(audioDAW.context.destination);
+            audioDAW.masterGain.gain.value = 1.3; // 30% boost for louder output
+            
+            // Add compressor for consistent levels
+            const compressor = audioDAW.context.createDynamicsCompressor();
+            compressor.threshold.setValueAtTime(-24, audioDAW.context.currentTime);
+            compressor.knee.setValueAtTime(30, audioDAW.context.currentTime);
+            compressor.ratio.setValueAtTime(12, audioDAW.context.currentTime);
+            compressor.attack.setValueAtTime(0.003, audioDAW.context.currentTime);
+            compressor.release.setValueAtTime(0.25, audioDAW.context.currentTime);
+            
+            audioDAW.masterGain.connect(compressor);
+            compressor.connect(audioDAW.context.destination);
 
-            // Create gain nodes for each track
+            // Create enhanced gain nodes for each track
             Object.keys(audioDAW.tracks).forEach(trackName => {
                 const track = audioDAW.tracks[trackName];
                 track.gainNode = audioDAW.context.createGain();
@@ -7849,39 +8021,94 @@ Format as clean, readable text ready for narration.`;
                 track.gainNode.gain.value = track.volume;
             });
 
-            // Auto-load narration if available
-            loadExistingNarration();
+            // Auto-load multi-part narration if available
+            loadMultiPartNarration();
             
-            drawTimeline();
+            // Initialize timeline
+            drawEnhancedTimeline();
             
-            // Initialize drag and drop for timeline
-            initializeTimelineDragDrop();
+            // Initialize enhanced interactions
+            initializeEnhancedInteractions();
             
-            document.getElementById('dawStatus').textContent = 'DAW Initialized - Ready to mix';
+            // Setup drag and drop functionality
+            setupDragAndDrop();
+            
+            // Update UI elements
+            updateVolumeLabels();
+            updateTimelinePosition();
+            
+            document.getElementById('dawStatus').textContent = 'Enhanced DAW Ready - Drag audio to tracks';
+            console.log('✅ Enhanced Audio DAW initialized successfully');
         }
 
-        // Auto-load existing narration into DAW
-        function loadExistingNarration() {
+        // Auto-load multi-part narration into DAW
+        async function loadMultiPartNarration() {
             const audioElements = document.querySelectorAll('#narrationResults audio');
-            if (audioElements.length > 0) {
-                document.getElementById('dawStatus').textContent = 'Loading narration...';
+            if (audioElements.length === 0) {
+                document.getElementById('dawStatus').textContent = 'No narration found - Upload files';
+                return;
+            }
+            
+            try {
+                document.getElementById('dawStatus').textContent = `Loading ${audioElements.length} narration part(s)...`;
+                console.log(`🎵 Loading ${audioElements.length} narration parts`);
                 
-                // For demonstration, load the first audio element
-                const firstAudio = audioElements[0];
-                const audioUrl = firstAudio.querySelector('source').src;
+                const buffers = [];
+                let totalDuration = 0;
                 
-                fetch(audioUrl)
-                    .then(response => response.arrayBuffer())
-                    .then(arrayBuffer => audioDAW.context.decodeAudioData(arrayBuffer))
-                    .then(audioBuffer => {
-                        audioDAW.tracks.narration.buffer = audioBuffer;
-                        drawTimeline();
-                        document.getElementById('dawStatus').textContent = `Narration loaded (${formatTime(audioBuffer.duration)})`;
-                    })
-                    .catch(error => {
-                        console.error('Failed to load narration:', error);
-                        document.getElementById('dawStatus').textContent = 'Ready - Upload audio files';
-                    });
+                // Load all narration parts sequentially
+                for (let i = 0; i < audioElements.length; i++) {
+                    const audioElement = audioElements[i];
+                    const audioUrl = audioElement.querySelector('source').src;
+                    
+                    document.getElementById('dawStatus').textContent = `Loading part ${i + 1}/${audioElements.length}...`;
+                    
+                    try {
+                        const response = await fetch(audioUrl);
+                        const arrayBuffer = await response.arrayBuffer();
+                        const audioBuffer = await audioDAW.context.decodeAudioData(arrayBuffer);
+                        
+                        buffers.push({
+                            buffer: audioBuffer,
+                            startTime: totalDuration,
+                            partNumber: i + 1
+                        });
+                        
+                        totalDuration += audioBuffer.duration;
+                        console.log(`✅ Part ${i + 1} loaded: ${formatTime(audioBuffer.duration)}`);
+                        
+                    } catch (partError) {
+                        console.error(`❌ Failed to load part ${i + 1}:`, partError);
+                        continue;
+                    }
+                }
+                
+                if (buffers.length > 0) {
+                    // Store multi-part buffers
+                    audioDAW.tracks.narration.buffers = buffers;
+                    audioDAW.totalDuration = totalDuration;
+                    
+                    // Update UI
+                    document.getElementById('narrationParts').textContent = buffers.length;
+                    document.getElementById('totalDurationDisplay').textContent = formatTime(totalDuration);
+                    document.getElementById('timelineDuration').textContent = formatTime(totalDuration);
+                    document.getElementById('narrationStatus').textContent = 
+                        `${buffers.length} parts loaded (${formatTime(totalDuration)})`;
+                    
+                    // Redraw timeline
+                    drawEnhancedTimeline();
+                    
+                    document.getElementById('dawStatus').textContent = 
+                        `✅ ${buffers.length} parts loaded (${formatTime(totalDuration)})`;
+                    
+                    console.log(`✅ Multi-part narration loaded: ${buffers.length} parts, ${formatTime(totalDuration)} total`);
+                } else {
+                    throw new Error('No audio parts could be loaded');
+                }
+                
+            } catch (error) {
+                console.error('❌ Failed to load multi-part narration:', error);
+                document.getElementById('dawStatus').textContent = 'Failed to load narration';
             }
         }
 
@@ -7927,12 +8154,14 @@ Format as clean, readable text ready for narration.`;
             updateLEDIndicator(trackName, volume);
         }
 
-        // Update master volume
+        // Enhanced master volume control with louder output
         function updateMasterVolume(value) {
             const volume = parseInt(value) / 100;
             
             if (audioDAW.masterGain) {
-                audioDAW.masterGain.gain.value = volume;
+                // Apply volume with gentle compression curve for louder, cleaner output
+                const enhancedVolume = Math.min(volume * 1.2, 1.8); // Up to 180% boost
+                audioDAW.masterGain.gain.setValueAtTime(enhancedVolume, audioDAW.context.currentTime);
             }
             
             const label = document.getElementById('masterVolumeLabel');
@@ -7940,7 +8169,57 @@ Format as clean, readable text ready for narration.`;
                 label.textContent = `${value}%`;
             }
             
-            updateMasterMeter(volume);
+            updateMasterMeters(volume);
+        }
+        
+        // Update master level meters
+        function updateMasterMeters(level) {
+            const meters = ['masterMeter1', 'masterMeter2', 'masterMeter3', 'masterMeter4', 'masterMeter5'];
+            const threshold = [0.2, 0.4, 0.6, 0.8, 1.0];
+            
+            meters.forEach((meterId, index) => {
+                const meter = document.getElementById(meterId);
+                if (meter) {
+                    if (level >= threshold[index]) {
+                        if (index < 3) meter.className = 'h-2 bg-green-500 rounded';
+                        else if (index < 4) meter.className = 'h-2 bg-yellow-500 rounded';
+                        else meter.className = 'h-2 bg-red-500 rounded';
+                    } else {
+                        meter.className = 'h-2 bg-gray-600 rounded';
+                    }
+                }
+            });
+        }
+        
+        // Normalize all track levels for optimal output
+        function normalizeAllTracks() {
+            console.log('🔊 Normalizing all track levels...');
+            
+            // Set recommended levels for each track type
+            const recommendedLevels = {
+                narration: 120,
+                music1: 60,
+                music2: 60, 
+                sfx1: 80,
+                sfx2: 80
+            };
+            
+            Object.keys(recommendedLevels).forEach(trackName => {
+                const slider = document.getElementById(`${trackName}Volume`);
+                if (slider) {
+                    slider.value = recommendedLevels[trackName];
+                    updateTrackVolume(trackName, recommendedLevels[trackName]);
+                }
+            });
+            
+            // Set master to optimal level
+            const masterSlider = document.getElementById('masterVolume');
+            if (masterSlider) {
+                masterSlider.value = 130;
+                updateMasterVolume(130);
+            }
+            
+            showNotification('✅ All track levels normalized for optimal output', 'success');
         }
 
         // Mute/unmute track
@@ -7991,7 +8270,7 @@ Format as clean, readable text ready for narration.`;
             }
         }
 
-        // Play DAW audio
+        // Enhanced DAW audio playback with multi-part support
         async function playDAWAudio() {
             if (audioDAW.isPlaying) return;
             
@@ -8001,56 +8280,127 @@ Format as clean, readable text ready for narration.`;
                 }
                 
                 audioDAW.isPlaying = true;
+                audioDAW.playbackStartTime = audioDAW.context.currentTime - audioDAW.currentTime;
+                
                 const playBtn = document.getElementById('dawPlayBtn');
                 if (playBtn) {
                     playBtn.innerHTML = '<i class="fas fa-pause"></i> Pause';
                     playBtn.onclick = pauseDAWAudio;
                 }
                 
-                // Create and connect source nodes for each track with audio
-                Object.keys(audioDAW.tracks).forEach(trackName => {
+                console.log(`🎵 Starting playback from ${formatTime(audioDAW.currentTime)}`);
+                
+                // Handle multi-part narration
+                if (audioDAW.tracks.narration.buffers && audioDAW.tracks.narration.buffers.length > 0) {
+                    playMultiPartNarration();
+                } else if (audioDAW.tracks.narration.buffer) {
+                    // Single narration file
+                    playTrackFromTime('narration', audioDAW.currentTime);
+                }
+                
+                // Play other tracks (music, sfx)
+                ['music1', 'music2', 'sfx1', 'sfx2'].forEach(trackName => {
                     const track = audioDAW.tracks[trackName];
                     if (track.buffer && track.gainNode) {
-                        track.source = audioDAW.context.createBufferSource();
-                        track.source.buffer = track.buffer;
-                        track.source.connect(track.gainNode);
-                        track.source.start(0, audioDAW.currentTime);
-                        
-                        // Set up ended event
-                        track.source.addEventListener('ended', () => {
-                            if (audioDAW.isPlaying) {
-                                stopDAWAudio();
+                        const trackStartTime = track.startTime || 0;
+                        if (audioDAW.currentTime >= trackStartTime) {
+                            const offset = audioDAW.currentTime - trackStartTime;
+                            if (offset < track.buffer.duration) {
+                                playTrackFromTime(trackName, offset);
                             }
-                        });
+                        }
                     }
                 });
                 
                 document.getElementById('dawStatus').textContent = 'Playing...';
                 
                 // Start timeline animation
-                animateTimeline();
+                startTimelineAnimation();
                 
             } catch (error) {
-                console.error('Playback error:', error);
+                console.error('❌ Playback error:', error);
                 stopDAWAudio();
                 showNotification(`Playback error: ${error.message}`, 'error');
             }
         }
+        
+        // Play multi-part narration seamlessly
+        function playMultiPartNarration() {
+            const buffers = audioDAW.tracks.narration.buffers;
+            const currentTime = audioDAW.currentTime;
+            
+            buffers.forEach((part, index) => {
+                const partStartTime = part.startTime;
+                const partEndTime = part.startTime + part.buffer.duration;
+                
+                // Check if this part should be playing at current time
+                if (currentTime >= partStartTime && currentTime < partEndTime) {
+                    const offset = currentTime - partStartTime;
+                    const delay = 0; // Start immediately
+                    
+                    console.log(`🎵 Playing part ${part.partNumber} from ${formatTime(offset)}`);
+                    
+                    // Create source for this part
+                    const source = audioDAW.context.createBufferSource();
+                    source.buffer = part.buffer;
+                    source.connect(audioDAW.tracks.narration.gainNode);
+                    source.start(audioDAW.context.currentTime + delay, offset);
+                    
+                    // Store source for stopping later
+                    if (!audioDAW.tracks.narration.sources) {
+                        audioDAW.tracks.narration.sources = [];
+                    }
+                    audioDAW.tracks.narration.sources.push(source);
+                } else if (currentTime < partStartTime) {
+                    // Schedule future parts
+                    const delay = partStartTime - currentTime;
+                    
+                    console.log(`🕰️ Scheduling part ${part.partNumber} in ${formatTime(delay)}`);
+                    
+                    const source = audioDAW.context.createBufferSource();
+                    source.buffer = part.buffer;
+                    source.connect(audioDAW.tracks.narration.gainNode);
+                    source.start(audioDAW.context.currentTime + delay, 0);
+                    
+                    if (!audioDAW.tracks.narration.sources) {
+                        audioDAW.tracks.narration.sources = [];
+                    }
+                    audioDAW.tracks.narration.sources.push(source);
+                }
+            });
+        }
+        
+        // Play individual track from specific time
+        function playTrackFromTime(trackName, offset) {
+            const track = audioDAW.tracks[trackName];
+            if (!track.buffer || !track.gainNode) return;
+            
+            try {
+                track.source = audioDAW.context.createBufferSource();
+                track.source.buffer = track.buffer;
+                track.source.connect(track.gainNode);
+                
+                const clampedOffset = Math.max(0, Math.min(offset, track.buffer.duration));
+                track.source.start(audioDAW.context.currentTime, clampedOffset);
+                
+                console.log(`🎵 Playing ${trackName} from ${formatTime(clampedOffset)}`);
+            } catch (error) {
+                console.error(`❌ Failed to play ${trackName}:`, error);
+            }
+        }
 
-        // Pause DAW audio
+        // Enhanced pause with position preservation
         function pauseDAWAudio() {
             if (!audioDAW.isPlaying) return;
             
+            // Calculate current playback position
+            if (audioDAW.playbackStartTime) {
+                const elapsedTime = audioDAW.context.currentTime - audioDAW.playbackStartTime;
+                audioDAW.currentTime = Math.min(elapsedTime, audioDAW.totalDuration || 0);
+            }
+            
             // Stop all sources
-            Object.keys(audioDAW.tracks).forEach(trackName => {
-                const track = audioDAW.tracks[trackName];
-                if (track.source) {
-                    try {
-                        track.source.stop();
-                    } catch (e) {}
-                    track.source = null;
-                }
-            });
+            stopAllAudioSources();
             
             audioDAW.isPlaying = false;
             
@@ -8060,13 +8410,27 @@ Format as clean, readable text ready for narration.`;
                 playBtn.onclick = playDAWAudio;
             }
             
-            document.getElementById('dawStatus').textContent = 'Paused';
+            // Update timeline position
+            updateTimelinePosition();
+            drawEnhancedTimeline();
+            
+            document.getElementById('dawStatus').textContent = `Paused at ${formatTime(audioDAW.currentTime)}`;
+            
+            // Cancel animation
+            if (audioDAW.animationId) {
+                cancelAnimationFrame(audioDAW.animationId);
+                audioDAW.animationId = null;
+            }
         }
 
-        // Stop DAW audio
+        // Enhanced stop function
         function stopDAWAudio() {
             audioDAW.isPlaying = false;
             audioDAW.currentTime = 0;
+            audioDAW.playbackStartTime = 0;
+            
+            // Stop all audio sources
+            stopAllAudioSources();
             
             // Stop all sources
             Object.keys(audioDAW.tracks).forEach(trackName => {
@@ -8086,79 +8450,732 @@ Format as clean, readable text ready for narration.`;
             }
             
             document.getElementById('dawStatus').textContent = 'Stopped';
-            drawTimeline();
+            
+            // Cancel animation
+            if (audioDAW.animationId) {
+                cancelAnimationFrame(audioDAW.animationId);
+                audioDAW.animationId = null;
+            }
+            
+            drawEnhancedTimeline();
         }
 
-        // Animate timeline during playback
+        // Stop all audio sources helper function
+        function stopAllAudioSources() {
+            Object.keys(audioDAW.tracks).forEach(trackName => {
+                const track = audioDAW.tracks[trackName];
+                if (track.source) {
+                    try {
+                        track.source.stop();
+                    } catch (e) {
+                        console.warn(`Error stopping ${trackName}:`, e);
+                    }
+                    track.source = null;
+                }
+            });
+        }
+
+        // Start timeline animation during playback
+        function startTimelineAnimation() {
+            if (audioDAW.animationId) {
+                cancelAnimationFrame(audioDAW.animationId);
+            }
+            
+            const animate = () => {
+                if (audioDAW.isPlaying) {
+                    updateCurrentTime();
+                    drawEnhancedTimeline();
+                    audioDAW.animationId = requestAnimationFrame(animate);
+                }
+            };
+            
+            audioDAW.animationId = requestAnimationFrame(animate);
+        }
+
+        // Get maximum duration across all tracks
+        function getMaxTrackDuration() {
+            let maxDuration = 0;
+            
+            // Check multi-part narration total
+            if (audioDAW.totalDuration > 0) {
+                maxDuration = Math.max(maxDuration, audioDAW.totalDuration);
+            }
+            
+            // Check other track durations
+            Object.keys(audioDAW.tracks).forEach(trackName => {
+                const track = audioDAW.tracks[trackName];
+                if (track.buffer && track.buffer.duration) {
+                    maxDuration = Math.max(maxDuration, track.buffer.duration);
+                }
+            });
+            
+            return maxDuration || 10; // Minimum 10 seconds for empty tracks
+        }
+
+        // Update current playback time
+        function updateCurrentTime() {
+            if (audioDAW.isPlaying && audioDAW.playbackStartTime > 0) {
+                const elapsed = (audioDAW.context.currentTime - audioDAW.playbackStartTime) / 1000;
+                audioDAW.currentTime = elapsed;
+                
+                // Update status display
+                const status = document.getElementById('dawStatus');
+                if (status) {
+                    const totalDuration = getMaxTrackDuration();
+                    status.textContent = `Playing: ${formatTime(audioDAW.currentTime)} / ${formatTime(totalDuration)}`;
+                }
+            }
+        }
+
+        // Animate timeline during playback (legacy compatibility)
         function animateTimeline() {
             if (!audioDAW.isPlaying) return;
             
-            drawTimeline();
+            drawEnhancedTimeline();
             requestAnimationFrame(animateTimeline);
         }
 
-        // Draw timeline with waveforms and playback position
-        function drawTimeline() {
+        // Enhanced timeline drawing with multi-part support
+        function drawEnhancedTimeline() {
             if (!audioDAW.ctx || !audioDAW.canvas) return;
             
             const canvas = audioDAW.canvas;
             const ctx = audioDAW.ctx;
-            const width = canvas.width;
-            const height = canvas.height;
+            const width = audioDAW.timelineWidth || canvas.offsetWidth;
+            const height = canvas.offsetHeight;
             
-            // Clear canvas
-            ctx.fillStyle = '#1f2937';
+            // Clear canvas with dark background
+            ctx.fillStyle = '#111827';
             ctx.fillRect(0, 0, width, height);
             
-            // Draw grid lines
-            ctx.strokeStyle = '#374151';
-            ctx.lineWidth = 1;
-            for (let i = 0; i < width; i += 50) {
-                ctx.beginPath();
-                ctx.moveTo(i, 0);
-                ctx.lineTo(i, height);
-                ctx.stroke();
-            }
+            const totalDuration = audioDAW.totalDuration || getMaxTrackDuration();
+            if (totalDuration === 0) return;
             
-            // Draw track waveforms
-            const trackHeight = height / 3;
-            let yOffset = 0;
+            // Calculate zoom and offset
+            const pixelsPerSecond = (width * audioDAW.zoomLevel) / totalDuration;
             
-            Object.keys(audioDAW.tracks).forEach((trackName, index) => {
-                const track = audioDAW.tracks[trackName];
-                if (track.buffer) {
-                    drawWaveform(ctx, track.buffer, 0, yOffset, width, trackHeight, getTrackColor(trackName));
-                }
-                yOffset += trackHeight;
+            // Draw time grid
+            drawTimeGrid(ctx, width, height, totalDuration, pixelsPerSecond);
+            
+            // Draw track lanes (5 tracks total)
+            const trackNames = ['narration', 'music1', 'music2', 'sfx1', 'sfx2'];
+            const trackHeight = (height - 40) / trackNames.length; // Leave space for time ruler
+            
+            trackNames.forEach((trackName, index) => {
+                const yPos = 30 + (index * trackHeight);
+                drawTrackLane(ctx, trackName, 0, yPos, width, trackHeight, pixelsPerSecond);
             });
             
             // Draw playback position
-            if (audioDAW.isPlaying) {
-                const maxDuration = Math.max(...Object.values(audioDAW.tracks)
-                    .filter(t => t.buffer)
-                    .map(t => t.buffer.duration));
-                
-                if (maxDuration > 0) {
-                    const playbackX = (audioDAW.currentTime / maxDuration) * width;
-                    ctx.strokeStyle = '#ef4444';
-                    ctx.lineWidth = 2;
-                    ctx.beginPath();
-                    ctx.moveTo(playbackX, 0);
-                    ctx.lineTo(playbackX, height);
-                    ctx.stroke();
+            if (totalDuration > 0) {
+                const playheadX = (audioDAW.currentTime / totalDuration) * width;
+                drawPlayhead(ctx, playheadX, 0, height);
+                updatePlayheadPosition(playheadX);
+            }
+        }
+        
+        // Draw time grid and rulers
+        function drawTimeGrid(ctx, width, height, totalDuration, pixelsPerSecond) {
+            ctx.strokeStyle = '#374151';
+            ctx.lineWidth = 1;
+            ctx.fillStyle = '#9ca3af';
+            ctx.font = '11px Arial';
+            
+            // Calculate grid interval (1 second, 5 seconds, 10 seconds, etc.)
+            const intervals = [1, 5, 10, 30, 60, 300]; // seconds
+            let gridInterval = 1;
+            
+            for (let interval of intervals) {
+                if (pixelsPerSecond * interval > 50) { // At least 50px between grid lines
+                    gridInterval = interval;
+                    break;
                 }
-                
-                // Update current time (simulate playback progress)
-                audioDAW.currentTime += 0.016; // ~60fps
             }
             
-            // Draw time markers
-            ctx.fillStyle = '#9ca3af';
-            ctx.font = '10px Arial';
-            for (let i = 0; i < width; i += 100) {
-                const timeSeconds = (i / width) * getMaxTrackDuration();
-                ctx.fillText(formatTime(timeSeconds), i + 2, 12);
+            // Draw vertical grid lines and time labels
+            for (let time = 0; time <= totalDuration; time += gridInterval) {
+                const x = (time / totalDuration) * width;
+                
+                // Vertical grid line
+                ctx.globalAlpha = 0.3;
+                ctx.beginPath();
+                ctx.moveTo(x, 30);
+                ctx.lineTo(x, height);
+                ctx.stroke();
+                
+                // Time label
+                ctx.globalAlpha = 1;
+                ctx.fillText(formatTime(time), x + 2, 25);
             }
+        }
+        
+        // Draw individual track lane
+        function drawTrackLane(ctx, trackName, x, y, width, height, pixelsPerSecond) {
+            const track = audioDAW.tracks[trackName];
+            
+            // Draw track background
+            ctx.fillStyle = '#1f2937';
+            ctx.fillRect(x, y, width, height);
+            
+            // Draw track border
+            ctx.strokeStyle = '#374151';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(x, y, width, height);
+            
+            // Draw track label
+            ctx.fillStyle = '#d1d5db';
+            ctx.font = '12px Arial';
+            ctx.fillText(trackName.toUpperCase(), x + 5, y + 15);
+            
+            // Draw audio content
+            if (trackName === 'narration' && audioDAW.tracks.narration.buffers) {
+                // Multi-part narration
+                drawMultiPartNarration(ctx, x, y, width, height, pixelsPerSecond);
+            } else if (track.buffer) {
+                // Single audio file
+                const startX = x + (track.startTime || 0) * pixelsPerSecond;
+                const audioWidth = (track.buffer.duration * pixelsPerSecond);
+                drawAudioBlock(ctx, track, startX, y + 20, audioWidth, height - 40);
+            }
+        }
+        
+        // Draw multi-part narration blocks
+        function drawMultiPartNarration(ctx, x, y, width, height, pixelsPerSecond) {
+            const buffers = audioDAW.tracks.narration.buffers;
+            if (!buffers) return;
+            
+            buffers.forEach((part, index) => {
+                const startX = x + (part.startTime * pixelsPerSecond);
+                const partWidth = part.buffer.duration * pixelsPerSecond;
+                
+                // Draw part background
+                ctx.fillStyle = index % 2 === 0 ? '#0d9488' : '#059669';
+                ctx.fillRect(startX, y + 20, partWidth, height - 40);
+                
+                // Draw part border
+                ctx.strokeStyle = '#22d3ee';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(startX, y + 20, partWidth, height - 40);
+                
+                // Draw part label
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 10px Arial';
+                ctx.fillText(`Part ${part.partNumber}`, startX + 5, y + 35);
+                ctx.font = '9px Arial';
+                ctx.fillText(formatTime(part.buffer.duration), startX + 5, y + 48);
+                
+                // Draw simple waveform
+                if (partWidth > 50) {
+                    drawSimpleWaveform(ctx, part.buffer, startX + 2, y + 52, partWidth - 4, height - 60, '#86efac');
+                }
+            });
+        }
+        
+        // Draw audio block for music/sfx tracks
+        function drawAudioBlock(ctx, track, x, y, width, height) {
+            // Draw audio background
+            ctx.fillStyle = track.color || '#4b5563';
+            ctx.globalAlpha = 0.7;
+            ctx.fillRect(x, y, width, height);
+            
+            // Draw audio border
+            ctx.globalAlpha = 1;
+            ctx.strokeStyle = track.color || '#6b7280';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(x, y, width, height);
+            
+            // Draw waveform if block is large enough
+            if (width > 50 && track.buffer) {
+                drawSimpleWaveform(ctx, track.buffer, x + 2, y + 2, width - 4, height - 4, '#ffffff');
+            }
+        }
+        
+        // Draw simplified waveform
+        function drawSimpleWaveform(ctx, buffer, x, y, width, height, color) {
+            const data = buffer.getChannelData(0);
+            const samples = data.length;
+            const samplesPerPixel = samples / width;
+            const centerY = y + height / 2;
+            
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 1;
+            ctx.globalAlpha = 0.8;
+            ctx.beginPath();
+            
+            for (let i = 0; i < width; i += 2) {
+                const startSample = Math.floor(i * samplesPerPixel);
+                const endSample = Math.floor((i + 1) * samplesPerPixel);
+                
+                let max = 0;
+                for (let j = startSample; j < endSample; j++) {
+                    max = Math.max(max, Math.abs(data[j]));
+                }
+                
+                const lineHeight = max * (height / 2);
+                ctx.moveTo(x + i, centerY - lineHeight);
+                ctx.lineTo(x + i, centerY + lineHeight);
+            }
+            
+            ctx.stroke();
+            ctx.globalAlpha = 1;
+        }
+        
+        // Draw playhead
+        function drawPlayhead(ctx, x, y, height) {
+            // Playhead line
+            ctx.strokeStyle = '#22d3ee';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            ctx.lineTo(x, height);
+            ctx.stroke();
+            
+            // Playhead handle
+            ctx.fillStyle = '#22d3ee';
+            ctx.beginPath();
+            ctx.arc(x, y + 15, 6, 0, 2 * Math.PI);
+            ctx.fill();
+        }
+        
+        // Update DOM playhead position
+        function updatePlayheadPosition(x) {
+            const playhead = document.getElementById('playhead');
+            if (playhead) {
+                playhead.style.left = `${x}px`;
+            }
+        }
+        
+        // Initialize enhanced interactions
+        function initializeEnhancedInteractions() {
+            // Canvas mouse events for seeking
+            const canvas = audioDAW.canvas;
+            if (!canvas) return;
+            
+            // Prevent context menu
+            canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+            
+            // Add resize handler
+            window.addEventListener('resize', () => {
+                resizeCanvas();
+                drawEnhancedTimeline();
+            });
+        }
+        
+        // Handle timeline drag for seeking
+        function startTimelineDrag(event) {
+            audioDAW.isDragging = true;
+            audioDAW.dragStartX = event.offsetX;
+            handleTimelineSeek(event);
+        }
+        
+        function handleTimelineDrag(event) {
+            if (audioDAW.isDragging) {
+                handleTimelineSeek(event);
+            }
+        }
+        
+        function stopTimelineDrag(event) {
+            audioDAW.isDragging = false;
+        }
+        
+        // Handle timeline seeking
+        function handleTimelineSeek(event) {
+            const rect = audioDAW.canvas.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const width = rect.width;
+            
+            const totalDuration = audioDAW.totalDuration || getMaxTrackDuration();
+            if (totalDuration > 0) {
+                const seekTime = (x / width) * totalDuration;
+                audioDAW.currentTime = Math.max(0, Math.min(seekTime, totalDuration));
+                
+                // Update timeline position display
+                updateTimelinePosition();
+                
+                // Redraw timeline to show new position
+                drawEnhancedTimeline();
+                
+                // If playing, restart from new position
+                if (audioDAW.isPlaying) {
+                    stopDAWAudio();
+                    setTimeout(() => playDAWAudio(), 100);
+                }
+            }
+        }
+        
+        // Handle timeline zoom
+        function handleTimelineZoom(event) {
+            event.preventDefault();
+            const zoomFactor = event.deltaY > 0 ? 0.9 : 1.1;
+            audioDAW.zoomLevel = Math.max(0.1, Math.min(audioDAW.zoomLevel * zoomFactor, 10));
+            
+            document.getElementById('zoomLevel').textContent = `${Math.round(audioDAW.zoomLevel * 100)}%`;
+            drawEnhancedTimeline();
+        }
+
+        // Drag and Drop Audio Asset Functions
+        function setupDragAndDrop() {
+            // Make audio elements draggable
+            const setupDraggableAudio = () => {
+                document.querySelectorAll('audio').forEach(audio => {
+                    audio.setAttribute('draggable', 'true');
+                    audio.addEventListener('dragstart', handleAudioDragStart);
+                });
+            };
+
+            // Setup drop zones for tracks
+            const trackNames = ['music1', 'music2', 'sfx1', 'sfx2'];
+            trackNames.forEach(trackName => {
+                const trackElement = document.querySelector(`[data-track="${trackName}"]`);
+                if (trackElement) {
+                    trackElement.addEventListener('dragover', handleDragOver);
+                    trackElement.addEventListener('drop', (e) => handleAudioDrop(e, trackName));
+                }
+            });
+
+            // Setup for timeline canvas
+            if (audioDAW.canvas) {
+                audioDAW.canvas.addEventListener('dragover', handleDragOver);
+                audioDAW.canvas.addEventListener('drop', handleTimelineDrop);
+            }
+
+            setupDraggableAudio();
+        }
+
+        function handleAudioDragStart(event) {
+            const audioSrc = event.target.src || event.target.currentSrc;
+            event.dataTransfer.setData('text/plain', audioSrc);
+            event.dataTransfer.setData('audio/src', audioSrc);
+            
+            // Store additional data about the audio
+            event.dataTransfer.setData('audio/duration', event.target.duration || '0');
+            event.dataTransfer.effectAllowed = 'copy';
+        }
+
+        function handleDragOver(event) {
+            event.preventDefault();
+            event.dataTransfer.dropEffect = 'copy';
+        }
+
+        function handleAudioDrop(event, trackName) {
+            event.preventDefault();
+            const audioSrc = event.dataTransfer.getData('audio/src') || event.dataTransfer.getData('text/plain');
+            
+            if (audioSrc && trackName) {
+                loadAudioToTrack(audioSrc, trackName, 0); // Start at beginning by default
+            }
+        }
+
+        function handleTimelineDrop(event) {
+            event.preventDefault();
+            const audioSrc = event.dataTransfer.getData('audio/src') || event.dataTransfer.getData('text/plain');
+            
+            if (audioSrc) {
+                // Calculate drop position on timeline
+                const rect = audioDAW.canvas.getBoundingClientRect();
+                const x = event.clientX - rect.left;
+                const width = rect.width;
+                const totalDuration = getMaxTrackDuration();
+                const dropTime = (x / width) * totalDuration;
+
+                // Determine which track based on Y position
+                const y = event.clientY - rect.top;
+                const trackHeight = rect.height / 5;
+                const trackIndex = Math.floor(y / trackHeight);
+                const trackNames = ['narration', 'music1', 'music2', 'sfx1', 'sfx2'];
+                
+                if (trackIndex >= 1 && trackIndex < trackNames.length) { // Skip narration track
+                    const trackName = trackNames[trackIndex];
+                    loadAudioToTrack(audioSrc, trackName, dropTime);
+                }
+            }
+        }
+
+        // Load audio file to specific track at specific time
+        async function loadAudioToTrack(audioSrc, trackName, startTime = 0) {
+            try {
+                showLoading(`Loading audio to ${trackName} track...`);
+                
+                const response = await fetch(audioSrc);
+                const audioData = await response.arrayBuffer();
+                const audioBuffer = await audioDAW.context.decodeAudioData(audioData);
+                
+                // Store in track
+                if (!audioDAW.tracks[trackName]) {
+                    audioDAW.tracks[trackName] = {};
+                }
+                
+                audioDAW.tracks[trackName].buffer = audioBuffer;
+                audioDAW.tracks[trackName].startTime = startTime;
+                audioDAW.tracks[trackName].duration = audioBuffer.duration;
+                
+                // Update UI to show loaded audio
+                updateTrackUI(trackName, {
+                    duration: audioBuffer.duration,
+                    startTime: startTime,
+                    name: audioSrc.split('/').pop()
+                });
+                
+                // Redraw timeline
+                drawEnhancedTimeline();
+                
+                hideLoading();
+                showNotification(`Audio loaded to ${trackName} track at ${formatTime(startTime)}`, 'success');
+                
+            } catch (error) {
+                console.error(`Error loading audio to ${trackName}:`, error);
+                hideLoading();
+                showNotification(`Failed to load audio to ${trackName} track`, 'error');
+            }
+        }
+
+        // Update track UI to show loaded content
+        function updateTrackUI(trackName, info) {
+            const trackElement = document.querySelector(`[data-track="${trackName}"]`);
+            if (trackElement) {
+                // Update track info display
+                const infoElement = trackElement.querySelector('.track-info') || 
+                    (() => {
+                        const info = document.createElement('div');
+                        info.className = 'track-info';
+                        trackElement.appendChild(info);
+                        return info;
+                    })();
+                
+                infoElement.innerHTML = `
+                    <small>${info.name} (${formatTime(info.duration)})</small>
+                    <br><small>Start: ${formatTime(info.startTime)}</small>
+                    <button onclick="editTrackTiming('${trackName}')" class="btn-small">Edit</button>
+                `;
+            }
+        }
+
+        // Audio Trimming and Positioning Controls
+        function editTrackTiming(trackName) {
+            const track = audioDAW.tracks[trackName];
+            if (!track || !track.buffer) {
+                showNotification('No audio loaded in this track', 'warning');
+                return;
+            }
+
+            // Create modal for editing timing
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay';
+            modal.innerHTML = `
+                <div class="modal-content" style="max-width: 500px;">
+                    <h3>Edit ${trackName.toUpperCase()} Timing</h3>
+                    <div class="form-group">
+                        <label>Start Time (seconds)</label>
+                        <input type="number" id="trackStartTime" value="${track.startTime || 0}" step="0.1" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Trim Start (seconds)</label>
+                        <input type="number" id="trackTrimStart" value="${track.trimStart || 0}" step="0.1" min="0" max="${track.buffer.duration}">
+                    </div>
+                    <div class="form-group">
+                        <label>Trim End (seconds)</label>
+                        <input type="number" id="trackTrimEnd" value="${track.trimEnd || track.buffer.duration}" step="0.1" min="0" max="${track.buffer.duration}">
+                    </div>
+                    <div class="form-group">
+                        <label>Original Duration: ${formatTime(track.buffer.duration)}</label>
+                        <label id="trimmedDurationLabel">Trimmed Duration: ${formatTime((track.trimEnd || track.buffer.duration) - (track.trimStart || 0))}</label>
+                    </div>
+                    <div class="button-group">
+                        <button onclick="previewTrackTiming('${trackName}')" class="btn btn-secondary">Preview</button>
+                        <button onclick="applyTrackTiming('${trackName}')" class="btn btn-primary">Apply</button>
+                        <button onclick="removeTrackAudio('${trackName}')" class="btn btn-danger">Remove</button>
+                        <button onclick="closeModal()" class="btn btn-secondary">Cancel</button>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(modal);
+
+            // Update duration when trim values change
+            const updateDuration = () => {
+                const trimStart = parseFloat(document.getElementById('trackTrimStart').value) || 0;
+                const trimEnd = parseFloat(document.getElementById('trackTrimEnd').value) || track.buffer.duration;
+                const duration = Math.max(0, trimEnd - trimStart);
+                document.getElementById('trimmedDurationLabel').textContent = `Trimmed Duration: ${formatTime(duration)}`;
+            };
+
+            document.getElementById('trackTrimStart').addEventListener('input', updateDuration);
+            document.getElementById('trackTrimEnd').addEventListener('input', updateDuration);
+        }
+
+        function previewTrackTiming(trackName) {
+            const track = audioDAW.tracks[trackName];
+            if (!track || !track.buffer) return;
+
+            const trimStart = parseFloat(document.getElementById('trackTrimStart').value) || 0;
+            const trimEnd = parseFloat(document.getElementById('trackTrimEnd').value) || track.buffer.duration;
+
+            // Stop any current preview
+            if (audioDAW.previewSource) {
+                audioDAW.previewSource.stop();
+                audioDAW.previewSource = null;
+            }
+
+            try {
+                const source = audioDAW.context.createBufferSource();
+                source.buffer = track.buffer;
+                
+                const gainNode = audioDAW.context.createGain();
+                gainNode.gain.value = 0.7; // Preview at lower volume
+                
+                source.connect(gainNode);
+                gainNode.connect(audioDAW.context.destination);
+                
+                const duration = Math.max(0.1, trimEnd - trimStart);
+                source.start(audioDAW.context.currentTime, trimStart, duration);
+                
+                audioDAW.previewSource = source;
+                
+                showNotification(`Previewing ${formatTime(duration)} of audio`, 'info');
+                
+                // Auto-stop preview
+                setTimeout(() => {
+                    if (audioDAW.previewSource === source) {
+                        audioDAW.previewSource = null;
+                    }
+                }, duration * 1000 + 100);
+                
+            } catch (error) {
+                console.error('Preview error:', error);
+                showNotification('Preview failed', 'error');
+            }
+        }
+
+        function applyTrackTiming(trackName) {
+            const track = audioDAW.tracks[trackName];
+            if (!track || !track.buffer) return;
+
+            const startTime = parseFloat(document.getElementById('trackStartTime').value) || 0;
+            const trimStart = parseFloat(document.getElementById('trackTrimStart').value) || 0;
+            const trimEnd = parseFloat(document.getElementById('trackTrimEnd').value) || track.buffer.duration;
+
+            // Validate values
+            if (trimStart >= trimEnd) {
+                showNotification('Trim start must be less than trim end', 'error');
+                return;
+            }
+
+            if (trimStart < 0 || trimEnd > track.buffer.duration) {
+                showNotification('Trim values must be within audio duration', 'error');
+                return;
+            }
+
+            // Apply timing settings
+            track.startTime = Math.max(0, startTime);
+            track.trimStart = trimStart;
+            track.trimEnd = trimEnd;
+            track.effectiveDuration = trimEnd - trimStart;
+
+            // Update UI
+            updateTrackUI(trackName, {
+                duration: track.effectiveDuration,
+                startTime: track.startTime,
+                name: `${trackName} (trimmed)`
+            });
+
+            // Redraw timeline
+            drawEnhancedTimeline();
+
+            closeModal();
+            showNotification(`${trackName} timing updated`, 'success');
+        }
+
+        function removeTrackAudio(trackName) {
+            if (confirm(`Remove audio from ${trackName} track?`)) {
+                // Clear track data
+                if (audioDAW.tracks[trackName]) {
+                    delete audioDAW.tracks[trackName];
+                }
+
+                // Clear UI
+                const trackElement = document.querySelector(`[data-track="${trackName}"]`);
+                if (trackElement) {
+                    const infoElement = trackElement.querySelector('.track-info');
+                    if (infoElement) {
+                        infoElement.innerHTML = '<small>Drop audio here</small>';
+                    }
+                }
+
+                // Redraw timeline
+                drawEnhancedTimeline();
+
+                closeModal();
+                showNotification(`${trackName} audio removed`, 'success');
+            }
+        }
+
+        function closeModal() {
+            const modal = document.querySelector('.modal-overlay');
+            if (modal) {
+                modal.remove();
+            }
+
+            // Stop any preview
+            if (audioDAW.previewSource) {
+                try {
+                    audioDAW.previewSource.stop();
+                } catch (e) {}
+                audioDAW.previewSource = null;
+            }
+        }
+        
+        // Timeline control functions
+        function seekToStart() {
+            audioDAW.currentTime = 0;
+            updateTimelinePosition();
+            drawEnhancedTimeline();
+            if (audioDAW.isPlaying) {
+                stopDAWAudio();
+                setTimeout(() => playDAWAudio(), 100);
+            }
+        }
+        
+        function zoomTimelineIn() {
+            audioDAW.zoomLevel = Math.min(audioDAW.zoomLevel * 1.5, 10);
+            document.getElementById('zoomLevel').textContent = `${Math.round(audioDAW.zoomLevel * 100)}%`;
+            drawEnhancedTimeline();
+        }
+        
+        function zoomTimelineOut() {
+            audioDAW.zoomLevel = Math.max(audioDAW.zoomLevel / 1.5, 0.1);
+            document.getElementById('zoomLevel').textContent = `${Math.round(audioDAW.zoomLevel * 100)}%`;
+            drawEnhancedTimeline();
+        }
+        
+        function fitToView() {
+            audioDAW.zoomLevel = 1;
+            document.getElementById('zoomLevel').textContent = '100%';
+            drawEnhancedTimeline();
+        }
+        
+        // Update timeline position display
+        function updateTimelinePosition() {
+            const currentTimeDisplay = document.getElementById('timelinePosition');
+            if (currentTimeDisplay) {
+                currentTimeDisplay.textContent = formatTime(audioDAW.currentTime);
+            }
+        }
+        
+        // Resize canvas maintaining aspect ratio
+        function resizeCanvas() {
+            const canvas = audioDAW.canvas;
+            if (!canvas) return;
+            
+            const rect = canvas.getBoundingClientRect();
+            const dpr = window.devicePixelRatio || 1;
+            
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+            canvas.style.width = rect.width + 'px';
+            canvas.style.height = rect.height + 'px';
+            
+            audioDAW.ctx.scale(dpr, dpr);
+            audioDAW.timelineWidth = rect.width;
         }
 
         // Draw waveform visualization

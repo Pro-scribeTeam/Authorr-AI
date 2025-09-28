@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Fixed Dialogue Scanning</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white p-8">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-3xl font-bold mb-8">Test Fixed Dialogue Scanning</h1>
+        
+        <div class="mb-6">
+            <h2 class="text-xl mb-4">Test Content:</h2>
+            <textarea id="testContent" class="w-full h-40 bg-gray-800 text-white p-4 rounded" placeholder="Enter test story content here...">
+Michael looked at his friend Jake and sighed. "I don't think this is going to work," he said nervously.
+
+"Come on, don't give up so easily," Jake replied with a grin. "We've come this far already."
+
+Sarah walked into the room and saw the two of them arguing. "What's all the commotion about?" she asked, crossing her arms.
+
+"Nothing important," Michael muttered, avoiding eye contact.
+
+Jake laughed. "He's just being dramatic as usual. We're planning something amazing!"
+
+"Well, whatever it is," Sarah said, "count me in. I love a good adventure."
+            </textarea>
+        </div>
+
+        <button id="testBtn" class="bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded text-white font-semibold mb-6">
+            Test Fixed Dialogue Scanning
+        </button>
+
+        <div id="results" class="bg-gray-800 p-6 rounded">
+            <h3 class="text-lg font-bold mb-4">Results:</h3>
+            <div id="output"></div>
+        </div>
+    </div>
+
+    <script>
+        // Enhanced isValidCharacterName function from the implementation
+        function isValidCharacterName(name) {
+            if (!name || typeof name !== 'string') return false;
+            
+            const cleaned = name.trim();
+            console.log(`🔍 Validating character name: "${cleaned}"`);
+            
+            // Reject if empty or too short/long
+            if (cleaned.length < 2 || cleaned.length > 25) {
+                console.log(`❌ Invalid length: ${cleaned.length} chars`);
+                return false;
+            }
+            
+            // Must start with capital letter and contain only letters/spaces/hyphens/apostrophes
+            if (!/^[A-Z][a-zA-Z\s\-']*$/.test(cleaned)) {
+                console.log(`❌ Invalid format: "${cleaned}"`);
+                return false;
+            }
+            
+            // Check each word individually
+            const words = cleaned.split(/\s+/);
+            for (const word of words) {
+                if (word.length < 1) continue;
+                
+                // Each word should start with capital
+                if (!/^[A-Z]/.test(word)) {
+                    console.log(`❌ Word doesn't start with capital: "${word}"`);
+                    return false;
+                }
+                
+                // Reject obvious dialogue words
+                const invalidWords = [
+                    'What', 'How', 'Why', 'When', 'Where', 'Who',
+                    'Come', 'Well', 'Sure', 'Only', 'The', 'And', 'But', 'Then', 'There', 'This', 'That',
+                    'Chapter', 'Said', 'Asked', 'Replied', 'Whispered', 'Shouted', 'Called',
+                    'He', 'She', 'They', 'It', 'His', 'Her', 'Their', 'Its',
+                    'Kind', 'All', 'Whatever', 'Was', 'Were', 'Been', 'Being'
+                ];
+                
+                if (invalidWords.includes(word)) {
+                    console.log(`❌ Contains invalid word: "${word}"`);
+                    return false;
+                }
+            }
+            
+            console.log(`✅ Valid character name: "${cleaned}"`);
+            return true;
+        }
+
+        // Test function with FIXED patterns
+        function testFixedDialogueScanning(content) {
+            console.log('🔍 Starting FIXED dialogue scanning test...');
+            console.log('📝 Content to analyze:', content.substring(0, 200) + '...');
+            
+            const dialoguePatterns = [
+                // Pattern 1: Character said/asked + dialogue - "Jake said, 'Hello world'"
+                /([A-Z][a-zA-Z\s\-']{1,24})\s+(?:said|asked|replied|whispered|shouted|called|exclaimed|muttered|declared|announced|continued|interrupted|added|noted|observed|remarked|stated|explained|suggested|wondered|insisted|argued|protested|complained|sighed|laughed|chuckled|grinned|smiled|frowned|nodded|shook\s+(?:his|her)\s+head|paused|hesitated|stammered|stuttered)\s*,?\s*["""]([^"""]{3,500}?)["""]/gi,
+                
+                // Pattern 2A: Dialogue + said Character - "'Hello world,' said Jake"
+                /["""]([^"""]{3,500}?)["""][,.\s]*(?:said|asked|replied|whispered|shouted|called|exclaimed|muttered|declared|announced|continued|interrupted|added|noted|observed|remarked|stated|explained|suggested|wondered|insisted|argued|protested|complained|sighed|laughed|chuckled|grinned|smiled|frowned|nodded|shook\s+(?:his|her)\s+head|paused|hesitated|stammered|stuttered)\s+([A-Z][a-zA-Z\s\-']{1,24})/gi,
+                
+                // Pattern 2B: Dialogue + Character said - "'Hello world,' Jake said"
+                /["""]([^"""]{3,500}?)["""][,.\s]*([A-Z][a-zA-Z\s\-']{1,24})\s+(?:said|asked|replied|whispered|shouted|called|exclaimed|muttered|declared|announced|continued|interrupted|added|noted|observed|remarked|stated|explained|suggested|wondered|insisted|argued|protested|complained|sighed|laughed|chuckled|grinned|smiled|frowned|nodded|shook\s+(?:his|her)\s+head|paused|hesitated|stammered|stuttered)/gi,
+                
+                // Pattern 3: Character colon dialogue - "Jake: 'Hello world'" or just "Jake: Hello world"
+                /^([A-Z][a-zA-Z\s\-']{1,24})\s*:\s*["""]?([^"""]{3,500}?)[""".]?$/gmi,
+                
+                // Pattern 4: Standalone dialogue with context analysis - "'Hello world'"
+                /["""]([^"""]{10,300}?)["""]/gi,
+                
+                // Pattern 5: Dialogue with action tags - "'Hello,' Jake said as he walked in"
+                /["""]([^"""]{3,500}?)["""],?\s*([A-Z][a-zA-Z\s\-']{1,24})\s+(?:said|asked|replied|whispered|shouted|called|exclaimed|muttered|declared|announced|continued|interrupted|added|noted|observed|remarked|stated|explained|suggested|wondered|insisted|argued|protested|complained|sighed|laughed|chuckled|grinned|smiled|frowned|nodded|shook\s+(?:his|her)\s+head|paused|hesitated|stammered|stuttered)\s+(?:as|while|when|before|after)/gi
+            ];
+
+            let allMatches = [];
+            
+            // Process each pattern with enhanced extraction logic
+            for (let patternIndex = 0; patternIndex < dialoguePatterns.length; patternIndex++) {
+                const pattern = dialoguePatterns[patternIndex];
+                let match;
+                let patternMatches = 0;
+                
+                // Reset regex lastIndex to ensure proper scanning
+                pattern.lastIndex = 0;
+                
+                while ((match = pattern.exec(content)) !== null) {
+                    patternMatches++;
+                    
+                    let character = null;
+                    let dialogue = null;
+                    
+                    console.log(`🔍 Pattern ${patternIndex + 1} Match ${patternMatches}:`, match[0].substring(0, 60) + '...');
+                    console.log('📥 Raw match groups:', match.slice(1, 3));
+                    
+                    // Extract character and dialogue based on pattern type
+                    switch (patternIndex) {
+                        case 0: // Pattern 1: Character first, then dialogue
+                            character = match[1]?.trim();
+                            dialogue = match[2]?.trim();
+                            console.log(`📝 P1 extracted - Char: "${character}", Dialogue: "${dialogue?.substring(0, 30)}..."`);
+                            break;
+                            
+                        case 1: // Pattern 2A: Dialogue first, then said character
+                            dialogue = match[1]?.trim();
+                            character = match[2]?.trim();
+                            console.log(`📝 P2A extracted - Dialogue: "${dialogue?.substring(0, 30)}...", Char: "${character}"`);
+                            break;
+                            
+                        case 2: // Pattern 2B: Dialogue first, then character said
+                            dialogue = match[1]?.trim();
+                            character = match[2]?.trim();
+                            console.log(`📝 P2B extracted - Dialogue: "${dialogue?.substring(0, 30)}...", Char: "${character}"`);
+                            break;
+                            
+                        case 3: // Pattern 3: Character colon format
+                            character = match[1]?.trim();
+                            dialogue = match[2]?.trim();
+                            console.log(`📝 P3 extracted - Char: "${character}", Dialogue: "${dialogue?.substring(0, 30)}..."`);
+                            break;
+                            
+                        case 4: // Pattern 4: Standalone dialogue
+                            dialogue = match[1]?.trim();
+                            character = 'Unknown Speaker';
+                            console.log(`📝 P4 extracted - Dialogue: "${dialogue?.substring(0, 30)}...", Char: "${character}"`);
+                            break;
+                            
+                        case 5: // Pattern 5: Dialogue with action tags
+                            dialogue = match[1]?.trim();
+                            character = match[2]?.trim();
+                            console.log(`📝 P5 extracted - Dialogue: "${dialogue?.substring(0, 30)}...", Char: "${character}"`);
+                            break;
+                    }
+                    
+                    // Validate extracted data
+                    if (dialogue && dialogue.length >= 3) {
+                        if (character && isValidCharacterName(character)) {
+                            console.log(`✅ Valid match - "${character}": "${dialogue.substring(0, 30)}..."`);
+                            
+                            allMatches.push({
+                                character: character,
+                                dialogue: dialogue,
+                                patternIndex: patternIndex + 1,
+                                valid: true
+                            });
+                        } else if (!character || character === 'Unknown Speaker') {
+                            allMatches.push({
+                                character: 'Unknown Speaker',
+                                dialogue: dialogue,
+                                patternIndex: patternIndex + 1,
+                                valid: false
+                            });
+                        }
+                    }
+                    
+                    // Prevent infinite loops
+                    if (pattern.lastIndex === match.index) {
+                        pattern.lastIndex++;
+                    }
+                }
+                console.log(`📊 Pattern ${patternIndex + 1} found ${patternMatches} matches`);
+            }
+            
+            return allMatches;
+        }
+
+        document.getElementById('testBtn').addEventListener('click', function() {
+            console.log('🧪 Starting FIXED dialogue scanning test...');
+            const content = document.getElementById('testContent').value;
+            const results = testFixedDialogueScanning(content);
+            
+            const outputDiv = document.getElementById('output');
+            
+            // Group results by character
+            const characters = new Set();
+            const validMatches = results.filter(r => r.valid);
+            
+            validMatches.forEach(match => {
+                characters.add(match.character);
+            });
+            
+            let html = `
+                <div class="mb-4">
+                    <h4 class="font-bold text-green-400">✅ FIXED Test Results:</h4>
+                    <p>Total matches: ${results.length}</p>
+                    <p>Valid characters found: ${characters.size}</p>
+                    <p>Characters: ${Array.from(characters).join(', ')}</p>
+                </div>
+                
+                <div class="mb-4">
+                    <h4 class="font-bold">📊 Detailed Results:</h4>
+                    <div class="space-y-2">
+            `;
+            
+            results.forEach((result, index) => {
+                const validIcon = result.valid ? '✅' : '❌';
+                const validClass = result.valid ? 'text-green-400' : 'text-red-400';
+                html += `
+                    <div class="bg-gray-700 p-3 rounded">
+                        <div class="${validClass}">${validIcon} Pattern ${result.patternIndex}: "${result.character}"</div>
+                        <div class="text-gray-300 text-sm ml-6">"${result.dialogue}"</div>
+                    </div>
+                `;
+            });
+            
+            html += '</div></div>';
+            
+            outputDiv.innerHTML = html;
+            
+            console.log('🎯 FIXED Test completed!', {
+                totalMatches: results.length,
+                validCharacters: characters.size,
+                characters: Array.from(characters)
+            });
+        });
+
+        // Auto-run test on page load
+        window.addEventListener('load', function() {
+            console.log('📄 Page loaded, running FIXED auto-test...');
+            setTimeout(() => {
+                document.getElementById('testBtn').click();
+            }, 1000);
+        });
+    </script>
+</body>
+</html>
