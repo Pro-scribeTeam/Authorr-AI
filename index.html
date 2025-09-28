@@ -8328,8 +8328,42 @@ Format as clean, readable text ready for narration.`;
             `;
         }
 
+        // Setup timeline canvas with proper context
+        function setupTimelineCanvas() {
+            const canvas = document.getElementById('audioTimeline');
+            if (!canvas) {
+                console.error('❌ Canvas not found');
+                return;
+            }
+            
+            // Get 2D context
+            const ctx = canvas.getContext('2d');
+            if (!ctx) {
+                console.error('❌ Failed to get canvas context');
+                return;
+            }
+            
+            // Store references
+            audioDAW.canvas = canvas;
+            audioDAW.ctx = ctx;
+            
+            // Setup canvas dimensions
+            resizeCanvas();
+            
+            // Initial timeline drawing
+            drawEnhancedTimeline();
+            
+            console.log('✅ Timeline canvas setup complete');
+        }
+
         // Initialize the Enhanced Audio DAW
         function initializeAudioDAW() {
+            // Prevent double initialization
+            if (audioDAW.initialized) {
+                console.log('⚠️ DAW already initialized, skipping...');
+                return;
+            }
+            
             console.log('🎚️ Initializing Enhanced Audio DAW...');
             
             // Initialize Web Audio Context with higher sample rate for quality
@@ -8447,8 +8481,8 @@ Format as clean, readable text ready for narration.`;
             // Auto-load multi-part narration if available
             loadMultiPartNarration();
             
-            // Initialize timeline
-            drawEnhancedTimeline();
+            // Initialize canvas and timeline
+            setupTimelineCanvas();
             
             // Initialize enhanced interactions
             initializeEnhancedInteractions();
@@ -8463,6 +8497,10 @@ Format as clean, readable text ready for narration.`;
             updateTimelinePosition();
             
             document.getElementById('dawStatus').textContent = 'Enhanced DAW Ready - Drag audio to tracks';
+            
+            // Mark as initialized to prevent double initialization
+            audioDAW.initialized = true;
+            
             console.log('✅ Enhanced Audio DAW initialized successfully');
         }
 
@@ -8826,73 +8864,93 @@ Format as clean, readable text ready for narration.`;
 
         // Enhanced pause with position preservation
         function pauseDAWAudio() {
-            if (!audioDAW.isPlaying) return;
+            console.log('⏸️ Pausing DAW audio...');
             
-            // Calculate current playback position
-            if (audioDAW.playbackStartTime) {
-                const elapsedTime = audioDAW.context.currentTime - audioDAW.playbackStartTime;
-                audioDAW.currentTime = Math.min(elapsedTime, audioDAW.totalDuration || 0);
+            if (!audioDAW.isPlaying) {
+                console.log('⚠️ DAW not playing, pause ignored');
+                return;
             }
             
-            // Stop all sources
-            stopAllAudioSources();
-            
-            audioDAW.isPlaying = false;
-            
-            const playBtn = document.getElementById('dawPlayBtn');
-            if (playBtn) {
-                playBtn.innerHTML = '<i class="fas fa-play"></i> Play';
-                playBtn.onclick = playDAWAudio;
-            }
-            
-            // Update timeline position
-            updateTimelinePosition();
-            drawEnhancedTimeline();
-            
-            document.getElementById('dawStatus').textContent = `Paused at ${formatTime(audioDAW.currentTime)}`;
-            
-            // Cancel animation
-            if (audioDAW.animationId) {
-                cancelAnimationFrame(audioDAW.animationId);
-                audioDAW.animationId = null;
+            try {
+                // Calculate current playback position
+                if (audioDAW.playbackStartTime) {
+                    const elapsedTime = audioDAW.context.currentTime - audioDAW.playbackStartTime;
+                    audioDAW.currentTime = Math.max(0, Math.min(elapsedTime, audioDAW.totalDuration || 0));
+                }
+                
+                // Stop all sources
+                stopAllAudioSources();
+                
+                audioDAW.isPlaying = false;
+                
+                const playBtn = document.getElementById('dawPlayBtn');
+                if (playBtn) {
+                    playBtn.innerHTML = '<i class="fas fa-play"></i> Play';
+                    playBtn.onclick = playDAWAudio;
+                }
+                
+                // Update timeline position
+                updateTimelinePosition();
+                drawEnhancedTimeline();
+                
+                const status = document.getElementById('dawStatus');
+                if (status) {
+                    status.textContent = `Paused at ${formatTime(audioDAW.currentTime)}`;
+                }
+                
+                // Cancel animation
+                if (audioDAW.animationId) {
+                    cancelAnimationFrame(audioDAW.animationId);
+                    audioDAW.animationId = null;
+                }
+                
+                console.log('✅ DAW paused successfully');
+                
+            } catch (error) {
+                console.error('❌ Error pausing DAW:', error);
+                showNotification('Error pausing playback', 'error');
             }
         }
 
         // Enhanced stop function
         function stopDAWAudio() {
-            audioDAW.isPlaying = false;
-            audioDAW.currentTime = 0;
-            audioDAW.playbackStartTime = 0;
+            console.log('⏹️ Stopping DAW audio...');
             
-            // Stop all audio sources
-            stopAllAudioSources();
-            
-            // Stop all sources
-            Object.keys(audioDAW.tracks).forEach(trackName => {
-                const track = audioDAW.tracks[trackName];
-                if (track.source) {
-                    try {
-                        track.source.stop();
-                    } catch (e) {}
-                    track.source = null;
+            try {
+                audioDAW.isPlaying = false;
+                audioDAW.currentTime = 0;
+                audioDAW.playbackStartTime = 0;
+                
+                // Stop all audio sources
+                stopAllAudioSources();
+                
+                const playBtn = document.getElementById('dawPlayBtn');
+                if (playBtn) {
+                    playBtn.innerHTML = '<i class="fas fa-play"></i> Play';
+                    playBtn.onclick = playDAWAudio;
                 }
-            });
-            
-            const playBtn = document.getElementById('dawPlayBtn');
-            if (playBtn) {
-                playBtn.innerHTML = '<i class="fas fa-play"></i> Play';
-                playBtn.onclick = playDAWAudio;
+                
+                const status = document.getElementById('dawStatus');
+                if (status) {
+                    status.textContent = 'Stopped';
+                }
+                
+                // Cancel animation
+                if (audioDAW.animationId) {
+                    cancelAnimationFrame(audioDAW.animationId);
+                    audioDAW.animationId = null;
+                }
+                
+                // Update timeline position
+                updateTimelinePosition();
+                drawEnhancedTimeline();
+                
+                console.log('✅ DAW stopped successfully');
+                
+            } catch (error) {
+                console.error('❌ Error stopping DAW:', error);
+                showNotification('Error stopping playback', 'error');
             }
-            
-            document.getElementById('dawStatus').textContent = 'Stopped';
-            
-            // Cancel animation
-            if (audioDAW.animationId) {
-                cancelAnimationFrame(audioDAW.animationId);
-                audioDAW.animationId = null;
-            }
-            
-            drawEnhancedTimeline();
         }
 
         // Stop all audio sources helper function
@@ -8950,8 +9008,9 @@ Format as clean, readable text ready for narration.`;
         // Update current playback time
         function updateCurrentTime() {
             if (audioDAW.isPlaying && audioDAW.playbackStartTime > 0) {
-                const elapsed = (audioDAW.context.currentTime - audioDAW.playbackStartTime) / 1000;
-                audioDAW.currentTime = elapsed;
+                // AudioContext.currentTime is already in seconds, no need to divide by 1000
+                const elapsed = audioDAW.context.currentTime - audioDAW.playbackStartTime;
+                audioDAW.currentTime = Math.max(0, elapsed);
                 
                 // Update status display
                 const status = document.getElementById('dawStatus');
@@ -8959,6 +9018,12 @@ Format as clean, readable text ready for narration.`;
                     const totalDuration = getMaxTrackDuration();
                     status.textContent = `Playing: ${formatTime(audioDAW.currentTime)} / ${formatTime(totalDuration)}`;
                 }
+                
+                // Update timeline position display
+                updateTimelinePosition();
+                
+                // Debug logging for timeline sync
+                console.log(`⏰ Timeline sync: ${formatTime(audioDAW.currentTime)} / ${formatTime(totalDuration)}`);
             }
         }
 
@@ -9279,6 +9344,16 @@ Format as clean, readable text ready for narration.`;
 
         function handleAudioDragStart(event) {
             const audioSrc = event.target.src || event.target.currentSrc;
+            
+            // Validate audio source before allowing drag
+            if (!audioSrc || (!audioSrc.startsWith('http') && !audioSrc.startsWith('blob') && !audioSrc.startsWith('data'))) {
+                console.warn('⚠️ Invalid audio source for drag:', audioSrc);
+                event.preventDefault();
+                return;
+            }
+            
+            console.log('🎵 Starting audio drag:', audioSrc);
+            
             event.dataTransfer.setData('text/plain', audioSrc);
             event.dataTransfer.setData('audio/src', audioSrc);
             
@@ -9329,17 +9404,62 @@ Format as clean, readable text ready for narration.`;
         // Load audio file to specific track at specific time
         async function loadAudioToTrack(audioSrc, trackName, startTime = 0) {
             try {
-                showLoading(`Loading audio to ${trackName} track...`);
-                
-                const response = await fetch(audioSrc);
-                const audioData = await response.arrayBuffer();
-                const audioBuffer = await audioDAW.context.decodeAudioData(audioData);
-                
-                // Store in track
-                if (!audioDAW.tracks[trackName]) {
-                    audioDAW.tracks[trackName] = {};
+                // Validate inputs
+                if (!audioSrc || !trackName) {
+                    throw new Error('Invalid audio source or track name');
                 }
                 
+                // Validate URL format
+                if (!audioSrc.startsWith('http://') && !audioSrc.startsWith('https://') && !audioSrc.startsWith('blob:') && !audioSrc.startsWith('data:')) {
+                    throw new Error('Invalid audio URL format');
+                }
+                
+                console.log(`🎵 Loading audio to ${trackName}:`, audioSrc);
+                showLoading(`Loading audio to ${trackName} track...`);
+                
+                // Fetch and validate response
+                const response = await fetch(audioSrc);
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch audio: ${response.status} ${response.statusText}`);
+                }
+                
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.startsWith('audio/')) {
+                    console.warn('⚠️ Content type is not audio:', contentType);
+                }
+                
+                const audioData = await response.arrayBuffer();
+                
+                if (audioData.byteLength === 0) {
+                    throw new Error('Audio file is empty');
+                }
+                
+                console.log(`📦 Audio data loaded: ${audioData.byteLength} bytes`);
+                
+                // Decode audio with error handling
+                const audioBuffer = await audioDAW.context.decodeAudioData(audioData.slice());
+                
+                // Validate decoded audio
+                if (!audioBuffer || audioBuffer.duration === 0) {
+                    throw new Error('Invalid or corrupted audio data');
+                }
+                
+                console.log(`🎵 Audio decoded: ${formatTime(audioBuffer.duration)}, channels: ${audioBuffer.numberOfChannels}`);
+                
+                // Initialize track if needed
+                if (!audioDAW.tracks[trackName]) {
+                    audioDAW.tracks[trackName] = {
+                        buffer: null,
+                        source: null,
+                        gainNode: audioDAW.context.createGain(),
+                        volume: 0.7,
+                        muted: false,
+                        type: trackName.startsWith('music') ? 'music' : 'sfx'
+                    };
+                    audioDAW.tracks[trackName].gainNode.connect(audioDAW.masterGain);
+                }
+                
+                // Store in track
                 audioDAW.tracks[trackName].buffer = audioBuffer;
                 audioDAW.tracks[trackName].startTime = startTime;
                 audioDAW.tracks[trackName].duration = audioBuffer.duration;
@@ -9348,19 +9468,19 @@ Format as clean, readable text ready for narration.`;
                 updateTrackUI(trackName, {
                     duration: audioBuffer.duration,
                     startTime: startTime,
-                    name: audioSrc.split('/').pop()
+                    name: audioSrc.split('/').pop() || `${trackName}_audio`
                 });
                 
                 // Redraw timeline
                 drawEnhancedTimeline();
                 
                 hideLoading();
-                showNotification(`Audio loaded to ${trackName} track at ${formatTime(startTime)}`, 'success');
+                showNotification(`✅ Audio loaded to ${trackName} track (${formatTime(audioBuffer.duration)})`, 'success');
                 
             } catch (error) {
-                console.error(`Error loading audio to ${trackName}:`, error);
+                console.error(`❌ Error loading audio to ${trackName}:`, error);
                 hideLoading();
-                showNotification(`Failed to load audio to ${trackName} track`, 'error');
+                showNotification(`Failed to load audio to ${trackName}: ${error.message}`, 'error');
             }
         }
 
