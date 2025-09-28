@@ -2141,6 +2141,11 @@
         }
         
         async function generateAllChapters() {
+            console.log('📚 Generating ALL chapter content - clearing old dialogue data...');
+            
+            // Clear dialogue data when generating new story content
+            clearAllDialogueData(true);
+            
             if (!storyData.chapters || storyData.chapters.length === 0) {
                 showNotification('Please generate a chapter plan first.', 'error');
                 return;
@@ -3731,6 +3736,11 @@ Return the COMPLETE text with DRAMATICALLY humanized writing that's obviously di
         }
 
         function applyTextChanges(newText, modal) {
+            console.log('✏️ Applying text changes - clearing dialogue data due to content modification...');
+            
+            // Clear dialogue data when text content is manually changed
+            clearAllDialogueData(true);
+            
             const editor = document.getElementById('storyEditor');
             if (!editor) {
                 showNotification('No text editor found to apply changes', 'error');
@@ -5073,6 +5083,11 @@ JSON Structure:
 
         // Enhanced Chapter Content Generation
         async function generateChapterContent(chapterNumber) {
+            console.log(`📝 Generating new chapter ${chapterNumber} content - clearing old dialogue data...`);
+            
+            // Clear dialogue data when generating new content
+            clearAllDialogueData(true);
+            
             const apiKey = getOpenAIApiKey();
             if (!apiKey) {
                 showNotification('Please configure your OpenAI API key first', 'error');
@@ -5853,6 +5868,50 @@ Format as clean, readable text ready for narration.`;
                    !/^[A-Z][a-zA-Z\s]*$/.test(character);
         }
         
+        // Helper function to completely clear all dialogue data and UI
+        function clearAllDialogueData(force = false) {
+            console.log('🧹 CLEARING ALL DIALOGUE DATA' + (force ? ' (FORCED)' : ''));
+            
+            // Clear data objects
+            dialogueData.characters = [];
+            dialogueData.dialogueSections = [];
+            dialogueData.voiceAssignments = {};
+            
+            // Clear UI elements
+            const dialogueAssignments = document.getElementById('dialogueAssignments');
+            const dialoguePreview = document.getElementById('dialoguePreview');
+            const characterVoiceList = document.getElementById('characterVoiceList');
+            const dialogueList = document.getElementById('dialogueList');
+            const multiVoiceResults = document.getElementById('multiVoiceResults');
+            
+            [dialogueAssignments, dialoguePreview].forEach(element => {
+                if (element) {
+                    element.classList.add('hidden');
+                    element.style.display = 'none';
+                }
+            });
+            
+            [characterVoiceList, dialogueList, multiVoiceResults].forEach(element => {
+                if (element) {
+                    element.innerHTML = '';
+                    element.textContent = '';
+                    while (element.firstChild) {
+                        element.removeChild(element.firstChild);
+                    }
+                }
+            });
+            
+            // Remove any voice selection dropdowns
+            const voiceSelects = document.querySelectorAll('select[id^="voice-"]');
+            voiceSelects.forEach(select => select.remove());
+            
+            // Remove any dialogue audio elements
+            const audioElements = document.querySelectorAll('audio[data-dialogue]');
+            audioElements.forEach(audio => audio.remove());
+            
+            console.log('✅ ALL DIALOGUE DATA CLEARED');
+        }
+
         // Helper function to check if quoted text is actual dialogue vs narrative description
         function isActualDialogue(text) {
             const lower = text.toLowerCase();
@@ -5907,7 +5966,10 @@ Format as clean, readable text ready for narration.`;
         async function scanForDialogue() {
             console.log('🔍 Starting enhanced dialogue scanning...');
             
-            // Validate content first
+            // STEP 1: Use the dedicated clearing function for thorough cleanup
+            clearAllDialogueData(true);
+            
+            // STEP 4: Validate content AFTER clearing
             let content = getFullStoryContent();
             if (!content || content.trim().length === 0) {
                 console.log('❌ No content to scan for dialogue');
@@ -5917,22 +5979,7 @@ Format as clean, readable text ready for narration.`;
             
             console.log(`📝 Content validation: ${content.length} characters available`);
             console.log('📖 Content preview:', content.substring(0, 200) + '...');
-            
-            // FORCE CLEAR all cached dialogue data before scanning
-            dialogueData.characters = [];
-            dialogueData.dialogueSections = [];
-            dialogueData.voiceAssignments = {};
-            
-            // Hide and clear any existing results immediately
-            const dialogueAssignments = document.getElementById('dialogueAssignments');
-            const dialoguePreview = document.getElementById('dialoguePreview');
-            const characterVoiceList = document.getElementById('characterVoiceList');
-            const dialogueList = document.getElementById('dialogueList');
-            
-            if (dialogueAssignments) dialogueAssignments.classList.add('hidden');
-            if (dialoguePreview) dialoguePreview.classList.add('hidden');
-            if (characterVoiceList) characterVoiceList.innerHTML = '';
-            if (dialogueList) dialogueList.innerHTML = '';
+            console.log('🔄 Starting fresh dialogue scan with clean slate...');
             
             // Check if current content has dialogue - if not, use sample content for testing
             const hasDialogue = content.includes('"') || content.includes('"') || content.includes('"');
@@ -6176,9 +6223,17 @@ The room fell silent as everyone waited for Tom's response.
                     });
                 }
                 
-                // Store results
+                // FINAL CLEAR before storing new results
+                console.log('🧹 Final clearing before storing new results...');
+                dialogueData.characters = [];
+                dialogueData.dialogueSections = [];
+                dialogueData.voiceAssignments = {};
+                
+                // Store NEW results only
                 dialogueData.characters = Array.from(characters);
                 dialogueData.dialogueSections = dialogueSections;
+                
+                console.log('✅ NEW DATA STORED - Previous data completely replaced');
                 
                 console.log('=== ENHANCED SCAN RESULTS ===');
                 console.log(`👥 Characters found: ${dialogueData.characters.length}`, dialogueData.characters);
@@ -6448,20 +6503,52 @@ The room fell silent as everyone waited for Tom's response.
         }
 
         function displayDialogueResults() {
+            console.log('🎭 DISPLAYING DIALOGUE RESULTS - Starting fresh display...');
+            console.log('📊 Data to display:', {
+                characters: dialogueData.characters.length,
+                dialogueSections: dialogueData.dialogueSections.length,
+                characterList: dialogueData.characters
+            });
+            
             const dialogueAssignments = document.getElementById('dialogueAssignments');
             const dialoguePreview = document.getElementById('dialoguePreview');
             const characterVoiceList = document.getElementById('characterVoiceList');
             const dialogueList = document.getElementById('dialogueList');
 
-            // Show the sections
-            dialogueAssignments.classList.remove('hidden');
-            dialoguePreview.classList.remove('hidden');
-
-            // FORCE clear ALL previous results
-            characterVoiceList.innerHTML = '';
-            dialogueList.innerHTML = '';
+            // AGGRESSIVE CLEARING of ALL previous UI content
+            if (characterVoiceList) {
+                characterVoiceList.innerHTML = '';
+                characterVoiceList.textContent = '';
+                // Remove all child nodes
+                while (characterVoiceList.firstChild) {
+                    characterVoiceList.removeChild(characterVoiceList.firstChild);
+                }
+            }
             
-            console.log('Cleared characterVoiceList and dialogueList DOM elements');
+            if (dialogueList) {
+                dialogueList.innerHTML = '';
+                dialogueList.textContent = '';
+                // Remove all child nodes  
+                while (dialogueList.firstChild) {
+                    dialogueList.removeChild(dialogueList.firstChild);
+                }
+            }
+            
+            // Clear any remaining voice select elements
+            const oldVoiceSelects = document.querySelectorAll('select[id^="voice-"]');
+            oldVoiceSelects.forEach(select => select.remove());
+            
+            console.log('✅ UI COMPLETELY CLEARED - Ready for fresh content');
+
+            // Show the sections AFTER clearing
+            if (dialogueAssignments) {
+                dialogueAssignments.classList.remove('hidden');
+                dialogueAssignments.style.display = '';
+            }
+            if (dialoguePreview) {
+                dialoguePreview.classList.remove('hidden');
+                dialoguePreview.style.display = '';
+            }
 
             // Populate character voice assignments
             dialogueData.characters.forEach((character, index) => {
