@@ -4303,6 +4303,41 @@ Return the COMPLETE text with DRAMATICALLY humanized writing that's obviously di
             return editor ? editor.value : '';
         }
         
+        // NEW: Ensure we always get the FULL content, never truncated previews
+        function getFullStoryContent() {
+            // Priority order: chapters > current content > editor
+            let content = '';
+            
+            // Try chapters first (most complete)
+            if (storyData.chapters && storyData.chapters.length > 0) {
+                content = getAllChaptersText();
+                if (content && content.trim().length > 0) {
+                    console.log('✅ Using chapters content:', content.length, 'characters');
+                    return content;
+                }
+            }
+            
+            // Try current content (but check it's not truncated)
+            if (storyData.currentContent && !storyData.currentContent.includes('[Content truncated')) {
+                content = storyData.currentContent;
+                if (content && content.trim().length > 0) {
+                    console.log('✅ Using currentContent:', content.length, 'characters');
+                    return content;
+                }
+            }
+            
+            // Fallback to editor
+            const editor = document.getElementById('storyEditor');
+            content = editor ? editor.value : '';
+            if (content && content.trim().length > 0) {
+                console.log('✅ Using storyEditor content:', content.length, 'characters');
+                return content;
+            }
+            
+            console.log('❌ No content found in any source');
+            return '';
+        }
+        
         function getTextWithinLimits(text, maxTokens = 15000) {
             // Rough estimation: 1 token ≈ 4 characters for English text
             const maxChars = maxTokens * 4;
@@ -5592,9 +5627,14 @@ Format as clean, readable text ready for narration.`;
             `;
             previewToggle.classList.remove('hidden');
             
-            // Store the content for dialogue scanning (use getAllChaptersText for consistency)
+            // Store the FULL content for dialogue scanning and narration (never truncated)
             const previousContent = storyData.currentContent;
             storyData.currentContent = content;
+            
+            console.log('💾 STORING FULL CONTENT:');
+            console.log('- Previous content length:', (previousContent || '').length);
+            console.log('- New full content length:', content.length);
+            console.log('- Content stored in storyData.currentContent');
             
             // Also update combined content if we have chapters
             if (storyData.chapters && storyData.chapters.length > 0) {
@@ -5830,8 +5870,8 @@ Format as clean, readable text ready for narration.`;
             if (characterVoiceList) characterVoiceList.innerHTML = '';
             if (dialogueList) dialogueList.innerHTML = '';
             
-            // Get content from all chapters (force refresh)
-            let content = getAllChaptersText();
+            // Get FULL content - never truncated
+            let content = getFullStoryContent();
             
             // Check if current content has dialogue - if not, use sample content for testing
             const hasDialogue = content.includes('"') || content.includes('"') || content.includes('"');
@@ -6638,10 +6678,14 @@ The room fell silent as everyone waited for Tom's response.
             showLoading('Generating multi-voice narration...');
             
             try {
-                const content = storyData.currentContent || document.getElementById('storyEditor')?.value || '';
+                // ENSURE FULL CONTENT - use the dedicated function that guarantees full content
+                let content = getFullStoryContent();
+                
                 if (!content.trim()) {
                     throw new Error('No story content to narrate');
                 }
+                
+                console.log('🎙️ MULTI-VOICE GENERATION - Using FULL content:', content.length, 'characters');
 
                 // Store the plan for actual narration generation
                 storyData.voiceAssignments = assignments;
