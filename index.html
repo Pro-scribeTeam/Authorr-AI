@@ -5763,32 +5763,83 @@ Format as clean, readable text ready for narration.`;
             if (!name || typeof name !== 'string') return false;
             
             const cleaned = name.trim();
+            console.log(`🔍 Validating character name: "${cleaned}"`);
             
-            // Reject if empty or too short
-            if (cleaned.length < 2 || cleaned.length > 30) return false;
-            
-            // Reject dialogue patterns that were incorrectly captured as names
-            const dialogueIndicators = [
-                'What kind of', 'Come on', 'What\'s all', 'Well, whatever', 
-                'Who was', 'The kind that', 'Sure it is', 'Only Tom\'s',
-                'he said', 'she said', 'asked Jake', 'replied with'
-            ];
-            
-            if (dialogueIndicators.some(indicator => 
-                cleaned.toLowerCase().includes(indicator.toLowerCase()))) {
+            // Reject if empty or too short/long
+            if (cleaned.length < 2 || cleaned.length > 25) {
+                console.log(`❌ Invalid length: ${cleaned.length} chars`);
                 return false;
             }
             
-            // Reject if contains punctuation that indicates dialogue
-            if (/[.!?,;:'"]+/.test(cleaned)) return false;
+            // Must start with capital letter and contain only letters/spaces/hyphens/apostrophes
+            if (!/^[A-Z][a-zA-Z\s\-']*$/.test(cleaned)) {
+                console.log(`❌ Invalid format: "${cleaned}"`);
+                return false;
+            }
             
-            // Must start with capital letter and contain only letters/spaces
-            if (!/^[A-Z][a-zA-Z\s]*$/.test(cleaned)) return false;
+            // Check each word individually
+            const words = cleaned.split(/\s+/);
+            for (const word of words) {
+                if (word.length < 1) continue;
+                
+                // Each word should start with capital
+                if (!/^[A-Z]/.test(word)) {
+                    console.log(`❌ Word doesn't start with capital: "${word}"`);
+                    return false;
+                }
+                
+                // Reject obvious dialogue words
+                const invalidWords = [
+                    'What', 'How', 'Why', 'When', 'Where', 'Who',
+                    'Come', 'Well', 'Sure', 'Only', 'The', 'And', 'But', 'Then', 'There', 'This', 'That',
+                    'Chapter', 'Said', 'Asked', 'Replied', 'Whispered', 'Shouted', 'Called',
+                    'He', 'She', 'They', 'It', 'His', 'Her', 'Their', 'Its',
+                    'Kind', 'All', 'Whatever', 'Was', 'Were', 'Been', 'Being'
+                ];
+                
+                if (invalidWords.includes(word)) {
+                    console.log(`❌ Contains invalid word: "${word}"`);
+                    return false;
+                }
+            }
             
-            // Reject common narrative words
-            const narrativeWords = ['Chapter', 'The', 'And', 'But', 'Then', 'There', 'This', 'That'];
-            if (narrativeWords.includes(cleaned)) return false;
+            // Enhanced dialogue pattern rejection
+            const dialogueIndicators = [
+                'what kind of', 'come on', 'what\'s all', 'well whatever', 'well then',
+                'who was', 'the kind that', 'sure it is', 'only tom\'s', 'only he',
+                'he said', 'she said', 'asked jake', 'replied with', 'whispered to',
+                'but then', 'and then', 'this is', 'that was', 'there is', 'there was',
+                'how do', 'why did', 'when will', 'where are', 'who is'
+            ];
             
+            const lowerName = cleaned.toLowerCase();
+            for (const indicator of dialogueIndicators) {
+                if (lowerName.includes(indicator)) {
+                    console.log(`❌ Contains dialogue indicator: "${indicator}"`);
+                    return false;
+                }
+            }
+            
+            // Reject if contains punctuation that indicates dialogue/narrative
+            if (/[.!?,;:'"\"]+/.test(cleaned)) {
+                console.log(`❌ Contains dialogue punctuation`);
+                return false;
+            }
+            
+            // Reject sentence starters and questions
+            const sentenceStarters = [
+                /^what\s/i, /^how\s/i, /^why\s/i, /^when\s/i, /^where\s/i, /^who\s/i,
+                /^the\s/i, /^and\s/i, /^but\s/i, /^then\s/i, /^there\s/i, /^this\s/i, /^that\s/i
+            ];
+            
+            for (const starter of sentenceStarters) {
+                if (starter.test(cleaned)) {
+                    console.log(`❌ Starts like sentence: "${cleaned}"`);
+                    return false;
+                }
+            }
+            
+            console.log(`✅ Valid character name: "${cleaned}"`);
             return true;
         }
 
@@ -5854,6 +5905,19 @@ Format as clean, readable text ready for narration.`;
         }
 
         async function scanForDialogue() {
+            console.log('🔍 Starting enhanced dialogue scanning...');
+            
+            // Validate content first
+            let content = getFullStoryContent();
+            if (!content || content.trim().length === 0) {
+                console.log('❌ No content to scan for dialogue');
+                showNotification('No story content available to scan for dialogue.', 'error');
+                return;
+            }
+            
+            console.log(`📝 Content validation: ${content.length} characters available`);
+            console.log('📖 Content preview:', content.substring(0, 200) + '...');
+            
             // FORCE CLEAR all cached dialogue data before scanning
             dialogueData.characters = [];
             dialogueData.dialogueSections = [];
@@ -5870,13 +5934,10 @@ Format as clean, readable text ready for narration.`;
             if (characterVoiceList) characterVoiceList.innerHTML = '';
             if (dialogueList) dialogueList.innerHTML = '';
             
-            // Get FULL content - never truncated
-            let content = getFullStoryContent();
-            
             // Check if current content has dialogue - if not, use sample content for testing
             const hasDialogue = content.includes('"') || content.includes('"') || content.includes('"');
             
-            if (!content.trim() || !hasDialogue) {
+            if (!hasDialogue) {
                 // Add sample content for testing dialogue patterns
                 content = `
 === Sample Story for Testing ===
@@ -5921,18 +5982,12 @@ Ethan joined the group, looking concerned. "Did I miss something important again
 
 The room fell silent as everyone waited for Tom's response.
 `;
-                console.log('Using sample content for dialogue testing');
-                if (!content.trim()) {
-                    showNotification('No story content found. Using sample content to test dialogue patterns.', 'info');
-                } else {
-                    showNotification('Current story has no dialogue. Using sample content to test dialogue patterns.', 'info');
-                }
+                console.log('📚 Using sample content for dialogue testing');
+                showNotification('Current story has no dialogue. Using sample content to test dialogue patterns.', 'info');
             }
             
-            console.log('=== ROBUST DIALOGUE SCANNER WITH SUPABASE ===');
-            console.log('Content length:', content.length, 'characters');
-            console.log('Content preview:', content.substring(0, 500));
-            console.log('🔍 FULL CONTENT will be scanned - no truncation for dialogue patterns');
+            console.log('=== ENHANCED DIALOGUE SCANNER v2.0 ===');
+            console.log(`📊 Scanning ${content.length} characters with 5 enhanced patterns...`);
             
             const chapterInfo = hasMultipleChapters() ? 
                 `Scanning ${storyData.chapters.length} chapters for dialogue and characters...` :
@@ -5941,261 +5996,191 @@ The room fell silent as everyone waited for Tom's response.
             showLoading(chapterInfo);
             
             try {
-                // Fixed robust dialogue patterns with proper character/dialogue extraction
+                // Enhanced dialogue patterns - 5 comprehensive patterns
                 const dialoguePatterns = [
-                    // Pattern 1: Character THEN dialogue - "Name said, 'text'"
-                    /([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)\s+(?:said|asked|replied|whispered|shouted|called|interrupted)\s*,?\s*["""]([^"""]{3,}?)["""]/gi,
+                    // Pattern 1: Character said/asked + dialogue - "Jake said, 'Hello world'"
+                    /([A-Z][a-zA-Z\s\-']{1,24})\s+(?:said|asked|replied|whispered|shouted|called|exclaimed|muttered|declared|announced|continued|interrupted|added|noted|observed|remarked|stated|explained|suggested|wondered|insisted|argued|protested|complained|sighed|laughed|chuckled|grinned|smiled|frowned|nodded|shook\s+(?:his|her)\s+head|paused|hesitated|stammered|stuttered)\s*,?\s*["""]([^"""]{3,500}?)["""]/gi,
                     
-                    // Pattern 2: Dialogue THEN character - "'text,' said Name"  
-                    /["""]([^"""]{3,}?)["""]\s*,?\s*(?:said|asked|replied|whispered|shouted|called|interrupted)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)/gi,
+                    // Pattern 2: Dialogue + said Character - "'Hello world,' said Jake" or "'Hello world,' Jake said"
+                    /["""]([^"""]{3,500}?)["""][,.\s]*(?:said|asked|replied|whispered|shouted|called|exclaimed|muttered|declared|announced|continued|interrupted|added|noted|observed|remarked|stated|explained|suggested|wondered|insisted|argued|protested|complained|sighed|laughed|chuckled|grinned|smiled|frowned|nodded|shook\s+(?:his|her)\s+head|paused|hesitated|stammered|stuttered)\s+([A-Z][a-zA-Z\s\-']{1,24})/gi,
                     
-                    // Pattern 3: Direct character colon format - "Name: 'text'"
-                    /([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*?)\s*:\s*["""]([^"""]{3,}?)["""]/gi,
+                    // Pattern 3: Character colon dialogue - "Jake: 'Hello world'" or just "Jake: Hello world"
+                    /^([A-Z][a-zA-Z\s\-']{1,24})\s*:\s*["""]?([^"""]{3,500}?)[""".]?$/gmi,
                     
-                    // Pattern 4: Simple quoted text (minimum 10 chars to avoid junk)
-                    /["""]([^"""]{10,}?)["""]/gi
+                    // Pattern 4: Standalone dialogue with context analysis - "'Hello world'"
+                    /["""]([^"""]{10,300}?)["""]/gi,
+                    
+                    // Pattern 5: Dialogue with action tags - "'Hello,' Jake said as he walked in"
+                    /["""]([^"""]{3,500}?)["""],?\s*([A-Z][a-zA-Z\s\-']{1,24})\s+(?:said|asked|replied|whispered|shouted|called|exclaimed|muttered|declared|announced|continued|interrupted|added|noted|observed|remarked|stated|explained|suggested|wondered|insisted|argued|protested|complained|sighed|laughed|chuckled|grinned|smiled|frowned|nodded|shook\s+(?:his|her)\s+head|paused|hesitated|stammered|stuttered)\s+(?:as|while|when|before|after)/gi
                 ];
 
                 let allMatches = [];
+                const lines = content.split('\n');
                 
-                // Process all patterns exactly as you specified
-                console.log(`🔍 Scanning FULL CONTENT (${content.length} chars) with ${dialoguePatterns.length} robust patterns...`);
-                for (const pattern of dialoguePatterns) {
+                // Process each pattern with enhanced extraction logic
+                console.log(`🔍 Processing ${dialoguePatterns.length} enhanced patterns...`);
+                for (let patternIndex = 0; patternIndex < dialoguePatterns.length; patternIndex++) {
+                    const pattern = dialoguePatterns[patternIndex];
                     let match;
                     let patternMatches = 0;
+                    
+                    // Reset regex lastIndex to ensure proper scanning
+                    pattern.lastIndex = 0;
+                    
                     while ((match = pattern.exec(content)) !== null) {
                         patternMatches++;
                         
-                        // Fix the character/dialogue extraction based on pattern type
-                        let character, dialogue;
-                        const patternIndex = dialoguePatterns.indexOf(pattern);
+                        let character = null;
+                        let dialogue = null;
                         
-                        if (patternIndex === 0) {
-                            // Pattern 1: Character FIRST, then dialogue
-                            character = match[1];
-                            dialogue = match[2];
-                        } else if (patternIndex === 1 || patternIndex === 2) {
-                            // Patterns 2&3: Dialogue FIRST, then character  
-                            dialogue = match[1];
-                            character = match[2];
-                        } else {
-                            // Pattern 4: Just dialogue
-                            dialogue = match[1];
-                            character = 'Unknown Speaker';
-                        }
+                        console.log(`🔍 Pattern ${patternIndex + 1} Match ${patternMatches}:`, match[0].substring(0, 100) + '...');
+                        console.log('📥 Raw match groups:', match.slice(1, 3));
                         
-                        // Store the corrected match
-                        const correctedMatch = [...match];
-                        correctedMatch.character = character;
-                        correctedMatch.dialogue = dialogue;
-                        allMatches.push(correctedMatch);
-                        
-                        console.log(`✓ Pattern ${patternIndex + 1} Match ${patternMatches}:`, match[0]);
-                        console.log("Character:", character);
-                        console.log("Dialogue:", dialogue);
-                    }
-                    console.log(`Pattern ${dialoguePatterns.indexOf(pattern) + 1} found ${patternMatches} matches`);
-                }
-                
-                console.log(`Found ${allMatches.length} dialogue matches using robust patterns`);
-                
-                // Split content into lines for fallback processing
-                const lines = content.split('\n');
-                
-                // Process matches and extract characters/dialogue
-                let characters = new Set();
-                let dialogueSections = [];
-                
-                allMatches.forEach((match, index) => {
-                    const character = (match.character || 'Unknown Speaker').trim();
-                    const dialogue = (match.dialogue || '').trim();
-                    
-                    if (dialogue && dialogue.length >= 3) {
-                        // Validate character name - must be actual names, not dialogue text
-                        if (isValidCharacterName(character)) {
-                            characters.add(character);
-                            // Find line number for this dialogue
-                            let lineNumber = null;
-                            for (let i = 0; i < lines.length; i++) {
-                                if (lines[i].includes(dialogue) || lines[i].includes(match[0])) {
-                                    lineNumber = i + 1;
-                                    break;
-                                }
-                            }
-                            
-                            dialogueSections.push({
-                                character: character,
-                                text: dialogue,
-                                match: match[0],
-                                index: index,
-                                line: lineNumber,
-                                type: 'robust_pattern_match'
-                            });
-                        
-                            console.log(`✓ DIALOGUE EXTRACTED: "${character}" -> "${dialogue.substring(0, 40)}..."`);
-                        } else {
-                            console.log(`⚠️ Rejected invalid character name: "${character}"`);
-                        }
-                    }
-                });
-                
-                // Optional: Try to enhance with database character matching if Supabase is available
-                if (window.storyManager) {
-                    try {
-                        const enhancedMatches = await window.storyManager.scanForDialogueWithDatabase(content, 'current_story');
-                        console.log('Enhanced database matches:', enhancedMatches.length);
-                        
-                        // Merge database matches with pattern matches
-                        enhancedMatches.forEach(dbMatch => {
-                            if (dbMatch.confidence >= 0.7) {
-                                characters.add(dbMatch.character);
-                                dialogueSections.push({
-                                    character: dbMatch.character,
-                                    text: dbMatch.dialogue,
-                                    position: dbMatch.position,
-                                    confidence: dbMatch.confidence,
-                                    type: 'database_enhanced'
-                                });
-                            }
-                        });
-                    } catch (dbError) {
-                        console.log('Supabase not configured, using pattern-only scanning:', dbError);
-                    }
-                }
-                
-                // If we still don't have enough matches, try fallback patterns on lines
-                if (allMatches.length === 0) {
-                    console.log('No robust pattern matches found, trying fallback line-by-line patterns...');
-                    for (let i = 0; i < lines.length; i++) {
-                        const line = lines[i].trim();
-                        if (!line || line.length < 10) continue;
-                        
-                        // Simple fallback patterns for immediate functionality
-                        const fallbackPatterns = [
-                            // "Dialogue," Character said
-                            /["""]([^"""]{3,})["""][\\s,]*([A-Z][a-zA-Z\\s]{2,15})[\\s,]*(?:said|asked|replied|whispered|shouted|muttered|exclaimed)/i,
-                            // Character said, "Dialogue"
-                            /([A-Z][a-zA-Z\\s]{2,15})[\\s,]*(?:said|asked|replied|whispered|shouted|muttered|exclaimed)[\\s,]*["""]([^"""]{3,})["""]/i,
-                            // Character: "Dialogue"
-                            /^([A-Z][a-zA-Z\\s]+?):[\\s]*["""]([^"""]+?)["""]/i
-                        ];
-                        
-                        for (const pattern of fallbackPatterns) {
-                            const match = line.match(pattern);
-                            if (match) {
-                                const character = (match[1] && match[1].length < 25) ? match[1].trim() : (match[2] && match[2].length < 25) ? match[2].trim() : null;
-                                const dialogue = (match[2] && match[2].length > match[1]?.length) ? match[2].trim() : (match[1] && match[1].length > 10) ? match[1].trim() : null;
-                                
-                                if (character && dialogue && dialogue.length >= 3) {
-                                    characters.add(character);
-                                    dialogueSections.push({
-                                        character: character,
-                                        text: dialogue,
-                                        line: i + 1,
-                                        type: 'fallback_pattern'
-                                    });
-                                    
-                                    console.log(`✓ FALLBACK DIALOGUE: "${character}" -> "${dialogue.substring(0, 40)}..."`);
-                                }
+                        // Extract character and dialogue based on pattern type
+                        switch (patternIndex) {
+                            case 0: // Pattern 1: Character first, then dialogue
+                                character = match[1]?.trim();
+                                dialogue = match[2]?.trim();
+                                console.log(`📝 Pattern 1 - Character: "${character}", Dialogue: "${dialogue?.substring(0, 50)}..."`);
                                 break;
-                            }
+                                
+                            case 1: // Pattern 2: Dialogue first, then character
+                                dialogue = match[1]?.trim();
+                                character = match[2]?.trim();
+                                console.log(`📝 Pattern 2 - Dialogue: "${dialogue?.substring(0, 50)}...", Character: "${character}"`);
+                                break;
+                                
+                            case 2: // Pattern 3: Character colon format
+                                character = match[1]?.trim();
+                                dialogue = match[2]?.trim();
+                                console.log(`📝 Pattern 3 - Character: "${character}", Dialogue: "${dialogue?.substring(0, 50)}..."`);
+                                break;
+                                
+                            case 3: // Pattern 4: Standalone dialogue - try to find character from context
+                                dialogue = match[1]?.trim();
+                                character = extractCharacterFromContext(match, content, lines);
+                                console.log(`📝 Pattern 4 - Dialogue: "${dialogue?.substring(0, 50)}...", Context Character: "${character}"`);
+                                break;
+                                
+                            case 4: // Pattern 5: Dialogue with action tags
+                                dialogue = match[1]?.trim();
+                                character = match[2]?.trim();
+                                console.log(`📝 Pattern 5 - Dialogue: "${dialogue?.substring(0, 50)}...", Character: "${character}"`);
+                                break;
                         }
-                    }
-                }
-                
-                // Try AI detection for additional characters if no patterns matched
-                if (characters.size === 0 || dialogueSections.length === 0) {
-                    console.log('No matches from robust patterns, trying AI detection...');
-                    try {
-                        const processableText = getTextWithinLimits(content, 8000);
-                        const aiCharacters = await detectCharacters(processableText);
-                        console.log('AI detected characters:', aiCharacters);
-                        if (aiCharacters && Array.isArray(aiCharacters)) {
-                            aiCharacters.forEach(char => {
-                                if (char && char.trim()) {
-                                    characters.add(char.trim());
-                                }
-                            });
-                        }
-                    } catch (aiError) {
-                        console.log('AI character detection failed:', aiError);
-                    }
-                }
-                
-                // Assign unassigned dialogue to characters based on context
-                if (characters.size > 0) {
-                    const characterArray = Array.from(characters);
-                    console.log('Assigning unassigned dialogue to characters:', characterArray);
-                    
-                    // Find unassigned quotes
-                    const unassignedQuotes = dialogueSections.filter(d => 
-                        d.character === 'Unknown Speaker' || !d.character
-                    );
-                    console.log(`Found ${unassignedQuotes.length} unassigned quotes`);
-                    
-                    for (const quote of unassignedQuotes) {
-                        // Distribute among characters if no clear match
-                        const leastUsedChar = characterArray.reduce((min, char) => {
-                            const usageCount = dialogueSections.filter(d => d.character === char).length;
-                            const minUsageCount = dialogueSections.filter(d => d.character === min).length;
-                            return usageCount < minUsageCount ? char : min;
-                        });
-                        quote.character = leastUsedChar;
-                        console.log(`✓ DISTRIBUTED: "${quote.text.substring(0, 30)}..." -> ${leastUsedChar}`);
-                    }
-                }
-                
-                // Store results (completely replace, don't append)
-                dialogueData.characters = Array.from(characters);
-                dialogueData.dialogueSections = dialogueSections;
-                
-                console.log('=== STORING NEW RESULTS ===');
-                console.log('Replacing old data with new scan results');
-                
-                console.log('=== FINAL DIALOGUE SCAN RESULTS ===');
-                console.log('Characters found:', dialogueData.characters);
-                console.log('Total dialogue sections:', dialogueData.dialogueSections.length);
-                console.log('Dialogue distribution:');
-                dialogueData.characters.forEach(char => {
-                    const count = dialogueData.dialogueSections.filter(d => d.character === char).length;
-                    console.log(`  - ${char}: ${count} dialogue sections`);
-                });
-                console.log('Dialogue sections preview:');
-                dialogueData.dialogueSections.slice(0, 5).forEach((d, i) => {
-                    console.log(`  ${i+1}. ${d.character}: "${d.text.substring(0, 50)}..."`);  
-                });
-                
-                hideLoading();
                         
-                // Final processing - deduplicate and clean up results
-                const uniqueDialogue = new Map();
+                        // Validate extracted data
+                        if (dialogue && dialogue.length >= 3) {
+                            // Clean up dialogue
+                            dialogue = cleanDialogueText(dialogue);
+                            
+                            // Validate character name
+                            if (character && isValidCharacterName(character)) {
+                                console.log(`✅ Valid match - "${character}": "${dialogue.substring(0, 30)}..."`);
+                                
+                                // Store the match with metadata
+                                allMatches.push({
+                                    character: character,
+                                    dialogue: dialogue,
+                                    fullMatch: match[0],
+                                    patternIndex: patternIndex,
+                                    position: match.index,
+                                    confidence: calculateConfidence(character, dialogue, patternIndex),
+                                    type: 'enhanced_pattern'
+                                });
+                            } else {
+                                console.log(`❌ Invalid character name: "${character}"`);
+                                // For patterns that don't extract characters, still store as Unknown Speaker
+                                if (!character || character === 'Unknown Speaker') {
+                                    allMatches.push({
+                                        character: 'Unknown Speaker',
+                                        dialogue: dialogue,
+                                        fullMatch: match[0],
+                                        patternIndex: patternIndex,
+                                        position: match.index,
+                                        confidence: 0.3,
+                                        type: 'unassigned_dialogue'
+                                    });
+                                }
+                            }
+                        } else {
+                            console.log(`❌ Invalid dialogue: too short or empty`);
+                        }
+                        
+                        // Prevent infinite loops
+                        if (pattern.lastIndex === match.index) {
+                            pattern.lastIndex++;
+                        }
+                    }
+                    console.log(`📊 Pattern ${patternIndex + 1} found ${patternMatches} matches`);
+                }
                 
-                // Remove duplicates by dialogue text
-                dialogueSections.forEach(section => {
-                    const key = section.text.toLowerCase().trim();
-                    if (!uniqueDialogue.has(key) || section.type === 'robust_pattern_match') {
-                        uniqueDialogue.set(key, section);
+                console.log(`📈 Total matches found: ${allMatches.length}`);
+                
+                // Group and process matches
+                const characters = new Set();
+                const dialogueSections = [];
+                
+                // First pass: Process matches with valid characters
+                allMatches.forEach((match, index) => {
+                    if (match.character !== 'Unknown Speaker') {
+                        characters.add(match.character);
+                        
+                        dialogueSections.push({
+                            character: match.character,
+                            text: match.dialogue,
+                            match: match.fullMatch,
+                            index: index,
+                            position: match.position,
+                            confidence: match.confidence,
+                            type: match.type,
+                            patternUsed: match.patternIndex + 1
+                        });
+                        
+                        console.log(`✅ Added dialogue: "${match.character}" -> "${match.dialogue.substring(0, 40)}..."`);
                     }
                 });
                 
-                // Convert back to array
-                dialogueSections = Array.from(uniqueDialogue.values());
+                // Second pass: Try to assign unknown speakers to characters
+                const characterArray = Array.from(characters);
+                if (characterArray.length > 0) {
+                    const unknownMatches = allMatches.filter(m => m.character === 'Unknown Speaker');
+                    console.log(`🔄 Attempting to assign ${unknownMatches.length} unknown speakers to ${characterArray.length} known characters...`);
+                    
+                    unknownMatches.forEach((match, index) => {
+                        // Use round-robin assignment for now, could be enhanced with ML/context analysis
+                        const assignedCharacter = characterArray[index % characterArray.length];
+                        
+                        dialogueSections.push({
+                            character: assignedCharacter,
+                            text: match.dialogue,
+                            match: match.fullMatch,
+                            index: allMatches.length + index,
+                            position: match.position,
+                            confidence: 0.5, // Lower confidence for assigned dialogue
+                            type: 'assigned_dialogue',
+                            patternUsed: match.patternIndex + 1,
+                            originallyUnknown: true
+                        });
+                        
+                        console.log(`🔄 Assigned unknown dialogue to "${assignedCharacter}": "${match.dialogue.substring(0, 40)}..."`);
+                    });
+                }
                 
-                // Store final results
+                // Store results
                 dialogueData.characters = Array.from(characters);
                 dialogueData.dialogueSections = dialogueSections;
                 
-                console.log('=== FINAL DIALOGUE SCAN RESULTS ===');
-                console.log('Characters found:', dialogueData.characters);
-                console.log('Total dialogue sections:', dialogueData.dialogueSections.length);
-                console.log('Dialogue distribution:');
+                console.log('=== ENHANCED SCAN RESULTS ===');
+                console.log(`👥 Characters found: ${dialogueData.characters.length}`, dialogueData.characters);
+                console.log(`💬 Dialogue sections: ${dialogueData.dialogueSections.length}`);
+                console.log('📊 Distribution:');
                 dialogueData.characters.forEach(char => {
                     const count = dialogueData.dialogueSections.filter(d => d.character === char).length;
-                    console.log(`  - ${char}: ${count} dialogue sections`);
-                });
-                console.log('Dialogue sections preview:');
-                dialogueData.dialogueSections.slice(0, 5).forEach((d, i) => {
-                    console.log(`  ${i+1}. ${d.character}: "${d.text.substring(0, 50)}..."`);  
+                    const avgConfidence = dialogueData.dialogueSections
+                        .filter(d => d.character === char)
+                        .reduce((sum, d) => sum + (d.confidence || 0.5), 0) / count;
+                    console.log(`  - ${char}: ${count} lines (avg confidence: ${avgConfidence.toFixed(2)})`);
                 });
                 
                 hideLoading();
@@ -6225,13 +6210,109 @@ The room fell silent as everyone waited for Tom's response.
                 }
                 
                 displayDialogueResults();
-                showNotification(`✅ Scan complete! Found ${dialogueData.characters.length} characters and ${dialogueSections.length} dialogue sections`, 'success');
+                showNotification(`✅ Enhanced scan complete! Found ${dialogueData.characters.length} characters and ${dialogueSections.length} dialogue sections`, 'success');
 
             } catch (error) {
-                console.error('Dialogue scanning error:', error);
+                console.error('❌ Dialogue scanning error:', error);
                 hideLoading();
                 showNotification(`Failed to scan dialogue: ${error.message}`, 'error');
             }
+        }
+        
+        // Helper function to extract character from context for standalone dialogue
+        function extractCharacterFromContext(match, content, lines) {
+            const matchPosition = match.index;
+            const matchText = match[0];
+            
+            // Find the line containing this match
+            let currentPos = 0;
+            for (let i = 0; i < lines.length; i++) {
+                const lineLength = lines[i].length + 1; // +1 for newline
+                if (currentPos + lineLength > matchPosition) {
+                    // Found the line, now look for character names in surrounding lines
+                    const contextRange = 3; // Look 3 lines before and after
+                    const startLine = Math.max(0, i - contextRange);
+                    const endLine = Math.min(lines.length - 1, i + contextRange);
+                    
+                    for (let j = startLine; j <= endLine; j++) {
+                        const contextLine = lines[j];
+                        
+                        // Look for character indicators in nearby lines
+                        const characterPatterns = [
+                            /([A-Z][a-zA-Z\s\-']{1,24})\s+(?:said|asked|replied|whispered|shouted|walked|looked|turned|smiled|laughed|nodded|stood|sat)/i,
+                            /^([A-Z][a-zA-Z\s\-']{1,24})\s*:/,
+                            /([A-Z][a-zA-Z\s\-']{1,24})\s+(?:was|were|had|could|would|might)/i
+                        ];
+                        
+                        for (const pattern of characterPatterns) {
+                            const contextMatch = contextLine.match(pattern);
+                            if (contextMatch && isValidCharacterName(contextMatch[1])) {
+                                console.log(`🔍 Found context character: "${contextMatch[1]}" near dialogue`);
+                                return contextMatch[1].trim();
+                            }
+                        }
+                    }
+                    break;
+                }
+                currentPos += lineLength;
+            }
+            
+            return 'Unknown Speaker';
+        }
+        
+        // Helper function to clean dialogue text
+        function cleanDialogueText(dialogue) {
+            if (!dialogue) return '';
+            
+            return dialogue
+                .trim()
+                .replace(/^["""]|["""]$/g, '') // Remove surrounding quotes
+                .replace(/\s+/g, ' ') // Normalize whitespace
+                .trim();
+        }
+        
+        // Helper function to calculate confidence score
+        function calculateConfidence(character, dialogue, patternIndex) {
+            let confidence = 0.5; // Base confidence
+            
+            // Pattern-based confidence
+            switch (patternIndex) {
+                case 0: // Character said pattern
+                case 1: // Said character pattern  
+                    confidence = 0.9;
+                    break;
+                case 2: // Colon pattern
+                    confidence = 0.8;
+                    break;
+                case 3: // Context-based
+                    confidence = 0.6;
+                    break;
+                case 4: // Action tag pattern
+                    confidence = 0.7;
+                    break;
+            }
+            
+            // Character name quality
+            if (character && character !== 'Unknown Speaker') {
+                if (character.length >= 2 && character.length <= 15) {
+                    confidence += 0.1;
+                }
+                if (/^[A-Z][a-z]+$/.test(character)) {
+                    confidence += 0.1; // Simple names are more reliable
+                }
+            }
+            
+            // Dialogue quality
+            if (dialogue) {
+                if (dialogue.length >= 10 && dialogue.length <= 100) {
+                    confidence += 0.1; // Reasonable length dialogue
+                }
+                if (/[!?]/.test(dialogue)) {
+                    confidence += 0.05; // Questions and exclamations are likely dialogue
+                }
+            }
+            
+            return Math.min(1.0, confidence);
         }
         
         function showDialogueDebugModal(content, lines) {
