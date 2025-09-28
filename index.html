@@ -1077,27 +1077,50 @@
                             </div>
                         </div>
                         
-                        <button onclick="scanForDialogue()" class="btn-secondary w-full py-2 rounded-lg font-semibold">
-                            <i class="fas fa-search mr-2"></i>Scan Story for Dialogue
+                        <button onclick="scanToNarration()" class="btn-secondary w-full py-2 rounded-lg font-semibold">
+                            <i class="fas fa-microphone mr-2"></i>Scan to Narration
                         </button>
                         
                         <!-- Dialogue Assignment Results -->
                         <!-- Character Voice Assignments removed - all dialogue now uses narrator voice -->
 
-                        <!-- Dialogue Preview (Information Only - All dialogue uses narrator voice) -->
-                        <div id="dialoguePreview" class="hidden">
-                            <div class="bg-theme-primary p-4 rounded-lg border border-theme max-h-60 overflow-y-auto">
-                                <h4 class="font-semibold mb-3 text-green-400">Found Dialogue Sections</h4>
-                                <p class="text-sm text-gray-400 mb-3">ℹ️ All dialogue will be narrated by the selected narrator voice</p>
-                                <div id="dialogueList" class="space-y-2">
-                                    <!-- Dialogue will be populated here -->
+                        <!-- Narration Preview -->
+                        <div id="narrationPreview" class="hidden">
+                            <div class="bg-theme-primary p-4 rounded-lg border border-theme">
+                                <h4 class="font-semibold mb-3 text-green-400">Story Content for Narration</h4>
+                                
+                                <!-- Narrator Voice Selection -->
+                                <div class="mb-4 p-3 bg-theme-secondary rounded-lg border border-theme">
+                                    <h5 class="font-medium mb-2 text-cyan-400">Select Narrator Voice</h5>
+                                    <div class="flex items-center space-x-2">
+                                        <select id="narratorVoiceSelect" class="flex-1 px-3 py-2 rounded bg-theme-primary border border-theme text-sm">
+                                            <option value="">Select narrator voice...</option>
+                                        </select>
+                                        <button onclick="previewNarratorVoice()" id="narratorPreviewBtn" class="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 rounded text-white text-sm font-medium" disabled>
+                                            <i class="fas fa-play mr-1"></i>Preview Voice
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <!-- Story Content Preview -->
+                                <div class="mb-3">
+                                    <h5 class="font-medium mb-2 text-cyan-400">Story Content (First 500 characters)</h5>
+                                    <div id="storyContentPreview" class="text-sm text-theme-secondary bg-theme-secondary p-3 rounded border max-h-32 overflow-y-auto">
+                                        <!-- Story preview will be populated here -->
+                                    </div>
+                                </div>
+                                
+                                <div class="text-center">
+                                    <div id="fullStoryStats" class="text-xs text-gray-400">
+                                        <!-- Story statistics will be shown here -->
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
                         <div class="border-t border-theme pt-4">
-                            <button onclick="generateMultiVoiceNarration()" id="multiVoiceBtn" class="btn-primary w-full py-3 rounded-lg font-semibold" disabled>
-                                <i class="fas fa-theater-masks mr-2"></i>Generate Multi-Voice Narration
+                            <button onclick="generateNarration()" id="generateNarrationBtn" class="btn-primary w-full py-3 rounded-lg font-semibold" disabled>
+                                <i class="fas fa-microphone mr-2"></i>Generate Narration
                             </button>
                         </div>
                     </div>
@@ -5957,82 +5980,23 @@ Format as clean, readable text ready for narration.`;
             return text.length < 100;
         }
 
-        async function scanForDialogue() {
-            console.log('🔍 Starting enhanced dialogue scanning...');
+        async function scanToNarration() {
+            console.log('🎙️ Starting narration scan...');
             
-            // STEP 1: Use the dedicated clearing function for thorough cleanup
-            clearAllDialogueData(true);
-            
-            // STEP 4: Validate content AFTER clearing
+            // Get full story content
             let content = getFullStoryContent();
             if (!content || content.trim().length === 0) {
-                console.log('❌ No content to scan for dialogue');
-                showNotification('No story content available to scan for dialogue.', 'error');
+                console.log('❌ No content to scan for narration');
+                showNotification('No story content available for narration.', 'error');
                 return;
             }
             
             console.log(`📝 Content validation: ${content.length} characters available`);
             console.log('📖 Content preview:', content.substring(0, 200) + '...');
-            console.log('🔄 Starting fresh dialogue scan with clean slate...');
-            
-            // Check if current content has dialogue - if not, use sample content for testing
-            const hasDialogue = content.includes('"') || content.includes('"') || content.includes('"');
-            
-            if (!hasDialogue) {
-                // Add sample content for testing dialogue patterns
-                content = `
-=== Sample Story for Testing ===
-
-Michael looked at his friend Jake and sighed. "I don't think this is going to work," he said nervously.
-
-"Come on, don't give up so easily," Jake replied with a grin. "We've come this far already."
-
-Sarah walked into the room and saw the two of them arguing. "What's all the commotion about?" she asked, crossing her arms.
-
-"Nothing important," Michael muttered, avoiding eye contact.
-
-Jake laughed. "He's just being dramatic as usual. We're planning something amazing!"
-
-"Well, whatever it is," Sarah said, "count me in. I love a good adventure."
-
-The old man in the corner spoke softly, "Adventure often finds those who seek it least."
-
-"Who was that?" Sarah whispered to Michael.
-
-"I have no idea," he whispered back, "but he's been sitting there all morning."
-
-Tom burst through the door. "Did someone mention adventure? Because I have news!"
-
-"What kind of news?" asked Jake eagerly.
-
-"The kind that changes everything," Tom said with a mysterious smile. "Are you all ready for this?"
-
-Clara appeared behind Tom, shaking her head. "Don't listen to him. He's been like this all week."
-
-"I heard that!" Tom protested. "And for your information, this is completely different."
-
-"Sure it is," Clara replied sarcastically. "Just like last time when you said you found buried treasure."
-
-Ethan joined the group, looking concerned. "Did I miss something important again?"
-
-"Only Tom's latest grand scheme," Mia said as she entered the room. "But don't worry, it's probably nothing serious."
-
-"Hey!" Tom exclaimed. "This time it's real. I have proof!"
-
-"Prove it then," Liam challenged from the doorway.
-
-The room fell silent as everyone waited for Tom's response.
-`;
-                console.log('📚 Using sample content for dialogue testing');
-                showNotification('Current story has no dialogue. Using sample content to test dialogue patterns.', 'info');
-            }
-            
-            console.log('=== ENHANCED DIALOGUE SCANNER v2.0 ===');
-            console.log(`📊 Scanning ${content.length} characters with 5 enhanced patterns...`);
             
             const chapterInfo = hasMultipleChapters() ? 
-                `Scanning ${storyData.chapters.length} chapters for dialogue and characters...` :
-                'Scanning story for dialogue and characters...';
+                `Preparing ${storyData.chapters.length} chapters for narration...` :
+                'Preparing story for narration...';
             
             showLoading(chapterInfo);
             
@@ -6271,9 +6235,9 @@ The room fell silent as everyone waited for Tom's response.
                 showNotification(`✅ Enhanced scan complete! Found ${dialogueData.characters.length} characters and ${dialogueSections.length} dialogue sections`, 'success');
 
             } catch (error) {
-                console.error('❌ Dialogue scanning error:', error);
+                console.error('❌ Narration scan error:', error);
                 hideLoading();
-                showNotification(`Failed to scan dialogue: ${error.message}`, 'error');
+                showNotification(`Failed to prepare narration: ${error.message}`, 'error');
             }
         }
         
@@ -6570,15 +6534,209 @@ The room fell silent as everyone waited for Tom's response.
             }
         }
 
+        function displayNarrationPreview(content, stats) {
+            console.log('🎙️ Displaying narration preview');
+            
+            const narrationPreview = document.getElementById('narrationPreview');
+            const storyContentPreview = document.getElementById('storyContentPreview');
+            const fullStoryStats = document.getElementById('fullStoryStats');
+            const narratorVoiceSelect = document.getElementById('narratorVoiceSelect');
+            
+            if (!narrationPreview || !storyContentPreview || !fullStoryStats || !narratorVoiceSelect) {
+                console.error('❌ Narration preview elements not found');
+                return;
+            }
+            
+            // Populate narrator voice options from main voice selector
+            populateNarratorVoices();
+            
+            // Show story content preview (first 500 characters)
+            const preview = content.length > 500 ? content.substring(0, 500) + '...' : content;
+            storyContentPreview.textContent = preview;
+            
+            // Show story statistics
+            const { wordCount, charCount, estimatedDuration } = stats;
+            fullStoryStats.innerHTML = `
+                <strong>Full Story:</strong> ${wordCount.toLocaleString()} words • ${charCount.toLocaleString()} characters • 
+                ~${Math.floor(estimatedDuration / 60)}:${(estimatedDuration % 60).toString().padStart(2, '0')} minutes estimated
+            `;
+            
+            // Show the narration preview section
+            narrationPreview.classList.remove('hidden');
+            
+            // Enable the generate narration button
+            const generateNarrationBtn = document.getElementById('generateNarrationBtn');
+            if (generateNarrationBtn) {
+                generateNarrationBtn.disabled = false;
+            }
+            
+            console.log('✅ Narration preview displayed successfully');
+        }
+        
+        function populateNarratorVoices() {
+            const narratorVoiceSelect = document.getElementById('narratorVoiceSelect');
+            const mainVoiceSelect = document.getElementById('voiceSelection');
+            
+            if (!narratorVoiceSelect || !mainVoiceSelect) return;
+            
+            // Clear existing options except the first one
+            narratorVoiceSelect.innerHTML = '<option value="">Select narrator voice...</option>';
+            
+            // Copy options from main voice selector
+            Array.from(mainVoiceSelect.children).forEach(child => {
+                if (child.tagName === 'OPTGROUP') {
+                    const optgroup = document.createElement('optgroup');
+                    optgroup.label = child.label;
+                    Array.from(child.children).forEach(option => {
+                        const newOption = document.createElement('option');
+                        newOption.value = option.value;
+                        newOption.textContent = option.textContent;
+                        newOption.dataset.provider = option.dataset.provider;
+                        newOption.dataset.voice = option.dataset.voice;
+                        optgroup.appendChild(newOption);
+                    });
+                    narratorVoiceSelect.appendChild(optgroup);
+                } else if (child.tagName === 'OPTION' && child.value) {
+                    const newOption = document.createElement('option');
+                    newOption.value = child.value;
+                    newOption.textContent = child.textContent;
+                    newOption.dataset.provider = child.dataset.provider;
+                    newOption.dataset.voice = child.dataset.voice;
+                    narratorVoiceSelect.appendChild(newOption);
+                }
+            });
+            
+            // Enable preview button when voice is selected
+            narratorVoiceSelect.addEventListener('change', function() {
+                const previewBtn = document.getElementById('narratorPreviewBtn');
+                if (previewBtn) {
+                    previewBtn.disabled = !this.value;
+                }
+            });
+        }
+        
+        function previewNarratorVoice() {
+            const narratorVoiceSelect = document.getElementById('narratorVoiceSelect');
+            const selectedVoice = narratorVoiceSelect.value;
+            
+            if (!selectedVoice) {
+                showNotification('Please select a narrator voice first.', 'warning');
+                return;
+            }
+            
+            // Get a sample of the story text (first few sentences)
+            const content = getFullStoryContent();
+            if (!content) {
+                showNotification('No story content available for preview.', 'error');
+                return;
+            }
+            
+            // Extract first 200 characters for preview
+            let sampleText = content.substring(0, 200).trim();
+            
+            // Try to end at a sentence boundary
+            const lastPeriod = sampleText.lastIndexOf('.');
+            const lastExclamation = sampleText.lastIndexOf('!');
+            const lastQuestion = sampleText.lastIndexOf('?');
+            const lastSentenceEnd = Math.max(lastPeriod, lastExclamation, lastQuestion);
+            
+            if (lastSentenceEnd > 100) {
+                sampleText = sampleText.substring(0, lastSentenceEnd + 1);
+            } else {
+                sampleText += '...';
+            }
+            
+            console.log('🎙️ Previewing narrator voice:', selectedVoice);
+            console.log('📝 Sample text:', sampleText.substring(0, 100) + '...');
+            
+            // Show loading state
+            const previewBtn = document.getElementById('narratorPreviewBtn');
+            const originalText = previewBtn.innerHTML;
+            previewBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Generating...';
+            previewBtn.disabled = true;
+            
+            // Generate preview audio
+            generatePreviewAudio(sampleText, selectedVoice)
+                .then(audioBlob => {
+                    if (audioBlob) {
+                        playPreviewAudio(audioBlob);
+                        showNotification('🎙️ Narrator voice preview generated!', 'success');
+                    } else {
+                        throw new Error('Failed to generate preview audio');
+                    }
+                })
+                .catch(error => {
+                    console.error('❌ Preview generation failed:', error);
+                    showNotification(`Preview failed: ${error.message}`, 'error');
+                })
+                .finally(() => {
+                    previewBtn.innerHTML = originalText;
+                    previewBtn.disabled = false;
+                });
+        }
+        
+        async function generatePreviewAudio(text, voice) {
+            try {
+                const voiceInfo = voice.split('_');
+                const provider = voiceInfo[0];
+                const voiceId = voiceInfo[1];
+                
+                if (provider === 'openai') {
+                    return await generateOpenAIAudio(text, voiceId);
+                } else if (provider === 'elevenlabs') {
+                    const apiKey = getElevenLabsApiKey();
+                    if (!apiKey) {
+                        throw new Error('ElevenLabs API key not configured');
+                    }
+                    return await generateElevenLabsAudio(text, voiceId, apiKey);
+                } else {
+                    throw new Error(`Unknown voice provider: ${provider}`);
+                }
+            } catch (error) {
+                console.error('❌ Preview audio generation failed:', error);
+                throw error;
+            }
+        }
+        
+        function playPreviewAudio(audioBlob) {
+            // Remove any existing preview audio
+            const existingPreview = document.getElementById('narratorVoicePreview');
+            if (existingPreview) {
+                existingPreview.remove();
+            }
+            
+            // Create new audio element
+            const audioUrl = URL.createObjectURL(audioBlob);
+            const audioElement = document.createElement('audio');
+            audioElement.id = 'narratorVoicePreview';
+            audioElement.controls = true;
+            audioElement.autoplay = true;
+            audioElement.className = 'w-full mt-2';
+            audioElement.src = audioUrl;
+            
+            // Add to narrator preview section
+            const narratorPreviewBtn = document.getElementById('narratorPreviewBtn');
+            if (narratorPreviewBtn && narratorPreviewBtn.parentNode) {
+                narratorPreviewBtn.parentNode.appendChild(audioElement);
+            }
+            
+            // Clean up URL after playing
+            audioElement.addEventListener('ended', () => {
+                setTimeout(() => {
+                    URL.revokeObjectURL(audioUrl);
+                }, 1000);
+            });
+        }
+
         /* REMOVED: Character voice assignment UI code - now using narrator-only mode */
 
-        async function generateMultiVoiceNarration() {
-            // Fixed deployment - narrator-only mode
-            console.log('🎵 === NARRATOR-ONLY NARRATION START ===');
+        async function generateNarration() {
+            console.log('🎙️ === NARRATION GENERATION START ===');
             
-            // Get narrator voice from main voice selection
-            const narratorVoiceSelect = document.getElementById('voiceSelection');
-            const narratorVoice = narratorVoiceSelect?.value;
+            // Get narrator voice from narrator voice selection (preferred) or main voice selection (fallback)
+            const narratorVoiceSelect = document.getElementById('narratorVoiceSelect');
+            const mainVoiceSelect = document.getElementById('voiceSelection');
+            const narratorVoice = narratorVoiceSelect?.value || mainVoiceSelect?.value;
             
             console.log('Narrator voice selected:', narratorVoice);
             
