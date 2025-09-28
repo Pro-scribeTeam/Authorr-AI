@@ -1082,19 +1082,13 @@
                         </button>
                         
                         <!-- Dialogue Assignment Results -->
-                        <div id="dialogueAssignments" class="hidden">
-                            <div class="bg-theme-primary p-4 rounded-lg border border-theme">
-                                <h4 class="font-semibold mb-3 text-cyan-400">Character Voice Assignments</h4>
-                                <div id="characterVoiceList" class="space-y-3">
-                                    <!-- Characters will be populated here -->
-                                </div>
-                            </div>
-                        </div>
+                        <!-- Character Voice Assignments removed - all dialogue now uses narrator voice -->
 
-                        <!-- Dialogue Preview -->
+                        <!-- Dialogue Preview (Information Only - All dialogue uses narrator voice) -->
                         <div id="dialoguePreview" class="hidden">
                             <div class="bg-theme-primary p-4 rounded-lg border border-theme max-h-60 overflow-y-auto">
                                 <h4 class="font-semibold mb-3 text-green-400">Found Dialogue Sections</h4>
+                                <p class="text-sm text-gray-400 mb-3">ℹ️ All dialogue will be narrated by the selected narrator voice</p>
                                 <div id="dialogueList" class="space-y-2">
                                     <!-- Dialogue will be populated here -->
                                 </div>
@@ -6503,171 +6497,80 @@ The room fell silent as everyone waited for Tom's response.
         }
 
         function displayDialogueResults() {
-            console.log('🎭 DISPLAYING DIALOGUE RESULTS - Starting fresh display...');
+            console.log('🎭 DISPLAYING DIALOGUE RESULTS - Narrator-only mode');
             console.log('📊 Data to display:', {
                 characters: dialogueData.characters.length,
                 dialogueSections: dialogueData.dialogueSections.length,
                 characterList: dialogueData.characters
             });
             
-            const dialogueAssignments = document.getElementById('dialogueAssignments');
             const dialoguePreview = document.getElementById('dialoguePreview');
-            const characterVoiceList = document.getElementById('characterVoiceList');
             const dialogueList = document.getElementById('dialogueList');
 
-            // AGGRESSIVE CLEARING of ALL previous UI content
-            if (characterVoiceList) {
-                characterVoiceList.innerHTML = '';
-                characterVoiceList.textContent = '';
-                // Remove all child nodes
-                while (characterVoiceList.firstChild) {
-                    characterVoiceList.removeChild(characterVoiceList.firstChild);
-                }
-            }
-            
+            // Clear dialogue list
             if (dialogueList) {
                 dialogueList.innerHTML = '';
-                dialogueList.textContent = '';
-                // Remove all child nodes  
                 while (dialogueList.firstChild) {
                     dialogueList.removeChild(dialogueList.firstChild);
                 }
             }
             
-            // Clear any remaining voice select elements
-            const oldVoiceSelects = document.querySelectorAll('select[id^="voice-"]');
-            oldVoiceSelects.forEach(select => select.remove());
-            
-            console.log('✅ UI COMPLETELY CLEARED - Ready for fresh content');
+            console.log('✅ UI CLEARED - Ready for dialogue preview');
 
-            // Show the sections AFTER clearing
-            if (dialogueAssignments) {
-                dialogueAssignments.classList.remove('hidden');
-                dialogueAssignments.style.display = '';
-            }
+            // Show dialogue preview only (no character voice assignments)
             if (dialoguePreview) {
                 dialoguePreview.classList.remove('hidden');
                 dialoguePreview.style.display = '';
             }
 
-            // Populate character voice assignments
-            dialogueData.characters.forEach((character, index) => {
-                const characterDiv = document.createElement('div');
-                characterDiv.className = 'flex items-center justify-between p-3 bg-theme-secondary rounded border border-theme';
+            console.log('📝 Character voice assignments REMOVED - all dialogue uses narrator voice');
+            console.log(`🎭 Characters detected (for reference): ${dialogueData.characters.join(', ')}`);
+            
+            // AUTO-ASSIGN all characters to narrator voice (no UI needed)
+            dialogueData.voiceAssignments = {};
+            dialogueData.characters.forEach(character => {
+                dialogueData.voiceAssignments[character] = 'narrator'; // Will be replaced with actual narrator voice
+            });
+            dialogueData.voiceAssignments['Narrator'] = 'narrator'; // Will be replaced with actual narrator voice
+            
+            console.log('✅ All characters auto-assigned to narrator voice');
+            
+            // Populate dialogue preview (information only)
+            dialogueData.dialogueSections.slice(0, 10).forEach((dialogue, index) => {
+                const dialogueDiv = document.createElement('div');
+                dialogueDiv.className = 'p-2 bg-theme-secondary rounded text-sm border-l-4 border-green-500';
                 
-                // Get character's dialogue samples
-                const characterDialogue = dialogueData.dialogueSections.filter(d => d.character === character);
-                // Clean sample text properly - remove surrounding quotes but preserve internal punctuation
-                let sampleText = 'No dialogue found';
-                if (characterDialogue.length > 0) {
-                    let rawText = characterDialogue[0].text || '';
-                    // Aggressive cleaning to fix 's character issue
-                    rawText = rawText
-                        .replace(/^["""'"s\s]*/, '') // Remove quotes and 's' at start
-                        .replace(/["""'"\s]*$/, '') // Remove quotes at end
-                        .replace(/^s\s+/, '') // Remove leading 's '
-                        .trim();
-                    sampleText = rawText.substring(0, 80) + (rawText.length > 80 ? '...' : '');
-                }
+                // Create character header
+                const characterHeader = document.createElement('div');
+                characterHeader.className = 'font-medium text-green-400';
+                characterHeader.textContent = `${dialogue.character || 'Unknown Speaker'} → Narrator Voice`;
                 
-                // Create main container
-                const mainContainer = document.createElement('div');
-                mainContainer.className = 'flex-1';
+                // Create dialogue text
+                const dialogueText = document.createElement('div');
+                dialogueText.className = 'text-theme-primary mt-1';
+                dialogueText.textContent = `"${dialogue.text || 'No text'}"`;
                 
-                // Create header section
-                const headerSection = document.createElement('div');
-                headerSection.className = 'flex items-center space-x-3 mb-2';
-                
-                // Create character avatar
-                const avatar = document.createElement('div');
-                avatar.className = 'w-8 h-8 bg-cyan-600 rounded-full flex items-center justify-center text-white font-bold text-sm';
-                avatar.textContent = character.charAt(0).toUpperCase();
-                
-                // Create character info section
-                const infoSection = document.createElement('div');
-                infoSection.className = 'flex-1';
-                
-                const characterName = document.createElement('span');
-                characterName.className = 'font-medium text-cyan-400';
-                characterName.textContent = character;
-                
-                const dialogueCount = document.createElement('div');
-                dialogueCount.className = 'text-xs text-theme-secondary';
-                dialogueCount.textContent = `${characterDialogue.length} dialogue section(s)`;
-                
-                infoSection.appendChild(characterName);
-                infoSection.appendChild(dialogueCount);
-                
-                headerSection.appendChild(avatar);
-                headerSection.appendChild(infoSection);
-                
-                // Create sample section
-                const sampleSection = document.createElement('div');
-                sampleSection.className = 'text-xs text-theme-secondary mb-2 italic';
-                sampleSection.textContent = `Sample: "${sampleText}"`;
-                
-                // Create controls section
-                const controlsSection = document.createElement('div');
-                controlsSection.className = 'flex items-center space-x-2';
-                
-                const voiceSelect = document.createElement('select');
-                voiceSelect.id = `voice_${index}`;
-                voiceSelect.className = 'flex-1 px-3 py-2 rounded bg-theme-primary border border-theme text-sm';
-                voiceSelect.onchange = () => updateVoiceAssignment(character, voiceSelect.value);
-                
-                const defaultOption = document.createElement('option');
-                defaultOption.value = '';
-                defaultOption.textContent = 'Select voice...';
-                voiceSelect.appendChild(defaultOption);
-                
-                const previewButton = document.createElement('button');
-                previewButton.className = 'px-3 py-2 bg-cyan-600 hover:bg-cyan-500 rounded text-white text-xs';
-                previewButton.onclick = () => previewCharacterVoice(character, `voice_${index}`);
-                previewButton.innerHTML = '<i class="fas fa-play"></i> Preview';
-                
-                controlsSection.appendChild(voiceSelect);
-                controlsSection.appendChild(previewButton);
-                
-                // Assemble main container
-                mainContainer.appendChild(headerSection);
-                mainContainer.appendChild(sampleSection);
-                mainContainer.appendChild(controlsSection);
-                
-                characterDiv.appendChild(mainContainer);
-                characterVoiceList.appendChild(characterDiv);
-
-                // Populate voice options for this character
-                setTimeout(() => {
-                    populateCharacterVoiceOptions(`voice_${index}`);
-                }, 100);
+                dialogueDiv.appendChild(characterHeader);
+                dialogueDiv.appendChild(dialogueText);
+                dialogueList.appendChild(dialogueDiv);
             });
 
-            // Add narrator voice assignment
-            const narratorDiv = document.createElement('div');
-            narratorDiv.className = 'flex items-center justify-between p-3 bg-theme-secondary rounded border border-theme';
-            // Get narrator text sample (pure narrative, no dialogue)
-            const content = storyData.currentContent || document.getElementById('storyEditor')?.value || '';
-            let narratorSample = content
-                // Remove all quoted dialogue (various quote types)
-                .replace(/["""'][^"""']*["""']/g, '')
-                // Remove dialogue attribution lines (Character said, etc.)
-                .replace(/\b[A-Z][a-zA-Z\s]{1,25}\s+(said|asked|replied|whispered|called|shouted|exclaimed|muttered)[^.!?]*[.!?]/gi, '')
-                // Remove character colon lines
-                .replace(/^\s*[A-Z][a-zA-Z\s]{1,25}\s*:\s*.*/gm, '')
-                // Clean up extra whitespace and newlines
-                .replace(/\s+/g, ' ')
-                .trim();
-            
-            // If no narrative text found, use default
-            if (!narratorSample || narratorSample.length < 20) {
-                narratorSample = 'The story unfolds with rich narrative description and scene-setting text.';
-            } else {
-                narratorSample = narratorSample.substring(0, 100) + (narratorSample.length > 100 ? '...' : '');
+            if (dialogueData.dialogueSections.length > 10) {
+                const moreDiv = document.createElement('div');
+                moreDiv.className = 'text-center text-sm text-theme-secondary';
+                moreDiv.textContent = `... and ${dialogueData.dialogueSections.length - 10} more dialogue sections (all using narrator voice)`;
+                dialogueList.appendChild(moreDiv);
             }
-            
-            // Create narrator section using DOM elements
-            const narratorMainContainer = document.createElement('div');
-            narratorMainContainer.className = 'flex-1';
+
+            // Enable multi-voice button (now narrator-only)
+            const multiVoiceBtn = document.getElementById('multiVoiceBtn');
+            if (multiVoiceBtn) {
+                multiVoiceBtn.disabled = false;
+                multiVoiceBtn.textContent = 'Generate Narration (Narrator Voice Only)';
+            }
+        }
+
+        /* REMOVED: Large section of character voice assignment UI creation code - no longer needed */
             
             // Create narrator header section
             const narratorHeaderSection = document.createElement('div');
@@ -6812,35 +6715,21 @@ The room fell silent as everyone waited for Tom's response.
         }
 
         async function generateMultiVoiceNarration() {
-            console.log('🎵 === MULTI-VOICE NARRATION DEBUG START ===');
+            console.log('🎵 === NARRATOR-ONLY NARRATION START ===');
             
-            const assignments = dialogueData.voiceAssignments;
-            const characters = dialogueData.characters;
+            // Get narrator voice from main voice selection
+            const narratorVoiceSelect = document.getElementById('voiceSelection');
+            const narratorVoice = narratorVoiceSelect?.value;
             
-            console.log('Voice assignments:', assignments);
-            console.log('Characters found:', characters);
-            console.log('Full dialogue data:', dialogueData);
+            console.log('Narrator voice selected:', narratorVoice);
             
-            // Check if dialogue scanning was done first
-            if (!characters || characters.length === 0) {
-                console.log('❌ No characters found - dialogue scanning not done');
-                showNotification('Please scan story for dialogue first to identify characters.', 'error');
+            if (!narratorVoice) {
+                console.log('❌ No narrator voice selected');
+                showNotification('Please select a narrator voice from the main voice selection dropdown first.', 'error');
                 return;
             }
             
-            if (Object.keys(assignments).length === 0) {
-                console.log('❌ No voice assignments found');
-                console.log('Available characters that need voice assignment:', characters);
-                showNotification(`Please assign voices to characters first. Found characters: ${characters.join(', ')}, Narrator`, 'warning');
-                return;
-            }
-
-            if (!assignments['Narrator']) {
-                console.log('❌ No narrator voice assigned');
-                console.log('Current assignments:', Object.keys(assignments));
-                showNotification('Please assign a narrator voice. Scroll down to the "Narrator" section and select a voice.', 'warning');
-                return;
-            }
+            console.log('✅ Using narrator voice for ALL content (dialogue and narrative)');
             
             // Check if API key is available
             const apiKey = getOpenAIApiKey();
@@ -6851,8 +6740,7 @@ The room fell silent as everyone waited for Tom's response.
             }
             console.log('✅ OpenAI API key found');
             
-            console.log('✅ Voice assignments validated');
-            showLoading('Generating multi-voice narration...');
+            showLoading('Generating narration (narrator voice only)...');
             
             try {
                 // ENSURE FULL CONTENT - use the dedicated function that guarantees full content
@@ -6862,162 +6750,52 @@ The room fell silent as everyone waited for Tom's response.
                     throw new Error('No story content to narrate');
                 }
                 
-                console.log('🎙️ MULTI-VOICE GENERATION - Using FULL content:', content.length, 'characters');
+                console.log('🎙️ NARRATOR-ONLY GENERATION - Using FULL content:', content.length, 'characters');
 
-                // Store the plan for actual narration generation
-                storyData.voiceAssignments = assignments;
-                storyData.dialogueSections = dialogueData.dialogueSections;
+                // Simplified: ALL content uses narrator voice
+                const audioSegments = [{
+                    type: 'all_content',
+                    text: content,
+                    voice: narratorVoice,
+                    character: 'Narrator'
+                }];
                 
-                const audioSegments = [];
+                console.log('📝 Created single audio segment with narrator voice for all content');
                 
-                // Simplified approach: Create segments by splitting on dialogue patterns
-                const lines = content.split('\n').filter(line => line.trim());
+                // Generate single audio file with narrator voice
+                console.log('🎙️ Generating narrator audio for full story...');
                 
-                for (let i = 0; i < lines.length; i++) {
-                    const line = lines[i].trim();
+                try {
+                    const audioBlob = await generateSegmentAudio({
+                        type: 'all_content',
+                        text: content,
+                        voice: narratorVoice,
+                        character: 'Narrator'
+                    });
                     
-                    // Check if this line contains dialogue
-                    const characterMatch = line.match(/^(?:\[([^\]]+)\]|([A-Z][A-Z\s]*[A-Z])|([A-Z][a-z]+)):\s*"([^"]+)"/);
-                    
-                    if (characterMatch) {
-                        // This is character dialogue
-                        const character = characterMatch[1] || characterMatch[2] || characterMatch[3];
-                        const dialogueText = characterMatch[4];
+                    if (audioBlob) {
+                        console.log('✅ Narrator audio generation successful');
                         
-                        audioSegments.push({
-                            type: 'dialogue',
-                            text: dialogueText,
-                            voice: assignments[character] || assignments['Narrator'],
-                            character: character
-                        });
-                        
-                        // Add any remaining narrative part of the line
-                        const narrativePart = line.replace(/^(?:\[([^\]]+)\]|([A-Z][A-Z\s]*[A-Z])|([A-Z][a-z]+)):\s*"([^"]+)"\s*/, '').trim();
-                        if (narrativePart) {
-                            audioSegments.push({
-                                type: 'narrator',
-                                text: narrativePart,
-                                voice: assignments['Narrator'],
+                        // Display single result
+                        displayNarratorOnlyResults([{
+                            blob: audioBlob,
+                            segment: {
+                                type: 'all_content',
+                                text: content,
+                                voice: narratorVoice,
                                 character: 'Narrator'
-                            });
-                        }
-                    } else if (line.includes('"')) {
-                        // Handle quoted dialogue without character tags
-                        const quotes = line.match(/"([^"]+)"/g);
-                        if (quotes) {
-                            let remainingLine = line;
-                            quotes.forEach(quote => {
-                                const beforeQuote = remainingLine.substring(0, remainingLine.indexOf(quote)).trim();
-                                if (beforeQuote) {
-                                    audioSegments.push({
-                                        type: 'narrator',
-                                        text: beforeQuote,
-                                        voice: assignments['Narrator'],
-                                        character: 'Narrator'
-                                    });
-                                }
-                                
-                                const dialogueText = quote.replace(/"/g, '');
-                                audioSegments.push({
-                                    type: 'dialogue',
-                                    text: dialogueText,
-                                    voice: assignments['Unknown Speaker'] || assignments['Narrator'],
-                                    character: 'Unknown Speaker'
-                                });
-                                
-                                remainingLine = remainingLine.substring(remainingLine.indexOf(quote) + quote.length);
-                            });
-                            
-                            // Add remaining text after quotes
-                            if (remainingLine.trim()) {
-                                audioSegments.push({
-                                    type: 'narrator',
-                                    text: remainingLine.trim(),
-                                    voice: assignments['Narrator'],
-                                    character: 'Narrator'
-                                });
                             }
-                        }
-                    } else {
-                        // Pure narrative line
-                        audioSegments.push({
-                            type: 'narrator',
-                            text: line,
-                            voice: assignments['Narrator'],
-                            character: 'Narrator'
-                        });
-                    }
-                }
-                
-                // Show detailed progress
-                console.log('=== MULTI-VOICE GENERATION DEBUG ===');
-                console.log('Audio segments to generate:', audioSegments.length);
-                console.log('Voice assignments:', assignments);
-                
-                updateLoadingText(`Preparing ${audioSegments.length} audio segments...`);
-                const audioFiles = [];
-                const failedSegments = [];
-                
-                // Add progress tracking
-                for (let i = 0; i < audioSegments.length; i++) {
-                    const segment = audioSegments[i];
-                    const progress = Math.round(((i + 1) / audioSegments.length) * 100);
-                    
-                    updateLoadingText(`🎙️ Generating ${segment.character} (${i + 1}/${audioSegments.length}) - ${progress}%`);
-                    console.log(`Processing segment ${i + 1}: ${segment.character} - "${segment.text.substring(0, 50)}..."`);
-                    
-                    try {
-                        const audioBlob = await generateSegmentAudio(segment);
-                        if (audioBlob) {
-                            audioFiles.push({
-                                blob: audioBlob,
-                                segment: segment,
-                                index: i
-                            });
-                            console.log(`✅ Success: Generated audio for ${segment.character}`);
-                        } else {
-                            throw new Error('No audio blob returned');
-                        }
-                    } catch (segmentError) {
-                        console.error(`❌ Failed: Segment ${i} (${segment.character}):`, segmentError);
-                        failedSegments.push({
-                            index: i,
-                            character: segment.character,
-                            error: segmentError.message,
-                            text: segment.text.substring(0, 100)
-                        });
+                        }]);
                         
-                        // Show individual warnings but continue
-                        setTimeout(() => {
-                            showNotification(`⚠️ Failed: ${segment.character} - ${segmentError.message}`, 'warning');
-                        }, 100);
+                        hideLoading();
+                        showNotification('✅ Narrator-only narration generated successfully!', 'success');
+                    } else {
+                        throw new Error('Failed to generate narrator audio');
                     }
-                    
-                    // Small delay to prevent API rate limiting
-                    if (i < audioSegments.length - 1) {
-                        await new Promise(resolve => setTimeout(resolve, 500));
-                    }
-                }
-                
-                console.log('=== GENERATION RESULTS ===');
-                console.log(`✅ Successful: ${audioFiles.length}`);
-                console.log(`❌ Failed: ${failedSegments.length}`);
-                console.log('Failed segments:', failedSegments);
-                
-                if (audioFiles.length === 0) {
-                    const errorDetails = failedSegments.map(f => `${f.character}: ${f.error}`).join(', ');
-                    throw new Error(`No audio segments were generated successfully. Errors: ${errorDetails}`);
-                }
-                
-                // Display results with summary
-                displayMultiVoiceResults(audioFiles, assignments, failedSegments);
-                hideLoading();
-                
-                // Show comprehensive results notification
-                if (failedSegments.length === 0) {
-                    showNotification(`✅ Perfect! All ${audioFiles.length} audio segments generated successfully!`, 'success');
-                } else {
-                    showNotification(`⚠️ Partial success: ${audioFiles.length} segments generated, ${failedSegments.length} failed. Check results below.`, 'warning');
+                } catch (audioError) {
+                    console.error('❌ Narrator audio generation failed:', audioError);
+                    hideLoading();
+                    showNotification(`Failed to generate narrator audio: ${audioError.message}`, 'error');
                 }
                 
             } catch (error) {
@@ -7275,6 +7053,68 @@ The room fell silent as everyone waited for Tom's response.
                             </button>
                             <button onclick="downloadAllMultiVoiceAudio()" class="btn-outline px-6 py-2 rounded-lg w-full">
                                 <i class="fas fa-download mr-2"></i>Download Individual Segments
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            narrationResults.innerHTML = resultsHTML;
+        }
+
+        function displayNarratorOnlyResults(audioFiles) {
+            const narrationResults = document.getElementById('narrationResults');
+            if (!narrationResults) return;
+
+            const audioFile = audioFiles[0]; // Single audio file for narrator-only
+            const audioUrl = URL.createObjectURL(audioFile.blob);
+            const segment = audioFile.segment;
+            
+            // Calculate content stats
+            const wordCount = segment.text.split(/\s+/).length;
+            const charCount = segment.text.length;
+            const estimatedDuration = Math.round(wordCount / 2.5); // ~2.5 words per second average speaking rate
+
+            const resultsHTML = `
+                <div class="bg-theme-secondary p-6 rounded-xl border-2 border-theme">
+                    <h3 class="text-xl font-bold mb-4 text-green-400">
+                        <i class="fas fa-microphone mr-2"></i>Narrator-Only Audiobook Generated
+                    </h3>
+                    
+                    <div class="mb-4 p-3 bg-theme-primary rounded-lg border border-theme">
+                        <h4 class="font-semibold mb-2 text-cyan-400">Content Statistics:</h4>
+                        <div class="text-sm space-y-1">
+                            <div>• <span class="text-cyan-300">Voice:</span> ${segment.voice.replace('openai_', 'OpenAI ').replace('elevenlabs_', 'ElevenLabs ')}</div>
+                            <div>• <span class="text-cyan-300">Words:</span> ${wordCount.toLocaleString()}</div>
+                            <div>• <span class="text-cyan-300">Characters:</span> ${charCount.toLocaleString()}</div>
+                            <div>• <span class="text-cyan-300">Estimated Duration:</span> ~${Math.floor(estimatedDuration / 60)}:${(estimatedDuration % 60).toString().padStart(2, '0')} minutes</div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-theme-primary p-4 rounded-lg border border-theme mb-4">
+                        <div class="flex justify-between items-center mb-3">
+                            <div class="font-medium text-cyan-400">Complete Audiobook (Narrator Voice)</div>
+                            <button onclick="downloadAudio('${audioUrl}', 'narrator_audiobook.mp3')" 
+                                    class="text-cyan-400 hover:text-cyan-300 p-2 bg-theme-secondary rounded-lg">
+                                <i class="fas fa-download mr-1"></i> Download
+                            </button>
+                        </div>
+                        <audio controls class="w-full mb-3">
+                            <source src="${audioUrl}" type="audio/mp3">
+                            Your browser does not support the audio element.
+                        </audio>
+                        <div class="text-xs text-theme-secondary">
+                            All content (narrative and dialogue) narrated by the selected narrator voice
+                        </div>
+                    </div>
+                    
+                    <div class="text-center">
+                        <div class="bg-green-900 bg-opacity-20 border border-green-600 rounded-lg p-3 mb-4 text-sm">
+                            ✅ <strong>Success:</strong> Single narrator audiobook generated successfully
+                        </div>
+                        <div class="space-y-2">
+                            <button onclick="openAudioDAW()" class="btn-secondary px-6 py-2 rounded-lg w-full">
+                                <i class="fas fa-sliders-h mr-2"></i>Open Audio DAW
                             </button>
                         </div>
                     </div>
