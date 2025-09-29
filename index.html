@@ -8201,8 +8201,14 @@ Format as clean, readable text ready for narration.`;
                                 <div id="playhead" class="absolute top-0 w-0.5 bg-cyan-400 opacity-80 pointer-events-none" 
                                      style="height: 100%; left: 0px; transition: left 0.1s ease;"></div>
                                 <!-- Track Drop Zones -->
-                                <div id="trackDropZones" class="absolute inset-0 pointer-events-none">
-                                    <!-- Will be populated dynamically -->
+                                <div id="timelineDropZone" class="absolute inset-0 pointer-events-auto" 
+                                     ondrop="handleTimelineAudioDrop(event)" 
+                                     ondragover="handleTimelineDragOver(event)"
+                                     ondragenter="handleTimelineDragEnter(event)"
+                                     ondragleave="handleTimelineDragLeave(event)">
+                                    <!-- Visual drop indicator -->
+                                    <div id="dropIndicator" class="absolute hidden w-1 bg-green-400 opacity-75 pointer-events-none" 
+                                         style="top: 0; height: 100%; z-index: 200;"></div>
                                 </div>
                             </div>
                         </div>
@@ -9324,6 +9330,11 @@ Format as clean, readable text ready for narration.`;
             if (audioTools.selectionBox) {
                 drawSelectionBox(ctx);
             }
+            
+            // Draw dragged clip at new position
+            if (audioTools.draggedClip && audioTools.draggedClip.newTrackName !== audioTools.draggedClip.trackName) {
+                drawDraggedClipAtNewPosition(ctx);
+            }
         }
         
         // Draw selection box
@@ -9445,44 +9456,128 @@ Format as clean, readable text ready for narration.`;
             });
         }
         
-        // Draw audio block for music/sfx tracks
+        // Enhanced audio block drawing with drag state
         function drawAudioBlock(ctx, track, x, y, width, height, trackName) {
-            // Check if this track is selected
+            // Check states
             const isSelected = audioTools.selectedClips.find(clip => clip.trackName === trackName);
+            const isDragging = audioTools.draggedClip && audioTools.draggedClip.trackName === trackName;
             
-            // Draw audio background
-            ctx.fillStyle = isSelected ? '#fbbf24' : (track.color || '#4b5563');
-            ctx.globalAlpha = 0.7;
+            // If this clip is being dragged, draw it at the new position
+            if (isDragging && audioTools.draggedClip.newStartTime !== undefined) {
+                const totalDuration = Math.max(getMaxTrackDuration(), 60);
+                const canvasWidth = audioDAW.canvas.offsetWidth;
+                const newX = (audioTools.draggedClip.newStartTime / totalDuration) * canvasWidth;
+                
+                // If moving to a different track, don't draw in original position
+                if (audioTools.draggedClip.newTrackName !== trackName) {
+                    return; // Don't draw in original position
+                }
+                
+                // Draw at new position with drag feedback
+                drawClipBlock(ctx, newX, y, width, height, track.color, trackName, true, isSelected);
+                return;
+            }
+            
+            // Draw at normal position
+            drawClipBlock(ctx, x, y, width, height, track.color, trackName, false, isSelected);
+        }
+
+        // Draw a clip block with various states
+        function drawClipBlock(ctx, x, y, width, height, color, trackName, isDragging, isSelected) {
+            // Determine colors and opacity based on state
+            let fillColor = color || '#4b5563';
+            let strokeColor = color || '#6b7280';
+            let opacity = isDragging ? 0.8 : 0.7;
+            let strokeWidth = 2;
+            
+            if (isSelected) {
+                fillColor = '#fbbf24';
+                strokeColor = '#f59e0b';
+                strokeWidth = 3;
+            }
+            
+            if (isDragging) {
+                strokeColor = '#22d3ee';
+                strokeWidth = 3;
+            }
+            
+            // Draw shadow for dragging effect
+            if (isDragging) {
+                ctx.shadowColor = 'rgba(34, 211, 238, 0.5)';
+                ctx.shadowBlur = 10;
+                ctx.shadowOffsetX = 2;
+                ctx.shadowOffsetY = 2;
+            }
+            
+            // Draw background
+            ctx.fillStyle = fillColor;
+            ctx.globalAlpha = opacity;
             ctx.fillRect(x, y, width, height);
             
-            // Draw audio border with selection highlight
+            // Draw border
             ctx.globalAlpha = 1;
-            ctx.strokeStyle = isSelected ? '#f59e0b' : (track.color || '#6b7280');
-            ctx.lineWidth = isSelected ? 3 : 2;
+            ctx.strokeStyle = strokeColor;
+            ctx.lineWidth = strokeWidth;
             ctx.strokeRect(x, y, width, height);
             
-            // Draw selection glow effect
-            if (isSelected) {
-                ctx.shadowColor = '#fbbf24';
-                ctx.shadowBlur = 8;
-                ctx.strokeRect(x, y, width, height);
-                ctx.shadowBlur = 0;
+            // Reset shadow
+            ctx.shadowBlur = 0;
+            ctx.shadowOffsetX = 0;
+            ctx.shadowOffsetY = 0;
+            
+            // Draw waveform placeholder
+            if (width > 30) {
+                drawClipWaveform(ctx, x, y, width, height);
             }
             
-            // Draw waveform if block is large enough
-            if (width > 50 && track.buffer) {
-                const waveColor = isSelected ? '#ffffff' : '#ffffff';
-                drawSimpleWaveform(ctx, track.buffer, x + 2, y + 2, width - 4, height - 4, waveColor);
-            }
-            
-            // Draw track name on the audio block
-            if (width > 80) {
-                ctx.fillStyle = isSelected ? '#000000' : '#ffffff';
-                ctx.font = 'bold 10px Arial';
+            // Draw label
+            if (width > 60) {
+                ctx.fillStyle = isDragging ? '#ffffff' : (isSelected ? '#000000' : '#ffffff');
+                ctx.font = 'bold 9px Arial';
                 ctx.textAlign = 'center';
-                ctx.fillText(trackName.toUpperCase(), x + width/2, y + height/2 + 3);
+                const label = trackName.toUpperCase();
+                ctx.fillText(label, x + width/2, y + height/2 + 2);
                 ctx.textAlign = 'start';
             }
+        }
+
+        // Draw clip being dragged to a new track
+        function drawDraggedClipAtNewPosition(ctx) {
+            const clip = audioTools.draggedClip;
+            if (!clip || clip.newTrackName === undefined || clip.newStartTime === undefined) return;
+            
+            // Calculate new position
+            const totalDuration = Math.max(getMaxTrackDuration(), 60);
+            const canvasWidth = audioDAW.canvas.offsetWidth;
+            const canvasHeight = audioDAW.canvas.offsetHeight;
+            const headerHeight = 30;
+            const trackHeight = (canvasHeight - headerHeight) / 5;
+            
+            const newX = (clip.newStartTime / totalDuration) * canvasWidth;
+            const newY = headerHeight + (clip.newTrackIndex * trackHeight) + 2;
+            const width = clip.width;
+            const height = trackHeight - 4;
+            
+            // Draw the clip at new position
+            drawClipBlock(ctx, newX, newY, width, height, '#22d3ee', clip.newTrackName, true, false);
+        }
+
+        // Simple waveform representation
+        function drawClipWaveform(ctx, x, y, width, height) {
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+            ctx.lineWidth = 1;
+            
+            const centerY = y + height / 2;
+            const waveWidth = width - 8;
+            const waveX = x + 4;
+            
+            ctx.beginPath();
+            for (let i = 0; i < waveWidth; i += 4) {
+                const waveHeight = (Math.sin(i * 0.1) * 0.3 + Math.random() * 0.2) * height * 0.3;
+                ctx.moveTo(waveX + i, centerY - waveHeight);
+                ctx.lineTo(waveX + i, centerY + waveHeight);
+            }
+            ctx.stroke();
         }
         
         // Draw simplified waveform
@@ -9556,7 +9651,7 @@ Format as clean, readable text ready for narration.`;
             });
         }
         
-        // Comprehensive Timeline Mouse Handlers
+        // Rewritten Timeline Mouse Handlers - Proper Separation of Concerns
         function handleTimelineMouseDown(event) {
             const rect = audioDAW.canvas.getBoundingClientRect();
             const x = event.clientX - rect.left;
@@ -9567,15 +9662,60 @@ Format as clean, readable text ready for narration.`;
             
             console.log(`🖱️ Mouse down at (${x}, ${y}) with tool: ${audioTools.currentTool}`);
             
+            // FIRST: Check if clicking on an audio clip
+            const clickedClip = getAudioClipAt(x, y);
+            
+            if (clickedClip) {
+                console.log(`🎵 Clicked on audio clip: ${clickedClip.name}`);
+                // Handle clip interaction based on current tool
+                handleClipInteraction(event, x, y, clickedClip);
+            } else {
+                console.log(`🎵 Clicked on empty timeline`);
+                // Handle empty timeline interaction
+                handleEmptyTimelineInteraction(event, x, y);
+            }
+        }
+
+        function handleClipInteraction(event, x, y, clip) {
+            // Clear any previous timeline seeking state
+            audioDAW.isDragging = false;
+            
             switch(audioTools.currentTool) {
                 case 'select':
-                    handleSelectMouseDown(event, x, y);
+                    handleClipSelection(event, clip);
                     break;
                 case 'hand':
-                    handleHandMouseDown(event, x, y);
+                    startClipDrag(event, x, y, clip);
                     break;
                 case 'cut':
+                    // Cut tool still works on clips
                     handleCutMouseDown(event, x, y);
+                    break;
+            }
+        }
+
+        function handleEmptyTimelineInteraction(event, x, y) {
+            switch(audioTools.currentTool) {
+                case 'select':
+                    // Start selection box OR seek timeline
+                    if (y < 30) {
+                        // Clicked in header area - seek timeline
+                        handleTimelineSeek(event);
+                    } else {
+                        // Clicked in track area - start selection box
+                        if (!event.ctrlKey && !event.metaKey) {
+                            clearSelection();
+                        }
+                        startSelectionBox(x, y);
+                    }
+                    break;
+                case 'hand':
+                    // Hand tool seeks timeline when not on clips
+                    handleTimelineSeek(event);
+                    audioDAW.isDragging = true;
+                    break;
+                case 'cut':
+                    // Cut tool does nothing on empty timeline
                     break;
             }
         }
@@ -9587,16 +9727,71 @@ Format as clean, readable text ready for narration.`;
             const x = event.clientX - rect.left;
             const y = event.clientY - rect.top;
             
+            // Handle clip dragging first (highest priority)
+            if (audioTools.draggedClip) {
+                handleClipDrag(event, x, y);
+                return;
+            }
+            
+            // Handle selection box
+            if (audioTools.selectionBox) {
+                updateSelectionBox(x, y);
+                return;
+            }
+            
+            // Handle timeline dragging for seeking
+            if (audioDAW.isDragging) {
+                handleTimelineSeek(event);
+                return;
+            }
+            
+            // Tool-specific handling
             switch(audioTools.currentTool) {
-                case 'select':
-                    handleSelectMouseMove(event, x, y);
-                    break;
-                case 'hand':
-                    handleHandMouseMove(event, x, y);
-                    break;
                 case 'cut':
                     handleCutMouseMove(event, x, y);
                     break;
+            }
+        }
+
+        function handleClipDrag(event, x, y) {
+            if (!audioTools.draggedClip) return;
+            
+            const clip = audioTools.draggedClip;
+            
+            // Calculate new position
+            const canvasWidth = audioDAW.canvas.offsetWidth;
+            const canvasHeight = audioDAW.canvas.offsetHeight;
+            const totalDuration = Math.max(getMaxTrackDuration(), 60);
+            
+            // Calculate new time position
+            const newX = x - audioTools.dragOffset.x;
+            const newTime = Math.max(0, (newX / canvasWidth) * totalDuration);
+            
+            // Calculate new track
+            const headerHeight = 30;
+            const trackHeight = (canvasHeight - headerHeight) / 5;
+            const newY = y - audioTools.dragOffset.y;
+            const newTrackIndex = Math.floor((newY - headerHeight) / trackHeight);
+            const trackNames = ['narration', 'music1', 'music2', 'sfx1', 'sfx2'];
+            const newTrackName = trackNames[newTrackIndex];
+            
+            // Only allow moving to valid tracks
+            if (newTrackName && newTrackIndex >= 0 && newTrackIndex < trackNames.length) {
+                // For narration, don't allow repositioning multi-part
+                if (clip.trackName === 'narration' && clip.isMultiPart) {
+                    console.log('⚠️ Cannot move multi-part narration');
+                    return;
+                }
+                
+                // Update clip position (visual only for now)
+                clip.newStartTime = newTime;
+                clip.newTrackName = newTrackName;
+                clip.newTrackIndex = newTrackIndex;
+                
+                // Redraw timeline with updated position
+                drawEnhancedTimeline();
+                
+                console.log(`🤏 Dragging to ${newTrackName} at ${formatTime(newTime)}`);
             }
         }
 
@@ -9607,121 +9802,140 @@ Format as clean, readable text ready for narration.`;
             
             console.log(`🖱️ Mouse up at (${x}, ${y}) with tool: ${audioTools.currentTool}`);
             
-            switch(audioTools.currentTool) {
-                case 'select':
-                    handleSelectMouseUp(event, x, y);
-                    break;
-                case 'hand':
-                    handleHandMouseUp(event, x, y);
-                    break;
-                case 'cut':
-                    handleCutMouseUp(event, x, y);
-                    break;
+            // Handle clip drag completion (highest priority)
+            if (audioTools.draggedClip) {
+                finishClipDrag();
+                return;
             }
             
+            // Handle selection box completion
+            if (audioTools.selectionBox) {
+                finishSelectionBox();
+                return;
+            }
+            
+            // Handle cut tool
+            if (audioTools.currentTool === 'cut') {
+                handleCutMouseUp(event, x, y);
+            }
+            
+            // Clean up states
             audioTools.mouseDown = false;
+            audioDAW.isDragging = false;
+        }
+
+        function finishClipDrag() {
+            if (!audioTools.draggedClip) return;
+            
+            const clip = audioTools.draggedClip;
+            
+            console.log(`🤏 Finishing drag of ${clip.name}`);
+            
+            // Apply the position change if valid
+            if (clip.newTrackName && clip.newStartTime !== undefined) {
+                const success = moveClipToNewPosition(clip, clip.newTrackName, clip.newStartTime);
+                
+                if (success) {
+                    showNotification(`Moved ${clip.name} to ${clip.newTrackName} at ${formatTime(clip.newStartTime)}`, 'success');
+                } else {
+                    showNotification('Could not move clip to that position', 'error');
+                }
+            }
+            
+            // Clean up
+            audioTools.draggedClip = null;
+            audioDAW.canvas.style.cursor = audioTools.currentTool === 'hand' ? 'grab' : 'default';
+            
+            // Redraw timeline
+            drawEnhancedTimeline();
+        }
+
+        function moveClipToNewPosition(clip, newTrackName, newStartTime) {
+            try {
+                console.log(`🚀 Moving ${clip.trackName} to ${newTrackName} at ${formatTime(newStartTime)}`);
+                
+                // Don't allow moving to narration track
+                if (newTrackName === 'narration') {
+                    console.warn('⚠️ Cannot move clips to narration track');
+                    return false;
+                }
+                
+                // Get the audio data
+                const sourceTrack = audioDAW.tracks[clip.trackName];
+                const targetTrack = audioDAW.tracks[newTrackName];
+                
+                if (!sourceTrack || !sourceTrack.buffer) {
+                    console.error('❌ Source track has no audio');
+                    return false;
+                }
+                
+                // Clear source track if moving to different track
+                if (clip.trackName !== newTrackName) {
+                    // Check if target track is empty
+                    if (targetTrack.buffer) {
+                        console.warn('⚠️ Target track is not empty');
+                        return false;
+                    }
+                    
+                    // Move audio to new track
+                    targetTrack.buffer = sourceTrack.buffer;
+                    targetTrack.startTime = newStartTime;
+                    targetTrack.duration = sourceTrack.buffer.duration;
+                    
+                    // Clear source track
+                    sourceTrack.buffer = null;
+                    sourceTrack.startTime = 0;
+                    sourceTrack.duration = 0;
+                } else {
+                    // Same track, just update position
+                    sourceTrack.startTime = newStartTime;
+                }
+                
+                console.log('✅ Clip moved successfully');
+                return true;
+                
+            } catch (error) {
+                console.error('❌ Error moving clip:', error);
+                return false;
+            }
         }
 
         // SELECT TOOL HANDLERS
-        function handleSelectMouseDown(event, x, y) {
-            // Check if clicking on an audio clip
-            const clickedClip = getAudioClipAt(x, y);
+        // Proper Clip Selection Handler
+        function handleClipSelection(event, clip) {
+            console.log(`🔘 Selecting clip: ${clip.name}`);
             
-            if (clickedClip) {
-                // Select/deselect clip
-                if (!event.ctrlKey && !event.metaKey) {
-                    clearSelection();
-                }
-                toggleClipSelection(clickedClip);
-            } else {
-                // Start selection box
-                if (!event.ctrlKey && !event.metaKey) {
-                    clearSelection();
-                }
-                startSelectionBox(x, y);
+            if (!event.ctrlKey && !event.metaKey) {
+                // Clear other selections unless holding Ctrl
+                clearSelection();
             }
-        }
-
-        function handleSelectMouseMove(event, x, y) {
-            if (audioTools.selectionBox) {
-                updateSelectionBox(x, y);
-            }
-        }
-
-        function handleSelectMouseUp(event, x, y) {
-            if (audioTools.selectionBox) {
-                finishSelectionBox();
-            }
-        }
-
-        // HAND TOOL HANDLERS
-        function handleHandMouseDown(event, x, y) {
-            const clickedClip = getAudioClipAt(x, y);
             
-            if (clickedClip) {
-                // Start dragging clip
-                audioTools.draggedClip = clickedClip;
-                audioTools.dragOffset = {
-                    x: x - clickedClip.x,
-                    y: y - clickedClip.y
-                };
-                
-                if (clickedClip.element) {
-                    clickedClip.element.classList.add('dragging');
-                }
-                
-                audioDAW.canvas.style.cursor = 'grabbing';
-                console.log('🤏 Started dragging clip:', clickedClip.name);
-            } else {
-                // Timeline seeking
-                handleTimelineSeek(event);
-            }
+            toggleClipSelection(clip);
+            
+            // Prevent timeline seeking
+            event.stopPropagation();
         }
 
-        function handleHandMouseMove(event, x, y) {
-            if (audioTools.draggedClip) {
-                // Update clip position
-                const newX = x - audioTools.dragOffset.x;
-                const newY = y - audioTools.dragOffset.y;
-                
-                // Calculate new time position
-                const totalDuration = getMaxTrackDuration();
-                const timelineWidth = audioDAW.canvas.offsetWidth;
-                const newTime = (newX / timelineWidth) * totalDuration;
-                
-                // Determine new track
-                const trackHeight = audioDAW.canvas.offsetHeight / 5;
-                const newTrackIndex = Math.floor((newY - 30) / trackHeight);
-                const trackNames = ['narration', 'music1', 'music2', 'sfx1', 'sfx2'];
-                const newTrack = trackNames[newTrackIndex];
-                
-                if (newTrack && newTime >= 0) {
-                    audioTools.draggedClip.startTime = newTime;
-                    audioTools.draggedClip.trackName = newTrack;
-                    
-                    // Redraw timeline to show new position
-                    drawEnhancedTimeline();
-                }
-            }
+        // Clip Dragging System
+        function startClipDrag(event, x, y, clip) {
+            console.log(`🤏 Starting drag of clip: ${clip.name}`);
+            
+            audioTools.draggedClip = clip;
+            audioTools.dragStartTime = clip.startTime;
+            audioTools.dragOffset = {
+                x: x - clip.x,
+                y: y - clip.y
+            };
+            
+            // Visual feedback
+            audioDAW.canvas.style.cursor = 'grabbing';
+            
+            // Prevent timeline seeking
+            event.stopPropagation();
+            audioDAW.isDragging = false;
         }
 
-        function handleHandMouseUp(event, x, y) {
-            if (audioTools.draggedClip) {
-                console.log('🤏 Finished dragging clip to:', audioTools.draggedClip.startTime, 'on track:', audioTools.draggedClip.trackName);
-                
-                // Apply the position change to the actual audio track
-                updateAudioClipPosition(audioTools.draggedClip);
-                
-                if (audioTools.draggedClip.element) {
-                    audioTools.draggedClip.element.classList.remove('dragging');
-                }
-                
-                audioTools.draggedClip = null;
-                audioDAW.canvas.style.cursor = 'grab';
-                
-                showNotification('Audio clip repositioned', 'success');
-            }
-        }
+
 
         // CUT TOOL HANDLERS
         function handleCutMouseDown(event, x, y) {
@@ -9775,40 +9989,112 @@ Format as clean, readable text ready for narration.`;
             drawEnhancedTimeline();
         }
 
-        // Audio Clip Management Functions
+        // Enhanced Audio Clip Detection and Management
         function getAudioClipAt(x, y) {
-            // Calculate which track and time position was clicked
-            const trackHeight = (audioDAW.canvas.offsetHeight - 40) / 5;
-            const trackIndex = Math.floor((y - 30) / trackHeight);
+            console.log(`🔍 Checking for clip at (${x}, ${y})`);
+            
+            // Calculate dimensions
+            const canvasHeight = audioDAW.canvas.offsetHeight;
+            const canvasWidth = audioDAW.canvas.offsetWidth;
+            const headerHeight = 30;
+            const trackHeight = (canvasHeight - headerHeight) / 5;
+            
+            // Check if click is in track area (below header)
+            if (y < headerHeight) {
+                console.log('🔍 Click in header area, no clip');
+                return null;
+            }
+            
+            // Calculate which track
+            const trackIndex = Math.floor((y - headerHeight) / trackHeight);
             const trackNames = ['narration', 'music1', 'music2', 'sfx1', 'sfx2'];
             const trackName = trackNames[trackIndex];
             
-            if (!trackName) return null;
+            if (!trackName || trackIndex < 0 || trackIndex >= trackNames.length) {
+                console.log('🔍 Invalid track index:', trackIndex);
+                return null;
+            }
             
-            // Calculate time position
-            const totalDuration = getMaxTrackDuration();
-            const timePosition = (x / audioDAW.canvas.offsetWidth) * totalDuration;
+            console.log(`🔍 Checking track: ${trackName}`);
             
-            // Check if there's an audio clip at this position
+            // Check for multi-part narration
+            if (trackName === 'narration' && audioDAW.tracks.narration.buffers) {
+                return getMultiPartNarrationClipAt(x, y, trackIndex, trackHeight, canvasWidth);
+            }
+            
+            // Check single track
             const track = audioDAW.tracks[trackName];
-            if (!track || !track.buffer) return null;
+            if (!track || !track.buffer) {
+                console.log(`🔍 No audio in track: ${trackName}`);
+                return null;
+            }
             
+            // Calculate time position and clip bounds
+            const totalDuration = Math.max(getMaxTrackDuration(), 60);
+            const timePosition = (x / canvasWidth) * totalDuration;
             const clipStartTime = track.startTime || 0;
             const clipEndTime = clipStartTime + track.buffer.duration;
             
+            console.log(`🔍 Time: ${formatTime(timePosition)}, Clip: ${formatTime(clipStartTime)} - ${formatTime(clipEndTime)}`);
+            
+            // Check if click is within the clip
             if (timePosition >= clipStartTime && timePosition <= clipEndTime) {
+                const clipX = (clipStartTime / totalDuration) * canvasWidth;
+                const clipWidth = (track.buffer.duration / totalDuration) * canvasWidth;
+                const clipY = headerHeight + (trackIndex * trackHeight) + 2;
+                const clipHeight = trackHeight - 4;
+                
+                console.log(`🔍 ✅ Found clip in ${trackName}!`);
+                
                 return {
                     trackName: trackName,
+                    trackIndex: trackIndex,
                     startTime: clipStartTime,
                     endTime: clipEndTime,
                     duration: track.buffer.duration,
                     buffer: track.buffer,
-                    x: (clipStartTime / totalDuration) * audioDAW.canvas.offsetWidth,
-                    y: 30 + (trackIndex * trackHeight),
-                    width: (track.buffer.duration / totalDuration) * audioDAW.canvas.offsetWidth,
-                    height: trackHeight - 4,
-                    name: `${trackName}_audio`
+                    x: clipX,
+                    y: clipY,
+                    width: clipWidth,
+                    height: clipHeight,
+                    name: `${trackName}_audio`,
+                    track: track
                 };
+            }
+            
+            console.log(`🔍 No clip at this position in ${trackName}`);
+            return null;
+        }
+
+        function getMultiPartNarrationClipAt(x, y, trackIndex, trackHeight, canvasWidth) {
+            const buffers = audioDAW.tracks.narration.buffers;
+            const totalDuration = Math.max(getMaxTrackDuration(), 60);
+            const timePosition = (x / canvasWidth) * totalDuration;
+            
+            for (let i = 0; i < buffers.length; i++) {
+                const part = buffers[i];
+                const partEndTime = part.startTime + part.buffer.duration;
+                
+                if (timePosition >= part.startTime && timePosition <= partEndTime) {
+                    const clipX = (part.startTime / totalDuration) * canvasWidth;
+                    const clipWidth = (part.buffer.duration / totalDuration) * canvasWidth;
+                    
+                    return {
+                        trackName: 'narration',
+                        trackIndex: trackIndex,
+                        startTime: part.startTime,
+                        endTime: partEndTime,
+                        duration: part.buffer.duration,
+                        buffer: part.buffer,
+                        x: clipX,
+                        y: 30 + (trackIndex * trackHeight) + 2,
+                        width: clipWidth,
+                        height: trackHeight - 4,
+                        name: `narration_part_${part.partNumber}`,
+                        partIndex: i,
+                        isMultiPart: true
+                    };
+                }
             }
             
             return null;
@@ -10218,99 +10504,183 @@ Format as clean, readable text ready for narration.`;
             });
         }
 
-        // Drag and Drop Audio Asset Functions
+        // Enhanced Drag and Drop System
         function setupDragAndDrop() {
-            // Make audio elements draggable
-            const setupDraggableAudio = () => {
-                document.querySelectorAll('audio').forEach(audio => {
-                    audio.setAttribute('draggable', 'true');
-                    audio.addEventListener('dragstart', handleAudioDragStart);
-                });
-            };
-
-            // Setup drop zones for tracks
-            const trackNames = ['music1', 'music2', 'sfx1', 'sfx2'];
-            trackNames.forEach(trackName => {
-                const trackElement = document.querySelector(`[data-track="${trackName}"]`);
-                if (trackElement) {
-                    trackElement.addEventListener('dragover', handleDragOver);
-                    trackElement.addEventListener('drop', (e) => handleAudioDrop(e, trackName));
-                }
-            });
-
-            // Setup for timeline canvas
-            if (audioDAW.canvas) {
-                audioDAW.canvas.addEventListener('dragover', handleDragOver);
-                audioDAW.canvas.addEventListener('drop', handleTimelineDrop);
-            }
-
-            setupDraggableAudio();
+            console.log('🎵 Setting up enhanced drag and drop system...');
+            
+            // Make all audio elements draggable
+            setupDraggableAudioElements();
+            
+            // Setup file drop support
+            setupFileDropSupport();
+            
+            console.log('✅ Drag and drop system ready');
         }
 
-        function handleAudioDragStart(event) {
-            const audioSrc = event.target.src || event.target.currentSrc;
+        function setupDraggableAudioElements() {
+            // Find all audio elements and make them draggable
+            const setupAudioElements = () => {
+                document.querySelectorAll('audio').forEach((audio, index) => {
+                    audio.setAttribute('draggable', 'true');
+                    audio.addEventListener('dragstart', handleAudioElementDragStart);
+                    
+                    // Also make the container draggable
+                    const container = audio.closest('.bg-theme-primary, .border');
+                    if (container && !container.hasAttribute('draggable')) {
+                        container.setAttribute('draggable', 'true');
+                        container.addEventListener('dragstart', (e) => {
+                            // Use the audio source from this container
+                            const audioElement = container.querySelector('audio');
+                            if (audioElement) {
+                                handleAudioElementDragStart.call(audioElement, e);
+                            }
+                        });
+                    }
+                });
+            };
             
-            // Validate audio source before allowing drag
-            if (!audioSrc || (!audioSrc.startsWith('http') && !audioSrc.startsWith('blob') && !audioSrc.startsWith('data'))) {
-                console.warn('⚠️ Invalid audio source for drag:', audioSrc);
+            // Setup initially and watch for new audio elements
+            setupAudioElements();
+            
+            // Re-setup when new audio is added
+            const observer = new MutationObserver(() => {
+                setupAudioElements();
+            });
+            
+            const narrationResults = document.getElementById('narrationResults');
+            if (narrationResults) {
+                observer.observe(narrationResults, { childList: true, subtree: true });
+            }
+        }
+
+        function setupFileDropSupport() {
+            // Add file input drag support
+            document.querySelectorAll('input[type="file"][accept*="audio"]').forEach(fileInput => {
+                const container = fileInput.parentElement;
+                if (container) {
+                    container.addEventListener('dragover', (e) => {
+                        e.preventDefault();
+                        container.style.backgroundColor = 'rgba(34, 211, 238, 0.1)';
+                        container.style.borderColor = '#22d3ee';
+                    });
+                    
+                    container.addEventListener('dragleave', (e) => {
+                        container.style.backgroundColor = '';
+                        container.style.borderColor = '';
+                    });
+                    
+                    container.addEventListener('drop', (e) => {
+                        e.preventDefault();
+                        container.style.backgroundColor = '';
+                        container.style.borderColor = '';
+                        
+                        const files = e.dataTransfer.files;
+                        if (files.length > 0) {
+                            const audioFile = Array.from(files).find(f => f.type.startsWith('audio/'));
+                            if (audioFile) {
+                                fileInput.files = files;
+                                fileInput.dispatchEvent(new Event('change'));
+                            }
+                        }
+                    });
+                }
+            });
+        }
+
+        // Timeline Drop Handlers
+        function handleAudioElementDragStart(event) {
+            const audioSrc = this.src || this.currentSrc;
+            
+            if (!audioSrc) {
+                console.warn('⚠️ No audio source found');
                 event.preventDefault();
                 return;
             }
             
-            console.log('🎵 Starting audio drag:', audioSrc);
+            console.log('🎵 Starting drag from audio element:', audioSrc);
             
             event.dataTransfer.setData('text/plain', audioSrc);
             event.dataTransfer.setData('audio/src', audioSrc);
-            
-            // Store additional data about the audio
-            event.dataTransfer.setData('audio/duration', event.target.duration || '0');
+            event.dataTransfer.setData('audio/duration', this.duration || '0');
             event.dataTransfer.effectAllowed = 'copy';
+            
+            // Add visual feedback
+            event.target.style.opacity = '0.5';
+            setTimeout(() => {
+                if (event.target) event.target.style.opacity = '';
+            }, 100);
         }
 
-        function handleDragOver(event) {
+        function handleTimelineDragOver(event) {
             event.preventDefault();
             event.dataTransfer.dropEffect = 'copy';
-        }
-
-        function handleAudioDrop(event, trackName) {
-            event.preventDefault();
-            console.log('🎵 Audio drop detected on', trackName);
             
-            const audioSrc = event.dataTransfer.getData('audio/src') || event.dataTransfer.getData('text/plain');
-            console.log('🎵 Audio source:', audioSrc);
-            
-            if (audioSrc && trackName && (audioSrc.includes('blob:') || audioSrc.includes('http'))) {
-                console.log('🎵 Loading audio to track:', trackName);
-                loadAudioToTrack(audioSrc, trackName, 0);
-            } else {
-                console.warn('⚠️ Invalid audio source or track name');
-                showNotification('Invalid audio file for drag and drop', 'warning');
+            // Show drop indicator
+            const rect = event.currentTarget.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const indicator = document.getElementById('dropIndicator');
+            if (indicator) {
+                indicator.style.left = x + 'px';
+                indicator.classList.remove('hidden');
             }
         }
 
-        function handleTimelineDrop(event) {
+        function handleTimelineDragEnter(event) {
             event.preventDefault();
+            console.log('🎵 Drag enter timeline');
+        }
+
+        function handleTimelineDragLeave(event) {
+            // Hide drop indicator when leaving
+            const indicator = document.getElementById('dropIndicator');
+            if (indicator) {
+                indicator.classList.add('hidden');
+            }
+        }
+
+        function handleTimelineAudioDrop(event) {
+            event.preventDefault();
+            console.log('🎵 Audio dropped on timeline!');
+            
+            // Hide drop indicator
+            const indicator = document.getElementById('dropIndicator');
+            if (indicator) {
+                indicator.classList.add('hidden');
+            }
+            
             const audioSrc = event.dataTransfer.getData('audio/src') || event.dataTransfer.getData('text/plain');
             
-            if (audioSrc) {
-                // Calculate drop position on timeline
-                const rect = audioDAW.canvas.getBoundingClientRect();
-                const x = event.clientX - rect.left;
-                const width = rect.width;
-                const totalDuration = getMaxTrackDuration();
-                const dropTime = (x / width) * totalDuration;
-
-                // Determine which track based on Y position
-                const y = event.clientY - rect.top;
-                const trackHeight = rect.height / 5;
-                const trackIndex = Math.floor(y / trackHeight);
-                const trackNames = ['narration', 'music1', 'music2', 'sfx1', 'sfx2'];
-                
-                if (trackIndex >= 1 && trackIndex < trackNames.length) { // Skip narration track
-                    const trackName = trackNames[trackIndex];
-                    loadAudioToTrack(audioSrc, trackName, dropTime);
-                }
+            if (!audioSrc) {
+                console.warn('⚠️ No audio source in drop');
+                showNotification('No audio data found', 'error');
+                return;
             }
+            
+            // Calculate drop position
+            const rect = event.currentTarget.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+            
+            // Calculate time position
+            const totalDuration = Math.max(getMaxTrackDuration(), 60); // Minimum 60 seconds
+            const dropTime = (x / rect.width) * totalDuration;
+            
+            // Calculate track
+            const trackHeight = rect.height / 5;
+            const trackIndex = Math.floor(y / trackHeight);
+            const trackNames = ['narration', 'music1', 'music2', 'sfx1', 'sfx2'];
+            const targetTrack = trackNames[trackIndex];
+            
+            if (!targetTrack) {
+                console.warn('⚠️ Invalid drop position');
+                showNotification('Drop outside of track area', 'warning');
+                return;
+            }
+            
+            console.log(`🎵 Dropping audio on ${targetTrack} at ${formatTime(dropTime)}`);
+            
+            // Load audio to the specified track and position
+            loadAudioToTrack(audioSrc, targetTrack, dropTime);
         }
 
         // Load audio file to specific track at specific time
