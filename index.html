@@ -8237,6 +8237,33 @@ Format as clean, readable text ready for narration.`;
             }, 100);
         }
 
+        // Close and cleanup DAW
+        function closeAudioDAW() {
+            console.log('🔄 Closing Audio DAW...');
+            
+            // Stop any playing audio
+            if (audioDAW.isPlaying) {
+                stopDAWAudio();
+            }
+            
+            // Clear selection and reset states
+            clearSelection();
+            audioTools.draggedClip = null;
+            audioTools.selectionBox = null;
+            
+            // Remove the modal
+            const modal = document.getElementById('audioDAWModal');
+            if (modal) {
+                modal.remove();
+            }
+            
+            // Reset initialization flag to allow proper reinitialization
+            audioDAW.initialized = false;
+            
+            console.log('✅ DAW closed and reset');
+        }
+        }
+
         // Professional DAW Fader Functions
         
         // Convert percentage to dB scale (professional audio scale)
@@ -8415,15 +8442,22 @@ Format as clean, readable text ready for narration.`;
             let fadersCreated = 0;
 
             faderConfigs.forEach(([trackName, containerId, initialValue, label, callback]) => {
+                console.log(`🎚️ Attempting to create fader for ${trackName} in container ${containerId}`);
+                
                 const container = document.getElementById(containerId);
                 if (container) {
-                    console.log(`✅ Creating fader for ${trackName}`);
+                    console.log(`✅ Found container for ${trackName}`);
+                    
+                    // Clear existing content
+                    container.innerHTML = '';
                     
                     // Try professional fader first, fallback to simple if it fails
                     try {
-                        container.innerHTML = createProfessionalFaderHTML(trackName, initialValue, label);
+                        const faderHTML = createProfessionalFaderHTML(trackName, initialValue, label);
+                        container.innerHTML = faderHTML;
                         setupFaderInteraction(trackName, initialValue);
                         fadersCreated++;
+                        console.log(`✅ Professional fader created for ${trackName}`);
                     } catch (error) {
                         console.warn(`⚠️ Professional fader failed for ${trackName}, using simple fader:`, error);
                         // Create simple working fader as fallback
@@ -8435,9 +8469,12 @@ Format as clean, readable text ready for narration.`;
                             <div id="${trackName}VolumeLabel" style="color: #00bcd4; font-size: 10px; text-align: center; margin-top: 5px;">${initialValue}%</div>
                         `;
                         fadersCreated++;
+                        console.log(`✅ Simple fallback fader created for ${trackName}`);
                     }
                 } else {
                     console.error(`❌ Container not found: ${containerId}`);
+                    // Try to find the container in the DOM
+                    console.log('🔍 Available containers:', Array.from(document.querySelectorAll('[id*="FaderContainer"]')).map(el => el.id));
                 }
             });
 
@@ -8514,14 +8551,23 @@ Format as clean, readable text ready for narration.`;
             
             audioTools.currentTool = toolName;
             
-            // Update tool button states
-            document.querySelectorAll('.tool-btn').forEach(btn => {
+            // Update tool button states with debug info
+            const toolButtons = document.querySelectorAll('.tool-btn');
+            console.log(`🔧 Found ${toolButtons.length} tool buttons`);
+            
+            toolButtons.forEach(btn => {
                 btn.classList.remove('active');
+                console.log(`🔧 Cleared active from button:`, btn.id);
             });
             
             const selectedBtn = document.getElementById(toolName + 'Tool');
+            console.log(`🔧 Looking for button with ID: ${toolName + 'Tool'}`, selectedBtn);
+            
             if (selectedBtn) {
                 selectedBtn.classList.add('active');
+                console.log(`🔧 Added active class to:`, selectedBtn.id);
+            } else {
+                console.warn(`🔧 Button not found with ID: ${toolName + 'Tool'}`);
             }
             
             // Update canvas cursor based on tool
@@ -8589,13 +8635,23 @@ Format as clean, readable text ready for narration.`;
 
         // Initialize the Enhanced Audio DAW
         function initializeAudioDAW() {
-            // Prevent double initialization
+            console.log('🎚️ Initializing Enhanced Audio DAW...');
+            
+            // Always reinitialize UI components on DAW open
             if (audioDAW.initialized) {
-                console.log('⚠️ DAW already initialized, skipping...');
+                console.log('🔄 DAW already initialized, reinitializing UI components...');
+                
+                // Reinitialize essential UI components
+                setupTimelineCanvas();
+                setupDragAndDrop();
+                createAllProfessionalFaders();
+                setupKeyboardShortcuts();
+                updateTimelinePosition();
+                selectTool('select'); // Reset to select tool
+                
+                console.log('✅ DAW UI components reinitialized');
                 return;
             }
-            
-            console.log('🎚️ Initializing Enhanced Audio DAW...');
             
             // Initialize Web Audio Context with higher sample rate for quality
             if (!audioDAW.context) {
@@ -8820,7 +8876,7 @@ Format as clean, readable text ready for narration.`;
                 const audioBuffer = await audioDAW.context.decodeAudioData(arrayBuffer);
                 
                 audioDAW.tracks[trackName].buffer = audioBuffer;
-                drawTimeline();
+                drawEnhancedTimeline();
                 
                 document.getElementById('dawStatus').textContent = `${trackName} loaded (${formatTime(audioBuffer.duration)})`;
                 showNotification(`✅ ${trackName.charAt(0).toUpperCase() + trackName.slice(1)} track loaded successfully`, 'success');
@@ -10591,18 +10647,30 @@ Format as clean, readable text ready for narration.`;
         function handleAudioElementDragStart(event) {
             const audioSrc = this.src || this.currentSrc;
             
+            console.log('🎵 Drag start triggered on element:', this);
+            console.log('🎵 Audio source found:', audioSrc);
+            
             if (!audioSrc) {
                 console.warn('⚠️ No audio source found');
                 event.preventDefault();
                 return;
             }
             
-            console.log('🎵 Starting drag from audio element:', audioSrc);
+            console.log('🎵 Setting drag data - audio/src:', audioSrc);
+            console.log('🎵 Setting drag data - text/plain:', audioSrc);
             
-            event.dataTransfer.setData('text/plain', audioSrc);
-            event.dataTransfer.setData('audio/src', audioSrc);
-            event.dataTransfer.setData('audio/duration', this.duration || '0');
-            event.dataTransfer.effectAllowed = 'copy';
+            // Set multiple data types for compatibility
+            try {
+                event.dataTransfer.setData('text/plain', audioSrc);
+                event.dataTransfer.setData('audio/src', audioSrc);
+                event.dataTransfer.setData('text/uri-list', audioSrc);
+                event.dataTransfer.setData('audio/duration', this.duration || '0');
+                event.dataTransfer.effectAllowed = 'copy';
+                
+                console.log('✅ Drag data set successfully');
+            } catch (error) {
+                console.error('❌ Error setting drag data:', error);
+            }
             
             // Add visual feedback
             event.target.style.opacity = '0.5';
@@ -10641,6 +10709,8 @@ Format as clean, readable text ready for narration.`;
         function handleTimelineAudioDrop(event) {
             event.preventDefault();
             console.log('🎵 Audio dropped on timeline!');
+            console.log('🎵 DataTransfer object:', event.dataTransfer);
+            console.log('🎵 DataTransfer types:', event.dataTransfer.types);
             
             // Hide drop indicator
             const indicator = document.getElementById('dropIndicator');
@@ -10648,10 +10718,33 @@ Format as clean, readable text ready for narration.`;
                 indicator.classList.add('hidden');
             }
             
-            const audioSrc = event.dataTransfer.getData('audio/src') || event.dataTransfer.getData('text/plain');
+            // Try multiple data retrieval methods
+            let audioSrc = null;
+            
+            // Try different data types
+            const dataTypes = ['audio/src', 'text/plain', 'text/uri-list'];
+            for (const type of dataTypes) {
+                const data = event.dataTransfer.getData(type);
+                console.log(`🎵 Checking ${type}:`, data);
+                if (data) {
+                    audioSrc = data;
+                    console.log(`🎵 Found audio source via ${type}:`, audioSrc);
+                    break;
+                }
+            }
+            
+            // Also try files if no data found
+            if (!audioSrc && event.dataTransfer.files.length > 0) {
+                console.log('🎵 Checking files:', event.dataTransfer.files);
+                const audioFile = Array.from(event.dataTransfer.files).find(f => f.type.startsWith('audio/'));
+                if (audioFile) {
+                    audioSrc = URL.createObjectURL(audioFile);
+                    console.log('🎵 Created blob URL from file:', audioSrc);
+                }
+            }
             
             if (!audioSrc) {
-                console.warn('⚠️ No audio source in drop');
+                console.warn('⚠️ No audio source in drop after all attempts');
                 showNotification('No audio data found', 'error');
                 return;
             }
@@ -11266,7 +11359,7 @@ Format as clean, readable text ready for narration.`;
                     const maxDuration = getMaxTrackDuration();
                     const newTime = (e.offsetX / canvas.width) * maxDuration;
                     audioDAW.currentTime = Math.max(0, Math.min(newTime, maxDuration));
-                    drawTimeline();
+                    drawEnhancedTimeline();
                 }
             });
             
