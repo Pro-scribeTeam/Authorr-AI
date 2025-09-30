@@ -8201,11 +8201,13 @@ Format as clean, readable text ready for narration.`;
                                 <div id="playhead" class="absolute top-0 w-0.5 bg-cyan-400 opacity-80 pointer-events-none" 
                                      style="height: 100%; left: 0px; transition: left 0.1s ease;"></div>
                                 <!-- Track Drop Zones -->
-                                <div id="timelineDropZone" class="absolute inset-0 pointer-events-auto" 
+                                <div id="timelineDropZone" class="absolute inset-0" 
                                      ondrop="handleTimelineAudioDrop(event)" 
                                      ondragover="handleTimelineDragOver(event)"
                                      ondragenter="handleTimelineDragEnter(event)"
-                                     ondragleave="handleTimelineDragLeave(event)">
+                                     ondragleave="handleTimelineDragLeave(event)"
+                                     onmousedown="handleDropZoneMouseDown(event)"
+                                     style="pointer-events: auto; background: transparent;">
                                     <!-- Visual drop indicator -->
                                     <div id="dropIndicator" class="absolute hidden w-1 bg-green-400 opacity-75 pointer-events-none" 
                                          style="top: 0; height: 100%; z-index: 200;"></div>
@@ -9907,6 +9909,17 @@ Format as clean, readable text ready for narration.`;
         }
         
         // Rewritten Timeline Mouse Handlers - Proper Separation of Concerns
+        // Handle mouse events on drop zone - pass through to canvas
+        function handleDropZoneMouseDown(event) {
+            console.log('🖱️ Drop zone intercepted mouse down, passing to canvas...');
+            
+            // Prevent the drop zone from handling this as a drag start
+            if (!event.dataTransfer || event.dataTransfer.types.length === 0) {
+                // This is a regular click, not a drag - pass to canvas
+                handleTimelineMouseDown(event);
+            }
+        }
+        
         function handleTimelineMouseDown(event) {
             // Prevent triggering drag-and-drop events
             event.stopPropagation();
@@ -11020,16 +11033,11 @@ Format as clean, readable text ready for narration.`;
                 return;
             }
             
-            // Handle both dragged audio sources and direct file drops
-            let audioSrc = event.dataTransfer.getData('audio/src') || event.dataTransfer.getData('text/plain');
-            let audioFile = null;
-            
-            // Check for direct file drop - NO MORE BLOB URLs
-            if (!audioSrc && hasFiles) {
-                audioFile = event.dataTransfer.files[0];
+            // PRIORITY 1: Check for direct file drops first
+            if (hasFiles) {
+                const audioFile = event.dataTransfer.files[0];
                 if (audioFile && audioFile.type.startsWith('audio/')) {
                     console.log('🎵 Processing dropped file with ArrayBuffer storage:', audioFile.name);
-                    // Now we can safely use targetTrack and dropTime
                     await processDroppedAudioFile(audioFile, targetTrack, dropTime);
                     return;
                 } else {
@@ -11039,16 +11047,18 @@ Format as clean, readable text ready for narration.`;
                 }
             }
             
-            if (!audioSrc) {
-                console.warn('⚠️ No audio source in drop');
-                showNotification('No audio data found', 'error');
+            // PRIORITY 2: Check for dragged audio sources (from existing UI elements)
+            const audioSrc = event.dataTransfer.getData('audio/src') || event.dataTransfer.getData('text/plain');
+            if (audioSrc) {
+                console.log(`🎵 Dropping existing audio source on ${targetTrack} at ${formatTime(dropTime)}`);
+                console.log(`🎵 Audio source:`, audioSrc);
+                loadAudioToTrack(audioSrc, targetTrack, dropTime);
                 return;
             }
             
-            console.log(`🎵 Dropping audio on ${targetTrack} at ${formatTime(dropTime)}`);
-            
-            // Load audio to the specified track and position
-            loadAudioToTrack(audioSrc, targetTrack, dropTime);
+            // No valid drop data
+            console.warn('⚠️ No valid audio source in drop - no files and no audio data');
+            showNotification('No audio data found', 'error');
         }
 
         // NEW: Process dropped audio file without blob URLs (following suggestion)
