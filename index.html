@@ -8514,29 +8514,43 @@ Format as clean, readable text ready for narration.`;
             
             audioTools.currentTool = toolName;
             
-            // Update tool button states with enhanced visual feedback
+            // SUGGESTION: Clear edit mode state and implement visual feedback
             document.querySelectorAll('.tool-btn').forEach(btn => {
-                btn.classList.remove('active', 'bg-cyan-600', 'text-white');
+                btn.classList.remove('active', 'bg-cyan-600', 'text-white', 'ring-2', 'ring-cyan-400');
                 btn.classList.add('bg-gray-600', 'text-gray-300');
+                btn.style.transform = '';
+                btn.style.boxShadow = '';
             });
             
             const selectedBtn = document.getElementById(toolName + 'Tool');
             if (selectedBtn) {
                 selectedBtn.classList.remove('bg-gray-600', 'text-gray-300');
-                selectedBtn.classList.add('active', 'bg-cyan-600', 'text-white');
-                console.log(`✅ Tool ${toolName} selected and highlighted`);
+                selectedBtn.classList.add('active', 'bg-cyan-600', 'text-white', 'ring-2', 'ring-cyan-400');
+                selectedBtn.style.transform = 'scale(1.05)';
+                selectedBtn.style.boxShadow = '0 0 12px rgba(34, 211, 238, 0.5)';
+                console.log(`✅ Tool ${toolName} selected with visual feedback`);
             } else {
                 console.warn(`⚠️ Tool button ${toolName}Tool not found`);
             }
             
-            // Update cursor style based on tool
+            // Update cursor and canvas style based on active tool
             const timeline = document.getElementById('audioTimeline');
             if (timeline) {
                 timeline.style.cursor = getCursorForTool(toolName);
+                timeline.classList.remove('select-mode', 'hand-mode', 'cut-mode');
+                timeline.classList.add(`${toolName}-mode`);
             }
             
-            // Redraw timeline to show tool-specific feedback
+            // Update status display
+            const statusElement = document.getElementById('dawStatus');
+            if (statusElement) {
+                statusElement.textContent = `${toolName.charAt(0).toUpperCase() + toolName.slice(1)} Tool Active`;
+            }
+            
+            // Redraw timeline with tool-specific visual indicators
             drawEnhancedTimeline();
+            
+            console.log(`🎯 Edit mode set to: ${toolName.toUpperCase()}`);
         }
         
         function getCursorForTool(toolName) {
@@ -8898,20 +8912,27 @@ Format as clean, readable text ready for narration.`;
                 console.log(`🎵 Loading file to ${trackName}:`, file.name, file.type);
                 document.getElementById('dawStatus').textContent = `Loading ${trackName}...`;
                 
-                // Validate file type
+                // SUGGESTION 1: Comprehensive file validation
                 if (!file.type.startsWith('audio/')) {
                     throw new Error('Invalid file type. Please select an audio file.');
                 }
                 
+                // Validate specific audio formats
+                const supportedFormats = ['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/ogg', 'audio/mp4', 'audio/m4a'];
+                if (!supportedFormats.some(format => file.type === format || file.name.toLowerCase().includes(format.split('/')[1]))) {
+                    console.warn(`⚠️ Unsupported format: ${file.type}, attempting to load anyway`);
+                }
+                
+                // SUGGESTION 2: Store as persistent ArrayBuffer, not temporary blob URL
                 const arrayBuffer = await file.arrayBuffer();
                 
                 if (arrayBuffer.byteLength === 0) {
                     throw new Error('Audio file is empty');
                 }
                 
-                console.log(`📦 Audio data loaded: ${arrayBuffer.byteLength} bytes`);
+                console.log(`📦 Raw audio data: ${arrayBuffer.byteLength} bytes, type: ${file.type}`);
                 
-                const audioBuffer = await audioDAW.context.decodeAudioData(arrayBuffer);
+                const audioBuffer = await audioDAW.context.decodeAudioData(arrayBuffer.slice());
                 
                 // Validate decoded audio
                 if (!audioBuffer || audioBuffer.duration === 0) {
@@ -8920,27 +8941,49 @@ Format as clean, readable text ready for narration.`;
                 
                 console.log(`🎵 Audio decoded: ${formatTime(audioBuffer.duration)}, channels: ${audioBuffer.numberOfChannels}`);
                 
-                // Store the audio buffer
+                // SUGGESTION 3: Store metadata in project state with persistent data
                 audioDAW.tracks[trackName].buffer = audioBuffer;
-                audioDAW.tracks[trackName].startTime = 0; // Reset position
+                audioDAW.tracks[trackName].startTime = 0;
                 audioDAW.tracks[trackName].trimStart = 0;
                 audioDAW.tracks[trackName].trimEnd = null;
+                audioDAW.tracks[trackName].fileName = file.name;
+                audioDAW.tracks[trackName].fileType = file.type;
+                audioDAW.tracks[trackName].rawData = arrayBuffer; // Store persistent data
                 
                 // Initialize audio clips array if needed
                 if (!audioDAW.audioClips) {
                     audioDAW.audioClips = [];
                 }
                 
-                // Add to audio clips for interaction
+                // SUGGESTION 4: Proper clip registration with complete metadata
                 const clipId = `${trackName}_${Date.now()}`;
-                audioDAW.audioClips.push({
+                const clipData = {
                     id: clipId,
                     trackName: trackName,
                     startTime: 0,
                     duration: audioBuffer.duration,
                     buffer: audioBuffer,
                     selected: false,
-                    color: audioDAW.tracks[trackName].color
+                    color: audioDAW.tracks[trackName].color,
+                    fileName: file.name,
+                    fileType: file.type,
+                    rawData: arrayBuffer, // Persistent storage
+                    metadata: {
+                        sampleRate: audioBuffer.sampleRate,
+                        numberOfChannels: audioBuffer.numberOfChannels,
+                        length: audioBuffer.length,
+                        uploadedAt: Date.now()
+                    }
+                };
+                
+                audioDAW.audioClips.push(clipData);
+                
+                console.log(`📌 Registered clip with complete metadata:`, {
+                    id: clipId,
+                    track: trackName,
+                    duration: formatTime(audioBuffer.duration),
+                    fileName: file.name,
+                    sampleRate: audioBuffer.sampleRate
                 });
                 
                 drawEnhancedTimeline();
@@ -8948,7 +8991,7 @@ Format as clean, readable text ready for narration.`;
                 document.getElementById('dawStatus').textContent = `${trackName} loaded (${formatTime(audioBuffer.duration)})`;
                 showNotification(`✅ ${trackName.charAt(0).toUpperCase() + trackName.slice(1)} track loaded successfully`, 'success');
                 
-                console.log(`✅ ${trackName} loaded successfully with clip ID: ${clipId}`);
+                console.log(`✅ ${trackName} loaded with persistent storage`);
                 
             } catch (error) {
                 console.error(`❌ Failed to load ${trackName}:`, error);
@@ -10199,11 +10242,33 @@ Format as clean, readable text ready for narration.`;
                 const seekTime = (x / width) * totalDuration;
                 audioDAW.currentTime = Math.max(0, Math.min(seekTime, totalDuration));
                 
+                console.log(`🎯 Scrubbing to: ${formatTime(audioDAW.currentTime)}`);
+                
+                // SUGGESTION: Scrubbing should only update position, never reload audio
+                // Stop any playing audio first
+                if (audioDAW.isPlaying) {
+                    stopAllAudioSources();
+                    audioDAW.isPlaying = false;
+                }
+                
                 // Update timeline position display
                 updateTimelinePosition();
                 
                 // Redraw timeline to show new position
                 drawEnhancedTimeline();
+                
+                // Update play button state
+                const playBtn = document.getElementById('dawPlayBtn');
+                if (playBtn) {
+                    playBtn.innerHTML = '<i class="fas fa-play"></i> Play';
+                    playBtn.onclick = playDAWAudio;
+                }
+                
+                // Update status
+                const statusElement = document.getElementById('dawStatus');
+                if (statusElement) {
+                    statusElement.textContent = `Seeked to ${formatTime(audioDAW.currentTime)}`;
+                }
                 
                 // If playing, restart from new position
                 if (audioDAW.isPlaying) {
@@ -10356,8 +10421,28 @@ Format as clean, readable text ready for narration.`;
                 console.log('🔘 Selected clip:', clip.id);
             }
             
+            // SUGGESTION: Add visual feedback (border highlight) when clip is selected
+            updateClipVisualSelection();
+            
             // Update selected count
             updateSelectedCount();
+            
+            console.log(`📊 Selection state: ${audioTools.selectedClips.length} clips selected`);
+        }
+        
+        // SUGGESTION: Visual feedback for selected clips
+        function updateClipVisualSelection() {
+            // Mark clips as selected for rendering
+            if (audioDAW.audioClips) {
+                audioDAW.audioClips.forEach(clip => {
+                    const isSelected = audioTools.selectedClips.find(c => c.id === clip.id);
+                    clip.selected = !!isSelected;
+                    clip.visualState = isSelected ? 'selected' : 'normal';
+                });
+            }
+            
+            // Force timeline redraw to show selection highlighting
+            drawEnhancedTimeline();
             
             // Redraw timeline to show selection
             drawEnhancedTimeline();
@@ -10912,13 +10997,14 @@ Format as clean, readable text ready for narration.`;
             let audioSrc = event.dataTransfer.getData('audio/src') || event.dataTransfer.getData('text/plain');
             let audioFile = null;
             
-            // Check for direct file drop
+            // Check for direct file drop - NO MORE BLOB URLs
             if (!audioSrc && hasFiles) {
                 audioFile = event.dataTransfer.files[0];
                 if (audioFile && audioFile.type.startsWith('audio/')) {
-                    // Create blob URL for the file
-                    audioSrc = URL.createObjectURL(audioFile);
-                    console.log('🎵 Created blob URL for dropped file:', audioSrc);
+                    console.log('🎵 Processing dropped file with ArrayBuffer storage:', audioFile.name);
+                    // Process file directly without blob URL
+                    await processDroppedAudioFile(audioFile, targetTrack, dropTime);
+                    return;
                 } else {
                     console.warn('⚠️ Dropped file is not an audio file');
                     showNotification('Please drop an audio file', 'error');
@@ -10957,6 +11043,102 @@ Format as clean, readable text ready for narration.`;
             
             // Load audio to the specified track and position
             loadAudioToTrack(audioSrc, targetTrack, dropTime);
+        }
+
+        // NEW: Process dropped audio file without blob URLs (following suggestion)
+        async function processDroppedAudioFile(file, trackName, startTime = 0) {
+            try {
+                console.log(`🎵 Processing dropped file: ${file.name} to ${trackName} at ${formatTime(startTime)}`);
+                showLoading(`Processing ${file.name}...`);
+                
+                // Validate file type thoroughly
+                if (!file.type.startsWith('audio/')) {
+                    throw new Error('Invalid file type. Please drop an audio file.');
+                }
+                
+                // Read file as ArrayBuffer (persistent storage)
+                const arrayBuffer = await file.arrayBuffer();
+                
+                if (arrayBuffer.byteLength === 0) {
+                    throw new Error('Audio file is empty');
+                }
+                
+                console.log(`📦 File data loaded: ${arrayBuffer.byteLength} bytes`);
+                
+                // Decode audio
+                const audioBuffer = await audioDAW.context.decodeAudioData(arrayBuffer.slice());
+                
+                if (!audioBuffer || audioBuffer.duration === 0) {
+                    throw new Error('Invalid or corrupted audio data');
+                }
+                
+                console.log(`🎵 Audio decoded: ${formatTime(audioBuffer.duration)}, channels: ${audioBuffer.numberOfChannels}`);
+                
+                // Initialize track if needed
+                if (!audioDAW.tracks[trackName]) {
+                    audioDAW.tracks[trackName] = {
+                        buffer: null,
+                        source: null,
+                        gainNode: audioDAW.context.createGain(),
+                        volume: 0.7,
+                        muted: false,
+                        type: trackName.startsWith('music') ? 'music' : 'sfx'
+                    };
+                    audioDAW.tracks[trackName].gainNode.connect(audioDAW.masterGain);
+                }
+                
+                // Store in track with complete metadata
+                audioDAW.tracks[trackName].buffer = audioBuffer;
+                audioDAW.tracks[trackName].startTime = startTime;
+                audioDAW.tracks[trackName].duration = audioBuffer.duration;
+                audioDAW.tracks[trackName].fileName = file.name;
+                audioDAW.tracks[trackName].fileType = file.type;
+                audioDAW.tracks[trackName].rawData = arrayBuffer;
+                
+                // Initialize audio clips array if needed
+                if (!audioDAW.audioClips) {
+                    audioDAW.audioClips = [];
+                }
+                
+                // Add to audio clips with persistent data
+                const clipId = `${trackName}_${Date.now()}`;
+                audioDAW.audioClips.push({
+                    id: clipId,
+                    trackName: trackName,
+                    startTime: startTime,
+                    duration: audioBuffer.duration,
+                    buffer: audioBuffer,
+                    selected: false,
+                    color: audioDAW.tracks[trackName].color,
+                    fileName: file.name,
+                    fileType: file.type,
+                    rawData: arrayBuffer,
+                    metadata: {
+                        sampleRate: audioBuffer.sampleRate,
+                        numberOfChannels: audioBuffer.numberOfChannels,
+                        length: audioBuffer.length,
+                        droppedAt: Date.now()
+                    }
+                });
+                
+                console.log(`📌 Added persistent clip: ${clipId} to ${trackName} at ${formatTime(startTime)}`);
+                
+                // Update UI
+                updateTrackUI(trackName, {
+                    duration: audioBuffer.duration,
+                    startTime: startTime,
+                    name: file.name
+                });
+                
+                drawEnhancedTimeline();
+                hideLoading();
+                showNotification(`✅ ${file.name} loaded to ${trackName} track`, 'success');
+                
+            } catch (error) {
+                console.error(`❌ Error processing dropped file:`, error);
+                hideLoading();
+                showNotification(`Failed to process ${file.name}: ${error.message}`, 'error');
+            }
         }
 
         // Load audio file to specific track at specific time
