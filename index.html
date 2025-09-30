@@ -8514,16 +8514,42 @@ Format as clean, readable text ready for narration.`;
             
             audioTools.currentTool = toolName;
             
-            // Update tool button states
+            // Update tool button states with enhanced visual feedback
             document.querySelectorAll('.tool-btn').forEach(btn => {
-                btn.classList.remove('active');
+                btn.classList.remove('active', 'bg-cyan-600', 'text-white');
+                btn.classList.add('bg-gray-600', 'text-gray-300');
             });
             
             const selectedBtn = document.getElementById(toolName + 'Tool');
             if (selectedBtn) {
-                selectedBtn.classList.add('active');
+                selectedBtn.classList.remove('bg-gray-600', 'text-gray-300');
+                selectedBtn.classList.add('active', 'bg-cyan-600', 'text-white');
+                console.log(`✅ Tool ${toolName} selected and highlighted`);
+            } else {
+                console.warn(`⚠️ Tool button ${toolName}Tool not found`);
             }
             
+            // Update cursor style based on tool
+            const timeline = document.getElementById('audioTimeline');
+            if (timeline) {
+                timeline.style.cursor = getCursorForTool(toolName);
+            }
+            
+            // Redraw timeline to show tool-specific feedback
+            drawEnhancedTimeline();
+        }
+        
+        function getCursorForTool(toolName) {
+            switch(toolName) {
+                case 'select': return 'default';
+                case 'hand': return 'grab';
+                case 'cut': return 'crosshair';
+                default: return 'default';
+            }
+        }
+        
+        // Legacy cursor update code (keeping for compatibility)
+        function updateCanvasCursor() {
             // Update canvas cursor based on tool
             const canvas = audioDAW.canvas;
             if (canvas) {
@@ -8570,12 +8596,22 @@ Format as clean, readable text ready for narration.`;
 
         // Clear all selections
         function clearSelection() {
+            // Clear selection from audio clips
+            if (audioDAW.audioClips) {
+                audioDAW.audioClips.forEach(clip => {
+                    clip.selected = false;
+                });
+            }
+            
+            // Clear selected clips array
             audioTools.selectedClips.forEach(clip => {
                 if (clip.element) {
                     clip.element.classList.remove('selected');
                 }
             });
             audioTools.selectedClips = [];
+            
+            console.log('🔄 Cleared all selections');
             
             // Update selected count
             updateSelectedCount();
@@ -9060,27 +9096,36 @@ Format as clean, readable text ready for narration.`;
                 
                 console.log(`🎵 Starting playback from ${formatTime(audioDAW.currentTime)}`);
                 
-                // Handle multi-part narration
-                if (audioDAW.tracks.narration.buffers && audioDAW.tracks.narration.buffers.length > 0) {
-                    playMultiPartNarration();
-                } else if (audioDAW.tracks.narration.buffer) {
-                    // Single narration file
-                    playTrackFromTime('narration', audioDAW.currentTime);
-                }
-                
-                // Play other tracks (music, sfx)
-                ['music1', 'music2', 'sfx1', 'sfx2'].forEach(trackName => {
-                    const track = audioDAW.tracks[trackName];
-                    if (track.buffer && track.gainNode) {
-                        const trackStartTime = track.startTime || 0;
-                        if (audioDAW.currentTime >= trackStartTime) {
-                            const offset = audioDAW.currentTime - trackStartTime;
-                            if (offset < track.buffer.duration) {
-                                playTrackFromTime(trackName, offset);
+                // NEW: Play audio clips based on their individual positions
+                if (audioDAW.audioClips && audioDAW.audioClips.length > 0) {
+                    console.log(`🎵 Playing ${audioDAW.audioClips.length} audio clips with individual positioning`);
+                    playAudioClipsFromTime(audioDAW.currentTime);
+                } else {
+                    // Fallback to old track-based system
+                    console.log('🎵 Using fallback track-based playback');
+                    
+                    // Handle multi-part narration
+                    if (audioDAW.tracks.narration.buffers && audioDAW.tracks.narration.buffers.length > 0) {
+                        playMultiPartNarration();
+                    } else if (audioDAW.tracks.narration.buffer) {
+                        // Single narration file
+                        playTrackFromTime('narration', audioDAW.currentTime);
+                    }
+                    
+                    // Play other tracks (music, sfx)
+                    ['music1', 'music2', 'sfx1', 'sfx2'].forEach(trackName => {
+                        const track = audioDAW.tracks[trackName];
+                        if (track.buffer && track.gainNode) {
+                            const trackStartTime = track.startTime || 0;
+                            if (audioDAW.currentTime >= trackStartTime) {
+                                const offset = audioDAW.currentTime - trackStartTime;
+                                if (offset < track.buffer.duration) {
+                                    playTrackFromTime(trackName, offset);
+                                }
                             }
                         }
-                    }
-                });
+                    });
+                }
                 
                 document.getElementById('dawStatus').textContent = 'Playing...';
                 
@@ -9157,6 +9202,60 @@ Format as clean, readable text ready for narration.`;
             } catch (error) {
                 console.error(`❌ Failed to play ${trackName}:`, error);
             }
+        }
+        
+        // NEW: Play audio clips based on their individual positions
+        function playAudioClipsFromTime(currentTime) {
+            if (!audioDAW.audioClips || audioDAW.audioClips.length === 0) return;
+            
+            console.log(`🎵 Evaluating ${audioDAW.audioClips.length} clips for playback at ${formatTime(currentTime)}`);
+            
+            // Clear any existing sources
+            audioDAW.audioClips.forEach(clip => {
+                if (clip.source) {
+                    try {
+                        clip.source.stop();
+                    } catch (e) {}
+                    clip.source = null;
+                }
+            });
+            
+            // Play clips that should be active at current time
+            audioDAW.audioClips.forEach((clip, index) => {
+                const clipStartTime = clip.startTime || 0;
+                const clipEndTime = clipStartTime + clip.duration;
+                
+                // Check if clip should be playing at current time
+                if (currentTime >= clipStartTime && currentTime < clipEndTime) {
+                    const track = audioDAW.tracks[clip.trackName];
+                    if (!track || !track.gainNode) {
+                        console.warn(`⚠️ Track ${clip.trackName} not found or missing gain node`);
+                        return;
+                    }
+                    
+                    const offset = currentTime - clipStartTime;
+                    const delay = 0; // Start immediately
+                    
+                    console.log(`🎵 Playing clip ${clip.id} (${clip.trackName}) from ${formatTime(offset)}`);
+                    
+                    try {
+                        // Create source for this clip
+                        clip.source = audioDAW.context.createBufferSource();
+                        clip.source.buffer = clip.buffer;
+                        clip.source.connect(track.gainNode);
+                        
+                        const clampedOffset = Math.max(0, Math.min(offset, clip.buffer.duration));
+                        clip.source.start(audioDAW.context.currentTime + delay, clampedOffset);
+                        
+                        console.log(`✅ Clip ${clip.id} started at offset ${formatTime(clampedOffset)}`);
+                        
+                    } catch (error) {
+                        console.error(`❌ Failed to play clip ${clip.id}:`, error);
+                    }
+                } else {
+                    console.log(`⏭️ Clip ${clip.id} (${formatTime(clipStartTime)}-${formatTime(clipEndTime)}) not active at ${formatTime(currentTime)}`);
+                }
+            });
         }
 
         // Enhanced pause with position preservation
@@ -9716,6 +9815,9 @@ Format as clean, readable text ready for narration.`;
         
         // Rewritten Timeline Mouse Handlers - Proper Separation of Concerns
         function handleTimelineMouseDown(event) {
+            // Prevent triggering drag-and-drop events
+            event.stopPropagation();
+            
             const rect = audioDAW.canvas.getBoundingClientRect();
             const x = event.clientX - rect.left;
             const y = event.clientY - rect.top;
@@ -9729,7 +9831,7 @@ Format as clean, readable text ready for narration.`;
             const clickedClip = getAudioClipAt(x, y);
             
             if (clickedClip) {
-                console.log(`🎵 Clicked on audio clip: ${clickedClip.name}`);
+                console.log(`🎵 Clicked on audio clip: ${clickedClip.id} in track ${clickedClip.trackName}`);
                 // Handle clip interaction based on current tool
                 handleClipInteraction(event, x, y, clickedClip);
             } else {
@@ -9966,7 +10068,7 @@ Format as clean, readable text ready for narration.`;
         // SELECT TOOL HANDLERS
         // Proper Clip Selection Handler
         function handleClipSelection(event, clip) {
-            console.log(`🔘 Selecting clip: ${clip.name}`);
+            console.log(`🔘 Selecting clip: ${clip.id} (${clip.trackName})`);
             
             if (!event.ctrlKey && !event.metaKey) {
                 // Clear other selections unless holding Ctrl
@@ -9975,20 +10077,39 @@ Format as clean, readable text ready for narration.`;
             
             toggleClipSelection(clip);
             
+            // Redraw to show selection
+            drawEnhancedTimeline();
+            
             // Prevent timeline seeking
             event.stopPropagation();
         }
 
         // Clip Dragging System
         function startClipDrag(event, x, y, clip) {
-            console.log(`🤏 Starting drag of clip: ${clip.name}`);
+            console.log(`🤏 Starting drag of clip: ${clip.id} (${clip.trackName})`);
+            
+            // Ensure clip is selected when dragging
+            if (!clip.selected) {
+                clearSelection();
+                toggleClipSelection(clip);
+            }
             
             audioTools.draggedClip = clip;
             audioTools.dragStartTime = clip.startTime;
+            
+            // Calculate clip position on timeline for drag offset
+            const totalDuration = Math.max(getMaxTrackDuration(), 60);
+            const clipX = (clip.startTime / totalDuration) * audioDAW.timelineWidth;
+            const trackIndex = ['narration', 'music1', 'music2', 'sfx1', 'sfx2'].indexOf(clip.trackName);
+            const trackHeight = audioDAW.canvas.offsetHeight / 5;
+            const clipY = (trackIndex * trackHeight) + 30; // Account for header
+            
             audioTools.dragOffset = {
-                x: x - clip.x,
-                y: y - clip.y
+                x: x - clipX,
+                y: y - clipY
             };
+            
+            console.log(`📍 Drag offset: (${audioTools.dragOffset.x}, ${audioTools.dragOffset.y})`);
             
             // Visual feedback
             audioDAW.canvas.style.cursor = 'grabbing';
@@ -10164,16 +10285,19 @@ Format as clean, readable text ready for narration.`;
         }
 
         function toggleClipSelection(clip) {
-            const isSelected = audioTools.selectedClips.find(c => c.trackName === clip.trackName);
+            // Use unique clip ID for proper selection tracking
+            const isSelected = audioTools.selectedClips.find(c => c.id === clip.id);
             
             if (isSelected) {
                 // Deselect
-                audioTools.selectedClips = audioTools.selectedClips.filter(c => c.trackName !== clip.trackName);
-                console.log('🔘 Deselected clip:', clip.name);
+                audioTools.selectedClips = audioTools.selectedClips.filter(c => c.id !== clip.id);
+                clip.selected = false;
+                console.log('🔘 Deselected clip:', clip.id);
             } else {
                 // Select
                 audioTools.selectedClips.push(clip);
-                console.log('🔘 Selected clip:', clip.name);
+                clip.selected = true;
+                console.log('🔘 Selected clip:', clip.id);
             }
             
             // Update selected count
@@ -10711,12 +10835,22 @@ Format as clean, readable text ready for narration.`;
                 indicator.classList.add('hidden');
             }
             
+            // Check if this is actually a valid drop event
+            const hasFiles = event.dataTransfer.files && event.dataTransfer.files.length > 0;
+            const hasAudioData = event.dataTransfer.types && 
+                (event.dataTransfer.types.includes('audio/src') || event.dataTransfer.types.includes('text/plain'));
+            
+            if (!hasFiles && !hasAudioData) {
+                console.log('🚫 No valid drop data detected, ignoring');
+                return;
+            }
+            
             // Handle both dragged audio sources and direct file drops
             let audioSrc = event.dataTransfer.getData('audio/src') || event.dataTransfer.getData('text/plain');
             let audioFile = null;
             
             // Check for direct file drop
-            if (!audioSrc && event.dataTransfer.files.length > 0) {
+            if (!audioSrc && hasFiles) {
                 audioFile = event.dataTransfer.files[0];
                 if (audioFile && audioFile.type.startsWith('audio/')) {
                     // Create blob URL for the file
