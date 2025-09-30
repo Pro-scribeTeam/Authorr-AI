@@ -9918,17 +9918,19 @@ Format as clean, readable text ready for narration.`;
             audioTools.mouseDown = true;
             audioTools.startPos = { x, y };
             
-            console.log(`🖱️ Mouse down at (${x}, ${y}) with tool: ${audioTools.currentTool}`);
+            console.log(`🖱️ MOUSE DOWN DETECTED at (${x}, ${y}) with tool: ${audioTools.currentTool}`);
+            console.log(`🖱️ Canvas rect:`, rect);
+            console.log(`🖱️ AudioClips available:`, audioDAW.audioClips ? audioDAW.audioClips.length : 0);
             
             // FIRST: Check if clicking on an audio clip
             const clickedClip = getAudioClipAt(x, y);
             
             if (clickedClip) {
-                console.log(`🎵 Clicked on audio clip: ${clickedClip.id} in track ${clickedClip.trackName}`);
+                console.log(`🎵 SUCCESS - Clicked on audio clip: ${clickedClip.id} in track ${clickedClip.trackName}`);
                 // Handle clip interaction based on current tool
                 handleClipInteraction(event, x, y, clickedClip);
             } else {
-                console.log(`🎵 Clicked on empty timeline`);
+                console.log(`🎵 NO CLIP FOUND - Clicked on empty timeline`);
                 // Handle empty timeline interaction
                 handleEmptyTimelineInteraction(event, x, y);
             }
@@ -10290,13 +10292,15 @@ Format as clean, readable text ready for narration.`;
 
         // Enhanced Audio Clip Detection and Management
         function getAudioClipAt(x, y) {
-            console.log(`🔍 Checking for clip at (${x}, ${y})`);
+            console.log(`🔍 CLIP DETECTION START - Checking for clip at (${x}, ${y})`);
             
             // Calculate dimensions
             const canvasHeight = audioDAW.canvas.offsetHeight;
             const canvasWidth = audioDAW.canvas.offsetWidth;
             const headerHeight = 30;
             const trackHeight = (canvasHeight - headerHeight) / 5;
+            
+            console.log(`🔍 Canvas dimensions: ${canvasWidth}x${canvasHeight}, trackHeight: ${trackHeight}`);
             
             // Check if click is in track area (below header)
             if (y < headerHeight) {
@@ -10314,7 +10318,7 @@ Format as clean, readable text ready for narration.`;
                 return null;
             }
             
-            console.log(`🔍 Checking track: ${trackName}`);
+            console.log(`🔍 Target track: ${trackName} (index ${trackIndex})`);
             
             // Check for multi-part narration
             if (trackName === 'narration' && audioDAW.tracks.narration.buffers) {
