@@ -10983,6 +10983,29 @@ Format as clean, readable text ready for narration.`;
                 indicator.classList.add('hidden');
             }
             
+            // CALCULATE DROP POSITION FIRST (before using variables)
+            const rect = event.currentTarget.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+            
+            // Calculate time position
+            const totalDuration = Math.max(getMaxTrackDuration(), 60);
+            const dropTime = (x / rect.width) * totalDuration;
+            
+            // Calculate target track
+            const trackHeight = rect.height / 5;
+            const trackIndex = Math.floor(y / trackHeight);
+            const trackNames = ['narration', 'music1', 'music2', 'sfx1', 'sfx2'];
+            const targetTrack = trackNames[trackIndex];
+            
+            if (!targetTrack) {
+                console.warn('⚠️ Invalid drop position');
+                showNotification('Drop outside of track area', 'warning');
+                return;
+            }
+            
+            console.log(`🎵 Drop target: ${targetTrack} at ${formatTime(dropTime)}`);
+            
             // Check if this is actually a valid drop event
             const hasFiles = event.dataTransfer.files && event.dataTransfer.files.length > 0;
             const hasAudioData = event.dataTransfer.types && 
@@ -11002,7 +11025,7 @@ Format as clean, readable text ready for narration.`;
                 audioFile = event.dataTransfer.files[0];
                 if (audioFile && audioFile.type.startsWith('audio/')) {
                     console.log('🎵 Processing dropped file with ArrayBuffer storage:', audioFile.name);
-                    // Process file directly without blob URL
+                    // Now we can safely use targetTrack and dropTime
                     await processDroppedAudioFile(audioFile, targetTrack, dropTime);
                     return;
                 } else {
@@ -11015,27 +11038,6 @@ Format as clean, readable text ready for narration.`;
             if (!audioSrc) {
                 console.warn('⚠️ No audio source in drop');
                 showNotification('No audio data found', 'error');
-                return;
-            }
-            
-            // Calculate drop position
-            const rect = event.currentTarget.getBoundingClientRect();
-            const x = event.clientX - rect.left;
-            const y = event.clientY - rect.top;
-            
-            // Calculate time position
-            const totalDuration = Math.max(getMaxTrackDuration(), 60); // Minimum 60 seconds
-            const dropTime = (x / rect.width) * totalDuration;
-            
-            // Calculate track
-            const trackHeight = rect.height / 5;
-            const trackIndex = Math.floor(y / trackHeight);
-            const trackNames = ['narration', 'music1', 'music2', 'sfx1', 'sfx2'];
-            const targetTrack = trackNames[trackIndex];
-            
-            if (!targetTrack) {
-                console.warn('⚠️ Invalid drop position');
-                showNotification('Drop outside of track area', 'warning');
                 return;
             }
             
