@@ -9383,6 +9383,22 @@ Format as clean, readable text ready for narration.`;
 
         // Stop all audio sources helper function
         function stopAllAudioSources() {
+            // Stop audioClips sources (new system)
+            if (audioDAW.audioClips) {
+                audioDAW.audioClips.forEach(clip => {
+                    if (clip.source) {
+                        try {
+                            clip.source.stop();
+                            console.log(`🛑 Stopped clip: ${clip.id}`);
+                        } catch (e) {
+                            console.warn(`Error stopping clip ${clip.id}:`, e);
+                        }
+                        clip.source = null;
+                    }
+                });
+            }
+            
+            // Stop track sources (fallback system)
             Object.keys(audioDAW.tracks).forEach(trackName => {
                 const track = audioDAW.tracks[trackName];
                 
@@ -9390,6 +9406,7 @@ Format as clean, readable text ready for narration.`;
                 if (track.source) {
                     try {
                         track.source.stop();
+                        console.log(`🛑 Stopped track: ${trackName}`);
                     } catch (e) {
                         console.warn(`Error stopping ${trackName}:`, e);
                     }
@@ -9401,6 +9418,7 @@ Format as clean, readable text ready for narration.`;
                     track.sources.forEach((source, index) => {
                         try {
                             source.stop();
+                            console.log(`🛑 Stopped ${trackName} source ${index}`);
                         } catch (e) {
                             console.warn(`Error stopping ${trackName} source ${index}:`, e);
                         }
@@ -10238,47 +10256,53 @@ Format as clean, readable text ready for narration.`;
                 return getMultiPartNarrationClipAt(x, y, trackIndex, trackHeight, canvasWidth);
             }
             
-            // Check single track
-            const track = audioDAW.tracks[trackName];
-            if (!track || !track.buffer) {
-                console.log(`🔍 No audio in track: ${trackName}`);
+            // NEW: Check audioClips array instead of track buffers
+            if (!audioDAW.audioClips || audioDAW.audioClips.length === 0) {
+                console.log(`🔍 No audioClips available`);
                 return null;
             }
             
-            // Calculate time position and clip bounds
-            const totalDuration = Math.max(getMaxTrackDuration(), 60);
-            const timePosition = (x / canvasWidth) * totalDuration;
-            const clipStartTime = track.startTime || 0;
-            const clipEndTime = clipStartTime + track.buffer.duration;
-            
-            console.log(`🔍 Time: ${formatTime(timePosition)}, Clip: ${formatTime(clipStartTime)} - ${formatTime(clipEndTime)}`);
-            
-            // Check if click is within the clip
-            if (timePosition >= clipStartTime && timePosition <= clipEndTime) {
-                const clipX = (clipStartTime / totalDuration) * canvasWidth;
-                const clipWidth = (track.buffer.duration / totalDuration) * canvasWidth;
-                const clipY = headerHeight + (trackIndex * trackHeight) + 2;
-                const clipHeight = trackHeight - 4;
-                
-                console.log(`🔍 ✅ Found clip in ${trackName}!`);
-                
-                return {
-                    trackName: trackName,
-                    trackIndex: trackIndex,
-                    startTime: clipStartTime,
-                    endTime: clipEndTime,
-                    duration: track.buffer.duration,
-                    buffer: track.buffer,
-                    x: clipX,
-                    y: clipY,
-                    width: clipWidth,
-                    height: clipHeight,
-                    name: `${trackName}_audio`,
-                    track: track
-                };
+            // Find clips in this track
+            const trackClips = audioDAW.audioClips.filter(clip => clip.trackName === trackName);
+            if (trackClips.length === 0) {
+                console.log(`🔍 No clips in track: ${trackName}`);
+                return null;
             }
             
-            console.log(`🔍 No clip at this position in ${trackName}`);
+            console.log(`🔍 Found ${trackClips.length} clips in ${trackName}`);
+            
+            // Calculate time position 
+            const totalDuration = Math.max(getMaxTrackDuration(), 60);
+            const timePosition = (x / canvasWidth) * totalDuration;
+            
+            // Check each clip in the track
+            for (const clip of trackClips) {
+                const clipStartTime = clip.startTime || 0;
+                const clipEndTime = clipStartTime + clip.duration;
+                
+                console.log(`🔍 Checking clip ${clip.id}: Time: ${formatTime(timePosition)}, Clip: ${formatTime(clipStartTime)} - ${formatTime(clipEndTime)}`);
+                
+                // Check if click is within this clip
+                if (timePosition >= clipStartTime && timePosition <= clipEndTime) {
+                    const clipX = (clipStartTime / totalDuration) * canvasWidth;
+                    const clipWidth = (clip.duration / totalDuration) * canvasWidth;
+                    const clipY = headerHeight + (trackIndex * trackHeight) + 2;
+                    const clipHeight = trackHeight - 4;
+                    
+                    console.log(`✅ Found clip: ${clip.id} at (${clipX}, ${clipY})`);
+                    
+                    return {
+                        ...clip,
+                        x: clipX,
+                        y: clipY,
+                        width: clipWidth,
+                        height: clipHeight,
+                        trackIndex: trackIndex
+                    };
+                }
+            }
+            
+            console.log(`🔍 No clip found at this position in ${trackName}`);
             return null;
         }
 
@@ -10859,6 +10883,13 @@ Format as clean, readable text ready for narration.`;
 
         function handleTimelineAudioDrop(event) {
             event.preventDefault();
+            
+            // CRITICAL: Check if this is actually a drag-and-drop event or just a mouse event
+            if (!event.dataTransfer) {
+                console.log('🚫 No dataTransfer object - not a real drop event, ignoring');
+                return;
+            }
+            
             console.log('🎵 Audio dropped on timeline!');
             
             // Hide drop indicator
