@@ -8840,6 +8840,32 @@ Format as clean, readable text ready for narration.`;
                     audioDAW.tracks.narration.buffers = buffers;
                     audioDAW.totalDuration = totalDuration;
                     
+                    // CRITICAL: Convert narration parts to audioClips for new playback system
+                    if (!audioDAW.audioClips) {
+                        audioDAW.audioClips = [];
+                    }
+                    
+                    // Remove any existing narration clips
+                    audioDAW.audioClips = audioDAW.audioClips.filter(clip => !clip.trackName.startsWith('narration'));
+                    
+                    // Add each narration part as an audioClip
+                    buffers.forEach((part, index) => {
+                        const clipId = `narration_part_${index + 1}_${Date.now()}`;
+                        audioDAW.audioClips.push({
+                            id: clipId,
+                            trackName: 'narration',
+                            startTime: part.startTime,
+                            duration: part.buffer.duration,
+                            buffer: part.buffer,
+                            selected: false,
+                            color: audioDAW.tracks.narration.color,
+                            partNumber: part.partNumber
+                        });
+                        console.log(`📌 Added narration part ${part.partNumber} as clip: ${clipId} at ${formatTime(part.startTime)}`);
+                    });
+                    
+                    console.log(`✅ Converted ${buffers.length} narration parts to audioClips`);
+                    
                     // Update UI
                     document.getElementById('narrationParts').textContent = buffers.length;
                     document.getElementById('totalDurationDisplay').textContent = formatTime(totalDuration);
@@ -9096,23 +9122,24 @@ Format as clean, readable text ready for narration.`;
                 
                 console.log(`🎵 Starting playback from ${formatTime(audioDAW.currentTime)}`);
                 
-                // NEW: Play audio clips based on their individual positions
+                // UNIFIED SYSTEM: Use audioClips for everything (narration parts + other audio)
                 if (audioDAW.audioClips && audioDAW.audioClips.length > 0) {
-                    console.log(`🎵 Playing ${audioDAW.audioClips.length} audio clips with individual positioning`);
+                    console.log(`🎵 Playing ${audioDAW.audioClips.length} total audio clips (including narration parts)`);
                     playAudioClipsFromTime(audioDAW.currentTime);
                 } else {
-                    // Fallback to old track-based system
-                    console.log('🎵 Using fallback track-based playback');
+                    // Fallback to old system if no clips available
+                    console.log('🎵 No audioClips found, using fallback track-based playback');
                     
                     // Handle multi-part narration
                     if (audioDAW.tracks.narration.buffers && audioDAW.tracks.narration.buffers.length > 0) {
+                        console.log('🎵 Playing multi-part narration (fallback)');
                         playMultiPartNarration();
                     } else if (audioDAW.tracks.narration.buffer) {
-                        // Single narration file
+                        console.log('🎵 Playing single narration (fallback)');
                         playTrackFromTime('narration', audioDAW.currentTime);
                     }
                     
-                    // Play other tracks (music, sfx)
+                    // Play other tracks
                     ['music1', 'music2', 'sfx1', 'sfx2'].forEach(trackName => {
                         const track = audioDAW.tracks[trackName];
                         if (track.buffer && track.gainNode) {
@@ -9256,6 +9283,11 @@ Format as clean, readable text ready for narration.`;
                     console.log(`⏭️ Clip ${clip.id} (${formatTime(clipStartTime)}-${formatTime(clipEndTime)}) not active at ${formatTime(currentTime)}`);
                 }
             });
+        }
+        
+        // Helper function to check if a track has clips
+        function hasClipForTrack(trackName) {
+            return audioDAW.audioClips && audioDAW.audioClips.some(clip => clip.trackName === trackName);
         }
 
         // Enhanced pause with position preservation
