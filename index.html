@@ -8871,11 +8871,14 @@ Format as clean, readable text ready for narration.`;
                             id: clipId,
                             trackName: 'narration',
                             startTime: part.startTime,
+                            endTime: part.startTime + part.buffer.duration,
                             duration: part.buffer.duration,
                             buffer: part.buffer,
+                            rawData: part.rawData || null, // Store ArrayBuffer if available
                             selected: false,
                             color: audioDAW.tracks.narration.color,
-                            partNumber: part.partNumber
+                            partNumber: part.partNumber,
+                            name: `Narration Part ${part.partNumber}`
                         });
                         console.log(`📌 Added narration part ${part.partNumber} as clip: ${clipId} at ${formatTime(part.startTime)}`);
                     });
@@ -8963,12 +8966,14 @@ Format as clean, readable text ready for narration.`;
                     id: clipId,
                     trackName: trackName,
                     startTime: 0,
+                    endTime: audioBuffer.duration,
                     duration: audioBuffer.duration,
                     buffer: audioBuffer,
                     selected: false,
                     color: audioDAW.tracks[trackName].color,
                     fileName: file.name,
                     fileType: file.type,
+                    name: file.name,
                     rawData: arrayBuffer, // Persistent storage
                     metadata: {
                         sampleRate: audioBuffer.sampleRate,
@@ -10226,6 +10231,34 @@ Format as clean, readable text ready for narration.`;
             event.stopPropagation();
             audioDAW.isDragging = false;
         }
+        
+        // Move clip to new position using existing loaded data
+        function moveClipToPosition(clip, targetTrack, targetTime) {
+            try {
+                console.log(`✅ Moving clip ${clip.id} from ${clip.trackName} to ${targetTrack} at ${formatTime(targetTime)}`);
+                
+                // Calculate clip duration
+                const clipDuration = clip.endTime - clip.startTime;
+                
+                // Update clip properties with new position (using existing ArrayBuffer/AudioBuffer data)
+                clip.trackName = targetTrack;
+                clip.startTime = targetTime;
+                clip.endTime = targetTime + clipDuration;
+                
+                // The clip retains its existing buffer and rawData - no reloading needed
+                console.log(`💾 Using existing audio data - buffer: ${!!clip.buffer}, rawData: ${!!clip.rawData}`);
+                
+                // Redraw timeline to show new position
+                drawEnhancedTimeline();
+                
+                console.log(`✅ Successfully moved clip to ${targetTrack} at ${formatTime(targetTime)}`);
+                showNotification(`Moved clip to ${targetTrack}`, 'success');
+                
+            } catch (error) {
+                console.error('❌ Error moving clip:', error);
+                showNotification('Failed to move clip', 'error');
+            }
+        }
 
 
 
@@ -11047,18 +11080,32 @@ Format as clean, readable text ready for narration.`;
                 }
             }
             
-            // PRIORITY 2: Check for dragged audio sources (from existing UI elements)
+            // PRIORITY 2: Check for internal clip dragging (existing clips being moved)
+            if (audioTools.draggedClip) {
+                console.log(`🎵 Moving internal clip ${audioTools.draggedClip.id} to ${targetTrack} at ${formatTime(dropTime)}`);
+                
+                // This is an internal clip movement - use existing data, don't reload
+                moveClipToPosition(audioTools.draggedClip, targetTrack, dropTime);
+                
+                // Reset drag state
+                audioTools.draggedClip = null;
+                audioTools.previewPosition = null;
+                audioDAW.canvas.style.cursor = 'default';
+                
+                return;
+            }
+            
+            // PRIORITY 3: Check for external audio sources (from UI elements)
             const audioSrc = event.dataTransfer.getData('audio/src') || event.dataTransfer.getData('text/plain');
-            if (audioSrc) {
-                console.log(`🎵 Dropping existing audio source on ${targetTrack} at ${formatTime(dropTime)}`);
+            if (audioSrc && audioSrc.trim() && audioSrc.startsWith('http')) {
+                console.log(`🎵 Dropping external audio source on ${targetTrack} at ${formatTime(dropTime)}`);
                 console.log(`🎵 Audio source:`, audioSrc);
                 loadAudioToTrack(audioSrc, targetTrack, dropTime);
                 return;
             }
             
             // No valid drop data
-            console.warn('⚠️ No valid audio source in drop - no files and no audio data');
-            showNotification('No audio data found', 'error');
+            console.log('🚫 No valid drop data detected - ignoring');
         }
 
         // NEW: Process dropped audio file without blob URLs (following suggestion)
@@ -11122,13 +11169,15 @@ Format as clean, readable text ready for narration.`;
                     id: clipId,
                     trackName: trackName,
                     startTime: startTime,
+                    endTime: startTime + audioBuffer.duration,
                     duration: audioBuffer.duration,
                     buffer: audioBuffer,
                     selected: false,
                     color: audioDAW.tracks[trackName].color,
                     fileName: file.name,
                     fileType: file.type,
-                    rawData: arrayBuffer,
+                    rawData: arrayBuffer, // Persistent ArrayBuffer storage
+                    name: file.name,
                     metadata: {
                         sampleRate: audioBuffer.sampleRate,
                         numberOfChannels: audioBuffer.numberOfChannels,
