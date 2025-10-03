@@ -9175,7 +9175,9 @@ Format as clean, readable text ready for narration.`;
                 // UNIFIED SYSTEM: Use audioClips for everything (narration parts + other audio)
                 if (audioDAW.audioClips && audioDAW.audioClips.length > 0) {
                     console.log(`🎵 Playing ${audioDAW.audioClips.length} total audio clips (including narration parts)`);
-                    playAudioClipsFromTime(audioDAW.currentTime);
+                    
+                    // FIXED: Start all clips at initial time, then let timeline manage continuity
+                    startAllActiveClips(audioDAW.currentTime);
                 } else {
                     // Fallback to old system if no clips available
                     console.log('🎵 No audioClips found, using fallback track-based playback');
@@ -9214,6 +9216,80 @@ Format as clean, readable text ready for narration.`;
                 stopDAWAudio();
                 showNotification(`Playback error: ${error.message}`, 'error');
             }
+        }
+        
+        // Start all clips that should be active at the given time (called once at playback start)
+        function startAllActiveClips(startTime) {
+            if (!audioDAW.audioClips || audioDAW.audioClips.length === 0) return;
+            
+            console.log(`🎵 Starting all active clips at ${formatTime(startTime)}`);
+            
+            audioDAW.audioClips.forEach(clip => {
+                const clipStartTime = clip.startTime || 0;
+                const clipEndTime = clip.endTime || (clipStartTime + clip.duration);
+                
+                // Check if clip should be playing at start time
+                if (startTime >= clipStartTime && startTime < clipEndTime) {
+                    const track = audioDAW.tracks[clip.trackName];
+                    if (!track || !track.gainNode) {
+                        console.warn(`⚠️ Track ${clip.trackName} not found or missing gain node`);
+                        return;
+                    }
+                    
+                    const offset = startTime - clipStartTime;
+                    console.log(`🎵 Starting clip ${clip.id} (${clip.trackName}) from ${formatTime(offset)}`);
+                    
+                    try {
+                        // Create and start source
+                        clip.source = audioDAW.context.createBufferSource();
+                        clip.source.buffer = clip.buffer;
+                        clip.source.connect(track.gainNode);
+                        
+                        const clampedOffset = Math.max(0, Math.min(offset, clip.buffer.duration));
+                        const remainingDuration = clip.buffer.duration - clampedOffset;
+                        
+                        clip.source.start(audioDAW.context.currentTime, clampedOffset, remainingDuration);
+                        
+                        console.log(`✅ Clip ${clip.id} started successfully`);
+                        
+                        // Auto-cleanup when finished
+                        clip.source.onended = () => {
+                            clip.source = null;
+                            console.log(`🏁 Clip ${clip.id} finished naturally`);
+                        };
+                        
+                    } catch (error) {
+                        console.error(`❌ Failed to start clip ${clip.id}:`, error);
+                    }
+                } else if (startTime < clipStartTime) {
+                    // Schedule future clips
+                    const delay = clipStartTime - startTime;
+                    const track = audioDAW.tracks[clip.trackName];
+                    
+                    if (track && track.gainNode) {
+                        console.log(`⏰ Scheduling clip ${clip.id} to start in ${formatTime(delay)}`);
+                        
+                        setTimeout(() => {
+                            if (audioDAW.isPlaying && !clip.source) {
+                                try {
+                                    clip.source = audioDAW.context.createBufferSource();
+                                    clip.source.buffer = clip.buffer;
+                                    clip.source.connect(track.gainNode);
+                                    clip.source.start(audioDAW.context.currentTime);
+                                    
+                                    console.log(`🔄 Scheduled clip ${clip.id} started`);
+                                    
+                                    clip.source.onended = () => {
+                                        clip.source = null;
+                                    };
+                                } catch (error) {
+                                    console.error(`❌ Failed to start scheduled clip ${clip.id}:`, error);
+                                }
+                            }
+                        }, delay * 1000);
+                    }
+                }
+            });
         }
         
         // Play multi-part narration seamlessly
@@ -9287,49 +9363,58 @@ Format as clean, readable text ready for narration.`;
             
             console.log(`🎵 Evaluating ${audioDAW.audioClips.length} clips for playback at ${formatTime(currentTime)}`);
             
-            // Clear any existing sources
-            audioDAW.audioClips.forEach(clip => {
-                if (clip.source) {
-                    try {
-                        clip.source.stop();
-                    } catch (e) {}
-                    clip.source = null;
-                }
-            });
-            
-            // Play clips that should be active at current time
+            // FIXED: Only start clips that aren't already playing, don't constantly restart
             audioDAW.audioClips.forEach((clip, index) => {
                 const clipStartTime = clip.startTime || 0;
-                const clipEndTime = clipStartTime + clip.duration;
+                const clipEndTime = clip.endTime || (clipStartTime + clip.duration);
                 
                 // Check if clip should be playing at current time
                 if (currentTime >= clipStartTime && currentTime < clipEndTime) {
-                    const track = audioDAW.tracks[clip.trackName];
-                    if (!track || !track.gainNode) {
-                        console.warn(`⚠️ Track ${clip.trackName} not found or missing gain node`);
-                        return;
-                    }
-                    
-                    const offset = currentTime - clipStartTime;
-                    const delay = 0; // Start immediately
-                    
-                    console.log(`🎵 Playing clip ${clip.id} (${clip.trackName}) from ${formatTime(offset)}`);
-                    
-                    try {
-                        // Create source for this clip
-                        clip.source = audioDAW.context.createBufferSource();
-                        clip.source.buffer = clip.buffer;
-                        clip.source.connect(track.gainNode);
+                    // Only start if not already playing
+                    if (!clip.source || clip.source.playbackState === 'finished') {
+                        const track = audioDAW.tracks[clip.trackName];
+                        if (!track || !track.gainNode) {
+                            console.warn(`⚠️ Track ${clip.trackName} not found or missing gain node`);
+                            return;
+                        }
                         
-                        const clampedOffset = Math.max(0, Math.min(offset, clip.buffer.duration));
-                        clip.source.start(audioDAW.context.currentTime + delay, clampedOffset);
+                        const offset = currentTime - clipStartTime;
+                        const delay = 0; // Start immediately
                         
-                        console.log(`✅ Clip ${clip.id} started at offset ${formatTime(clampedOffset)}`);
+                        console.log(`🎵 Playing clip ${clip.id} (${clip.trackName}) from ${formatTime(offset)}`);
                         
-                    } catch (error) {
-                        console.error(`❌ Failed to play clip ${clip.id}:`, error);
+                        try {
+                            // Create source for this clip
+                            clip.source = audioDAW.context.createBufferSource();
+                            clip.source.buffer = clip.buffer;
+                            clip.source.connect(track.gainNode);
+                            
+                            const clampedOffset = Math.max(0, Math.min(offset, clip.buffer.duration));
+                            
+                            // Schedule the source to stop at the clip's end time
+                            const remainingDuration = clip.buffer.duration - clampedOffset;
+                            clip.source.start(audioDAW.context.currentTime + delay, clampedOffset, remainingDuration);
+                            
+                            console.log(`✅ Clip ${clip.id} started at offset ${formatTime(clampedOffset)}`);
+                            
+                            // Auto-cleanup when finished
+                            clip.source.onended = () => {
+                                clip.source = null;
+                            };
+                            
+                        } catch (error) {
+                            console.error(`❌ Failed to play clip ${clip.id}:`, error);
+                        }
                     }
                 } else {
+                    // Stop clips that are no longer in range
+                    if (clip.source && currentTime >= clipEndTime) {
+                        try {
+                            clip.source.stop();
+                        } catch (e) {}
+                        clip.source = null;
+                        console.log(`⏹️ Stopped clip ${clip.id} - end of range`);
+                    }
                     console.log(`⏭️ Clip ${clip.id} (${formatTime(clipStartTime)}-${formatTime(clipEndTime)}) not active at ${formatTime(currentTime)}`);
                 }
             });
@@ -9488,11 +9573,58 @@ Format as clean, readable text ready for narration.`;
                 if (audioDAW.isPlaying) {
                     updateCurrentTime();
                     drawEnhancedTimeline();
+                    
+                    // FIXED: Check for clips that need to start but don't restart existing ones
+                    checkForNewClipsToStart();
+                    
                     audioDAW.animationId = requestAnimationFrame(animate);
                 }
             };
             
             audioDAW.animationId = requestAnimationFrame(animate);
+        }
+        
+        // Check if any clips need to start at the current time (without restarting existing ones)
+        function checkForNewClipsToStart() {
+            if (!audioDAW.audioClips || audioDAW.audioClips.length === 0) return;
+            
+            const currentTime = audioDAW.currentTime;
+            
+            audioDAW.audioClips.forEach(clip => {
+                const clipStartTime = clip.startTime || 0;
+                const clipEndTime = clip.endTime || (clipStartTime + clip.duration);
+                
+                // Only start clips that should be playing now but aren't already started
+                if (currentTime >= clipStartTime && currentTime < clipEndTime && !clip.source) {
+                    const track = audioDAW.tracks[clip.trackName];
+                    if (!track || !track.gainNode) return;
+                    
+                    const offset = currentTime - clipStartTime;
+                    
+                    // Only start if we're very close to the start time (within 0.1 seconds)
+                    if (offset < 0.1) {
+                        console.log(`🔄 Starting late clip ${clip.id} at ${formatTime(currentTime)}`);
+                        
+                        try {
+                            clip.source = audioDAW.context.createBufferSource();
+                            clip.source.buffer = clip.buffer;
+                            clip.source.connect(track.gainNode);
+                            
+                            const clampedOffset = Math.max(0, Math.min(offset, clip.buffer.duration));
+                            const remainingDuration = clip.buffer.duration - clampedOffset;
+                            
+                            clip.source.start(audioDAW.context.currentTime, clampedOffset, remainingDuration);
+                            
+                            clip.source.onended = () => {
+                                clip.source = null;
+                            };
+                            
+                        } catch (error) {
+                            console.error(`❌ Failed to start late clip ${clip.id}:`, error);
+                        }
+                    }
+                }
+            });
         }
 
         // Get maximum duration across all tracks
@@ -11610,10 +11742,13 @@ Format as clean, readable text ready for narration.`;
                 document.getElementById('dawStatus').textContent = 'Exporting final audiobook...';
                 showLoading('Creating final audiobook with cover art and metadata...');
                 
-                // Check if we have audio to export
-                const tracksWithAudio = Object.values(audioDAW.tracks).filter(t => t.buffer);
-                if (tracksWithAudio.length === 0) {
-                    throw new Error('No audio tracks loaded to export');
+                // FIXED: Use audioClips system instead of legacy tracks
+                if (!audioDAW.audioClips || audioDAW.audioClips.length === 0) {
+                    // Fallback: Check old track system
+                    const tracksWithAudio = Object.values(audioDAW.tracks).filter(t => t.buffer);
+                    if (tracksWithAudio.length === 0) {
+                        throw new Error('No audio clips or tracks loaded to export');
+                    }
                 }
                 
                 // Get maximum duration
@@ -11622,28 +11757,65 @@ Format as clean, readable text ready for narration.`;
                     throw new Error('No valid audio found');
                 }
                 
+                console.log(`🎙️ Exporting final audiobook - Duration: ${formatTime(maxDuration)}`);
+                
                 // Create final mix buffer
                 const sampleRate = audioDAW.context.sampleRate;
                 const totalSamples = Math.floor(maxDuration * sampleRate);
                 const finalBuffer = audioDAW.context.createBuffer(2, totalSamples, sampleRate);
                 
-                // Mix all tracks together
-                Object.keys(audioDAW.tracks).forEach(trackName => {
-                    const track = audioDAW.tracks[trackName];
-                    if (track.buffer && !track.muted) {
-                        const volume = track.volume;
-                        const channels = Math.min(track.buffer.numberOfChannels, 2);
+                // FIXED: Mix using audioClips system (includes narration parts)
+                if (audioDAW.audioClips && audioDAW.audioClips.length > 0) {
+                    console.log(`🎵 Mixing ${audioDAW.audioClips.length} audio clips into final export`);
+                    
+                    audioDAW.audioClips.forEach(clip => {
+                        const track = audioDAW.tracks[clip.trackName];
+                        if (!clip.buffer || !track || track.muted) {
+                            console.log(`⏭️ Skipping clip ${clip.id} - no buffer or muted`);
+                            return;
+                        }
                         
+                        const volume = track.volume || 0.7;
+                        const clipStartSample = Math.floor(clip.startTime * sampleRate);
+                        const clipDuration = clip.buffer.duration;
+                        const clipSamples = clip.buffer.length;
+                        
+                        console.log(`🎵 Mixing clip ${clip.id} (${clip.trackName}) at ${formatTime(clip.startTime)}`);
+                        
+                        // Mix each channel
+                        const channels = Math.min(clip.buffer.numberOfChannels, 2);
                         for (let channel = 0; channel < channels; channel++) {
-                            const sourceData = track.buffer.getChannelData(channel);
+                            const sourceData = clip.buffer.getChannelData(channel);
                             const targetData = finalBuffer.getChannelData(channel);
                             
-                            for (let i = 0; i < Math.min(sourceData.length, totalSamples); i++) {
-                                targetData[i] += sourceData[i] * volume;
+                            // Mix clip data at the correct timeline position
+                            for (let i = 0; i < clipSamples && (clipStartSample + i) < totalSamples; i++) {
+                                targetData[clipStartSample + i] += sourceData[i] * volume;
                             }
                         }
-                    }
-                });
+                    });
+                } else {
+                    // Fallback: Use legacy track system
+                    console.log('🔄 Using legacy track mixing (fallback)');
+                    Object.keys(audioDAW.tracks).forEach(trackName => {
+                        const track = audioDAW.tracks[trackName];
+                        if (track.buffer && !track.muted) {
+                            const volume = track.volume || 0.7;
+                            const channels = Math.min(track.buffer.numberOfChannels, 2);
+                            
+                            for (let channel = 0; channel < channels; channel++) {
+                                const sourceData = track.buffer.getChannelData(channel);
+                                const targetData = finalBuffer.getChannelData(channel);
+                                
+                                for (let i = 0; i < Math.min(sourceData.length, totalSamples); i++) {
+                                    targetData[i] += sourceData[i] * volume;
+                                }
+                            }
+                        }
+                    });
+                }
+                
+                console.log('🎙️ Encoding final mix to WAV format...');
                 
                 // Convert to WAV format
                 const wavData = encodeWAV(finalBuffer);
@@ -11672,7 +11844,7 @@ Format as clean, readable text ready for narration.`;
                 }, 1000);
                 
             } catch (error) {
-                console.error('Export error:', error);
+                console.error('❌ Export error:', error);
                 hideLoading();
                 document.getElementById('dawStatus').textContent = 'Export failed';
                 showNotification(`Export failed: ${error.message}`, 'error');
