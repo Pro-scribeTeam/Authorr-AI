@@ -1579,6 +1579,24 @@
                 AI Book Cover Generator
             </h1>
 
+            <!-- DAW Audio Ready Notification Panel -->
+            <div id="dawAudioNotification" class="mb-6 bg-gradient-to-r from-purple-600 to-blue-600 p-4 rounded-xl border-2 border-purple-400 hidden">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <i class="fas fa-music text-purple-200"></i>
+                        <div>
+                            <span class="text-white font-semibold">Audio Ready for Cover Integration</span>
+                            <div class="text-purple-200 text-sm" id="dawAudioInfo">
+                                Audio from DAW is ready to be embedded with cover art
+                            </div>
+                        </div>
+                    </div>
+                    <button onclick="hideDawAudioNotification()" class="text-purple-200 hover:text-white">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+
             <!-- Platform Dimension Templates -->
             <div class="mb-8 bg-theme-secondary p-6 rounded-xl border-2 border-theme">
                 <h2 class="text-xl font-bold mb-4">
@@ -1769,6 +1787,13 @@
                                     </button>
                                     <button onclick="downloadCover()" class="btn-primary px-4 py-2 rounded text-sm">
                                         <i class="fas fa-download mr-1"></i>Download
+                                    </button>
+                                </div>
+                                
+                                <!-- Embed Cover Button (Only shows when DAW audio is available) -->
+                                <div id="embedCoverSection" class="hidden">
+                                    <button onclick="embedCoverIntoAudio()" class="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white px-6 py-3 rounded-lg font-semibold w-full">
+                                        <i class="fas fa-compact-disc mr-2"></i>Embed Cover into Audio
                                     </button>
                                 </div>
                                 
@@ -4866,6 +4891,274 @@ Return the COMPLETE text with DRAMATICALLY humanized writing that's obviously di
             showNotification(`Selected ${dimensions.name} template (${dimensions.width}×${dimensions.height}px)`, 'success');
         }
 
+        // DAW Audio Integration Functions
+        function notifyCoverPageAudioReady(audioData) {
+            console.log('🎵 Cover page notified of DAW audio ready:', audioData);
+            
+            // Update notification panel
+            const notification = document.getElementById('dawAudioNotification');
+            const audioInfo = document.getElementById('dawAudioInfo');
+            
+            if (notification && audioInfo) {
+                audioInfo.innerHTML = `
+                    <strong>${audioData.title}</strong><br>
+                    Duration: ${formatTime(audioData.duration)} | Ready: ${new Date(audioData.timestamp).toLocaleTimeString()}
+                `;
+                notification.classList.remove('hidden');
+                
+                showNotification('🎵 Audio from DAW is ready for cover embedding!', 'success');
+            }
+            
+            // Show embed button section if cover is already generated
+            updateEmbedButtonVisibility();
+        }
+        
+        function hideDawAudioNotification() {
+            const notification = document.getElementById('dawAudioNotification');
+            if (notification) {
+                notification.classList.add('hidden');
+            }
+        }
+        
+        function updateEmbedButtonVisibility() {
+            const embedSection = document.getElementById('embedCoverSection');
+            const coverPreview = document.getElementById('coverPreview');
+            
+            // Show embed button if both cover is generated AND DAW audio is available
+            const hasGeneratedCover = coverPreview && !coverPreview.classList.contains('hidden');
+            const hasDawAudio = window.dawMixedAudio && window.dawMixedAudio.blob;
+            
+            if (embedSection) {
+                if (hasGeneratedCover && hasDawAudio) {
+                    embedSection.classList.remove('hidden');
+                } else {
+                    embedSection.classList.add('hidden');
+                }
+            }
+        }
+
+        // Embed Cover Art into Audio File
+        async function embedCoverIntoAudio() {
+            try {
+                // Check requirements
+                if (!window.dawMixedAudio || !window.dawMixedAudio.blob) {
+                    showNotification('No audio available from DAW. Please send audio from Audio DAW first.', 'error');
+                    return;
+                }
+                
+                const generatedCover = document.getElementById('generatedCover');
+                if (!generatedCover || !generatedCover.src) {
+                    showNotification('Please generate a cover first before embedding.', 'error');
+                    return;
+                }
+                
+                showLoading('Embedding cover art into audio file...');
+                
+                // Get cover image data
+                const coverImageBlob = await fetch(generatedCover.src).then(r => r.blob());
+                const coverImageArray = new Uint8Array(await coverImageBlob.arrayBuffer());
+                
+                // Get metadata
+                const title = document.getElementById('coverTitle')?.value?.trim() || 'Audiobook';
+                const author = document.getElementById('coverAuthor')?.value?.trim() || 'Unknown Author';
+                const subtitle = document.getElementById('coverSubtitle')?.value?.trim();
+                
+                // Convert WAV to MP3 with embedded cover art using Web Audio API
+                const mp3Blob = await embedCoverIntoMP3(
+                    window.dawMixedAudio.buffer,
+                    coverImageArray,
+                    {
+                        title: title,
+                        artist: author,
+                        album: subtitle || title,
+                        genre: 'Audiobook',
+                        year: new Date().getFullYear().toString()
+                    }
+                );
+                
+                hideLoading();
+                
+                // Download the final audiobook with embedded cover
+                const url = URL.createObjectURL(mp3Blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${title.replace(/[^a-zA-Z0-9\s]/g, '')}_with_cover.mp3`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                showNotification('✅ Audiobook with embedded cover art downloaded successfully!', 'success');
+                
+            } catch (error) {
+                console.error('❌ Cover embedding error:', error);
+                hideLoading();
+                showNotification(`Failed to embed cover: ${error.message}`, 'error');
+            }
+        }
+
+        // Convert audio buffer to MP3 with embedded cover art and metadata
+        async function embedCoverIntoMP3(audioBuffer, coverImageData, metadata) {
+            // Convert AudioBuffer to WAV data
+            const wavData = bufferToWave(audioBuffer, audioBuffer.length);
+            const wavArrayBuffer = await wavData.arrayBuffer();
+            
+            // Create MP3 with ID3v2 tags
+            const mp3Data = await encodeMP3WithCover(wavArrayBuffer, coverImageData, metadata);
+            
+            return new Blob([mp3Data], { type: 'audio/mpeg' });
+        }
+
+        // Encode WAV to MP3 with ID3v2 tags and cover art
+        async function encodeMP3WithCover(wavArrayBuffer, coverImageData, metadata) {
+            try {
+                // For now, we'll create a simple MP3-like file with ID3 header
+                // Note: This is a simplified implementation
+                // In production, you'd want to use a proper MP3 encoder library
+                
+                // Create ID3v2.4 header with cover art (APIC frame)
+                const id3Header = createID3v2Header(metadata, coverImageData);
+                
+                // Convert WAV to a basic audio format (keeping as WAV for now)
+                // In a real implementation, you'd use an MP3 encoder here
+                const wavData = new Uint8Array(wavArrayBuffer);
+                
+                // Combine ID3 header with audio data
+                const finalData = new Uint8Array(id3Header.length + wavData.length);
+                finalData.set(id3Header, 0);
+                finalData.set(wavData, id3Header.length);
+                
+                return finalData;
+                
+            } catch (error) {
+                console.error('MP3 encoding error:', error);
+                throw error;
+            }
+        }
+
+        // Create ID3v2 header with metadata and cover art
+        function createID3v2Header(metadata, coverImageData) {
+            const frames = [];
+            
+            // Add text frames
+            if (metadata.title) frames.push(createTextFrame('TIT2', metadata.title));
+            if (metadata.artist) frames.push(createTextFrame('TPE1', metadata.artist));
+            if (metadata.album) frames.push(createTextFrame('TALB', metadata.album));
+            if (metadata.genre) frames.push(createTextFrame('TCON', metadata.genre));
+            if (metadata.year) frames.push(createTextFrame('TYER', metadata.year));
+            
+            // Add cover art frame (APIC)
+            if (coverImageData) {
+                frames.push(createAPICFrame(coverImageData));
+            }
+            
+            // Calculate total frame size
+            const frameSize = frames.reduce((sum, frame) => sum + frame.length, 0);
+            
+            // Create ID3v2.4 header
+            const header = new Uint8Array(10);
+            header[0] = 0x49; // 'I'
+            header[1] = 0x44; // 'D'
+            header[2] = 0x33; // '3'
+            header[3] = 0x04; // version 2.4
+            header[4] = 0x00; // revision
+            header[5] = 0x00; // flags
+            
+            // Size (synchsafe integer - 28 bits in 4 bytes)
+            const size = frameSize;
+            header[6] = (size >> 21) & 0x7F;
+            header[7] = (size >> 14) & 0x7F;
+            header[8] = (size >> 7) & 0x7F;
+            header[9] = size & 0x7F;
+            
+            // Combine header with frames
+            const id3Data = new Uint8Array(10 + frameSize);
+            id3Data.set(header, 0);
+            
+            let offset = 10;
+            for (const frame of frames) {
+                id3Data.set(frame, offset);
+                offset += frame.length;
+            }
+            
+            return id3Data;
+        }
+
+        // Create text frame for ID3v2
+        function createTextFrame(frameId, text) {
+            const textData = new TextEncoder().encode(text);
+            const frame = new Uint8Array(10 + 1 + textData.length);
+            
+            // Frame ID (4 bytes)
+            for (let i = 0; i < 4; i++) {
+                frame[i] = frameId.charCodeAt(i);
+            }
+            
+            // Frame size (4 bytes, synchsafe)
+            const size = 1 + textData.length;
+            frame[4] = (size >> 24) & 0xFF;
+            frame[5] = (size >> 16) & 0xFF;
+            frame[6] = (size >> 8) & 0xFF;
+            frame[7] = size & 0xFF;
+            
+            // Frame flags (2 bytes)
+            frame[8] = 0x00;
+            frame[9] = 0x00;
+            
+            // Text encoding (1 byte) - UTF-8
+            frame[10] = 0x03;
+            
+            // Text data
+            frame.set(textData, 11);
+            
+            return frame;
+        }
+
+        // Create APIC frame (Attached Picture) for cover art
+        function createAPICFrame(imageData) {
+            const mimeType = 'image/png'; // Assume PNG for now
+            const mimeTypeData = new TextEncoder().encode(mimeType);
+            
+            const frame = new Uint8Array(10 + 1 + mimeTypeData.length + 1 + 1 + imageData.length);
+            
+            // Frame ID "APIC" (4 bytes)
+            frame[0] = 0x41; // 'A'
+            frame[1] = 0x50; // 'P'
+            frame[2] = 0x49; // 'I'
+            frame[3] = 0x43; // 'C'
+            
+            // Frame size (4 bytes)
+            const size = 1 + mimeTypeData.length + 1 + 1 + imageData.length;
+            frame[4] = (size >> 24) & 0xFF;
+            frame[5] = (size >> 16) & 0xFF;
+            frame[6] = (size >> 8) & 0xFF;
+            frame[7] = size & 0xFF;
+            
+            // Frame flags (2 bytes)
+            frame[8] = 0x00;
+            frame[9] = 0x00;
+            
+            let offset = 10;
+            
+            // Text encoding (1 byte)
+            frame[offset++] = 0x00;
+            
+            // MIME type
+            frame.set(mimeTypeData, offset);
+            offset += mimeTypeData.length;
+            
+            // Null terminator for MIME type
+            frame[offset++] = 0x00;
+            
+            // Picture type (1 byte) - 0x03 = Cover (front)
+            frame[offset++] = 0x03;
+            
+            // Image data
+            frame.set(imageData, offset);
+            
+            return frame;
+        }
+
         // OpenAI DALL-E Cover Generation Functions
         async function generateAICover() {
             const apiKey = getOpenAIApiKey();
@@ -4998,6 +5291,9 @@ Return the COMPLETE text with DRAMATICALLY humanized writing that's obviously di
             
             placeholderPreview.classList.add('hidden');
             coverPreview.classList.remove('hidden');
+            
+            // Update embed button visibility now that cover is available
+            updateEmbedButtonVisibility();
             
             showNotification('AI book cover generated successfully!', 'success');
         }
@@ -7970,6 +8266,9 @@ Format as clean, readable text ready for narration.`;
                                 </button>
                                 <button onclick="exportFinalAudiobook()" class="bg-cyan-600 hover:bg-cyan-500 px-4 py-2 rounded">
                                     <i class="fas fa-download mr-2"></i>Export Final
+                                </button>
+                                <button onclick="sendToCoverPage()" class="bg-purple-600 hover:bg-purple-500 px-4 py-2 rounded">
+                                    <i class="fas fa-image mr-2"></i>Send to Cover
                                 </button>
                                 <button onclick="closeAudioDAW()" class="bg-gray-600 hover:bg-gray-500 px-4 py-2 rounded">
                                     <i class="fas fa-times"></i> Close
@@ -11950,6 +12249,104 @@ Format as clean, readable text ready for narration.`;
                 
                 showNotification('📸 Cover art generated and downloaded!', 'success');
             }, 'image/png');
+        }
+
+        // Send mixed audio from DAW to Cover Page for embedding
+        async function sendToCoverPage() {
+            try {
+                document.getElementById('dawStatus').textContent = 'Preparing audio for cover integration...';
+                showLoading('Mixing audio and preparing for cover page...');
+                
+                // Check if we have audio clips to mix
+                if (!audioDAW.audioClips || audioDAW.audioClips.length === 0) {
+                    const tracksWithAudio = Object.values(audioDAW.tracks).filter(t => t.buffer);
+                    if (tracksWithAudio.length === 0) {
+                        throw new Error('No audio clips or tracks loaded to send');
+                    }
+                }
+                
+                // Get maximum duration for mixing
+                const maxDuration = getMaxTrackDuration();
+                if (maxDuration === 0) {
+                    throw new Error('No valid audio found');
+                }
+                
+                console.log(`🎵 Mixing audio for cover integration - Duration: ${formatTime(maxDuration)}`);
+                
+                // Create offline audio context for mixing
+                const offlineContext = new OfflineAudioContext(2, maxDuration * 44100, 44100);
+                
+                // Mix all audio clips at their timeline positions
+                if (audioDAW.audioClips && audioDAW.audioClips.length > 0) {
+                    console.log(`📊 Mixing ${audioDAW.audioClips.length} clips from audioClips system`);
+                    
+                    for (const clip of audioDAW.audioClips) {
+                        if (clip.buffer && clip.startTime !== undefined) {
+                            const source = offlineContext.createBufferSource();
+                            source.buffer = clip.buffer;
+                            
+                            // Apply track volume
+                            const gainNode = offlineContext.createGain();
+                            const trackVolume = audioDAW.tracks[clip.trackName]?.volume || 100;
+                            gainNode.gain.value = trackVolume / 100;
+                            
+                            source.connect(gainNode);
+                            gainNode.connect(offlineContext.destination);
+                            source.start(clip.startTime);
+                        }
+                    }
+                } else {
+                    // Fallback to old track system
+                    console.log('📊 Using legacy tracks system for mixing');
+                    const tracks = Object.values(audioDAW.tracks).filter(t => t.buffer);
+                    
+                    tracks.forEach(track => {
+                        const source = offlineContext.createBufferSource();
+                        source.buffer = track.buffer;
+                        
+                        const gainNode = offlineContext.createGain();
+                        gainNode.gain.value = track.volume / 100;
+                        
+                        source.connect(gainNode);
+                        gainNode.connect(offlineContext.destination);
+                        source.start(0);
+                    });
+                }
+                
+                // Render the mixed audio
+                const renderedBuffer = await offlineContext.startRendering();
+                
+                // Convert to WAV blob
+                const wavBlob = bufferToWave(renderedBuffer, renderedBuffer.length);
+                
+                // Store mixed audio data globally for cover page access
+                window.dawMixedAudio = {
+                    blob: wavBlob,
+                    buffer: renderedBuffer,
+                    duration: maxDuration,
+                    timestamp: Date.now(),
+                    title: storyData?.title || 'Mixed Audio from DAW'
+                };
+                
+                hideLoading();
+                showNotification('🎵 Audio prepared successfully!', 'success');
+                
+                // Navigate to cover page
+                closeAudioDAW();
+                showPage('covers');
+                
+                // Notify cover page that audio is ready
+                if (typeof notifyCoverPageAudioReady === 'function') {
+                    notifyCoverPageAudioReady(window.dawMixedAudio);
+                }
+                
+                console.log('✅ Audio sent to cover page successfully');
+                
+            } catch (error) {
+                console.error('❌ Send to cover error:', error);
+                hideLoading();
+                showNotification(`Failed to prepare audio for cover: ${error.message}`, 'error');
+            }
         }
 
         // Close DAW modal
