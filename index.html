@@ -8561,6 +8561,8 @@ Format as clean, readable text ready for narration.`;
                                      ondragenter="handleTimelineDragEnter(event)"
                                      ondragleave="handleTimelineDragLeave(event)"
                                      onmousedown="handleDropZoneMouseDown(event)"
+                                     onmousemove="handleDropZoneMouseMove(event)"
+                                     onmouseup="handleDropZoneMouseUp(event)"
                                      style="pointer-events: auto; background: transparent;">
                                     <!-- Visual drop indicator -->
                                     <div id="dropIndicator" class="absolute hidden w-1 bg-green-400 opacity-75 pointer-events-none" 
@@ -9578,9 +9580,28 @@ Format as clean, readable text ready for narration.`;
             
             console.log(`🎵 Starting all active clips at ${formatTime(startTime)}`);
             
+            // Special handling for narrator parts - only play one at a time
+            let activeNarratorPart = null;
+            const narratorClips = audioDAW.audioClips.filter(clip => clip.trackName === 'narration');
+            
+            // Find which narrator part should be active at current time
+            for (const clip of narratorClips) {
+                const clipStartTime = clip.startTime || 0;
+                const clipEndTime = clip.endTime || (clipStartTime + clip.duration);
+                if (startTime >= clipStartTime && startTime < clipEndTime) {
+                    activeNarratorPart = clip;
+                    break;
+                }
+            }
+
             audioDAW.audioClips.forEach(clip => {
                 const clipStartTime = clip.startTime || 0;
                 const clipEndTime = clip.endTime || (clipStartTime + clip.duration);
+                
+                // Special check for narrator clips - only start the active one
+                if (clip.trackName === 'narration' && clip !== activeNarratorPart) {
+                    return; // Skip this narrator part
+                }
                 
                 // Check if clip should be playing at start time
                 if (startTime >= clipStartTime && startTime < clipEndTime) {
@@ -9619,6 +9640,17 @@ Format as clean, readable text ready for narration.`;
                     // Schedule future clips
                     const delay = clipStartTime - startTime;
                     const track = audioDAW.tracks[clip.trackName];
+                    
+                    // For narrator clips, only schedule if no other narrator is playing
+                    if (clip.trackName === 'narration') {
+                        const otherNarratorPlaying = narratorClips.some(narClip => 
+                            narClip !== clip && narClip.source && narClip.source.playbackState !== 'finished'
+                        );
+                        if (otherNarratorPlaying) {
+                            console.log(`⏭️ Skipping narrator clip ${clip.id} - another narrator is active`);
+                            return;
+                        }
+                    }
                     
                     if (track && track.gainNode) {
                         console.log(`⏰ Scheduling clip ${clip.id} to start in ${formatTime(delay)}`);
@@ -10409,6 +10441,18 @@ Format as clean, readable text ready for narration.`;
                 // This is a regular click, not a drag - pass to canvas
                 handleTimelineMouseDown(event);
             }
+        }
+        
+        function handleDropZoneMouseMove(event) {
+            console.log('🖱️ Drop zone intercepted mouse move, passing to canvas...');
+            // Always pass mouse move events to canvas for consistent behavior
+            handleTimelineMouseMove(event);
+        }
+        
+        function handleDropZoneMouseUp(event) {
+            console.log('🖱️ Drop zone intercepted mouse up, passing to canvas...');
+            // Always pass mouse up events to canvas for consistent behavior  
+            handleTimelineMouseUp(event);
         }
         
         function handleTimelineMouseDown(event) {
