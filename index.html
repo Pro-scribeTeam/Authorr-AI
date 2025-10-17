@@ -12155,9 +12155,31 @@ Format as clean, readable text ready for narration.`;
 
         // Get maximum duration across all tracks
         function getMaxTrackDuration() {
-            return Math.max(...Object.values(audioDAW.tracks)
-                .filter(t => t.buffer)
-                .map(t => t.buffer.duration), 0);
+            let maxDuration = 0;
+            
+            // FIXED: Check audioClips system (includes narration parts)
+            if (audioDAW.audioClips && audioDAW.audioClips.length > 0) {
+                audioDAW.audioClips.forEach(clip => {
+                    if (clip.buffer && clip.buffer.duration) {
+                        const clipEndTime = clip.startTime + clip.buffer.duration;
+                        maxDuration = Math.max(maxDuration, clipEndTime);
+                    }
+                });
+            }
+            
+            // Also check legacy tracks system
+            Object.values(audioDAW.tracks).forEach(track => {
+                if (track.buffer && track.buffer.duration) {
+                    maxDuration = Math.max(maxDuration, track.buffer.duration);
+                }
+            });
+            
+            // Check multi-part narration total duration
+            if (audioDAW.totalDuration > 0) {
+                maxDuration = Math.max(maxDuration, audioDAW.totalDuration);
+            }
+            
+            return maxDuration;
         }
 
         // Export final audiobook with metadata
