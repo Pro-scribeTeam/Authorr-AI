@@ -10094,6 +10094,23 @@ Format as clean, readable text ready for narration.`;
             requestAnimationFrame(animateTimeline);
         }
 
+        // Refresh canvas interaction state after changes
+        function refreshCanvasInteraction() {
+            console.log('🔄 Refreshing canvas interaction state');
+            
+            // Clear any stale interaction state
+            audioTools.mouseDown = false;
+            audioTools.draggedClip = null;
+            audioTools.selectionBox = null;
+            
+            // Ensure canvas cursor is correct
+            if (audioDAW.canvas) {
+                audioDAW.canvas.style.cursor = audioTools.currentTool === 'hand' ? 'grab' : 'default';
+            }
+            
+            console.log('✅ Canvas interaction state refreshed');
+        }
+        
         // Enhanced timeline drawing with multi-part support
         function drawEnhancedTimeline() {
             if (!audioDAW.ctx || !audioDAW.canvas) return;
@@ -10204,18 +10221,39 @@ Format as clean, readable text ready for narration.`;
         function drawTrackLane(ctx, trackName, x, y, width, height, pixelsPerSecond) {
             const track = audioDAW.tracks[trackName];
             
-            // Draw track background
-            ctx.fillStyle = '#1f2937';
-            ctx.fillRect(x, y, width, height);
+            // Check if this track has selected clips
+            const hasSelectedClips = audioDAW.audioClips && audioDAW.audioClips.some(clip => 
+                clip.trackName === trackName && clip.selected
+            );
             
-            // Draw track border
-            ctx.strokeStyle = '#374151';
-            ctx.lineWidth = 1;
+            // Draw track background with selection highlighting
+            if (hasSelectedClips) {
+                // Highlighted background for selected track
+                ctx.fillStyle = '#065f46'; // Dark green background
+                ctx.fillRect(x, y, width, height);
+                
+                // Brighter border for selected track
+                ctx.strokeStyle = '#10b981'; // Bright green border
+                ctx.lineWidth = 3;
+            } else {
+                // Normal track background
+                ctx.fillStyle = '#1f2937';
+                ctx.fillRect(x, y, width, height);
+                
+                // Normal border
+                ctx.strokeStyle = '#374151';
+                ctx.lineWidth = 1;
+            }
             ctx.strokeRect(x, y, width, height);
             
-            // Draw track label
-            ctx.fillStyle = '#d1d5db';
-            ctx.font = '12px Arial';
+            // Draw track label with highlighting for selected tracks
+            if (hasSelectedClips) {
+                ctx.fillStyle = '#d1fae5'; // Light green text for selected track
+                ctx.font = 'bold 12px Arial';
+            } else {
+                ctx.fillStyle = '#d1d5db';
+                ctx.font = '12px Arial';
+            }
             ctx.fillText(trackName.toUpperCase(), x + 5, y + 15);
             
             // Draw audio content
@@ -10297,9 +10335,10 @@ Format as clean, readable text ready for narration.`;
             let strokeWidth = 2;
             
             if (isSelected) {
-                fillColor = '#fbbf24';
-                strokeColor = '#f59e0b';
-                strokeWidth = 3;
+                fillColor = '#10b981'; // Bright green for selected
+                strokeColor = '#059669'; // Darker green border
+                strokeWidth = 4; // Thicker border for better visibility
+                opacity = 0.9; // More opaque when selected
             }
             
             if (isDragging) {
@@ -10561,6 +10600,11 @@ Format as clean, readable text ready for narration.`;
             const x = event.clientX - rect.left;
             const y = event.clientY - rect.top;
             
+            // Enhanced debugging for mouse move
+            if (audioTools.draggedClip) {
+                console.log(`🖱️ Mouse move with dragged clip: ${audioTools.draggedClip.id}`);
+            }
+            
             // Handle clip dragging first (highest priority)
             if (audioTools.draggedClip) {
                 handleClipDrag(event, x, y);
@@ -10756,15 +10800,23 @@ Format as clean, readable text ready for narration.`;
         // Clip Dragging System
         function startClipDrag(event, x, y, clip) {
             console.log(`🤏 Starting drag of clip: ${clip.id} (${clip.trackName})`);
+            console.log(`🤏 Clip data:`, clip);
             
-            // Ensure clip is selected when dragging
-            if (!clip.selected) {
-                clearSelection();
-                toggleClipSelection(clip);
+            // Ensure we have a valid clip reference from audioDAW.audioClips
+            const actualClip = audioDAW.audioClips.find(c => c.id === clip.id);
+            if (!actualClip) {
+                console.error(`❌ Clip ${clip.id} not found in audioDAW.audioClips!`);
+                return;
             }
             
-            audioTools.draggedClip = clip;
-            audioTools.dragStartTime = clip.startTime;
+            // Ensure clip is selected when dragging
+            if (!actualClip.selected) {
+                clearSelection();
+                toggleClipSelection(actualClip);
+            }
+            
+            audioTools.draggedClip = actualClip;
+            audioTools.dragStartTime = actualClip.startTime;
             
             // Calculate clip position on timeline for drag offset
             const totalDuration = Math.max(getMaxTrackDuration(), 60);
@@ -11752,6 +11804,7 @@ Format as clean, readable text ready for narration.`;
                 });
                 
                 drawEnhancedTimeline();
+                refreshCanvasInteraction(); // Ensure interaction works after adding file
                 hideLoading();
                 showNotification(`✅ ${file.name} loaded to ${trackName} track`, 'success');
                 
@@ -11853,6 +11906,7 @@ Format as clean, readable text ready for narration.`;
                 
                 // Redraw timeline
                 drawEnhancedTimeline();
+                refreshCanvasInteraction(); // Ensure interaction works after adding audio
                 
                 hideLoading();
                 showNotification(`✅ Audio loaded to ${trackName} track (${formatTime(audioBuffer.duration)})`, 'success');
