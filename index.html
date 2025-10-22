@@ -12994,17 +12994,30 @@ Format as clean, readable text ready for narration.`;
                     
                     for (const clip of audioDAW.audioClips) {
                         if (clip.buffer && clip.startTime !== undefined) {
-                            const source = offlineContext.createBufferSource();
-                            source.buffer = clip.buffer;
+                            console.log(`🎵 Processing clip: ${clip.id}, track: ${clip.trackName}, startTime: ${clip.startTime}s, duration: ${clip.buffer.duration}s`);
                             
-                            // Apply track volume
-                            const gainNode = offlineContext.createGain();
-                            const trackVolume = audioDAW.tracks[clip.trackName]?.volume || 100;
-                            gainNode.gain.value = trackVolume / 100;
-                            
-                            source.connect(gainNode);
-                            gainNode.connect(offlineContext.destination);
-                            source.start(clip.startTime);
+                            // Ensure clip startTime is within context duration
+                            if (clip.startTime >= 0 && clip.startTime < maxDuration) {
+                                const source = offlineContext.createBufferSource();
+                                source.buffer = clip.buffer;
+                                
+                                // Apply track volume
+                                const gainNode = offlineContext.createGain();
+                                const trackVolume = audioDAW.tracks[clip.trackName]?.volume || 100;
+                                gainNode.gain.value = trackVolume / 100;
+                                
+                                console.log(`🎵 Connecting clip ${clip.id} with volume: ${gainNode.gain.value}`);
+                                source.connect(gainNode);
+                                gainNode.connect(offlineContext.destination);
+                                
+                                // Start the clip at its timeline position
+                                source.start(clip.startTime);
+                                console.log(`🎵 Started clip ${clip.id} at ${clip.startTime}s`);
+                            } else {
+                                console.warn(`⚠️ Skipping clip ${clip.id} - startTime ${clip.startTime}s is outside context duration ${maxDuration}s`);
+                            }
+                        } else {
+                            console.warn(`⚠️ Skipping invalid clip:`, clip);
                         }
                     }
                 } else {
