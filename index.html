@@ -6403,15 +6403,63 @@ Format as clean, readable text ready for narration.`;
         
         function setupAudioPlayer(audioData) {
             console.log('🎵 Setting up audio player for mixed audio');
+            console.log('🎵 Audio data:', audioData);
+            console.log('🎵 Blob type:', audioData.blob.type);
+            console.log('🎵 Blob size:', audioData.blob.size);
             
             if (audioPlayerElement) {
                 audioPlayerElement.pause();
                 audioPlayerElement = null;
             }
             
+            // Try multiple approaches for audio playback
+            setupAudioFromBuffer(audioData);
+            
+
+        }
+        
+        function setupAudioFromBuffer(audioData) {
+            // Method 1: Try Web Audio API playback (more reliable for our generated audio)
+            if (audioData.buffer && audioDAW && audioDAW.context) {
+                console.log('🎵 Using Web Audio API for playback');
+                setupWebAudioPlayback(audioData);
+            } else {
+                console.log('🎵 Falling back to HTML5 audio element');
+                setupHTMLAudioPlayback(audioData);
+            }
+        }
+        
+        function setupWebAudioPlayback(audioData) {
+            // Store the buffer for Web Audio API playback
+            window.currentAudioBuffer = audioData.buffer;
+            window.currentAudioSource = null;
+            window.audioStartTime = 0;
+            window.audioPauseTime = 0;
+            
+            // Update duration display
+            const duration = audioData.buffer.duration;
+            document.getElementById('audioDuration').textContent = formatTime(duration);
+            document.getElementById('totalTime').textContent = formatTime(duration);
+            document.getElementById('audioProgress').max = duration;
+            
+            console.log('✅ Web Audio setup complete - duration:', duration);
+        }
+        
+        function setupHTMLAudioPlayback(audioData) {
             // Create audio element from blob
             const audioUrl = URL.createObjectURL(audioData.blob);
             audioPlayerElement = new Audio(audioUrl);
+            
+            // Add error handling for audio loading
+            audioPlayerElement.addEventListener('error', (e) => {
+                console.error('❌ Audio player error:', e);
+                console.error('❌ Audio error details:', audioPlayerElement.error);
+                showNotification('Audio playback error. Try downloading the file to play locally.', 'error');
+            });
+            
+            audioPlayerElement.addEventListener('canplay', () => {
+                console.log('✅ Audio can play - duration:', audioPlayerElement.duration);
+            });
             
             // Update duration display
             audioPlayerElement.addEventListener('loadedmetadata', () => {
@@ -6424,8 +6472,6 @@ Format as clean, readable text ready for narration.`;
             // Update progress during playback
             audioPlayerElement.addEventListener('timeupdate', () => {
                 const current = audioPlayerElement.currentTime;
-                const duration = audioPlayerElement.duration;
-                
                 document.getElementById('currentTime').textContent = formatTime(current);
                 document.getElementById('audioProgress').value = current;
             });
@@ -6435,27 +6481,150 @@ Format as clean, readable text ready for narration.`;
                 isAudioPlaying = false;
                 document.getElementById('playPauseBtn').innerHTML = '<i class="fas fa-play"></i>';
             });
-        }
-        
-        function toggleAudioPlayback() {
-            if (!audioPlayerElement) return;
             
+            // Set volume to ensure it's audible
+            audioPlayerElement.volume = 0.8;
+        }
+
+        function toggleAudioPlayback() {
             const playBtn = document.getElementById('playPauseBtn');
             
             if (isAudioPlaying) {
-                audioPlayerElement.pause();
+                // Pause audio
+                if (window.currentAudioSource) {
+                    // Web Audio API
+                    window.currentAudioSource.stop();
+                    window.currentAudioSource = null;
+                    window.audioPauseTime = audioDAW.context.currentTime - window.audioStartTime;
+                } else if (audioPlayerElement) {
+                    // HTML5 Audio
+                    audioPlayerElement.pause();
+                }
+                
                 playBtn.innerHTML = '<i class="fas fa-play"></i>';
                 isAudioPlaying = false;
+                console.log('⏸️ Audio paused');
+                
             } else {
-                audioPlayerElement.play();
-                playBtn.innerHTML = '<i class="fas fa-pause"></i>';
-                isAudioPlaying = true;
+                // Play audio
+                console.log('▶️ Attempting to play audio...');
+                
+                if (window.currentAudioBuffer && audioDAW && audioDAW.context) {
+                    // Use Web Audio API
+                    playWithWebAudio();
+                } else if (audioPlayerElement) {
+                    // Use HTML5 Audio
+                    playWithHTMLAudio();
+                } else {
+                    console.error('❌ No audio source available');
+                    showNotification('Audio player not ready. Please try again.', 'error');
+                }
             }
         }
         
+        function playWithWebAudio() {
+            try {
+                console.log('🎵 Playing with Web Audio API');
+                
+                // Create buffer source
+                window.currentAudioSource = audioDAW.context.createBufferSource();
+                window.currentAudioSource.buffer = window.currentAudioBuffer;
+                
+                // Connect to output
+                const gainNode = audioDAW.context.createGain();
+                gainNode.gain.value = 0.8; // Set volume
+                window.currentAudioSource.connect(gainNode);
+                gainNode.connect(audioDAW.context.destination);
+                
+                // Start playback
+                const startTime = window.audioPauseTime || 0;
+                window.currentAudioSource.start(0, startTime);
+                window.audioStartTime = audioDAW.context.currentTime - startTime;
+                
+                // Handle end
+                window.currentAudioSource.onended = () => {
+                    if (isAudioPlaying) {
+                        isAudioPlaying = false;
+                        document.getElementById('playPauseBtn').innerHTML = '<i class="fas fa-play"></i>';
+                        window.audioPauseTime = 0;
+                    }
+                };
+                
+                // Start progress tracking
+                startAudioProgressTracking();
+                
+                document.getElementById('playPauseBtn').innerHTML = '<i class="fas fa-pause"></i>';
+                isAudioPlaying = true;
+                console.log('✅ Web Audio playing successfully');
+                
+            } catch (error) {
+                console.error('❌ Web Audio play failed:', error);
+                showNotification(`Web Audio playback failed: ${error.message}`, 'error');
+            }
+        }
+        
+        function playWithHTMLAudio() {
+            console.log('🎵 Playing with HTML5 Audio');
+            console.log('🎵 Current time:', audioPlayerElement.currentTime);
+            console.log('🎵 Duration:', audioPlayerElement.duration);
+            console.log('🎵 Volume:', audioPlayerElement.volume);
+            console.log('🎵 Ready state:', audioPlayerElement.readyState);
+            
+            const playPromise = audioPlayerElement.play();
+            if (playPromise !== undefined) {
+                playPromise.then(() => {
+                    document.getElementById('playPauseBtn').innerHTML = '<i class="fas fa-pause"></i>';
+                    isAudioPlaying = true;
+                    console.log('✅ HTML5 Audio playing successfully');
+                }).catch((error) => {
+                    console.error('❌ HTML5 Audio play failed:', error);
+                    showNotification(`Playback failed: ${error.message}`, 'error');
+                    document.getElementById('playPauseBtn').innerHTML = '<i class="fas fa-play"></i>';
+                    isAudioPlaying = false;
+                });
+            }
+        }
+        
+        function startAudioProgressTracking() {
+            if (window.audioProgressInterval) {
+                clearInterval(window.audioProgressInterval);
+            }
+            
+            window.audioProgressInterval = setInterval(() => {
+                if (isAudioPlaying && window.currentAudioBuffer) {
+                    const elapsed = audioDAW.context.currentTime - window.audioStartTime;
+                    const duration = window.currentAudioBuffer.duration;
+                    
+                    if (elapsed >= duration) {
+                        clearInterval(window.audioProgressInterval);
+                        isAudioPlaying = false;
+                        document.getElementById('playPauseBtn').innerHTML = '<i class="fas fa-play"></i>';
+                        window.audioPauseTime = 0;
+                        return;
+                    }
+                    
+                    document.getElementById('currentTime').textContent = formatTime(elapsed);
+                    document.getElementById('audioProgress').value = elapsed;
+                }
+            }, 100);
+        }
+        
         function seekAudio(value) {
-            if (audioPlayerElement) {
-                audioPlayerElement.currentTime = parseFloat(value);
+            const seekTime = parseFloat(value);
+            
+            if (window.currentAudioBuffer) {
+                // Web Audio API - restart from new position
+                if (window.currentAudioSource && isAudioPlaying) {
+                    window.currentAudioSource.stop();
+                    window.audioPauseTime = seekTime;
+                    playWithWebAudio();
+                } else {
+                    window.audioPauseTime = seekTime;
+                    document.getElementById('currentTime').textContent = formatTime(seekTime);
+                }
+            } else if (audioPlayerElement) {
+                // HTML5 Audio
+                audioPlayerElement.currentTime = seekTime;
             }
         }
         
@@ -6476,11 +6645,23 @@ Format as clean, readable text ready for narration.`;
         
         function hideAudioTransferStatus() {
             document.getElementById('audioTransferStatus').classList.add('hidden');
+            
+            // Clean up audio playback
+            if (window.currentAudioSource) {
+                window.currentAudioSource.stop();
+                window.currentAudioSource = null;
+            }
             if (audioPlayerElement) {
                 audioPlayerElement.pause();
                 audioPlayerElement = null;
-                isAudioPlaying = false;
             }
+            if (window.audioProgressInterval) {
+                clearInterval(window.audioProgressInterval);
+                window.audioProgressInterval = null;
+            }
+            
+            isAudioPlaying = false;
+            window.audioPauseTime = 0;
         }
         
         function initializeCoversPage() {
@@ -12845,10 +13026,33 @@ Format as clean, readable text ready for narration.`;
                 }
                 
                 // Render the mixed audio
+                console.log('🎵 Starting audio rendering...');
                 const renderedBuffer = await offlineContext.startRendering();
+                
+                console.log('🎵 Rendered buffer details:');
+                console.log('- Duration:', renderedBuffer.duration);
+                console.log('- Sample rate:', renderedBuffer.sampleRate);
+                console.log('- Channels:', renderedBuffer.numberOfChannels);
+                console.log('- Length:', renderedBuffer.length);
+                
+                // Check if buffer has actual audio data
+                let hasAudioData = false;
+                for (let channel = 0; channel < renderedBuffer.numberOfChannels; channel++) {
+                    const channelData = renderedBuffer.getChannelData(channel);
+                    for (let i = 0; i < Math.min(1000, channelData.length); i++) {
+                        if (Math.abs(channelData[i]) > 0.001) {
+                            hasAudioData = true;
+                            break;
+                        }
+                    }
+                    if (hasAudioData) break;
+                }
+                
+                console.log('🎵 Buffer contains audio data:', hasAudioData);
                 
                 // Convert to WAV blob
                 const wavBlob = bufferToWave(renderedBuffer, renderedBuffer.length);
+                console.log('🎵 WAV blob created:', wavBlob.size, 'bytes, type:', wavBlob.type);
                 
                 // Store mixed audio data globally for cover page access
                 window.dawMixedAudio = {
