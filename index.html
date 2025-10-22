@@ -1605,21 +1605,53 @@
                 AI Book Cover Generator
             </h1>
 
-            <!-- DAW Audio Ready Notification Panel -->
-            <div id="dawAudioNotification" class="mb-6 bg-gradient-to-r from-purple-600 to-blue-600 p-4 rounded-xl border-2 border-purple-400 hidden">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center space-x-3">
-                        <i class="fas fa-music text-purple-200"></i>
-                        <div>
-                            <span class="text-white font-semibold">Audio Ready for Cover Integration</span>
-                            <div class="text-purple-200 text-sm" id="dawAudioInfo">
-                                Audio from DAW is ready to be embedded with cover art
-                            </div>
+            <!-- Enhanced Audio Transfer Status Panel -->
+            <div id="audioTransferStatus" class="mb-6 p-6 rounded-xl border-2 hidden">
+                <div class="flex items-start justify-between mb-4">
+                    <div class="flex items-center space-x-4">
+                        <!-- Status Light -->
+                        <div class="flex items-center space-x-2">
+                            <div id="statusLight" class="w-4 h-4 rounded-full animate-pulse"></div>
+                            <span id="statusText" class="font-semibold"></span>
+                        </div>
+                        
+                        <!-- Audio Info -->
+                        <div id="audioTransferInfo" class="text-sm">
                         </div>
                     </div>
-                    <button onclick="hideDawAudioNotification()" class="text-purple-200 hover:text-white">
+                    <button onclick="hideAudioTransferStatus()" class="text-gray-400 hover:text-white">
                         <i class="fas fa-times"></i>
                     </button>
+                </div>
+                
+                <!-- Audio Player for Review -->
+                <div id="audioPlayerSection" class="mt-4 p-4 bg-gray-800 rounded-lg hidden">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-sm font-semibold text-gray-300">
+                            <i class="fas fa-headphones mr-2"></i>Preview Mixed Audio
+                        </span>
+                        <div class="text-xs text-gray-400" id="audioDuration"></div>
+                    </div>
+                    
+                    <div class="flex items-center space-x-4">
+                        <button id="playPauseBtn" onclick="toggleAudioPlayback()" class="bg-cyan-600 hover:bg-cyan-500 text-white p-2 rounded-full">
+                            <i class="fas fa-play"></i>
+                        </button>
+                        
+                        <div class="flex-1">
+                            <input type="range" id="audioProgress" class="w-full h-2 bg-gray-700 rounded-lg slider" 
+                                   min="0" max="100" value="0" onchange="seekAudio(this.value)">
+                        </div>
+                        
+                        <button onclick="downloadMixedAudio()" class="bg-green-600 hover:bg-green-500 text-white px-3 py-2 rounded text-sm">
+                            <i class="fas fa-download mr-1"></i>Download
+                        </button>
+                    </div>
+                    
+                    <div class="flex justify-between text-xs text-gray-400 mt-2">
+                        <span id="currentTime">0:00</span>
+                        <span id="totalTime">0:00</span>
+                    </div>
                 </div>
             </div>
 
@@ -2217,6 +2249,11 @@
             // Transfer story data when navigating to narration
             if (pageId === 'narration') {
                 transferStoryToNarration();
+            }
+            
+            // Initialize covers page
+            if (pageId === 'covers') {
+                initializeCoversPage();
             }
         }
         
@@ -4749,10 +4786,37 @@ Return the COMPLETE text with DRAMATICALLY humanized writing that's obviously di
         
         function hideLoading() {
             document.getElementById('loadingOverlay').classList.add('hidden');
+            
+            // Clean up any progress intervals
+            if (window.loadingProgressInterval) {
+                clearInterval(window.loadingProgressInterval);
+                window.loadingProgressInterval = null;
+            }
         }
         
         function updateLoadingText(text) {
             document.getElementById('loadingText').textContent = text;
+        }
+        
+        // Enhanced book flipping loading with progressive messages
+        function showBookFlippingLoading(initialText, progressMessages = []) {
+            console.log('📚 Starting book flipping loading animation');
+            showLoading(initialText, 'book');
+            
+            if (progressMessages && progressMessages.length > 0) {
+                let currentIndex = 0;
+                const interval = setInterval(() => {
+                    if (currentIndex < progressMessages.length) {
+                        updateLoadingText(progressMessages[currentIndex]);
+                        currentIndex++;
+                    } else {
+                        clearInterval(interval);
+                    }
+                }, 1000); // Update every second
+                
+                // Store interval ID for cleanup
+                window.loadingProgressInterval = interval;
+            }
         }
         
         // Initialize word count tracking and event listeners
@@ -6277,6 +6341,160 @@ Format as clean, readable text ready for narration.`;
                 return null;
             }
             return storedKey;
+        }
+
+        // ============ AUDIO TRANSFER STATUS & PLAYER ============
+        
+        let audioPlayerElement = null;
+        let isAudioPlaying = false;
+        
+        function updateAudioTransferStatus(status, audioData = null, errorMessage = null) {
+            console.log(`🔄 Updating audio transfer status: ${status}`);
+            
+            const statusPanel = document.getElementById('audioTransferStatus');
+            const statusLight = document.getElementById('statusLight');
+            const statusText = document.getElementById('statusText');
+            const audioInfo = document.getElementById('audioTransferInfo');
+            const audioPlayerSection = document.getElementById('audioPlayerSection');
+            
+            if (!statusPanel) return;
+            
+            statusPanel.classList.remove('hidden');
+            
+            if (status === 'success') {
+                // Green success state
+                statusPanel.className = 'mb-6 p-6 rounded-xl border-2 bg-gradient-to-r from-green-900 to-emerald-900 border-green-500';
+                statusLight.className = 'w-4 h-4 rounded-full bg-green-500 animate-pulse shadow-lg shadow-green-500/50';
+                statusText.textContent = '✅ Audio Transfer Successful';
+                statusText.className = 'font-semibold text-green-100';
+                
+                if (audioData) {
+                    audioInfo.innerHTML = `
+                        <div class="text-green-200">
+                            <i class="fas fa-check-circle mr-1"></i>
+                            Mixed audio ready: ${formatTime(audioData.duration)} • 
+                            ${audioData.title} • 
+                            Generated ${new Date(audioData.timestamp).toLocaleTimeString()}
+                        </div>
+                    `;
+                    
+                    // Show audio player
+                    setupAudioPlayer(audioData);
+                    audioPlayerSection.classList.remove('hidden');
+                }
+                
+            } else if (status === 'error') {
+                // Red error state
+                statusPanel.className = 'mb-6 p-6 rounded-xl border-2 bg-gradient-to-r from-red-900 to-rose-900 border-red-500';
+                statusLight.className = 'w-4 h-4 rounded-full bg-red-500 animate-pulse shadow-lg shadow-red-500/50';
+                statusText.textContent = '❌ Audio Transfer Failed';
+                statusText.className = 'font-semibold text-red-100';
+                
+                audioInfo.innerHTML = `
+                    <div class="text-red-200">
+                        <i class="fas fa-exclamation-triangle mr-1"></i>
+                        Error: ${errorMessage || 'Unknown error during audio transfer'}
+                    </div>
+                `;
+                
+                audioPlayerSection.classList.add('hidden');
+            }
+        }
+        
+        function setupAudioPlayer(audioData) {
+            console.log('🎵 Setting up audio player for mixed audio');
+            
+            if (audioPlayerElement) {
+                audioPlayerElement.pause();
+                audioPlayerElement = null;
+            }
+            
+            // Create audio element from blob
+            const audioUrl = URL.createObjectURL(audioData.blob);
+            audioPlayerElement = new Audio(audioUrl);
+            
+            // Update duration display
+            audioPlayerElement.addEventListener('loadedmetadata', () => {
+                const duration = audioPlayerElement.duration;
+                document.getElementById('audioDuration').textContent = formatTime(duration);
+                document.getElementById('totalTime').textContent = formatTime(duration);
+                document.getElementById('audioProgress').max = duration;
+            });
+            
+            // Update progress during playback
+            audioPlayerElement.addEventListener('timeupdate', () => {
+                const current = audioPlayerElement.currentTime;
+                const duration = audioPlayerElement.duration;
+                
+                document.getElementById('currentTime').textContent = formatTime(current);
+                document.getElementById('audioProgress').value = current;
+            });
+            
+            // Handle playback end
+            audioPlayerElement.addEventListener('ended', () => {
+                isAudioPlaying = false;
+                document.getElementById('playPauseBtn').innerHTML = '<i class="fas fa-play"></i>';
+            });
+        }
+        
+        function toggleAudioPlayback() {
+            if (!audioPlayerElement) return;
+            
+            const playBtn = document.getElementById('playPauseBtn');
+            
+            if (isAudioPlaying) {
+                audioPlayerElement.pause();
+                playBtn.innerHTML = '<i class="fas fa-play"></i>';
+                isAudioPlaying = false;
+            } else {
+                audioPlayerElement.play();
+                playBtn.innerHTML = '<i class="fas fa-pause"></i>';
+                isAudioPlaying = true;
+            }
+        }
+        
+        function seekAudio(value) {
+            if (audioPlayerElement) {
+                audioPlayerElement.currentTime = parseFloat(value);
+            }
+        }
+        
+        function downloadMixedAudio() {
+            if (window.dawMixedAudio && window.dawMixedAudio.blob) {
+                const url = URL.createObjectURL(window.dawMixedAudio.blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${window.dawMixedAudio.title || 'Mixed_Audio'}.wav`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                showNotification('📁 Mixed audio downloaded successfully!', 'success');
+            }
+        }
+        
+        function hideAudioTransferStatus() {
+            document.getElementById('audioTransferStatus').classList.add('hidden');
+            if (audioPlayerElement) {
+                audioPlayerElement.pause();
+                audioPlayerElement = null;
+                isAudioPlaying = false;
+            }
+        }
+        
+        function initializeCoversPage() {
+            console.log('🎨 Initializing covers page');
+            
+            // Check if there's existing audio from DAW
+            if (window.dawMixedAudio && window.dawMixedAudio.blob) {
+                console.log('📁 Found existing DAW audio, showing transfer status');
+                updateAudioTransferStatus('success', window.dawMixedAudio);
+            } else {
+                console.log('📁 No DAW audio found');
+                // Hide transfer status if no audio available
+                document.getElementById('audioTransferStatus').classList.add('hidden');
+            }
         }
 
         // ============ ELEVENLABS API INTEGRATION ============
@@ -12559,7 +12777,16 @@ Format as clean, readable text ready for narration.`;
         async function sendToCoverPage() {
             try {
                 document.getElementById('dawStatus').textContent = 'Preparing audio for cover integration...';
-                showLoading('Mixing audio and preparing for cover page...');
+                
+                // Show enhanced loading with book flipping animation
+                showBookFlippingLoading('Mixing all audio clips into final audiobook...', [
+                    'Analyzing audio timeline...',
+                    'Mixing narration tracks...',
+                    'Blending background music...',
+                    'Adding sound effects...',
+                    'Finalizing audio mix...',
+                    'Preparing for cover integration...'
+                ]);
                 
                 // Check if we have audio clips to mix
                 if (!audioDAW.audioClips || audioDAW.audioClips.length === 0) {
@@ -12633,11 +12860,16 @@ Format as clean, readable text ready for narration.`;
                 };
                 
                 hideLoading();
-                showNotification('🎵 Audio prepared successfully!', 'success');
+                showNotification('🎵 Audio mixed and prepared successfully!', 'success');
                 
                 // Navigate to cover page
                 closeAudioDAW();
                 showPage('covers');
+                
+                // Set transfer status on cover page
+                setTimeout(() => {
+                    updateAudioTransferStatus('success', window.dawMixedAudio);
+                }, 100);
                 
                 // Notify cover page that audio is ready
                 if (typeof notifyCoverPageAudioReady === 'function') {
@@ -12650,6 +12882,11 @@ Format as clean, readable text ready for narration.`;
                 console.error('❌ Send to cover error:', error);
                 hideLoading();
                 showNotification(`Failed to prepare audio for cover: ${error.message}`, 'error');
+                
+                // Update cover page with error status
+                setTimeout(() => {
+                    updateAudioTransferStatus('error', null, error.message);
+                }, 100);
             }
         }
 
