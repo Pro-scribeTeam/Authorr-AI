@@ -4964,6 +4964,109 @@ Return the COMPLETE text with DRAMATICALLY humanized writing that's obviously di
         }
 
         // Embed Cover Art into Audio File
+        // Fetch image with CORS fallback using multiple proxy services
+        async function fetchImageWithCORSFallback(imageUrl) {
+            console.log('🖼️ Fetching cover image with CORS fallback:', imageUrl);
+            
+            // Method 1: Try direct fetch first
+            try {
+                console.log('📡 Attempting direct fetch...');
+                const response = await fetch(imageUrl);
+                if (response.ok) {
+                    console.log('✅ Direct fetch successful');
+                    return await response.blob();
+                }
+            } catch (error) {
+                console.log('❌ Direct fetch failed:', error.message);
+            }
+            
+            // Method 2: Try CORS proxy services
+            const proxyServices = [
+                `https://api.allorigins.win/raw?url=${encodeURIComponent(imageUrl)}`,
+                `https://cors-anywhere.herokuapp.com/${imageUrl}`,
+                `https://corsproxy.io/?${encodeURIComponent(imageUrl)}`,
+                `https://proxy.cors.sh/${imageUrl}`
+            ];
+            
+            for (const proxyUrl of proxyServices) {
+                try {
+                    console.log(`📡 Trying proxy: ${proxyUrl.split('?')[0]}`);
+                    const response = await fetch(proxyUrl);
+                    if (response.ok) {
+                        console.log('✅ Proxy fetch successful');
+                        return await response.blob();
+                    }
+                } catch (error) {
+                    console.log(`❌ Proxy failed: ${error.message}`);
+                    continue;
+                }
+            }
+            
+            // Method 3: Fallback to canvas conversion (if image is already loaded)
+            try {
+                console.log('🎨 Attempting canvas conversion fallback...');
+                const img = document.getElementById('generatedCover');
+                if (img && img.complete && img.naturalWidth > 0) {
+                    // Create a new canvas with proper CORS handling
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    canvas.width = img.naturalWidth;
+                    canvas.height = img.naturalHeight;
+                    
+                    // Draw the image to canvas (this works even with CORS issues if image is already displayed)
+                    ctx.drawImage(img, 0, 0);
+                    
+                    return new Promise((resolve, reject) => {
+                        canvas.toBlob((blob) => {
+                            if (blob) {
+                                console.log('✅ Canvas conversion successful');
+                                resolve(blob);
+                            } else {
+                                reject(new Error('Canvas toBlob returned null'));
+                            }
+                        }, 'image/png', 1.0);
+                    });
+                }
+            } catch (error) {
+                console.log('❌ Canvas conversion failed:', error.message);
+                
+                // Method 4: Try loading image with crossOrigin attribute
+                try {
+                    console.log('🔄 Attempting crossOrigin image load...');
+                    return new Promise((resolve, reject) => {
+                        const img = new Image();
+                        img.crossOrigin = 'anonymous';
+                        img.onload = () => {
+                            try {
+                                const canvas = document.createElement('canvas');
+                                const ctx = canvas.getContext('2d');
+                                canvas.width = img.width;
+                                canvas.height = img.height;
+                                ctx.drawImage(img, 0, 0);
+                                
+                                canvas.toBlob((blob) => {
+                                    if (blob) {
+                                        console.log('✅ CrossOrigin image conversion successful');
+                                        resolve(blob);
+                                    } else {
+                                        reject(new Error('CrossOrigin canvas toBlob failed'));
+                                    }
+                                }, 'image/png', 1.0);
+                            } catch (canvasError) {
+                                reject(canvasError);
+                            }
+                        };
+                        img.onerror = () => reject(new Error('CrossOrigin image load failed'));
+                        img.src = imageUrl;
+                    });
+                } catch (crossOriginError) {
+                    console.log('❌ CrossOrigin method failed:', crossOriginError.message);
+                }
+            }
+            
+            throw new Error('All CORS fallback methods failed. Unable to fetch cover image.');
+        }
+
         async function embedCoverIntoAudio() {
             try {
                 // Check requirements
@@ -4980,8 +5083,8 @@ Return the COMPLETE text with DRAMATICALLY humanized writing that's obviously di
                 
                 showLoading('Embedding cover art into audio file...');
                 
-                // Get cover image data
-                const coverImageBlob = await fetch(generatedCover.src).then(r => r.blob());
+                // Get cover image data with CORS fallback
+                const coverImageBlob = await fetchImageWithCORSFallback(generatedCover.src);
                 const coverImageArray = new Uint8Array(await coverImageBlob.arrayBuffer());
                 
                 // Get metadata
