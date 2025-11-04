@@ -824,7 +824,7 @@
                     </div>
                     <h3 class="text-xl font-bold mb-3">AI-Powered Writing</h3>
                     <p class="text-theme-secondary">
-                        Generate engaging chapters, stories, and content with advanced GPT-4o-mini integration. 
+                        Generate engaging chapters, stories, and content with advanced AI technology. 
                         Choose from multiple genres, tones, and writing styles.
                     </p>
                 </div>
@@ -835,7 +835,7 @@
                     </div>
                     <h3 class="text-xl font-bold mb-3">Professional Narration</h3>
                     <p class="text-theme-secondary">
-                        Convert your text to high-quality speech with OpenAI's TTS-1-HD. Choose from 6 professional 
+                        Convert your text to high-quality speech with cutting-edge text-to-speech technology. Choose from 6 professional 
                         voices including Alloy, Echo, Fable, Onyx, Nova, and Shimmer.
                     </p>
                 </div>
@@ -846,7 +846,7 @@
                     </div>
                     <h3 class="text-xl font-bold mb-3">AI Book Covers</h3>
                     <p class="text-theme-secondary">
-                        Generate stunning book covers with DALL-E 3 in HD quality (1024x1792). 
+                        Generate stunning book covers with advanced AI image generation in HD quality (1024x1792). 
                         Create professional artwork that matches your story's theme.
                     </p>
                 </div>
@@ -1899,7 +1899,7 @@
                     </div>
                     
                     <div class="text-xs text-theme-secondary text-center">
-                        <div id="progressMessage">Processing with OpenAI DALL-E API...</div>
+                        <div id="progressMessage">Processing with AI image generation...</div>
                         <div class="mt-1">High-quality generation typically takes 10-30 seconds</div>
                     </div>
                 </div>
@@ -2554,7 +2554,7 @@
             
             const apiKey = getOpenAIApiKey();
             if (!apiKey) {
-                showNotification('Please configure your OpenAI API key first', 'error');
+                showNotification('Please configure your API key first', 'error');
                 return;
             }
             
@@ -3957,7 +3957,7 @@ Return the COMPLETE text with DRAMATICALLY humanized writing that's obviously di
                 if (error.message && error.message.includes('token')) {
                     errorMessage += 'Story may be too long for processing. Try with shorter content.';
                 } else if (error.message && error.message.includes('API')) {
-                    errorMessage += 'Please check your OpenAI API key in Settings.';
+                    errorMessage += 'Please check your API key in Settings.';
                 } else if (error.message && error.message.includes('rate')) {
                     errorMessage += 'Rate limit reached. Please wait a moment and try again.';
                 } else {
@@ -4676,7 +4676,7 @@ Return the COMPLETE text with DRAMATICALLY humanized writing that's obviously di
             const apiKey = document.getElementById('openaiKey').value;
             
             if (!apiKey.trim()) {
-                alert('Please enter your OpenAI API key.');
+                alert('Please enter your API key.');
                 return;
             }
             
@@ -5411,7 +5411,7 @@ Return the COMPLETE text with DRAMATICALLY humanized writing that's obviously di
         async function generateAICover() {
             const apiKey = getOpenAIApiKey();
             if (!apiKey) {
-                showNotification('Please configure your OpenAI API key in the Config section first', 'error');
+                showNotification('Please configure your API key in the Config section first', 'error');
                 return;
             }
 
@@ -5556,7 +5556,7 @@ Return the COMPLETE text with DRAMATICALLY humanized writing that's obviously di
         async function createVariations() {
             const apiKey = getOpenAIApiKey();
             if (!apiKey) {
-                showNotification('Please configure your OpenAI API key first', 'error');
+                showNotification('Please configure your API key first', 'error');
                 return;
             }
 
@@ -5670,7 +5670,7 @@ Return the COMPLETE text with DRAMATICALLY humanized writing that's obviously di
         async function generateChapterPlan() {
             const apiKey = getOpenAIApiKey();
             if (!apiKey) {
-                showNotification('Please configure your OpenAI API key in Config section first', 'error');
+                showNotification('Please configure your API key in Config section first', 'error');
                 return;
             }
 
@@ -5826,7 +5826,7 @@ JSON Structure:
         async function generateFullNarration() {
             const apiKey = getOpenAIApiKey();
             if (!apiKey) {
-                showNotification('Please configure your OpenAI API key first', 'error');
+                showNotification('Please configure your API key first', 'error');
                 return;
             }
 
@@ -5947,7 +5947,7 @@ JSON Structure:
             
             const apiKey = getOpenAIApiKey();
             if (!apiKey) {
-                showNotification('Please configure your OpenAI API key first', 'error');
+                showNotification('Please configure your API key first', 'error');
                 return;
             }
 
@@ -6097,7 +6097,7 @@ Format as clean, readable text ready for narration.`;
         async function testApiConnection() {
             const apiKey = getOpenAIApiKey();
             if (!apiKey) {
-                showNotification('Please enter your OpenAI API key first', 'error');
+                showNotification('Please enter your API key first', 'error');
                 return;
             }
 
@@ -6175,7 +6175,7 @@ Format as clean, readable text ready for narration.`;
 
             const apiKey = getOpenAIApiKey();
             if (!apiKey) {
-                showNotification('Please configure your OpenAI API key first', 'error');
+                showNotification('Please configure your API key first', 'error');
                 return;
             }
 
@@ -6222,7 +6222,7 @@ Format as clean, readable text ready for narration.`;
                 if (provider === 'openai') {
                     const apiKey = getOpenAIApiKey();
                     if (!apiKey) {
-                        showNotification('Please configure your OpenAI API key first', 'error');
+                        showNotification('Please configure your API key first', 'error');
                         return;
                     }
                     audioBlob = await generateChapterAudio(previewText, voiceId, 1.0, apiKey);
@@ -7712,7 +7712,7 @@ Format as clean, readable text ready for narration.`;
             const apiKey = getOpenAIApiKey();
             if (!apiKey) {
                 console.log('❌ No OpenAI API key found');
-                showNotification('Please configure your OpenAI API key in Settings first.', 'error');
+                showNotification('Please configure your API key in Settings first.', 'error');
                 return;
             }
             console.log('✅ OpenAI API key found');
