@@ -13003,8 +13003,9 @@ Format as clean, readable text ready for narration.`;
                             
                             // Apply track volume
                             const gainNode = offlineContext.createGain();
-                            const trackVolume = audioDAW.tracks[clip.trackName]?.volume || 100;
-                            gainNode.gain.value = trackVolume / 100;
+                            const trackVolume = audioDAW.tracks[clip.trackName]?.volume;
+                            // track.volume is already a decimal (0-1.5), don't divide by 100 again
+                            gainNode.gain.value = trackVolume !== undefined ? trackVolume : 1.0;
                             
                             console.log(`🎵 Clip ${clip.id} volume: ${gainNode.gain.value} (track volume: ${trackVolume}%)`);
                             
@@ -13036,12 +13037,13 @@ Format as clean, readable text ready for narration.`;
                         source.buffer = track.buffer;
                         
                         const gainNode = offlineContext.createGain();
-                        gainNode.gain.value = track.volume / 100;
+                        // track.volume is already a decimal (0-1.5), don't divide by 100
+                        gainNode.gain.value = track.volume !== undefined ? track.volume : 1.0;
                         
                         source.connect(gainNode);
                         gainNode.connect(offlineContext.destination);
                         source.start(0);
-                        console.log(`✅ Added legacy track ${index + 1} with volume ${track.volume}%`);
+                        console.log(`✅ Added legacy track ${index + 1} with volume ${gainNode.gain.value}`);
                     });
                 }
                 
