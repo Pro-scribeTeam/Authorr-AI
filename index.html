@@ -5417,8 +5417,12 @@ Return the COMPLETE text with DRAMATICALLY humanized writing that's obviously di
         function createAPICFrame(imageData) {
             const mimeType = 'image/png'; // Assume PNG for now
             const mimeTypeData = new TextEncoder().encode(mimeType);
+            const description = ''; // Empty description
+            const descriptionData = new TextEncoder().encode(description);
             
-            const frame = new Uint8Array(10 + 1 + mimeTypeData.length + 1 + 1 + imageData.length);
+            // Calculate frame size: encoding + mime + null + picture_type + description + null + image
+            const frameDataSize = 1 + mimeTypeData.length + 1 + 1 + descriptionData.length + 1 + imageData.length;
+            const frame = new Uint8Array(10 + frameDataSize);
             
             // Frame ID "APIC" (4 bytes)
             frame[0] = 0x41; // 'A'
@@ -5426,12 +5430,11 @@ Return the COMPLETE text with DRAMATICALLY humanized writing that's obviously di
             frame[2] = 0x49; // 'I'
             frame[3] = 0x43; // 'C'
             
-            // Frame size (4 bytes)
-            const size = 1 + mimeTypeData.length + 1 + 1 + imageData.length;
-            frame[4] = (size >> 24) & 0xFF;
-            frame[5] = (size >> 16) & 0xFF;
-            frame[6] = (size >> 8) & 0xFF;
-            frame[7] = size & 0xFF;
+            // Frame size (4 bytes) - use standard integer, not synchsafe for ID3v2.4
+            frame[4] = (frameDataSize >> 24) & 0xFF;
+            frame[5] = (frameDataSize >> 16) & 0xFF;
+            frame[6] = (frameDataSize >> 8) & 0xFF;
+            frame[7] = frameDataSize & 0xFF;
             
             // Frame flags (2 bytes)
             frame[8] = 0x00;
@@ -5439,7 +5442,7 @@ Return the COMPLETE text with DRAMATICALLY humanized writing that's obviously di
             
             let offset = 10;
             
-            // Text encoding (1 byte)
+            // Text encoding (1 byte) - 0x00 = ISO-8859-1, 0x03 = UTF-8
             frame[offset++] = 0x00;
             
             // MIME type
@@ -5452,8 +5455,19 @@ Return the COMPLETE text with DRAMATICALLY humanized writing that's obviously di
             // Picture type (1 byte) - 0x03 = Cover (front)
             frame[offset++] = 0x03;
             
+            // Description (can be empty)
+            if (descriptionData.length > 0) {
+                frame.set(descriptionData, offset);
+                offset += descriptionData.length;
+            }
+            
+            // Null terminator for description (required even if empty)
+            frame[offset++] = 0x00;
+            
             // Image data
             frame.set(imageData, offset);
+            
+            console.log(`📸 APIC frame created: ${frame.length} bytes total, image data: ${imageData.length} bytes`);
             
             return frame;
         }
