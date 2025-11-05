@@ -11097,6 +11097,19 @@ Format as clean, readable text ready for narration.`;
                 handleClipInteraction(event, x, y, clickedClip);
             } else {
                 console.log(`🎵 NO CLIP FOUND - Clicked on empty timeline`);
+                console.log(`   Current tool: ${audioTools.currentTool}`);
+                console.log(`   Total clips available: ${audioDAW.audioClips ? audioDAW.audioClips.length : 0}`);
+                
+                // Show summary of clips per track
+                if (audioDAW.audioClips && audioDAW.audioClips.length > 0) {
+                    const clipsByTrack = {};
+                    audioDAW.audioClips.forEach(clip => {
+                        if (!clipsByTrack[clip.trackName]) clipsByTrack[clip.trackName] = 0;
+                        clipsByTrack[clip.trackName]++;
+                    });
+                    console.log(`   Clips per track:`, clipsByTrack);
+                }
+                
                 // Handle empty timeline interaction
                 handleEmptyTimelineInteraction(event, x, y);
             }
@@ -11578,7 +11591,45 @@ Format as clean, readable text ready for narration.`;
                 }
             }
             
-            console.log(`🔍 No clip found at this position in ${trackName}`);
+            // Enhanced warning for unclickable areas
+            console.warn(`⚠️ NO CLIP DETECTED - Detailed Diagnostics:`);
+            console.warn(`   📍 Click Position: (${x.toFixed(2)}, ${y.toFixed(2)})`);
+            console.warn(`   🎯 Detected Track: ${trackName} (index ${trackIndex})`);
+            console.warn(`   ⏱️ Time Position: ${formatTime(timePosition)}`);
+            console.warn(`   📊 Total Duration: ${formatTime(totalDuration)}`);
+            console.warn(`   🎵 Clips in this track: ${trackClips.length}`);
+            
+            if (trackClips.length > 0) {
+                console.warn(`   📝 Available clips in ${trackName}:`);
+                trackClips.forEach((clip, i) => {
+                    const clipStart = clip.startTime || 0;
+                    const clipEnd = clipStart + clip.duration;
+                    console.warn(`      ${i + 1}. ${clip.id}: ${formatTime(clipStart)} - ${formatTime(clipEnd)} (duration: ${formatTime(clip.duration)})`);
+                });
+                
+                // Check if click was BETWEEN clips
+                const sortedClips = trackClips.sort((a, b) => a.startTime - b.startTime);
+                for (let i = 0; i < sortedClips.length - 1; i++) {
+                    const clip1End = sortedClips[i].startTime + sortedClips[i].duration;
+                    const clip2Start = sortedClips[i + 1].startTime;
+                    if (timePosition > clip1End && timePosition < clip2Start) {
+                        console.warn(`   💡 Click was BETWEEN clips (gap: ${formatTime(clip2Start - clip1End)})`);
+                    }
+                }
+                
+                // Check if click was BEFORE first clip
+                if (timePosition < sortedClips[0].startTime) {
+                    console.warn(`   💡 Click was BEFORE first clip (${formatTime(sortedClips[0].startTime - timePosition)} too early)`);
+                }
+                
+                // Check if click was AFTER last clip
+                const lastClip = sortedClips[sortedClips.length - 1];
+                const lastClipEnd = lastClip.startTime + lastClip.duration;
+                if (timePosition > lastClipEnd) {
+                    console.warn(`   💡 Click was AFTER last clip (${formatTime(timePosition - lastClipEnd)} too late)`);
+                }
+            }
+            
             return null;
         }
 
