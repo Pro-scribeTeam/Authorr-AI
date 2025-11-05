@@ -5156,32 +5156,30 @@ Return the COMPLETE text with DRAMATICALLY humanized writing that's obviously di
                 const author = document.getElementById('coverAuthor')?.value?.trim() || 'Unknown Author';
                 const subtitle = document.getElementById('coverSubtitle')?.value?.trim();
                 
-                // Convert WAV to MP3 with embedded cover art using Web Audio API
-                const mp3Blob = await embedCoverIntoMP3(
-                    window.dawMixedAudio.buffer,
-                    coverImageArray,
-                    {
-                        title: title,
-                        artist: author,
-                        album: subtitle || title,
-                        genre: 'Audiobook',
-                        year: new Date().getFullYear().toString()
-                    }
-                );
+                // For now, download audio and cover separately (MP3 encoding requires additional library)
+                // Download the audio file as WAV
+                const audioUrl = URL.createObjectURL(window.dawMixedAudio.blob);
+                const audioLink = document.createElement('a');
+                audioLink.href = audioUrl;
+                audioLink.download = `${title.replace(/[^a-zA-Z0-9\s]/g, '')}_audiobook.wav`;
+                document.body.appendChild(audioLink);
+                audioLink.click();
+                document.body.removeChild(audioLink);
+                URL.revokeObjectURL(audioUrl);
+                
+                // Download the cover art
+                const coverUrl = URL.createObjectURL(coverImageBlob);
+                const coverLink = document.createElement('a');
+                coverLink.href = coverUrl;
+                coverLink.download = `${title.replace(/[^a-zA-Z0-9\s]/g, '')}_cover.png`;
+                document.body.appendChild(coverLink);
+                coverLink.click();
+                document.body.removeChild(coverLink);
+                URL.revokeObjectURL(coverUrl);
                 
                 hideLoading();
                 
-                // Download the final audiobook with embedded cover
-                const url = URL.createObjectURL(mp3Blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `${title.replace(/[^a-zA-Z0-9\s]/g, '')}_with_cover.mp3`;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-                
-                showNotification('✅ Audiobook with embedded cover art downloaded successfully!', 'success');
+                showNotification('✅ Audiobook and cover art downloaded successfully! (2 files)', 'success');
                 
             } catch (error) {
                 console.error('❌ Cover embedding error:', error);
@@ -13007,7 +13005,7 @@ Format as clean, readable text ready for narration.`;
                             // track.volume is already a decimal (0-1.5), don't divide by 100 again
                             gainNode.gain.value = trackVolume !== undefined ? trackVolume : 1.0;
                             
-                            console.log(`🎵 Clip ${clip.id} volume: ${gainNode.gain.value} (track volume: ${trackVolume}%)`);
+                            console.log(`🎵 Clip ${clip.id} volume: ${gainNode.gain.value} (track volume: ${(trackVolume * 100).toFixed(0)}%)`);
                             
                             // Connect nodes
                             source.connect(gainNode);
@@ -13057,18 +13055,23 @@ Format as clean, readable text ready for narration.`;
                 console.log('- Channels:', renderedBuffer.numberOfChannels);
                 console.log('- Length:', renderedBuffer.length);
                 
-                // Check if buffer has actual audio data
+                // Check if buffer has actual audio data (sample throughout the buffer)
                 let hasAudioData = false;
+                let maxSample = 0;
                 for (let channel = 0; channel < renderedBuffer.numberOfChannels; channel++) {
                     const channelData = renderedBuffer.getChannelData(channel);
-                    for (let i = 0; i < Math.min(1000, channelData.length); i++) {
-                        if (Math.abs(channelData[i]) > 0.001) {
+                    const sampleStep = Math.floor(channelData.length / 1000); // Sample 1000 points throughout
+                    for (let i = 0; i < channelData.length; i += Math.max(1, sampleStep)) {
+                        const absValue = Math.abs(channelData[i]);
+                        if (absValue > maxSample) maxSample = absValue;
+                        if (absValue > 0.001) {
                             hasAudioData = true;
                             break;
                         }
                     }
                     if (hasAudioData) break;
                 }
+                console.log('🎵 Max sample value found:', maxSample);
                 
                 console.log('🎵 Buffer contains audio data:', hasAudioData);
                 
