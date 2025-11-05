@@ -8,6 +8,7 @@
     <meta name="keywords" content="audiobook creation, AI writing, text to speech, book generation, storytelling, AI narration">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/lamejs@1.2.1/lame.min.js"></script>
     <script type="module">
         // Optional Supabase modules - only load if available
         try {
@@ -5156,30 +5157,32 @@ Return the COMPLETE text with DRAMATICALLY humanized writing that's obviously di
                 const author = document.getElementById('coverAuthor')?.value?.trim() || 'Unknown Author';
                 const subtitle = document.getElementById('coverSubtitle')?.value?.trim();
                 
-                // For now, download audio and cover separately (MP3 encoding requires additional library)
-                // Download the audio file as WAV
-                const audioUrl = URL.createObjectURL(window.dawMixedAudio.blob);
-                const audioLink = document.createElement('a');
-                audioLink.href = audioUrl;
-                audioLink.download = `${title.replace(/[^a-zA-Z0-9\s]/g, '')}_audiobook.wav`;
-                document.body.appendChild(audioLink);
-                audioLink.click();
-                document.body.removeChild(audioLink);
-                URL.revokeObjectURL(audioUrl);
-                
-                // Download the cover art
-                const coverUrl = URL.createObjectURL(coverImageBlob);
-                const coverLink = document.createElement('a');
-                coverLink.href = coverUrl;
-                coverLink.download = `${title.replace(/[^a-zA-Z0-9\s]/g, '')}_cover.png`;
-                document.body.appendChild(coverLink);
-                coverLink.click();
-                document.body.removeChild(coverLink);
-                URL.revokeObjectURL(coverUrl);
+                // Convert to MP3 with embedded cover art using lamejs
+                const mp3Blob = await embedCoverIntoMP3(
+                    window.dawMixedAudio.buffer,
+                    coverImageArray,
+                    {
+                        title: title,
+                        artist: author,
+                        album: subtitle || title,
+                        genre: 'Audiobook',
+                        year: new Date().getFullYear().toString()
+                    }
+                );
                 
                 hideLoading();
                 
-                showNotification('✅ Audiobook and cover art downloaded successfully! (2 files)', 'success');
+                // Download the final audiobook with embedded cover
+                const url = URL.createObjectURL(mp3Blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${title.replace(/[^a-zA-Z0-9\s]/g, '')}_audiobook.mp3`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                showNotification('✅ Audiobook MP3 with embedded cover art downloaded successfully!', 'success');
                 
             } catch (error) {
                 console.error('❌ Cover embedding error:', error);
@@ -5245,41 +5248,91 @@ Return the COMPLETE text with DRAMATICALLY humanized writing that's obviously di
 
         // Convert audio buffer to MP3 with embedded cover art and metadata
         async function embedCoverIntoMP3(audioBuffer, coverImageData, metadata) {
-            // Convert AudioBuffer to WAV data
-            const wavData = bufferToWave(audioBuffer, audioBuffer.length);
-            const wavArrayBuffer = await wavData.arrayBuffer();
+            console.log('🎵 Starting MP3 encoding with lamejs...');
             
-            // Create MP3 with ID3v2 tags
-            const mp3Data = await encodeMP3WithCover(wavArrayBuffer, coverImageData, metadata);
+            // Encode AudioBuffer to MP3 using lamejs
+            const mp3Data = await encodeAudioBufferToMP3(audioBuffer);
+            console.log('✅ MP3 encoded:', mp3Data.length, 'bytes');
             
-            return new Blob([mp3Data], { type: 'audio/mpeg' });
+            // Create ID3v2 header with cover art
+            const id3Header = createID3v2Header(metadata, coverImageData);
+            console.log('✅ ID3 header created:', id3Header.length, 'bytes');
+            
+            // Combine ID3 header with MP3 data
+            const finalData = new Uint8Array(id3Header.length + mp3Data.length);
+            finalData.set(id3Header, 0);
+            finalData.set(mp3Data, id3Header.length);
+            
+            console.log('✅ Final MP3 with embedded cover:', finalData.length, 'bytes');
+            return new Blob([finalData], { type: 'audio/mpeg' });
         }
 
-        // Encode WAV to MP3 with ID3v2 tags and cover art
-        async function encodeMP3WithCover(wavArrayBuffer, coverImageData, metadata) {
-            try {
-                // For now, we'll create a simple MP3-like file with ID3 header
-                // Note: This is a simplified implementation
-                // In production, you'd want to use a proper MP3 encoder library
-                
-                // Create ID3v2.4 header with cover art (APIC frame)
-                const id3Header = createID3v2Header(metadata, coverImageData);
-                
-                // Convert WAV to a basic audio format (keeping as WAV for now)
-                // In a real implementation, you'd use an MP3 encoder here
-                const wavData = new Uint8Array(wavArrayBuffer);
-                
-                // Combine ID3 header with audio data
-                const finalData = new Uint8Array(id3Header.length + wavData.length);
-                finalData.set(id3Header, 0);
-                finalData.set(wavData, id3Header.length);
-                
-                return finalData;
-                
-            } catch (error) {
-                console.error('MP3 encoding error:', error);
-                throw error;
-            }
+        // Encode AudioBuffer to MP3 using lamejs
+        async function encodeAudioBufferToMP3(audioBuffer) {
+            return new Promise((resolve, reject) => {
+                try {
+                    // Check if lamejs is loaded
+                    if (typeof lamejs === 'undefined') {
+                        throw new Error('lamejs library not loaded');
+                    }
+                    
+                    const sampleRate = audioBuffer.sampleRate;
+                    const numChannels = audioBuffer.numberOfChannels;
+                    const samples = audioBuffer.length;
+                    
+                    console.log(`🎵 Encoding: ${numChannels} channels, ${sampleRate}Hz, ${samples} samples`);
+                    
+                    // Get channel data
+                    const leftChannel = audioBuffer.getChannelData(0);
+                    const rightChannel = numChannels > 1 ? audioBuffer.getChannelData(1) : leftChannel;
+                    
+                    // Convert float samples to 16-bit PCM
+                    const leftPCM = new Int16Array(samples);
+                    const rightPCM = new Int16Array(samples);
+                    
+                    for (let i = 0; i < samples; i++) {
+                        leftPCM[i] = Math.max(-32768, Math.min(32767, leftChannel[i] * 32768));
+                        rightPCM[i] = Math.max(-32768, Math.min(32767, rightChannel[i] * 32768));
+                    }
+                    
+                    // Initialize MP3 encoder (128 kbps)
+                    const mp3encoder = new lamejs.Mp3Encoder(numChannels, sampleRate, 128);
+                    const mp3Data = [];
+                    
+                    // Encode in chunks (1152 samples per frame for MP3)
+                    const chunkSize = 1152;
+                    for (let i = 0; i < samples; i += chunkSize) {
+                        const leftChunk = leftPCM.subarray(i, i + chunkSize);
+                        const rightChunk = rightPCM.subarray(i, i + chunkSize);
+                        const mp3buf = mp3encoder.encodeBuffer(leftChunk, rightChunk);
+                        if (mp3buf.length > 0) {
+                            mp3Data.push(mp3buf);
+                        }
+                    }
+                    
+                    // Flush remaining data
+                    const mp3buf = mp3encoder.flush();
+                    if (mp3buf.length > 0) {
+                        mp3Data.push(mp3buf);
+                    }
+                    
+                    // Combine all MP3 chunks
+                    const totalLength = mp3Data.reduce((acc, chunk) => acc + chunk.length, 0);
+                    const result = new Uint8Array(totalLength);
+                    let offset = 0;
+                    for (const chunk of mp3Data) {
+                        result.set(chunk, offset);
+                        offset += chunk.length;
+                    }
+                    
+                    console.log('✅ MP3 encoding complete');
+                    resolve(result);
+                    
+                } catch (error) {
+                    console.error('❌ MP3 encoding error:', error);
+                    reject(error);
+                }
+            });
         }
 
         // Create ID3v2 header with metadata and cover art
