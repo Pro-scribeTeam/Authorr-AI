@@ -12991,50 +12991,59 @@ Format as clean, readable text ready for narration.`;
                 // Mix all audio clips at their timeline positions
                 if (audioDAW.audioClips && audioDAW.audioClips.length > 0) {
                     console.log(`📊 Mixing ${audioDAW.audioClips.length} clips from audioClips system`);
+                    console.log(`📊 OfflineContext duration: ${maxDuration}s`);
                     
                     for (const clip of audioDAW.audioClips) {
                         if (clip.buffer && clip.startTime !== undefined) {
                             console.log(`🎵 Processing clip: ${clip.id}, track: ${clip.trackName}, startTime: ${clip.startTime}s, duration: ${clip.buffer.duration}s`);
                             
-                            // Ensure clip startTime is within context duration
-                            if (clip.startTime >= 0 && clip.startTime < maxDuration) {
-                                const source = offlineContext.createBufferSource();
-                                source.buffer = clip.buffer;
-                                
-                                // Apply track volume
-                                const gainNode = offlineContext.createGain();
-                                const trackVolume = audioDAW.tracks[clip.trackName]?.volume || 100;
-                                gainNode.gain.value = trackVolume / 100;
-                                
-                                console.log(`🎵 Connecting clip ${clip.id} with volume: ${gainNode.gain.value}`);
-                                source.connect(gainNode);
-                                gainNode.connect(offlineContext.destination);
-                                
-                                // Start the clip at its timeline position
-                                source.start(clip.startTime);
-                                console.log(`🎵 Started clip ${clip.id} at ${clip.startTime}s`);
+                            // Create source for this clip
+                            const source = offlineContext.createBufferSource();
+                            source.buffer = clip.buffer;
+                            
+                            // Apply track volume
+                            const gainNode = offlineContext.createGain();
+                            const trackVolume = audioDAW.tracks[clip.trackName]?.volume;
+                            // track.volume is already a decimal (0-1.5), don't divide by 100 again
+                            gainNode.gain.value = trackVolume !== undefined ? trackVolume : 1.0;
+                            
+                            console.log(`🎵 Clip ${clip.id} volume: ${gainNode.gain.value} (track volume: ${trackVolume}%)`);
+                            
+                            // Connect nodes
+                            source.connect(gainNode);
+                            gainNode.connect(offlineContext.destination);
+                            
+                            // Schedule the clip at its timeline position
+                            // In OfflineAudioContext, start(when) schedules when to begin playback
+                            const startTime = Math.max(0, clip.startTime);
+                            if (startTime < maxDuration) {
+                                source.start(startTime);
+                                console.log(`✅ Scheduled clip ${clip.id} at ${startTime}s in offline timeline`);
                             } else {
-                                console.warn(`⚠️ Skipping clip ${clip.id} - startTime ${clip.startTime}s is outside context duration ${maxDuration}s`);
+                                console.warn(`⚠️ Skipping clip ${clip.id} - startTime ${startTime}s >= context duration ${maxDuration}s`);
                             }
                         } else {
-                            console.warn(`⚠️ Skipping invalid clip:`, clip);
+                            console.warn(`⚠️ Skipping invalid clip - missing buffer or startTime:`, clip);
                         }
                     }
                 } else {
                     // Fallback to old track system
                     console.log('📊 Using legacy tracks system for mixing');
                     const tracks = Object.values(audioDAW.tracks).filter(t => t.buffer);
+                    console.log(`📊 Found ${tracks.length} tracks with buffers`);
                     
-                    tracks.forEach(track => {
+                    tracks.forEach((track, index) => {
                         const source = offlineContext.createBufferSource();
                         source.buffer = track.buffer;
                         
                         const gainNode = offlineContext.createGain();
-                        gainNode.gain.value = track.volume / 100;
+                        // track.volume is already a decimal (0-1.5), don't divide by 100
+                        gainNode.gain.value = track.volume !== undefined ? track.volume : 1.0;
                         
                         source.connect(gainNode);
                         gainNode.connect(offlineContext.destination);
                         source.start(0);
+                        console.log(`✅ Added legacy track ${index + 1} with volume ${gainNode.gain.value}`);
                     });
                 }
                 
