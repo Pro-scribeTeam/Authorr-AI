@@ -5393,12 +5393,12 @@ Return the COMPLETE text with DRAMATICALLY humanized writing that's obviously di
                 frame[i] = frameId.charCodeAt(i);
             }
             
-            // Frame size (4 bytes, synchsafe)
+            // Frame size (4 bytes) - ID3v2.4 uses synchsafe integers
             const size = 1 + textData.length;
-            frame[4] = (size >> 24) & 0xFF;
-            frame[5] = (size >> 16) & 0xFF;
-            frame[6] = (size >> 8) & 0xFF;
-            frame[7] = size & 0xFF;
+            frame[4] = (size >> 21) & 0x7F;
+            frame[5] = (size >> 14) & 0x7F;
+            frame[6] = (size >> 7) & 0x7F;
+            frame[7] = size & 0x7F;
             
             // Frame flags (2 bytes)
             frame[8] = 0x00;
@@ -5415,14 +5415,46 @@ Return the COMPLETE text with DRAMATICALLY humanized writing that's obviously di
 
         // Create APIC frame (Attached Picture) for cover art
         function createAPICFrame(imageData) {
-            const mimeType = 'image/png'; // Assume PNG for now
+            // Detect MIME type from image data magic bytes
+            let mimeType = 'image/jpeg'; // Default to JPEG (most common for DALL-E)
+            
+            // Check for PNG signature (89 50 4E 47)
+            if (imageData.length > 4 && 
+                imageData[0] === 0x89 && 
+                imageData[1] === 0x50 && 
+                imageData[2] === 0x4E && 
+                imageData[3] === 0x47) {
+                mimeType = 'image/png';
+            }
+            // Check for JPEG signature (FF D8 FF)
+            else if (imageData.length > 3 && 
+                     imageData[0] === 0xFF && 
+                     imageData[1] === 0xD8 && 
+                     imageData[2] === 0xFF) {
+                mimeType = 'image/jpeg';
+            }
+            
+            console.log(`📸 Detected image type: ${mimeType}, size: ${imageData.length} bytes`);
+            
             const mimeTypeData = new TextEncoder().encode(mimeType);
             const description = ''; // Empty description
             const descriptionData = new TextEncoder().encode(description);
             
-            // Calculate frame size: encoding + mime + null + picture_type + description + null + image
+            // Calculate frame data size: encoding(1) + mime + null(1) + picture_type(1) + description + null(1) + image
             const frameDataSize = 1 + mimeTypeData.length + 1 + 1 + descriptionData.length + 1 + imageData.length;
             const frame = new Uint8Array(10 + frameDataSize);
+            
+            console.log(`📸 APIC frame structure:
+  - Frame header: 10 bytes
+  - Text encoding: 1 byte
+  - MIME type: ${mimeTypeData.length} bytes ("${mimeType}")
+  - MIME null: 1 byte
+  - Picture type: 1 byte (0x03 = Front Cover)
+  - Description: ${descriptionData.length} bytes (empty)
+  - Description null: 1 byte
+  - Image data: ${imageData.length} bytes
+  - Total frame data: ${frameDataSize} bytes
+  - Total frame size: ${10 + frameDataSize} bytes`);
             
             // Frame ID "APIC" (4 bytes)
             frame[0] = 0x41; // 'A'
@@ -5430,11 +5462,14 @@ Return the COMPLETE text with DRAMATICALLY humanized writing that's obviously di
             frame[2] = 0x49; // 'I'
             frame[3] = 0x43; // 'C'
             
-            // Frame size (4 bytes) - use standard integer, not synchsafe for ID3v2.4
-            frame[4] = (frameDataSize >> 24) & 0xFF;
-            frame[5] = (frameDataSize >> 16) & 0xFF;
-            frame[6] = (frameDataSize >> 8) & 0xFF;
-            frame[7] = frameDataSize & 0xFF;
+            // Frame size (4 bytes) - ID3v2.4 uses synchsafe integers
+            // Synchsafe integer: only uses 7 bits per byte (bit 7 is always 0)
+            frame[4] = (frameDataSize >> 21) & 0x7F;
+            frame[5] = (frameDataSize >> 14) & 0x7F;
+            frame[6] = (frameDataSize >> 7) & 0x7F;
+            frame[7] = frameDataSize & 0x7F;
+            
+            console.log(`📸 Frame size bytes (synchsafe): [${frame[4]}, ${frame[5]}, ${frame[6]}, ${frame[7]}]`);
             
             // Frame flags (2 bytes)
             frame[8] = 0x00;
@@ -5464,10 +5499,12 @@ Return the COMPLETE text with DRAMATICALLY humanized writing that's obviously di
             // Null terminator for description (required even if empty)
             frame[offset++] = 0x00;
             
+            console.log(`📸 Image data will be written at offset: ${offset}, expected offset: ${10 + 1 + mimeTypeData.length + 1 + 1 + descriptionData.length + 1}`);
+            
             // Image data
             frame.set(imageData, offset);
             
-            console.log(`📸 APIC frame created: ${frame.length} bytes total, image data: ${imageData.length} bytes`);
+            console.log(`✅ APIC frame completed: ${frame.length} bytes total`);
             
             return frame;
         }
