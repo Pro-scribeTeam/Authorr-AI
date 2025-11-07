@@ -5058,8 +5058,18 @@ Return the COMPLETE text with DRAMATICALLY humanized writing that's obviously di
                     console.log(`📡 Trying proxy: ${proxyUrl.split('?')[0]}`);
                     const response = await fetch(proxyUrl);
                     if (response.ok) {
-                        console.log('✅ Proxy fetch successful');
-                        return await response.blob();
+                        const blob = await response.blob();
+                        console.log(`📦 Blob received: ${blob.size} bytes, type: ${blob.type}`);
+                        
+                        // Validate: Image should be at least 10KB (10240 bytes)
+                        // Typical cover images are 100KB-5MB
+                        if (blob.size < 10240) {
+                            console.warn(`⚠️ Blob too small (${blob.size} bytes), likely not a valid image. Trying next proxy...`);
+                            continue;
+                        }
+                        
+                        console.log('✅ Proxy fetch successful with valid image size');
+                        return blob;
                     }
                 } catch (error) {
                     console.log(`❌ Proxy failed: ${error.message}`);
@@ -5129,7 +5139,7 @@ Return the COMPLETE text with DRAMATICALLY humanized writing that's obviously di
                 }
             }
             
-            throw new Error('All CORS fallback methods failed. Unable to fetch cover image.');
+            throw new Error('❌ Unable to fetch cover image. The image URL may have expired (DALL-E URLs expire after 1 hour). Please regenerate the cover and try embedding again.');
         }
 
         async function embedCoverIntoAudio() {
@@ -5150,6 +5160,14 @@ Return the COMPLETE text with DRAMATICALLY humanized writing that's obviously di
                 
                 // Get cover image data with CORS fallback
                 const coverImageBlob = await fetchImageWithCORSFallback(generatedCover.src);
+                
+                // Validate image size
+                if (coverImageBlob.size < 10240) {
+                    throw new Error(`Cover image is too small (${coverImageBlob.size} bytes). The image URL may have expired. Please regenerate the cover.`);
+                }
+                
+                console.log(`✅ Cover image fetched: ${coverImageBlob.size} bytes (${(coverImageBlob.size / 1024).toFixed(2)} KB)`);
+                
                 const coverImageArray = new Uint8Array(await coverImageBlob.arrayBuffer());
                 
                 // Get metadata
