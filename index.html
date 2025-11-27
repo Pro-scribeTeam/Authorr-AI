@@ -9,6 +9,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/lamejs@1.2.1/lame.min.js"></script>
+    <!-- PDF Generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script type="module">
         // Optional Supabase modules - only load if available
         try {
@@ -5749,7 +5751,7 @@ Return the COMPLETE text with DRAMATICALLY humanized writing that's obviously di
             showNotification('Cover downloaded successfully!', 'success');
         }
 
-        function downloadForPlatform(type) {
+        async function downloadForPlatform(type) {
             const coverImg = document.getElementById('generatedCover');
             if (!coverImg.src) {
                 showNotification('No cover to download', 'error');
@@ -5757,12 +5759,105 @@ Return the COMPLETE text with DRAMATICALLY humanized writing that's obviously di
             }
 
             const title = document.getElementById('coverTitle')?.value || 'book-cover';
-            const filename = type === 'print' ? 
-                `${title}-print-ready.png` : 
-                `${title}-web-optimized.png`;
             
-            downloadImage(coverImg.src, filename);
-            showNotification(`${type === 'print' ? 'Print-ready' : 'Web-optimized'} cover downloaded!`, 'success');
+            if (type === 'print') {
+                // Generate print-ready PDF with bleed and crop marks
+                await generatePrintReadyPDF(coverImg.src, title);
+            } else {
+                // Web-optimized PNG download
+                const filename = `${title}-web-optimized.png`;
+                downloadImage(coverImg.src, filename);
+                showNotification('Web-optimized cover downloaded!', 'success');
+            }
+        }
+
+        async function generatePrintReadyPDF(imageUrl, title) {
+            try {
+                showNotification('Generating print-ready PDF...', 'info');
+                
+                // Standard print book cover dimensions (6x9 inch book)
+                // With 0.125" bleed on all sides
+                const bookWidth = 6; // inches
+                const bookHeight = 9; // inches
+                const spineWidth = 0.5; // inches (adjust based on page count)
+                const bleed = 0.125; // inches
+                
+                // Total cover width = front + spine + back + bleed
+                const totalWidth = (bookWidth * 2) + spineWidth + (bleed * 2);
+                const totalHeight = bookHeight + (bleed * 2);
+                
+                // Convert to points (1 inch = 72 points)
+                const pdfWidth = totalWidth * 72;
+                const pdfHeight = totalHeight * 72;
+                
+                // Create PDF with custom dimensions
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF({
+                    orientation: 'landscape',
+                    unit: 'pt',
+                    format: [pdfWidth, pdfHeight]
+                });
+                
+                // Load and add the cover image
+                const img = new Image();
+                img.crossOrigin = 'anonymous';
+                
+                await new Promise((resolve, reject) => {
+                    img.onload = resolve;
+                    img.onerror = reject;
+                    img.src = imageUrl;
+                });
+                
+                // Add image to PDF (full bleed)
+                pdf.addImage(img, 'PNG', 0, 0, pdfWidth, pdfHeight, '', 'FAST');
+                
+                // Add crop marks
+                pdf.setDrawColor(0, 0, 0);
+                pdf.setLineWidth(0.5);
+                const markLength = 18; // Length of crop marks in points
+                const markOffset = bleed * 72; // Distance from edge
+                
+                // Top left
+                pdf.line(markOffset, 0, markOffset, markLength);
+                pdf.line(0, markOffset, markLength, markOffset);
+                
+                // Top right
+                pdf.line(pdfWidth - markOffset, 0, pdfWidth - markOffset, markLength);
+                pdf.line(pdfWidth, markOffset, pdfWidth - markLength, markOffset);
+                
+                // Bottom left
+                pdf.line(markOffset, pdfHeight, markOffset, pdfHeight - markLength);
+                pdf.line(0, pdfHeight - markOffset, markLength, pdfHeight - markOffset);
+                
+                // Bottom right
+                pdf.line(pdfWidth - markOffset, pdfHeight, pdfWidth - markOffset, pdfHeight - markLength);
+                pdf.line(pdfWidth, pdfHeight - markOffset, pdfWidth - markLength, pdfHeight - markOffset);
+                
+                // Add spine marks (vertical lines)
+                const frontCoverEnd = markOffset + (bookWidth * 72);
+                const spineEnd = frontCoverEnd + (spineWidth * 72);
+                
+                pdf.setDrawColor(0, 255, 255); // Cyan for spine guides
+                pdf.setLineWidth(0.25);
+                pdf.line(frontCoverEnd, 0, frontCoverEnd, pdfHeight);
+                pdf.line(spineEnd, 0, spineEnd, pdfHeight);
+                
+                // Add text specifications
+                pdf.setFontSize(8);
+                pdf.setTextColor(128, 128, 128);
+                const specs = `Print Specifications: ${totalWidth.toFixed(2)}" × ${totalHeight.toFixed(2)}" | 0.125" Bleed | 300 DPI Recommended`;
+                pdf.text(specs, markOffset + 10, pdfHeight - 10);
+                
+                // Save PDF
+                const filename = `${title}-print-ready.pdf`;
+                pdf.save(filename);
+                
+                showNotification('Print-ready PDF generated successfully! Includes bleed and crop marks.', 'success');
+                
+            } catch (error) {
+                console.error('PDF generation error:', error);
+                showNotification('Error generating PDF: ' + error.message, 'error');
+            }
         }
 
         function downloadImage(url, filename) {
