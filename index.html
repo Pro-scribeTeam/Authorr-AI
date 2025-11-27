@@ -5790,27 +5790,64 @@ Return the COMPLETE text with DRAMATICALLY humanized writing that's obviously di
                 const pdfWidth = totalWidth * 72;
                 const pdfHeight = totalHeight * 72;
                 
-                // CORS FIX: Convert image to canvas first, then to data URL
-                // This bypasses CORS restrictions from external image URLs
+                // CORS FIX: Fetch the image as a blob using a CORS proxy, then convert to data URL
                 const coverImgElement = document.getElementById('generatedCover');
-                if (!coverImgElement || !coverImgElement.complete) {
+                if (!coverImgElement || !coverImgElement.src) {
                     throw new Error('Cover image not loaded');
                 }
                 
-                // Create a temporary canvas to convert the image
-                const canvas = document.createElement('canvas');
-                canvas.width = coverImgElement.naturalWidth || coverImgElement.width;
-                canvas.height = coverImgElement.naturalHeight || coverImgElement.height;
-                const ctx = canvas.getContext('2d');
+                console.log('🔄 Fetching image via CORS proxy:', imageUrl);
                 
-                // Draw the image to canvas (this works even with CORS-restricted images 
-                // because the img element has already loaded it in the DOM)
-                ctx.drawImage(coverImgElement, 0, 0);
+                let imageDataUrl;
                 
-                // Convert canvas to data URL (base64 PNG)
-                const imageDataUrl = canvas.toDataURL('image/png');
-                
-                console.log('✅ Image converted to data URL, length:', imageDataUrl.length);
+                // Try to fetch via CORS proxy first
+                try {
+                    // Use a CORS proxy to fetch the image
+                    const corsProxy = 'https://corsproxy.io/?';
+                    const proxyUrl = corsProxy + encodeURIComponent(imageUrl);
+                    
+                    console.log('🌐 Fetching via proxy:', proxyUrl);
+                    const response = await fetch(proxyUrl);
+                    
+                    if (!response.ok) {
+                        throw new Error(`Proxy fetch failed: ${response.status}`);
+                    }
+                    
+                    const blob = await response.blob();
+                    console.log('✅ Image blob fetched:', blob.size, 'bytes');
+                    
+                    // Convert blob to data URL
+                    imageDataUrl = await new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onloadend = () => resolve(reader.result);
+                        reader.onerror = reject;
+                        reader.readAsDataURL(blob);
+                    });
+                    
+                    console.log('✅ Image converted to data URL, length:', imageDataUrl.length);
+                    
+                } catch (proxyError) {
+                    console.warn('⚠️ CORS proxy failed, trying direct approach:', proxyError);
+                    
+                    // Fallback: Try direct fetch (may fail due to CORS)
+                    try {
+                        const response = await fetch(imageUrl);
+                        const blob = await response.blob();
+                        
+                        imageDataUrl = await new Promise((resolve, reject) => {
+                            const reader = new FileReader();
+                            reader.onloadend = () => resolve(reader.result);
+                            reader.onerror = reject;
+                            reader.readAsDataURL(blob);
+                        });
+                        
+                        console.log('✅ Direct fetch succeeded');
+                        
+                    } catch (directError) {
+                        console.error('❌ Both proxy and direct fetch failed');
+                        throw new Error('Unable to fetch image. Please try uploading a local image instead of using an AI-generated one, or try again later.');
+                    }
+                }
                 
                 // Create PDF with custom dimensions
                 const { jsPDF } = window.jspdf;
