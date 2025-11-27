@@ -5882,14 +5882,8 @@ Return the COMPLETE text with DRAMATICALLY humanized writing that's obviously di
                 pdf.line(pdfWidth - markOffset, pdfHeight, pdfWidth - markOffset, pdfHeight - markLength);
                 pdf.line(pdfWidth, pdfHeight - markOffset, pdfWidth - markLength, pdfHeight - markOffset);
                 
-                // Add spine marks (vertical lines)
-                const frontCoverEnd = markOffset + (bookWidth * 72);
-                const spineEnd = frontCoverEnd + (spineWidth * 72);
-                
-                pdf.setDrawColor(0, 255, 255); // Cyan for spine guides
-                pdf.setLineWidth(0.25);
-                pdf.line(frontCoverEnd, 0, frontCoverEnd, pdfHeight);
-                pdf.line(spineEnd, 0, spineEnd, pdfHeight);
+                // Note: Spine guides removed to avoid interfering with cover design
+                // Professional printers can determine spine placement from specifications
                 
                 // Add text specifications
                 pdf.setFontSize(8);
