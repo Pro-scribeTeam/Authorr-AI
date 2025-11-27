@@ -5790,6 +5790,28 @@ Return the COMPLETE text with DRAMATICALLY humanized writing that's obviously di
                 const pdfWidth = totalWidth * 72;
                 const pdfHeight = totalHeight * 72;
                 
+                // CORS FIX: Convert image to canvas first, then to data URL
+                // This bypasses CORS restrictions from external image URLs
+                const coverImgElement = document.getElementById('generatedCover');
+                if (!coverImgElement || !coverImgElement.complete) {
+                    throw new Error('Cover image not loaded');
+                }
+                
+                // Create a temporary canvas to convert the image
+                const canvas = document.createElement('canvas');
+                canvas.width = coverImgElement.naturalWidth || coverImgElement.width;
+                canvas.height = coverImgElement.naturalHeight || coverImgElement.height;
+                const ctx = canvas.getContext('2d');
+                
+                // Draw the image to canvas (this works even with CORS-restricted images 
+                // because the img element has already loaded it in the DOM)
+                ctx.drawImage(coverImgElement, 0, 0);
+                
+                // Convert canvas to data URL (base64 PNG)
+                const imageDataUrl = canvas.toDataURL('image/png');
+                
+                console.log('✅ Image converted to data URL, length:', imageDataUrl.length);
+                
                 // Create PDF with custom dimensions
                 const { jsPDF } = window.jspdf;
                 const pdf = new jsPDF({
@@ -5798,18 +5820,8 @@ Return the COMPLETE text with DRAMATICALLY humanized writing that's obviously di
                     format: [pdfWidth, pdfHeight]
                 });
                 
-                // Load and add the cover image
-                const img = new Image();
-                img.crossOrigin = 'anonymous';
-                
-                await new Promise((resolve, reject) => {
-                    img.onload = resolve;
-                    img.onerror = reject;
-                    img.src = imageUrl;
-                });
-                
-                // Add image to PDF (full bleed)
-                pdf.addImage(img, 'PNG', 0, 0, pdfWidth, pdfHeight, '', 'FAST');
+                // Add image to PDF using data URL (full bleed)
+                pdf.addImage(imageDataUrl, 'PNG', 0, 0, pdfWidth, pdfHeight, '', 'FAST');
                 
                 // Add crop marks
                 pdf.setDrawColor(0, 0, 0);
@@ -5852,11 +5864,12 @@ Return the COMPLETE text with DRAMATICALLY humanized writing that's obviously di
                 const filename = `${title}-print-ready.pdf`;
                 pdf.save(filename);
                 
+                console.log('✅ PDF saved:', filename);
                 showNotification('Print-ready PDF generated successfully! Includes bleed and crop marks.', 'success');
                 
             } catch (error) {
                 console.error('PDF generation error:', error);
-                showNotification('Error generating PDF: ' + error.message, 'error');
+                showNotification('Error generating PDF: ' + (error.message || 'Unknown error'), 'error');
             }
         }
 
