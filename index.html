@@ -11,6 +11,25 @@
     <script src="https://cdn.jsdelivr.net/npm/lamejs@1.2.1/lame.min.js"></script>
     <!-- PDF Generation -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- Supabase Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        // Supabase Configuration
+        window.SUPABASE_CONFIG = {
+            url: 'https://hemykozfrrvvzrcqrpac.supabase.co',
+            anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhlbXlrb3pmcnJ2dnpyY3FycGFjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzMxODE3NTAsImV4cCI6MjA0ODc1Nzc1MH0.OM221rEOGowM18HAMePmPA_DRvbWdvT'
+        };
+        
+        // Initialize Supabase client
+        if (window.supabase) {
+            window.supabaseClient = window.supabase.createClient(
+                window.SUPABASE_CONFIG.url,
+                window.SUPABASE_CONFIG.anonKey
+            );
+            console.log('✅ Supabase client initialized successfully');
+            console.log('📡 Connected to:', window.SUPABASE_CONFIG.url);
+        }
+    </script>
     <script type="module">
         // Optional Supabase modules - only load if available
         try {
@@ -2235,7 +2254,39 @@
             
             // Initialize button states
             updateUndoRedoButtons();
+            
+            // Test Supabase connection
+            testSupabaseConnection();
         });
+        
+        // Test Supabase Connection
+        async function testSupabaseConnection() {
+            if (!window.supabaseClient) {
+                console.warn('⚠️ Supabase client not initialized');
+                return;
+            }
+            
+            try {
+                console.log('🔍 Testing Supabase connection...');
+                
+                // Test database connectivity by querying stories table
+                const { data, error } = await window.supabaseClient
+                    .from('stories')
+                    .select('count')
+                    .limit(1);
+                
+                if (error) {
+                    console.warn('⚠️ Supabase connection test failed:', error.message);
+                    console.log('💡 This is normal if you haven\'t created the database tables yet.');
+                    console.log('📝 Run the schema from supabase-schema.sql in your Supabase SQL Editor');
+                } else {
+                    console.log('✅ Supabase connection successful!');
+                    console.log('📊 Database is accessible and ready');
+                }
+            } catch (err) {
+                console.error('❌ Supabase test error:', err);
+            }
+        }
         
         // Page Navigation
         function showPage(pageId, clickEvent = null) {

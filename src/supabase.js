@@ -1,11 +1,19 @@
-import { createClient } from '@supabase/supabase-js'
-
-// Supabase configuration
-const supabaseUrl = process.env.SUPABASE_URL || 'YOUR_SUPABASE_URL'
-const supabaseKey = process.env.SUPABASE_ANON_KEY || 'YOUR_SUPABASE_ANON_KEY'
-
-// Create Supabase client
-export const supabase = createClient(supabaseUrl, supabaseKey)
+// Supabase client is initialized globally in index.html
+// Access it via window.supabaseClient
+export const supabase = window.supabaseClient || {
+  auth: {
+    signUp: () => Promise.reject(new Error('Supabase not initialized')),
+    signInWithPassword: () => Promise.reject(new Error('Supabase not initialized')),
+    signOut: () => Promise.reject(new Error('Supabase not initialized')),
+    getUser: () => Promise.reject(new Error('Supabase not initialized')),
+    onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } })
+  },
+  from: () => ({
+    select: () => Promise.reject(new Error('Supabase not initialized')),
+    insert: () => Promise.reject(new Error('Supabase not initialized')),
+    upsert: () => Promise.reject(new Error('Supabase not initialized'))
+  })
+}
 
 // Authentication helpers
 export const auth = {
