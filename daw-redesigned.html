@@ -510,7 +510,7 @@
            ======================================== */
         
         .mixer-section {
-            height: 280px;
+            height: 340px;
             background-color: var(--daw-bg-secondary);
             border-top: 2px solid var(--daw-border);
             display: flex;
@@ -643,11 +643,13 @@
         .fader-container {
             flex: 1;
             display: flex;
+            flex-direction: row;
             justify-content: center;
             align-items: center;
-            padding: 8px 0;
+            padding: 12px 0;
             position: relative;
-            gap: 4px;
+            gap: 6px;
+            min-height: 180px;
         }
         
         .fader-track {
