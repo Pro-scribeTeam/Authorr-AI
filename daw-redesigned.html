@@ -1079,12 +1079,13 @@
             totalDuration: 0,
             bpm: 120,
             zoom: 1.0,
+            masterVolume: 0.0,
             tracks: [
-                { id: 'narration', name: 'Narration', type: 'narration', icon: '🎙️', color: 'narration', clips: [], muted: false, solo: false, volume: 1.0, effects: {} },
-                { id: 'music1', name: 'Music 1', type: 'music', icon: '🎵', color: 'music', clips: [], muted: false, solo: false, volume: 1.0, effects: {} },
-                { id: 'music2', name: 'Music 2', type: 'music', icon: '🎵', color: 'music', clips: [], muted: false, solo: false, volume: 1.0, effects: {} },
-                { id: 'sfx1', name: 'SFX 1', type: 'sfx', icon: '🔊', color: 'sfx', clips: [], muted: false, solo: false, volume: 1.0, effects: {} },
-                { id: 'sfx2', name: 'SFX 2', type: 'sfx', icon: '🔊', color: 'sfx', clips: [], muted: false, solo: false, volume: 1.0, effects: {} }
+                { id: 'narration', name: 'Narration', type: 'narration', icon: '🎙️', color: 'narration', clips: [], muted: false, solo: false, volume: 0.0, effects: {} },
+                { id: 'music1', name: 'Music 1', type: 'music', icon: '🎵', color: 'music', clips: [], muted: false, solo: false, volume: 0.0, effects: {} },
+                { id: 'music2', name: 'Music 2', type: 'music', icon: '🎵', color: 'music', clips: [], muted: false, solo: false, volume: 0.0, effects: {} },
+                { id: 'sfx1', name: 'SFX 1', type: 'sfx', icon: '🔊', color: 'sfx', clips: [], muted: false, solo: false, volume: 0.0, effects: {} },
+                { id: 'sfx2', name: 'SFX 2', type: 'sfx', icon: '🔊', color: 'sfx', clips: [], muted: false, solo: false, volume: 0.0, effects: {} }
             ],
             selectedTool: 'select',
             selectedClips: []
@@ -1270,7 +1271,7 @@
                 </div>
                 <div class="fader-container">
                     <div class="fader-track">
-                        <div class="fader-thumb" data-track-id="${track.id}" style="bottom: ${track.volume * 100}%;"></div>
+                        <div class="fader-thumb" data-track-id="${track.id}" style="bottom: ${(1 - track.volume) * 100}%;"></div>
                     </div>
                     <div class="fader-scale">
                         <div class="fader-scale-mark"><span class="fader-scale-tick"></span><span class="fader-scale-label">0</span></div>
@@ -1317,7 +1318,7 @@
                 </div>
                 <div class="fader-container">
                     <div class="fader-track">
-                        <div class="fader-thumb" data-track-id="master" style="bottom: 100%;"></div>
+                        <div class="fader-thumb" data-track-id="master" style="bottom: 0%;"></div>
                     </div>
                     <div class="fader-scale">
                         <div class="fader-scale-mark"><span class="fader-scale-tick"></span><span class="fader-scale-label">0</span></div>
@@ -1894,13 +1895,14 @@
             function onMouseMove(moveEvent) {
                 const y = moveEvent.clientY - trackRect.top;
                 const height = trackRect.height;
-                let volume = 1 - (y / height);
+                let volume = y / height; // Inverted: top (y=0) = 0, bottom (y=height) = 1
                 volume = Math.max(0, Math.min(1, volume));
                 
-                e.target.style.bottom = `${volume * 100}%`;
+                e.target.style.bottom = `${(1 - volume) * 100}%`; // Inverted positioning
                 
                 // Update track volume
                 if (trackId === 'master') {
+                    dawState.masterVolume = volume;
                     const boostedMasterVolume = volume * 2.0; // Allow 0-2x range for master
                     console.log(`🎛️ Master volume: ${(volume * 100).toFixed(0)}% (${(boostedMasterVolume * 100).toFixed(0)}% actual)`);
                     // Update master gain node
