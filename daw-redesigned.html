@@ -406,6 +406,18 @@
             flex: 1;
             position: relative;
             background-color: var(--daw-bg-track);
+            min-height: 80px;
+            transition: all 0.2s;
+        }
+        
+        .audio-clip {
+            position: absolute;
+            cursor: move;
+            user-select: none;
+        }
+        
+        .audio-clip:hover {
+            filter: brightness(1.2);
         }
         
         .track-canvas.narration {
@@ -913,13 +925,63 @@
                             <span class="track-name-text">${track.name}</span>
                         </div>
                     </div>
-                    <div class="track-canvas ${track.color}" data-track-id="${track.id}">
+                    <div class="track-canvas ${track.color}" data-track-id="${track.id}"
+                         ondrop="handleTrackDrop(event, '${track.id}')"
+                         ondragover="handleTrackDragOver(event)"
+                         ondragenter="handleTrackDragEnter(event)"
+                         ondragleave="handleTrackDragLeave(event)">
                         <!-- Audio clips will be rendered here -->
                     </div>
                 `;
                 
                 tracksContainer.appendChild(trackRow);
             });
+            
+            // Also render timeline ruler
+            renderTimelineRuler();
+        }
+        
+        function renderTimelineRuler() {
+            const ruler = document.getElementById('timelineRuler');
+            ruler.innerHTML = '';
+            
+            // Calculate how many seconds to show based on zoom and total duration
+            const visibleDuration = Math.max(60, dawState.totalDuration || 60); // At least 60 seconds
+            const secondsToShow = visibleDuration / dawState.zoom;
+            
+            // Determine marker interval (every 5 or 10 seconds depending on zoom)
+            const markerInterval = dawState.zoom < 0.5 ? 10 : 5;
+            
+            const rulerWidth = ruler.offsetWidth || 1000;
+            const pixelsPerSecond = rulerWidth / secondsToShow;
+            
+            for (let seconds = 0; seconds <= secondsToShow; seconds += markerInterval) {
+                const marker = document.createElement('div');
+                marker.style.position = 'absolute';
+                marker.style.left = (seconds * pixelsPerSecond) + 'px';
+                marker.style.top = '0';
+                marker.style.width = '1px';
+                marker.style.height = '100%';
+                marker.style.backgroundColor = 'var(--grid-line-major)';
+                
+                const label = document.createElement('div');
+                label.style.position = 'absolute';
+                label.style.left = (seconds * pixelsPerSecond + 4) + 'px';
+                label.style.top = '6px';
+                label.style.fontSize = '11px';
+                label.style.color = 'var(--daw-text-secondary)';
+                label.style.fontFamily = 'monospace';
+                label.textContent = formatTime(seconds);
+                
+                ruler.appendChild(marker);
+                ruler.appendChild(label);
+            }
+        }
+        
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
         }
         
         function renderMixerChannels() {
@@ -1317,6 +1379,145 @@
         }
         
         // ========================================
+        // DRAG AND DROP FUNCTIONALITY
+        // ========================================
+        
+        function handleTrackDragOver(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.dataTransfer.dropEffect = 'copy';
+        }
+        
+        function handleTrackDragEnter(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            const trackCanvas = e.currentTarget;
+            trackCanvas.style.outline = '2px dashed var(--daw-accent)';
+            trackCanvas.style.backgroundColor = 'rgba(120, 227, 254, 0.1)';
+        }
+        
+        function handleTrackDragLeave(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            const trackCanvas = e.currentTarget;
+            trackCanvas.style.outline = '';
+            trackCanvas.style.backgroundColor = '';
+        }
+        
+        function handleTrackDrop(e, trackId) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const trackCanvas = e.currentTarget;
+            trackCanvas.style.outline = '';
+            trackCanvas.style.backgroundColor = '';
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                const file = files[0];
+                
+                // Check if it's an audio file
+                if (file.type.startsWith('audio/')) {
+                    loadAudioFile(file, trackId);
+                } else {
+                    alert('Please drop an audio file (MP3, WAV, etc.)');
+                    console.warn('⚠️ Invalid file type:', file.type);
+                }
+            }
+        }
+        
+        function loadAudioFile(file, trackId) {
+            console.log(`🎵 Loading audio file: ${file.name} to track: ${trackId}`);
+            
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                const audioData = e.target.result;
+                
+                // Create audio element to get duration
+                const audio = new Audio(audioData);
+                audio.addEventListener('loadedmetadata', function() {
+                    const duration = audio.duration;
+                    
+                    // Create clip object
+                    const clip = {
+                        id: `clip_${Date.now()}`,
+                        name: file.name,
+                        data: audioData,
+                        duration: duration,
+                        startTime: 0,
+                        trackId: trackId
+                    };
+                    
+                    // Add clip to track
+                    const track = dawState.tracks.find(t => t.id === trackId);
+                    if (track) {
+                        track.clips.push(clip);
+                        console.log(`✅ Audio loaded: ${file.name} (${duration.toFixed(2)}s)`);
+                        
+                        // Update total duration if needed
+                        const endTime = clip.startTime + clip.duration;
+                        if (endTime > dawState.totalDuration) {
+                            dawState.totalDuration = endTime;
+                            document.getElementById('totalTime').textContent = formatTime(Math.ceil(endTime));
+                        }
+                        
+                        // Re-render tracks to show the clip
+                        renderAudioClip(clip, trackId);
+                        renderTimelineRuler();
+                        
+                        // Show notification
+                        const trackName = track.name;
+                        alert(`✅ Audio added to ${trackName}:\n${file.name}\nDuration: ${duration.toFixed(2)}s`);
+                    }
+                });
+                
+                audio.addEventListener('error', function() {
+                    console.error('❌ Error loading audio file');
+                    alert('Error loading audio file. Please try a different file.');
+                });
+            };
+            
+            reader.onerror = function() {
+                console.error('❌ Error reading file');
+                alert('Error reading file. Please try again.');
+            };
+            
+            reader.readAsDataURL(file);
+        }
+        
+        function renderAudioClip(clip, trackId) {
+            const trackCanvas = document.querySelector(`.track-canvas[data-track-id="${trackId}"]`);
+            if (!trackCanvas) return;
+            
+            // Create clip visual element
+            const clipEl = document.createElement('div');
+            clipEl.className = 'audio-clip';
+            clipEl.dataset.clipId = clip.id;
+            clipEl.style.position = 'absolute';
+            clipEl.style.left = `${clip.startTime * 50}px`; // 50px per second for now
+            clipEl.style.top = '10px';
+            clipEl.style.width = `${clip.duration * 50}px`;
+            clipEl.style.height = 'calc(100% - 20px)';
+            clipEl.style.backgroundColor = 'rgba(120, 227, 254, 0.3)';
+            clipEl.style.border = '2px solid var(--daw-accent)';
+            clipEl.style.borderRadius = '4px';
+            clipEl.style.display = 'flex';
+            clipEl.style.alignItems = 'center';
+            clipEl.style.justifyContent = 'center';
+            clipEl.style.color = 'var(--daw-text-primary)';
+            clipEl.style.fontSize = '11px';
+            clipEl.style.padding = '4px';
+            clipEl.style.overflow = 'hidden';
+            clipEl.style.textOverflow = 'ellipsis';
+            clipEl.style.whiteSpace = 'nowrap';
+            clipEl.style.cursor = 'move';
+            clipEl.textContent = clip.name;
+            
+            trackCanvas.appendChild(clipEl);
+        }
+        
+        // ========================================
         // KEYBOARD SHORTCUTS
         // ========================================
         
@@ -1380,6 +1581,11 @@
         // ========================================
         
         window.addEventListener('DOMContentLoaded', initializeDAW);
+        
+        // Re-render timeline ruler on window resize
+        window.addEventListener('resize', () => {
+            renderTimelineRuler();
+        });
         
         console.log('🎨 Mozart-style DAW script loaded');
     </script>
