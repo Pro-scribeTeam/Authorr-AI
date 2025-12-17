@@ -423,21 +423,45 @@
         }
         
         .track-canvas.narration {
-            background: linear-gradient(90deg, 
-                var(--track-narration-dim) 0%, 
-                transparent 10%);
+            background-image: 
+                linear-gradient(90deg, 
+                    var(--track-narration-dim) 0px, 
+                    var(--track-narration-dim) 100px,
+                    transparent 200px),
+                repeating-linear-gradient(90deg,
+                    transparent 0px,
+                    transparent 49px,
+                    var(--grid-line-major) 49px,
+                    var(--grid-line-major) 50px
+                );
         }
         
         .track-canvas.music {
-            background: linear-gradient(90deg, 
-                var(--track-music-dim) 0%, 
-                transparent 10%);
+            background-image: 
+                linear-gradient(90deg, 
+                    var(--track-music-dim) 0px,
+                    var(--track-music-dim) 100px, 
+                    transparent 200px),
+                repeating-linear-gradient(90deg,
+                    transparent 0px,
+                    transparent 49px,
+                    var(--grid-line-major) 49px,
+                    var(--grid-line-major) 50px
+                );
         }
         
         .track-canvas.sfx {
-            background: linear-gradient(90deg, 
-                var(--track-sfx-dim) 0%, 
-                transparent 10%);
+            background-image: 
+                linear-gradient(90deg, 
+                    var(--track-sfx-dim) 0px,
+                    var(--track-sfx-dim) 100px, 
+                    transparent 200px),
+                repeating-linear-gradient(90deg,
+                    transparent 0px,
+                    transparent 49px,
+                    var(--grid-line-major) 49px,
+                    var(--grid-line-major) 50px
+                );
         }
         
         #playhead {
@@ -974,9 +998,10 @@
             const ruler = document.getElementById('timelineRuler');
             ruler.innerHTML = '';
             
-            // Calculate timeline width based on total duration + buffer
+            // Calculate timeline width based on total duration + generous buffer
             const pixelsPerSecond = 50 * dawState.zoom;
-            const totalDuration = Math.max(60, dawState.totalDuration + 10); // Add 10s buffer
+            const bufferTime = 30; // 30 seconds of empty space after last clip
+            const totalDuration = Math.max(60, dawState.totalDuration + bufferTime);
             const timelineWidth = totalDuration * pixelsPerSecond;
             
             // Set explicit width for ruler and all track canvases
@@ -989,10 +1014,33 @@
                 canvas.style.minWidth = `${timelineWidth}px`;
             });
             
+            // Add special marker at 0:00 (timeline start)
+            const zeroMarker = document.createElement('div');
+            zeroMarker.style.position = 'absolute';
+            zeroMarker.style.left = '0px';
+            zeroMarker.style.top = '0';
+            zeroMarker.style.width = '2px';
+            zeroMarker.style.height = '100%';
+            zeroMarker.style.backgroundColor = 'var(--daw-accent)'; // Cyan to stand out
+            zeroMarker.style.zIndex = '10';
+            
+            const zeroLabel = document.createElement('div');
+            zeroLabel.style.position = 'absolute';
+            zeroLabel.style.left = '6px';
+            zeroLabel.style.top = '6px';
+            zeroLabel.style.fontSize = '12px';
+            zeroLabel.style.fontWeight = 'bold';
+            zeroLabel.style.color = 'var(--daw-accent)';
+            zeroLabel.style.fontFamily = 'monospace';
+            zeroLabel.textContent = '0:00';
+            
+            ruler.appendChild(zeroMarker);
+            ruler.appendChild(zeroLabel);
+            
             // Determine marker interval (every 5 or 10 seconds depending on zoom)
             const markerInterval = dawState.zoom < 0.5 ? 10 : 5;
             
-            for (let seconds = 0; seconds <= totalDuration; seconds += markerInterval) {
+            for (let seconds = markerInterval; seconds <= totalDuration; seconds += markerInterval) {
                 const marker = document.createElement('div');
                 marker.style.position = 'absolute';
                 marker.style.left = (seconds * pixelsPerSecond) + 'px';
