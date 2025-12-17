@@ -321,7 +321,8 @@
             flex: 1;
             position: relative;
             background-color: var(--daw-bg-primary);
-            overflow: hidden;
+            overflow-x: auto;
+            overflow-y: hidden;
         }
         
         .timeline-ruler {
@@ -1202,8 +1203,9 @@
             if (!audioContext) {
                 audioContext = new (window.AudioContext || window.webkitAudioContext)();
                 masterGainNode = audioContext.createGain();
+                masterGainNode.gain.value = 1.5; // 1.5x boost for master output
                 masterGainNode.connect(audioContext.destination);
-                console.log('🎧 AudioContext initialized');
+                console.log('🎧 AudioContext initialized with boosted gain');
             }
             return audioContext;
         }
@@ -1256,8 +1258,10 @@
                 }
                 
                 // Update gain based on track volume and mute/solo
+                // Apply 2x boost for louder output (track.volume is 0-1, multiply by 2 for 0-2 range)
                 const shouldPlay = !track.muted && (!dawState.tracks.some(t => t.solo) || track.solo);
-                gainNodes[track.id].gain.value = shouldPlay ? track.volume : 0;
+                const boostedVolume = track.volume * 2.0; // 2x louder
+                gainNodes[track.id].gain.value = shouldPlay ? boostedVolume : 0;
             });
             
             // Schedule all clips
@@ -1353,6 +1357,29 @@
             
             playhead.style.left = `${position}px`;
             playhead.style.display = 'block';
+            
+            // Auto-scroll timeline to follow playhead during playback
+            if (dawState.isPlaying) {
+                const timelineWrapper = document.querySelector('.timeline-canvas-wrapper');
+                if (timelineWrapper) {
+                    const wrapperWidth = timelineWrapper.clientWidth;
+                    const playheadPosition = currentTime * pixelsPerSecond; // Position relative to content
+                    const currentScroll = timelineWrapper.scrollLeft;
+                    
+                    // Define scroll margins (keep playhead in center 60% of viewport)
+                    const leftMargin = wrapperWidth * 0.2;
+                    const rightMargin = wrapperWidth * 0.8;
+                    
+                    const playheadViewportPos = playheadPosition - currentScroll;
+                    
+                    // Scroll if playhead goes beyond margins
+                    if (playheadViewportPos > rightMargin) {
+                        timelineWrapper.scrollLeft = playheadPosition - (wrapperWidth / 2);
+                    } else if (playheadViewportPos < leftMargin && currentScroll > 0) {
+                        timelineWrapper.scrollLeft = playheadPosition - (wrapperWidth / 2);
+                    }
+                }
+            }
         }
         
         function updateLEDMetersWithRealAudio() {
@@ -1368,7 +1395,15 @@
                     
                     // Calculate average level
                     const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
-                    const level = Math.floor((average / 255) * 15);
+                    
+                    // Get track volume to scale LED display
+                    const track = dawState.tracks.find(t => t.id === trackId);
+                    const trackVolume = track ? track.volume : 1.0;
+                    
+                    // Apply volume scaling with 3x boost for better visibility
+                    // Higher fader = more LEDs light up
+                    const rawLevel = (average / 255) * 15 * 3.0; // 3x boost
+                    const level = Math.min(15, Math.floor(rawLevel * trackVolume));
                     
                     const segments = meter.querySelectorAll('.led-segment');
                     segments.forEach((segment, index) => {
@@ -1516,10 +1551,11 @@
                 
                 // Update track volume
                 if (trackId === 'master') {
-                    console.log(`🎛️ Master volume: ${(volume * 100).toFixed(0)}%`);
+                    const boostedMasterVolume = volume * 2.0; // Allow 0-2x range for master
+                    console.log(`🎛️ Master volume: ${(volume * 100).toFixed(0)}% (${(boostedMasterVolume * 100).toFixed(0)}% actual)`);
                     // Update master gain node
                     if (masterGainNode) {
-                        masterGainNode.gain.value = volume;
+                        masterGainNode.gain.value = boostedMasterVolume;
                     }
                 } else {
                     const track = dawState.tracks.find(t => t.id === trackId);
@@ -1582,7 +1618,8 @@
             if (!track || !gainNodes[trackId]) return;
             
             const shouldPlay = !track.muted && (!dawState.tracks.some(t => t.solo) || track.solo);
-            const targetGain = shouldPlay ? track.volume : 0;
+            const boostedVolume = track.volume * 2.0; // 2x boost for louder output
+            const targetGain = shouldPlay ? boostedVolume : 0;
             
             gainNodes[trackId].gain.value = targetGain;
         }
