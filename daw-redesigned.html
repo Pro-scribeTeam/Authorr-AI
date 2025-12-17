@@ -1919,7 +1919,10 @@
                     return;
                 }
                 
-                faderThumb.style.bottom = `${volume * 100}%`; // Direct positioning: volume 1.0 = 100% from bottom (top)
+                const bottomPercent = volume * 100;
+                faderThumb.style.bottom = `${bottomPercent}%`; // Direct positioning: volume 1.0 = 100% from bottom (top)
+                
+                console.log(`📍 Fader Debug - y: ${y.toFixed(0)}px, height: ${height.toFixed(0)}px, volume: ${(volume * 100).toFixed(0)}%, bottom: ${bottomPercent.toFixed(0)}%`);
                 
                 // Update track volume
                 if (trackId === 'master') {
