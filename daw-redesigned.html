@@ -329,10 +329,13 @@
         
         .timeline-ruler {
             height: 30px;
+            min-height: 30px;
             background-color: var(--daw-bg-secondary);
             border-bottom: 1px solid var(--daw-border);
             position: relative;
             margin-left: 200px; /* Align with track content area */
+            overflow: visible;
+            z-index: 5;
         }
         
         .timeline-tracks {
@@ -750,33 +753,35 @@
             flex-direction: column;
             justify-content: space-between;
             height: 100%;
-            font-size: 9px;
+            font-size: 10px;
             color: var(--daw-text-primary);
             line-height: 1;
             padding: 2px 0;
-            z-index: 1;
+            z-index: 5;
+            min-width: 20px;
         }
         
         .fader-scale-mark {
             display: flex;
             align-items: center;
             gap: 3px;
-            height: 0;
+            height: auto;
             position: relative;
+            min-height: 1px;
         }
         
         .fader-scale-tick {
-            width: 5px;
-            height: 1px;
+            width: 6px;
+            height: 2px;
             background-color: var(--daw-text-primary);
-            opacity: 0.8;
+            opacity: 0.9;
         }
         
         .fader-scale-label {
-            font-size: 9px;
-            font-weight: 600;
+            font-size: 10px;
+            font-weight: 700;
             color: var(--daw-text-primary);
-            opacity: 0.9;
+            opacity: 1.0;
         }
         
         .channel-controls {
