@@ -1894,12 +1894,13 @@
             const faderThumb = thumb || faderTrack.querySelector('.fader-thumb');
             const trackId = faderThumb.dataset.trackId;
             
-            // Get the bounding rect for calculations - use track for height
-            const trackRect = faderTrack.getBoundingClientRect();
+            // Get the fader-container (parent of track) for proper height calculation
+            const faderContainer = faderTrack.parentElement;
+            const containerRect = faderContainer.getBoundingClientRect();
             
             function onMouseMove(moveEvent) {
-                const y = moveEvent.clientY - trackRect.top;
-                const height = trackRect.height;
+                const y = moveEvent.clientY - containerRect.top;
+                const height = containerRect.height;
                 
                 // Prevent division by zero
                 if (height === 0 || isNaN(height)) {
