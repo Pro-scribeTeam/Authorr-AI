@@ -515,7 +515,7 @@
            ======================================== */
         
         .mixer-section {
-            height: 180px;
+            height: 340px;
             background-color: var(--daw-bg-secondary);
             border-top: 2px solid var(--daw-border);
             display: flex;
@@ -571,14 +571,14 @@
         }
         
         .channel-strip {
-            width: 80px;
+            width: 90px;
             background-color: var(--daw-bg-tertiary);
             border-radius: 8px;
             border: 1px solid var(--daw-border);
             display: flex;
             flex-direction: column;
             padding: 12px 8px;
-            gap: 12px;
+            gap: 8px;
             flex-shrink: 0;
         }
         
@@ -1267,6 +1267,26 @@
             
             strip.innerHTML = `
                 <div class="channel-label ${track.color}">${track.icon} ${track.name}</div>
+                <div class="fader-container">
+                    <div class="fader-track">
+                        <div class="fader-thumb" data-track-id="${track.id}" style="bottom: ${(1 - track.volume) * 100}%;"></div>
+                    </div>
+                    <div class="fader-scale">
+                        <div class="fader-scale-mark"><span class="fader-scale-tick"></span><span class="fader-scale-label">0</span></div>
+                        <div class="fader-scale-mark"><span class="fader-scale-tick"></span></div>
+                        <div class="fader-scale-mark"><span class="fader-scale-tick"></span><span class="fader-scale-label">10</span></div>
+                        <div class="fader-scale-mark"><span class="fader-scale-tick"></span></div>
+                        <div class="fader-scale-mark"><span class="fader-scale-tick"></span><span class="fader-scale-label">20</span></div>
+                        <div class="fader-scale-mark"><span class="fader-scale-tick"></span></div>
+                        <div class="fader-scale-mark"><span class="fader-scale-tick"></span><span class="fader-scale-label">30</span></div>
+                        <div class="fader-scale-mark"><span class="fader-scale-tick"></span></div>
+                        <div class="fader-scale-mark"><span class="fader-scale-tick"></span><span class="fader-scale-label">40</span></div>
+                        <div class="fader-scale-mark"><span class="fader-scale-tick"></span></div>
+                        <div class="fader-scale-mark"><span class="fader-scale-tick"></span><span class="fader-scale-label">50</span></div>
+                        <div class="fader-scale-mark"><span class="fader-scale-tick"></span></div>
+                        <div class="fader-scale-mark"><span class="fader-scale-tick"></span><span class="fader-scale-label">60</span></div>
+                    </div>
+                </div>
                 <div class="channel-controls">
                     <button class="ms-btn mute" data-track-id="${track.id}" data-action="mute" title="Mute">M</button>
                     <button class="ms-btn solo" data-track-id="${track.id}" data-action="solo" title="Solo">S</button>
