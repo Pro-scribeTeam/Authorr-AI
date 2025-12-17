@@ -1919,14 +1919,26 @@
                     return;
                 }
                 
-                // Calculate position accounting for thumb height (32px)
-                // We want the CENTER of the thumb to be at the volume position
+                // Calculate position to keep thumb centered within scale range
+                // Thumb height = 32px, we want it to stay between scale boundaries
                 const thumbHeight = 32;
-                const availableHeight = height - thumbHeight;
-                const bottomPx = volume * availableHeight;
+                const halfThumb = thumbHeight / 2; // 16px
+                
+                // Constrain movement: thumb center stays within (halfThumb) to (height - halfThumb)
+                const minY = halfThumb;
+                const maxY = height - halfThumb;
+                const constrainedY = Math.max(minY, Math.min(maxY, y));
+                
+                // Recalculate volume based on constrained position
+                const effectiveHeight = maxY - minY;
+                volume = 1 - ((constrainedY - minY) / effectiveHeight);
+                volume = Math.max(0, Math.min(1, volume));
+                
+                // Position thumb so its CENTER is at the constrained Y position
+                const bottomPx = constrainedY - halfThumb;
                 faderThumb.style.bottom = `${bottomPx}px`;
                 
-                console.log(`📍 Fader Debug - y: ${y.toFixed(0)}px, height: ${height.toFixed(0)}px, volume: ${(volume * 100).toFixed(0)}%, bottom: ${bottomPx.toFixed(0)}px`);
+                console.log(`📍 Fader Debug - y: ${y.toFixed(0)}px (constrained: ${constrainedY.toFixed(0)}px), volume: ${(volume * 100).toFixed(0)}%, bottom: ${bottomPx.toFixed(0)}px`);
                 
                 // Update track volume
                 if (trackId === 'master') {
