@@ -1490,7 +1490,7 @@
             const trackCanvas = document.querySelector(`.track-canvas[data-track-id="${trackId}"]`);
             if (!trackCanvas) return;
             
-            // Create clip visual element
+            // Create clip container
             const clipEl = document.createElement('div');
             clipEl.className = 'audio-clip';
             clipEl.dataset.clipId = clip.id;
@@ -1499,22 +1499,111 @@
             clipEl.style.top = '10px';
             clipEl.style.width = `${clip.duration * 50}px`;
             clipEl.style.height = 'calc(100% - 20px)';
-            clipEl.style.backgroundColor = 'rgba(120, 227, 254, 0.3)';
+            clipEl.style.backgroundColor = 'rgba(30, 30, 30, 0.8)';
             clipEl.style.border = '2px solid var(--daw-accent)';
             clipEl.style.borderRadius = '4px';
-            clipEl.style.display = 'flex';
-            clipEl.style.alignItems = 'center';
-            clipEl.style.justifyContent = 'center';
-            clipEl.style.color = 'var(--daw-text-primary)';
-            clipEl.style.fontSize = '11px';
-            clipEl.style.padding = '4px';
             clipEl.style.overflow = 'hidden';
-            clipEl.style.textOverflow = 'ellipsis';
-            clipEl.style.whiteSpace = 'nowrap';
             clipEl.style.cursor = 'move';
-            clipEl.textContent = clip.name;
+            clipEl.style.position = 'relative';
             
+            // Create canvas for waveform
+            const canvas = document.createElement('canvas');
+            canvas.width = clip.duration * 50; // Match clip width
+            canvas.height = 60; // Fixed height for waveform
+            canvas.style.width = '100%';
+            canvas.style.height = '100%';
+            
+            // Create filename label
+            const label = document.createElement('div');
+            label.style.position = 'absolute';
+            label.style.top = '4px';
+            label.style.left = '8px';
+            label.style.color = 'var(--daw-text-primary)';
+            label.style.fontSize = '10px';
+            label.style.fontWeight = '600';
+            label.style.textShadow = '1px 1px 2px rgba(0,0,0,0.8)';
+            label.style.pointerEvents = 'none';
+            label.style.zIndex = '10';
+            label.textContent = clip.name;
+            
+            clipEl.appendChild(canvas);
+            clipEl.appendChild(label);
             trackCanvas.appendChild(clipEl);
+            
+            // Draw waveform on canvas
+            drawWaveform(canvas, clip);
+        }
+        
+        function drawWaveform(canvas, clip) {
+            const ctx = canvas.getContext('2d');
+            const width = canvas.width;
+            const height = canvas.height;
+            
+            // Create audio context and decode audio
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            
+            // Convert data URL to ArrayBuffer
+            fetch(clip.data)
+                .then(response => response.arrayBuffer())
+                .then(arrayBuffer => audioContext.decodeAudioData(arrayBuffer))
+                .then(audioBuffer => {
+                    // Get audio data
+                    const rawData = audioBuffer.getChannelData(0); // Use first channel
+                    const samples = width; // One sample per pixel
+                    const blockSize = Math.floor(rawData.length / samples);
+                    const filteredData = [];
+                    
+                    // Downsample the audio data
+                    for (let i = 0; i < samples; i++) {
+                        let blockStart = blockSize * i;
+                        let sum = 0;
+                        for (let j = 0; j < blockSize; j++) {
+                            sum += Math.abs(rawData[blockStart + j]);
+                        }
+                        filteredData.push(sum / blockSize);
+                    }
+                    
+                    // Normalize the data
+                    const maxVal = Math.max(...filteredData);
+                    const normalizedData = filteredData.map(n => n / maxVal);
+                    
+                    // Clear canvas
+                    ctx.clearRect(0, 0, width, height);
+                    
+                    // Draw waveform
+                    ctx.fillStyle = 'rgba(120, 227, 254, 0.6)'; // Cyan with transparency
+                    ctx.strokeStyle = 'rgba(120, 227, 254, 1)'; // Solid cyan for outline
+                    ctx.lineWidth = 1;
+                    
+                    const middle = height / 2;
+                    
+                    // Draw as bars (Mozart-style)
+                    ctx.beginPath();
+                    for (let i = 0; i < normalizedData.length; i++) {
+                        const x = i;
+                        const barHeight = normalizedData[i] * (height * 0.8); // 80% of height
+                        const y = middle - (barHeight / 2);
+                        
+                        // Draw vertical bar
+                        ctx.fillRect(x, y, 1, barHeight);
+                    }
+                    
+                    // Add subtle gradient overlay
+                    const gradient = ctx.createLinearGradient(0, 0, 0, height);
+                    gradient.addColorStop(0, 'rgba(120, 227, 254, 0.4)');
+                    gradient.addColorStop(0.5, 'rgba(120, 227, 254, 0.2)');
+                    gradient.addColorStop(1, 'rgba(120, 227, 254, 0.4)');
+                    ctx.fillStyle = gradient;
+                    ctx.fillRect(0, 0, width, height);
+                    
+                    console.log('✅ Waveform rendered for:', clip.name);
+                })
+                .catch(error => {
+                    console.error('❌ Error rendering waveform:', error);
+                    // Fallback: draw simple placeholder
+                    ctx.fillStyle = 'rgba(120, 227, 254, 0.3)';
+                    ctx.fillRect(0, height / 3, width, height / 3);
+                });
         }
         
         // ========================================
