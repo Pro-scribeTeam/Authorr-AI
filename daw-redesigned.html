@@ -564,6 +564,7 @@
             gap: 8px;
             overflow-x: auto;
             overflow-y: auto;
+            align-items: flex-start;
         }
         
         .channel-strip {
@@ -585,13 +586,15 @@
         }
         
         .channel-label {
-            font-size: 11px;
-            font-weight: 600;
+            font-size: 12px;
+            font-weight: 700;
             text-align: center;
             color: var(--daw-text-primary);
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            padding: 4px 0;
+            min-height: 20px;
         }
         
         .channel-label.narration {
@@ -611,7 +614,7 @@
         }
         
         .led-meter {
-            height: 60px;
+            height: 70px;
             width: 100%;
             background-color: var(--daw-bg-primary);
             border-radius: 4px;
@@ -620,7 +623,8 @@
             display: flex;
             flex-direction: column-reverse;
             gap: 1px;
-            padding: 2px;
+            padding: 3px;
+            border: 1px solid var(--daw-border);
         }
         
         .led-segment {
@@ -895,6 +899,27 @@
         }
         
         .timeline-canvas-wrapper::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(to bottom, #666, #444);
+        }
+        
+        /* Enhanced scrollbar for mixer section */
+        .mixer-channels::-webkit-scrollbar {
+            width: 16px;
+            height: 14px;
+        }
+        
+        .mixer-channels::-webkit-scrollbar-track {
+            background: var(--daw-bg-secondary);
+            border-left: 2px solid var(--daw-border);
+        }
+        
+        .mixer-channels::-webkit-scrollbar-thumb {
+            background: linear-gradient(to bottom, #555, #333);
+            border-radius: 8px;
+            border: 3px solid var(--daw-bg-secondary);
+        }
+        
+        .mixer-channels::-webkit-scrollbar-thumb:hover {
             background: linear-gradient(to bottom, #666, #444);
         }
     </style>
