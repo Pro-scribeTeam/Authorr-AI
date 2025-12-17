@@ -322,7 +322,9 @@
             position: relative;
             background-color: var(--daw-bg-primary);
             overflow-x: auto;
-            overflow-y: hidden;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
         }
         
         .timeline-ruler {
@@ -336,9 +338,9 @@
         .timeline-tracks {
             flex: 1;
             position: relative;
-            overflow-y: auto;
+            overflow-y: visible;
             overflow-x: visible;
-            /* Allow horizontal scrolling to see full timeline */
+            /* Scrolling handled by parent wrapper */
         }
         
         .track-row {
@@ -856,12 +858,13 @@
         
         /* Scrollbar Styling */
         ::-webkit-scrollbar {
-            width: 12px;
-            height: 12px;
+            width: 14px;
+            height: 14px;
         }
         
         ::-webkit-scrollbar-track {
             background: var(--daw-bg-primary);
+            border-left: 1px solid var(--daw-border);
         }
         
         ::-webkit-scrollbar-thumb {
@@ -872,6 +875,27 @@
         
         ::-webkit-scrollbar-thumb:hover {
             background: var(--daw-border);
+        }
+        
+        /* Enhanced scrollbar for timeline wrapper */
+        .timeline-canvas-wrapper::-webkit-scrollbar {
+            width: 16px;
+            height: 14px;
+        }
+        
+        .timeline-canvas-wrapper::-webkit-scrollbar-track {
+            background: var(--daw-bg-secondary);
+            border-left: 2px solid var(--daw-border);
+        }
+        
+        .timeline-canvas-wrapper::-webkit-scrollbar-thumb {
+            background: linear-gradient(to bottom, #555, #333);
+            border-radius: 8px;
+            border: 3px solid var(--daw-bg-secondary);
+        }
+        
+        .timeline-canvas-wrapper::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(to bottom, #666, #444);
         }
     </style>
 </head>
