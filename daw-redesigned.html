@@ -1123,6 +1123,189 @@
         }
         
         // ========================================
+        // AUDIO ENGINE - Web Audio API
+        // ========================================
+        
+        let audioContext = null;
+        let audioSources = [];
+        let startTime = 0;
+        let pauseTime = 0;
+        let analyserNodes = {};
+        let gainNodes = {};
+        let masterGainNode = null;
+        let animationFrameId = null;
+        
+        function initAudioContext() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                masterGainNode = audioContext.createGain();
+                masterGainNode.connect(audioContext.destination);
+                console.log('🎧 AudioContext initialized');
+            }
+            return audioContext;
+        }
+        
+        async function decodeAudioClip(clip) {
+            if (clip.audioBuffer) return clip.audioBuffer;
+            
+            try {
+                const ctx = initAudioContext();
+                
+                // Convert data URL to ArrayBuffer
+                const response = await fetch(clip.data);
+                const arrayBuffer = await response.arrayBuffer();
+                
+                // Decode audio data
+                const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
+                clip.audioBuffer = audioBuffer;
+                
+                console.log(`🎵 Decoded: ${clip.name} (${audioBuffer.duration.toFixed(2)}s)`);
+                return audioBuffer;
+            } catch (error) {
+                console.error(`❌ Error decoding ${clip.name}:`, error);
+                return null;
+            }
+        }
+        
+        async function playAllTracks() {
+            const ctx = initAudioContext();
+            
+            // Resume audio context if suspended (browser autoplay policy)
+            if (ctx.state === 'suspended') {
+                await ctx.resume();
+            }
+            
+            // Stop any existing playback
+            stopAllSources();
+            
+            // Create gain nodes and analysers for each track
+            dawState.tracks.forEach(track => {
+                if (!gainNodes[track.id]) {
+                    const gainNode = ctx.createGain();
+                    const analyser = ctx.createAnalyser();
+                    analyser.fftSize = 256;
+                    
+                    gainNode.connect(analyser);
+                    analyser.connect(masterGainNode);
+                    
+                    gainNodes[track.id] = gainNode;
+                    analyserNodes[track.id] = analyser;
+                }
+                
+                // Update gain based on track volume and mute/solo
+                const shouldPlay = !track.muted && (!dawState.tracks.some(t => t.solo) || track.solo);
+                gainNodes[track.id].gain.value = shouldPlay ? track.volume : 0;
+            });
+            
+            // Schedule all clips
+            const currentTime = pauseTime || 0;
+            startTime = ctx.currentTime - currentTime;
+            
+            for (const track of dawState.tracks) {
+                for (const clip of track.clips) {
+                    // Decode audio if not already decoded
+                    const audioBuffer = await decodeAudioClip(clip);
+                    if (!audioBuffer) continue;
+                    
+                    // Skip clips that have already finished playing
+                    if (currentTime >= clip.startTime + clip.duration) continue;
+                    
+                    // Create buffer source
+                    const source = ctx.createBufferSource();
+                    source.buffer = audioBuffer;
+                    source.connect(gainNodes[track.id]);
+                    
+                    // Calculate when to start this clip
+                    const clipStartTime = Math.max(0, clip.startTime - currentTime);
+                    const offset = Math.max(0, currentTime - clip.startTime);
+                    
+                    // Start playback
+                    if (offset < audioBuffer.duration) {
+                        source.start(ctx.currentTime + clipStartTime, offset);
+                        audioSources.push(source);
+                        console.log(`▶️ Playing: ${clip.name} on ${track.name}`);
+                    }
+                }
+            }
+            
+            // Start time update loop
+            updatePlaybackTime();
+            updateLEDMetersWithRealAudio();
+        }
+        
+        function stopAllSources() {
+            audioSources.forEach(source => {
+                try {
+                    source.stop();
+                } catch (e) {
+                    // Source might already be stopped
+                }
+            });
+            audioSources = [];
+            
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+            }
+        }
+        
+        function updatePlaybackTime() {
+            if (!dawState.isPlaying) return;
+            
+            const ctx = audioContext;
+            if (ctx) {
+                const elapsed = ctx.currentTime - startTime;
+                dawState.currentTime = elapsed;
+                document.getElementById('currentTime').textContent = formatTime(elapsed);
+                
+                // Check if playback finished
+                if (elapsed >= dawState.totalDuration) {
+                    const loopBtn = document.getElementById('loopBtn');
+                    if (loopBtn.classList.contains('active')) {
+                        // Loop: restart playback
+                        pauseTime = 0;
+                        playAllTracks();
+                    } else {
+                        // Stop at end
+                        stop();
+                        return;
+                    }
+                }
+            }
+            
+            animationFrameId = requestAnimationFrame(updatePlaybackTime);
+        }
+        
+        function updateLEDMetersWithRealAudio() {
+            if (!dawState.isPlaying) return;
+            
+            document.querySelectorAll('.led-meter').forEach(meter => {
+                const trackId = meter.dataset.trackId;
+                const analyser = analyserNodes[trackId];
+                
+                if (analyser) {
+                    const dataArray = new Uint8Array(analyser.frequencyBinCount);
+                    analyser.getByteFrequencyData(dataArray);
+                    
+                    // Calculate average level
+                    const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
+                    const level = Math.floor((average / 255) * 15);
+                    
+                    const segments = meter.querySelectorAll('.led-segment');
+                    segments.forEach((segment, index) => {
+                        if (index < level) {
+                            segment.classList.add('active');
+                        } else {
+                            segment.classList.remove('active');
+                        }
+                    });
+                }
+            });
+            
+            requestAnimationFrame(updateLEDMetersWithRealAudio);
+        }
+        
+        // ========================================
         // TRANSPORT CONTROLS
         // ========================================
         
@@ -1133,25 +1316,35 @@
             
             if (dawState.isPlaying) {
                 console.log('▶️ Playing...');
-                // TODO: Start audio playback
+                playAllTracks();
             } else {
                 console.log('⏸️ Paused');
-                // TODO: Pause audio playback
+                pauseTime = dawState.currentTime;
+                stopAllSources();
             }
         }
         
         function stop() {
             dawState.isPlaying = false;
             dawState.currentTime = 0;
+            pauseTime = 0;
+            stopAllSources();
+            
             document.querySelector('#playBtn i').className = 'fas fa-play';
             document.getElementById('currentTime').textContent = '00:00.0';
+            
+            // Reset LED meters
+            document.querySelectorAll('.led-segment').forEach(seg => seg.classList.remove('active'));
+            
             console.log('⏹️ Stopped');
-            // TODO: Stop audio playback and reset
         }
         
         function seekToStart() {
-            dawState.currentTime = 0;
-            document.getElementById('currentTime').textContent = '00:00.0';
+            const wasPlaying = dawState.isPlaying;
+            stop();
+            if (wasPlaying) {
+                setTimeout(() => togglePlay(), 50);
+            }
             console.log('⏮️ Seek to start');
         }
         
@@ -1242,11 +1435,18 @@
                 // Update track volume
                 if (trackId === 'master') {
                     console.log(`🎛️ Master volume: ${(volume * 100).toFixed(0)}%`);
+                    // Update master gain node
+                    if (masterGainNode) {
+                        masterGainNode.gain.value = volume;
+                    }
                 } else {
                     const track = dawState.tracks.find(t => t.id === trackId);
                     if (track) {
                         track.volume = volume;
                         console.log(`🎛️ ${track.name} volume: ${(volume * 100).toFixed(0)}%`);
+                        
+                        // Update gain node in real-time
+                        updateTrackGain(trackId);
                     }
                 }
             }
@@ -1274,6 +1474,9 @@
                 if (track) {
                     track.muted = !track.muted;
                     console.log(`🔇 ${track.name} ${track.muted ? 'muted' : 'unmuted'}`);
+                    
+                    // Update gain node in real-time
+                    updateTrackGain(trackId);
                 }
             } else if (action === 'solo') {
                 button.classList.toggle('active');
@@ -1281,6 +1484,9 @@
                 if (track) {
                     track.solo = !track.solo;
                     console.log(`🎧 ${track.name} solo: ${track.solo}`);
+                    
+                    // Update all tracks when solo changes
+                    dawState.tracks.forEach(t => updateTrackGain(t.id));
                 }
             } else if (button.classList.contains('effects-btn')) {
                 button.classList.toggle('active');
@@ -1288,30 +1494,25 @@
             }
         }
         
+        // Update track gain based on volume, mute, and solo
+        function updateTrackGain(trackId) {
+            const track = dawState.tracks.find(t => t.id === trackId);
+            if (!track || !gainNodes[trackId]) return;
+            
+            const shouldPlay = !track.muted && (!dawState.tracks.some(t => t.solo) || track.solo);
+            const targetGain = shouldPlay ? track.volume : 0;
+            
+            gainNodes[trackId].gain.value = targetGain;
+        }
+        
         // ========================================
         // LED METERS ANIMATION
         // ========================================
         
         function startLEDMeterAnimation() {
-            setInterval(() => {
-                if (!dawState.isPlaying) return;
-                
-                document.querySelectorAll('.led-meter').forEach(meter => {
-                    const trackId = meter.dataset.trackId;
-                    const segments = meter.querySelectorAll('.led-segment');
-                    
-                    // Simulate audio level (random for demo)
-                    const level = Math.random() * 15;
-                    
-                    segments.forEach((segment, index) => {
-                        if (index < level) {
-                            segment.classList.add('active');
-                        } else {
-                            segment.classList.remove('active');
-                        }
-                    });
-                });
-            }, 50);
+            // LED meters are now updated by updateLEDMetersWithRealAudio() during playback
+            // This function kept for compatibility but does nothing
+            console.log('💡 LED meters will use real audio data during playback');
         }
         
         // ========================================
