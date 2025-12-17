@@ -423,45 +423,18 @@
         }
         
         .track-canvas.narration {
-            background-image: 
-                linear-gradient(90deg, 
-                    var(--track-narration-dim) 0px, 
-                    var(--track-narration-dim) 100px,
-                    transparent 200px),
-                repeating-linear-gradient(90deg,
-                    transparent 0px,
-                    transparent 49px,
-                    var(--grid-line-major) 49px,
-                    var(--grid-line-major) 50px
-                );
+            /* No gradient - keep it simple and clean */
+            background-color: var(--daw-bg-track);
         }
         
         .track-canvas.music {
-            background-image: 
-                linear-gradient(90deg, 
-                    var(--track-music-dim) 0px,
-                    var(--track-music-dim) 100px, 
-                    transparent 200px),
-                repeating-linear-gradient(90deg,
-                    transparent 0px,
-                    transparent 49px,
-                    var(--grid-line-major) 49px,
-                    var(--grid-line-major) 50px
-                );
+            /* No gradient - keep it simple and clean */
+            background-color: var(--daw-bg-track);
         }
         
         .track-canvas.sfx {
-            background-image: 
-                linear-gradient(90deg, 
-                    var(--track-sfx-dim) 0px,
-                    var(--track-sfx-dim) 100px, 
-                    transparent 200px),
-                repeating-linear-gradient(90deg,
-                    transparent 0px,
-                    transparent 49px,
-                    var(--grid-line-major) 49px,
-                    var(--grid-line-major) 50px
-                );
+            /* No gradient - keep it simple and clean */
+            background-color: var(--daw-bg-track);
         }
         
         #playhead {
@@ -1480,29 +1453,55 @@
         // TRANSPORT CONTROLS
         // ========================================
         
+        let isTogglingPlay = false;
+        
         function togglePlay() {
+            // Prevent rapid clicking
+            if (isTogglingPlay) return;
+            isTogglingPlay = true;
+            
             dawState.isPlaying = !dawState.isPlaying;
             const icon = document.querySelector('#playBtn i');
-            icon.className = dawState.isPlaying ? 'fas fa-pause' : 'fas fa-play';
+            if (icon) {
+                icon.className = dawState.isPlaying ? 'fas fa-pause' : 'fas fa-play';
+            }
             
             if (dawState.isPlaying) {
                 console.log('▶️ Playing...');
-                playAllTracks();
+                playAllTracks().then(() => {
+                    isTogglingPlay = false;
+                }).catch(err => {
+                    console.error('Playback error:', err);
+                    isTogglingPlay = false;
+                });
             } else {
                 console.log('⏸️ Paused');
                 pauseTime = dawState.currentTime;
                 stopAllSources();
+                isTogglingPlay = false;
             }
         }
         
         function stop() {
+            // Prevent double-stopping
+            if (!dawState.isPlaying && dawState.currentTime === 0 && pauseTime === 0) {
+                return;
+            }
+            
             dawState.isPlaying = false;
             dawState.currentTime = 0;
             pauseTime = 0;
             stopAllSources();
             
-            document.querySelector('#playBtn i').className = 'fas fa-play';
-            document.getElementById('currentTime').textContent = '00:00.0';
+            const playBtn = document.querySelector('#playBtn i');
+            if (playBtn) {
+                playBtn.className = 'fas fa-play';
+            }
+            
+            const timeDisplay = document.getElementById('currentTime');
+            if (timeDisplay) {
+                timeDisplay.textContent = '00:00.0';
+            }
             
             // Reset playhead position to start (with offset)
             updatePlayheadPosition(0);
@@ -1515,10 +1514,38 @@
         
         function seekToStart() {
             const wasPlaying = dawState.isPlaying;
-            stop();
-            if (wasPlaying) {
-                setTimeout(() => togglePlay(), 50);
+            
+            // Stop all playback and reset position
+            dawState.isPlaying = false;
+            dawState.currentTime = 0;
+            pauseTime = 0;
+            stopAllSources();
+            
+            // Update UI
+            const playBtn = document.querySelector('#playBtn i');
+            if (playBtn && !wasPlaying) {
+                playBtn.className = 'fas fa-play';
             }
+            
+            const timeDisplay = document.getElementById('currentTime');
+            if (timeDisplay) {
+                timeDisplay.textContent = '00:00.0';
+            }
+            
+            updatePlayheadPosition(0);
+            
+            // If was playing, restart playback from beginning
+            if (wasPlaying) {
+                dawState.isPlaying = true;
+                if (playBtn) {
+                    playBtn.className = 'fas fa-pause';
+                }
+                // Use requestAnimationFrame for smoother restart
+                requestAnimationFrame(() => {
+                    playAllTracks();
+                });
+            }
+            
             console.log('⏮️ Seek to start');
         }
         
