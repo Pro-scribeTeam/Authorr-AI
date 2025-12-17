@@ -349,6 +349,8 @@
             border-bottom: 1px solid var(--daw-border);
             display: flex;
             align-items: stretch;
+            overflow: visible;
+            /* Allow track canvas to extend beyond viewport */
         }
         
         .track-header {
@@ -418,10 +420,9 @@
             height: 80px;
             min-height: 80px;
             max-height: 80px;
-            flex: 1;
             transition: all 0.2s;
             overflow: visible;
-            /* Width set dynamically by renderTimelineRuler() */
+            /* Width set dynamically by renderTimelineRuler() - NO flex, use explicit width */
         }
         
         .audio-clip {
@@ -1022,6 +1023,19 @@
             // Set explicit width for ruler and all track canvases
             ruler.style.width = `${timelineWidth}px`;
             ruler.style.minWidth = `${timelineWidth}px`;
+            
+            // Set width on timeline tracks container
+            const tracksContainer = document.getElementById('timelineTracks');
+            if (tracksContainer) {
+                tracksContainer.style.width = `${timelineWidth + 200}px`; // +200 for headers
+                tracksContainer.style.minWidth = `${timelineWidth + 200}px`;
+            }
+            
+            // Update all track rows to extend full width
+            document.querySelectorAll('.track-row').forEach(row => {
+                row.style.width = `${timelineWidth + 200}px`; // +200 for headers
+                row.style.minWidth = `${timelineWidth + 200}px`;
+            });
             
             // Update all track canvas widths
             document.querySelectorAll('.track-canvas').forEach(canvas => {
