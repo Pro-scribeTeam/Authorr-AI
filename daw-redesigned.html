@@ -1896,13 +1896,28 @@
             const faderTrack = thumb ? thumb.parentElement : track;
             const faderThumb = thumb || faderTrack.querySelector('.fader-thumb');
             const trackId = faderThumb.dataset.trackId;
+            
+            // Get the bounding rect for calculations - use track for height
             const trackRect = faderTrack.getBoundingClientRect();
             
             function onMouseMove(moveEvent) {
                 const y = moveEvent.clientY - trackRect.top;
                 const height = trackRect.height;
-                let volume = y / height; // Inverted: top (y=0) = 0, bottom (y=height) = 1
+                
+                // Prevent division by zero
+                if (height === 0 || isNaN(height)) {
+                    console.warn('⚠️ Invalid fader height:', height);
+                    return;
+                }
+                
+                let volume = y / height; // Top (y=0) = 0, bottom (y=height) = 1
                 volume = Math.max(0, Math.min(1, volume));
+                
+                // Check for NaN
+                if (isNaN(volume)) {
+                    console.warn('⚠️ Invalid volume calculation:', { y, height, volume });
+                    return;
+                }
                 
                 faderThumb.style.bottom = `${(1 - volume) * 100}%`; // Inverted positioning
                 
@@ -1975,9 +1990,21 @@
             const track = dawState.tracks.find(t => t.id === trackId);
             if (!track || !gainNodes[trackId]) return;
             
+            // Validate track.volume
+            if (isNaN(track.volume) || track.volume === null || track.volume === undefined) {
+                console.warn('⚠️ Invalid track volume for', trackId, ':', track.volume);
+                track.volume = 0.5; // Reset to default
+            }
+            
             const shouldPlay = !track.muted && (!dawState.tracks.some(t => t.solo) || track.solo);
             const boostedVolume = track.volume * 2.0; // 2x boost for louder output
             const targetGain = shouldPlay ? boostedVolume : 0;
+            
+            // Final NaN check before setting
+            if (isNaN(targetGain) || !isFinite(targetGain)) {
+                console.warn('⚠️ Invalid target gain for', trackId, ':', targetGain);
+                return;
+            }
             
             gainNodes[trackId].gain.value = targetGain;
         }
