@@ -717,6 +717,7 @@
             background-color: #00d4ff;
             box-shadow: 0 0 4px rgba(0, 212, 255, 0.8);
             border-radius: 1px;
+            pointer-events: none;
         }
         
         .fader-thumb:hover {
@@ -1079,13 +1080,13 @@
             totalDuration: 0,
             bpm: 120,
             zoom: 1.0,
-            masterVolume: 0.0,
+            masterVolume: 0.5,
             tracks: [
-                { id: 'narration', name: 'Narration', type: 'narration', icon: '🎙️', color: 'narration', clips: [], muted: false, solo: false, volume: 0.0, effects: {} },
-                { id: 'music1', name: 'Music 1', type: 'music', icon: '🎵', color: 'music', clips: [], muted: false, solo: false, volume: 0.0, effects: {} },
-                { id: 'music2', name: 'Music 2', type: 'music', icon: '🎵', color: 'music', clips: [], muted: false, solo: false, volume: 0.0, effects: {} },
-                { id: 'sfx1', name: 'SFX 1', type: 'sfx', icon: '🔊', color: 'sfx', clips: [], muted: false, solo: false, volume: 0.0, effects: {} },
-                { id: 'sfx2', name: 'SFX 2', type: 'sfx', icon: '🔊', color: 'sfx', clips: [], muted: false, solo: false, volume: 0.0, effects: {} }
+                { id: 'narration', name: 'Narration', type: 'narration', icon: '🎙️', color: 'narration', clips: [], muted: false, solo: false, volume: 0.5, effects: {} },
+                { id: 'music1', name: 'Music 1', type: 'music', icon: '🎵', color: 'music', clips: [], muted: false, solo: false, volume: 0.5, effects: {} },
+                { id: 'music2', name: 'Music 2', type: 'music', icon: '🎵', color: 'music', clips: [], muted: false, solo: false, volume: 0.5, effects: {} },
+                { id: 'sfx1', name: 'SFX 1', type: 'sfx', icon: '🔊', color: 'sfx', clips: [], muted: false, solo: false, volume: 0.5, effects: {} },
+                { id: 'sfx2', name: 'SFX 2', type: 'sfx', icon: '🔊', color: 'sfx', clips: [], muted: false, solo: false, volume: 0.5, effects: {} }
             ],
             selectedTool: 'select',
             selectedClips: []
@@ -1886,10 +1887,15 @@
         // ========================================
         
         function handleFaderMouseDown(e) {
-            if (!e.target.classList.contains('fader-thumb')) return;
+            // Check if clicking on fader thumb or track
+            const thumb = e.target.classList.contains('fader-thumb') ? e.target : null;
+            const track = e.target.classList.contains('fader-track') ? e.target : null;
             
-            const trackId = e.target.dataset.trackId;
-            const faderTrack = e.target.parentElement;
+            if (!thumb && !track) return;
+            
+            const faderTrack = thumb ? thumb.parentElement : track;
+            const faderThumb = thumb || faderTrack.querySelector('.fader-thumb');
+            const trackId = faderThumb.dataset.trackId;
             const trackRect = faderTrack.getBoundingClientRect();
             
             function onMouseMove(moveEvent) {
@@ -1898,7 +1904,7 @@
                 let volume = y / height; // Inverted: top (y=0) = 0, bottom (y=height) = 1
                 volume = Math.max(0, Math.min(1, volume));
                 
-                e.target.style.bottom = `${(1 - volume) * 100}%`; // Inverted positioning
+                faderThumb.style.bottom = `${(1 - volume) * 100}%`; // Inverted positioning
                 
                 // Update track volume
                 if (trackId === 'master') {
