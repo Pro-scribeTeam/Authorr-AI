@@ -342,20 +342,27 @@
         
         .track-row {
             height: 80px;
+            min-height: 80px;
+            max-height: 80px;
             position: relative;
             border-bottom: 1px solid var(--daw-border);
             display: flex;
+            align-items: stretch;
         }
         
         .track-header {
             width: 200px;
+            min-width: 200px;
+            max-width: 200px;
             background-color: var(--daw-bg-secondary);
             border-right: 1px solid var(--daw-border);
             padding: 12px;
+            box-sizing: border-box;
             display: flex;
             flex-direction: column;
             justify-content: center;
             gap: 4px;
+            flex-shrink: 0;
         }
         
         .track-name {
@@ -407,7 +414,10 @@
         .track-canvas {
             position: relative;
             background-color: var(--daw-bg-track);
+            height: 80px;
             min-height: 80px;
+            max-height: 80px;
+            flex: 1;
             transition: all 0.2s;
             /* Width set dynamically by renderTimelineRuler() */
         }
@@ -423,18 +433,48 @@
         }
         
         .track-canvas.narration {
-            /* No gradient - keep it simple and clean */
             background-color: var(--daw-bg-track);
+            background-image: 
+                linear-gradient(90deg, 
+                    var(--track-narration-dim) 0px, 
+                    var(--track-narration-dim) 75px,
+                    transparent 150px),
+                repeating-linear-gradient(90deg,
+                    transparent 0px,
+                    transparent 49.5px,
+                    rgba(255, 255, 255, 0.03) 49.5px,
+                    rgba(255, 255, 255, 0.03) 50px
+                );
         }
         
         .track-canvas.music {
-            /* No gradient - keep it simple and clean */
             background-color: var(--daw-bg-track);
+            background-image: 
+                linear-gradient(90deg, 
+                    var(--track-music-dim) 0px,
+                    var(--track-music-dim) 75px, 
+                    transparent 150px),
+                repeating-linear-gradient(90deg,
+                    transparent 0px,
+                    transparent 49.5px,
+                    rgba(255, 255, 255, 0.03) 49.5px,
+                    rgba(255, 255, 255, 0.03) 50px
+                );
         }
         
         .track-canvas.sfx {
-            /* No gradient - keep it simple and clean */
             background-color: var(--daw-bg-track);
+            background-image: 
+                linear-gradient(90deg, 
+                    var(--track-sfx-dim) 0px,
+                    var(--track-sfx-dim) 75px, 
+                    transparent 150px),
+                repeating-linear-gradient(90deg,
+                    transparent 0px,
+                    transparent 49.5px,
+                    rgba(255, 255, 255, 0.03) 49.5px,
+                    rgba(255, 255, 255, 0.03) 50px
+                );
         }
         
         #playhead {
