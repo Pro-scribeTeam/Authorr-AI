@@ -1269,7 +1269,7 @@
                 <div class="channel-label ${track.color}">${track.icon} ${track.name}</div>
                 <div class="fader-container">
                     <div class="fader-track">
-                        <div class="fader-thumb" data-track-id="${track.id}" style="bottom: ${track.volume * 148}px;"></div>
+                        <div class="fader-thumb" data-track-id="${track.id}" style="bottom: ${(1 - track.volume) * 148}px;"></div>
                     </div>
                     <div class="fader-scale">
                         <div class="fader-scale-mark"><span class="fader-scale-tick"></span><span class="fader-scale-label">60</span></div>
@@ -1919,26 +1919,30 @@
                     return;
                 }
                 
-                // Calculate position to keep thumb centered within scale range
-                // Thumb height = 32px, we want it to stay between scale boundaries
+                // CONSTRAINT: Cyan line aligns with scale 60-0, entire knob stays within bounds
                 const thumbHeight = 32;
-                const halfThumb = thumbHeight / 2; // 16px
+                const halfThumb = thumbHeight / 2; // 16px (cyan line is at center)
                 
-                // Constrain movement: thumb center stays within (halfThumb) to (height - halfThumb)
-                const minY = halfThumb;
-                const maxY = height - halfThumb;
-                const constrainedY = Math.max(minY, Math.min(maxY, y));
+                // Scale padding: 2px top/bottom
+                // Movement range for cyan line: from 16px (top, aligned with "60") to (height - 16px) (bottom, aligned with "0")
+                // This ensures:
+                // 1. Cyan line aligns with scale markers
+                // 2. Entire knob (±16px from cyan line) stays within container (0 to height)
+                const minCyanY = halfThumb; // Cyan line at 16px = knob top at 0px
+                const maxCyanY = height - halfThumb; // Cyan line at (height-16px) = knob bottom at height
                 
-                // Recalculate volume based on constrained position
-                const effectiveHeight = maxY - minY;
-                volume = 1 - ((constrainedY - minY) / effectiveHeight);
+                const constrainedY = Math.max(minCyanY, Math.min(maxCyanY, y));
+                
+                // Recalculate volume based on constrained cyan line position
+                const effectiveHeight = maxCyanY - minCyanY;
+                volume = 1 - ((constrainedY - minCyanY) / effectiveHeight);
                 volume = Math.max(0, Math.min(1, volume));
                 
-                // Position thumb so its CENTER is at the constrained Y position
+                // Position knob: bottom edge = constrainedY (cyan center) - halfThumb
                 const bottomPx = constrainedY - halfThumb;
                 faderThumb.style.bottom = `${bottomPx}px`;
                 
-                console.log(`📍 Fader Debug - y: ${y.toFixed(0)}px (constrained: ${constrainedY.toFixed(0)}px), volume: ${(volume * 100).toFixed(0)}%, bottom: ${bottomPx.toFixed(0)}px`);
+                console.log(`📍 Fader - y:${y.toFixed(0)} cyan:${constrainedY.toFixed(0)} vol:${(volume * 100).toFixed(0)}% bottom:${bottomPx.toFixed(0)}px`);
                 
                 // Update track volume
                 if (trackId === 'master') {
