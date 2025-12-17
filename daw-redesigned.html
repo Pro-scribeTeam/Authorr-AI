@@ -446,6 +446,21 @@
             background-color: var(--playhead-color);
             z-index: 1000;
             pointer-events: none;
+            display: none;
+        }
+        
+        .audio-clip {
+            transition: all 0.15s ease;
+        }
+        
+        .audio-clip.selected {
+            border: 3px solid #FFD700 !important;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.6) !important;
+            z-index: 10;
+        }
+        
+        .audio-clip:hover {
+            filter: brightness(1.2);
         }
         
         /* ========================================
@@ -1104,8 +1119,43 @@
             // M/S buttons (delegate to parent)
             document.getElementById('mixerChannels').addEventListener('click', handleMixerButtonClick);
             
+            // Timeline click-to-seek
+            const timelineRuler = document.getElementById('timelineRuler');
+            timelineRuler.addEventListener('click', handleTimelineClick);
+            
+            document.getElementById('timelineTracks').addEventListener('click', handleTimelineClick);
+            
             // Keyboard shortcuts
             document.addEventListener('keydown', handleKeyboard);
+        }
+        
+        function handleTimelineClick(e) {
+            // Don't seek if clicking on a clip
+            if (e.target.closest('.audio-clip')) return;
+            
+            const timelineWrapper = document.querySelector('.timeline-canvas-wrapper');
+            const rect = timelineWrapper.getBoundingClientRect();
+            const clickX = e.clientX - rect.left;
+            
+            // Calculate time based on click position and zoom
+            const pixelsPerSecond = 50 * dawState.zoom;
+            const clickTime = clickX / pixelsPerSecond;
+            
+            // Update playhead position
+            dawState.currentTime = Math.max(0, Math.min(clickTime, dawState.totalDuration));
+            updatePlayheadPosition(dawState.currentTime);
+            document.getElementById('currentTime').textContent = formatTime(dawState.currentTime);
+            
+            // If playing, restart from new position
+            if (dawState.isPlaying) {
+                pauseTime = dawState.currentTime;
+                stopAllSources();
+                playAllTracks();
+            } else {
+                pauseTime = dawState.currentTime;
+            }
+            
+            console.log(`⏩ Seek to: ${dawState.currentTime.toFixed(2)}s`);
         }
         
         // ========================================
@@ -1258,6 +1308,9 @@
                 dawState.currentTime = elapsed;
                 document.getElementById('currentTime').textContent = formatTime(elapsed);
                 
+                // Update playhead position
+                updatePlayheadPosition(elapsed);
+                
                 // Check if playback finished
                 if (elapsed >= dawState.totalDuration) {
                     const loopBtn = document.getElementById('loopBtn');
@@ -1274,6 +1327,19 @@
             }
             
             animationFrameId = requestAnimationFrame(updatePlaybackTime);
+        }
+        
+        function updatePlayheadPosition(currentTime) {
+            const playhead = document.getElementById('playhead');
+            if (!playhead) return;
+            
+            // Calculate playhead position based on time and zoom
+            // Using 50px per second as base (same as clip rendering)
+            const pixelsPerSecond = 50 * dawState.zoom;
+            const position = currentTime * pixelsPerSecond;
+            
+            playhead.style.left = `${position}px`;
+            playhead.style.display = 'block';
         }
         
         function updateLEDMetersWithRealAudio() {
@@ -1332,6 +1398,12 @@
             
             document.querySelector('#playBtn i').className = 'fas fa-play';
             document.getElementById('currentTime').textContent = '00:00.0';
+            
+            // Reset playhead position
+            const playhead = document.getElementById('playhead');
+            if (playhead) {
+                playhead.style.left = '0px';
+            }
             
             // Reset LED meters
             document.querySelectorAll('.led-segment').forEach(seg => seg.classList.remove('active'));
@@ -1526,37 +1598,133 @@
             console.log(`🛠️ Tool selected: ${tool}`);
         }
         
+        // Clipboard for copy/paste
+        let clipboardClips = [];
+        
         function copySelected() {
-            console.log('📋 Copy selected clips');
-            // TODO: Implement copy
+            const selectedClips = document.querySelectorAll('.audio-clip.selected');
+            if (selectedClips.length === 0) {
+                console.log('⚠️ No clips selected');
+                return;
+            }
+            
+            clipboardClips = [];
+            selectedClips.forEach(clipEl => {
+                const clipId = clipEl.dataset.clipId;
+                const clip = findClipById(clipId);
+                if (clip) {
+                    clipboardClips.push(JSON.parse(JSON.stringify(clip))); // Deep copy
+                }
+            });
+            
+            console.log(`📋 Copied ${clipboardClips.length} clip(s)`);
         }
         
         function paste() {
-            console.log('📋 Paste clips');
-            // TODO: Implement paste
+            if (clipboardClips.length === 0) {
+                console.log('⚠️ Clipboard is empty');
+                return;
+            }
+            
+            // Paste clips at current playhead position
+            clipboardClips.forEach(clipData => {
+                const track = dawState.tracks[0]; // Paste to first track for now
+                if (!track) return;
+                
+                const newClip = {
+                    ...clipData,
+                    id: `clip_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                    startTime: dawState.currentTime
+                };
+                
+                track.clips.push(newClip);
+                renderAudioClip(newClip, track.id);
+            });
+            
+            console.log(`📋 Pasted ${clipboardClips.length} clip(s) at ${dawState.currentTime.toFixed(2)}s`);
         }
         
         function deleteSelected() {
-            console.log('🗑️ Delete selected clips');
-            // TODO: Implement delete
+            const selectedClips = document.querySelectorAll('.audio-clip.selected');
+            if (selectedClips.length === 0) {
+                console.log('⚠️ No clips selected');
+                return;
+            }
+            
+            let deletedCount = 0;
+            selectedClips.forEach(clipEl => {
+                const clipId = clipEl.dataset.clipId;
+                
+                // Find and remove from track
+                dawState.tracks.forEach(track => {
+                    const index = track.clips.findIndex(c => c.id === clipId);
+                    if (index !== -1) {
+                        track.clips.splice(index, 1);
+                        deletedCount++;
+                    }
+                });
+                
+                // Remove from DOM
+                clipEl.remove();
+            });
+            
+            console.log(`🗑️ Deleted ${deletedCount} clip(s)`);
+        }
+        
+        function findClipById(clipId) {
+            for (const track of dawState.tracks) {
+                const clip = track.clips.find(c => c.id === clipId);
+                if (clip) return clip;
+            }
+            return null;
         }
         
         function zoomIn() {
             dawState.zoom = Math.min(4.0, dawState.zoom + 0.2);
             document.getElementById('zoomLevel').textContent = `${Math.round(dawState.zoom * 100)}%`;
             console.log(`🔍 Zoom in: ${dawState.zoom.toFixed(1)}x`);
+            
+            // Re-render timeline with new zoom
+            renderTimelineRuler();
+            rerenderAllClips();
+            updatePlayheadPosition(dawState.currentTime);
         }
         
         function zoomOut() {
             dawState.zoom = Math.max(0.2, dawState.zoom - 0.2);
             document.getElementById('zoomLevel').textContent = `${Math.round(dawState.zoom * 100)}%`;
             console.log(`🔍 Zoom out: ${dawState.zoom.toFixed(1)}x`);
+            
+            // Re-render timeline with new zoom
+            renderTimelineRuler();
+            rerenderAllClips();
+            updatePlayheadPosition(dawState.currentTime);
         }
         
         function fitToView() {
             dawState.zoom = 1.0;
             document.getElementById('zoomLevel').textContent = '100%';
             console.log('🔍 Fit to view');
+            
+            // Re-render timeline with new zoom
+            renderTimelineRuler();
+            rerenderAllClips();
+            updatePlayheadPosition(dawState.currentTime);
+        }
+        
+        function rerenderAllClips() {
+            // Re-render all audio clips with new zoom level
+            dawState.tracks.forEach(track => {
+                track.clips.forEach(clip => {
+                    // Remove old clip element
+                    const oldClip = document.querySelector(`.audio-clip[data-clip-id="${clip.id}"]`);
+                    if (oldClip) {
+                        oldClip.remove();
+                    }
+                    // Render with new zoom
+                    renderAudioClip(clip, track.id);
+                });
+            });
         }
         
         // ========================================
@@ -1691,25 +1859,52 @@
             const trackCanvas = document.querySelector(`.track-canvas[data-track-id="${trackId}"]`);
             if (!trackCanvas) return;
             
+            // Apply zoom to positioning and sizing
+            const pixelsPerSecond = 50 * dawState.zoom;
+            
             // Create clip container
             const clipEl = document.createElement('div');
             clipEl.className = 'audio-clip';
             clipEl.dataset.clipId = clip.id;
             clipEl.style.position = 'absolute';
-            clipEl.style.left = `${clip.startTime * 50}px`; // 50px per second for now
+            clipEl.style.left = `${clip.startTime * pixelsPerSecond}px`;
             clipEl.style.top = '10px';
-            clipEl.style.width = `${clip.duration * 50}px`;
+            clipEl.style.width = `${clip.duration * pixelsPerSecond}px`;
             clipEl.style.height = 'calc(100% - 20px)';
             clipEl.style.backgroundColor = 'rgba(30, 30, 30, 0.8)';
             clipEl.style.border = '2px solid var(--daw-accent)';
             clipEl.style.borderRadius = '4px';
             clipEl.style.overflow = 'hidden';
-            clipEl.style.cursor = 'move';
+            clipEl.style.cursor = 'pointer';
             clipEl.style.position = 'relative';
+            
+            // Add click handler for selection
+            clipEl.addEventListener('click', function(e) {
+                e.stopPropagation();
+                
+                // Toggle selection
+                if (e.ctrlKey || e.metaKey) {
+                    // Multi-select with Ctrl/Cmd
+                    clipEl.classList.toggle('selected');
+                } else {
+                    // Single select
+                    document.querySelectorAll('.audio-clip').forEach(c => c.classList.remove('selected'));
+                    clipEl.classList.add('selected');
+                }
+                
+                // Update visual feedback
+                if (clipEl.classList.contains('selected')) {
+                    clipEl.style.border = '3px solid #FFD700'; // Gold border when selected
+                    clipEl.style.boxShadow = '0 0 10px rgba(255, 215, 0, 0.5)';
+                } else {
+                    clipEl.style.border = '2px solid var(--daw-accent)';
+                    clipEl.style.boxShadow = 'none';
+                }
+            });
             
             // Create canvas for waveform
             const canvas = document.createElement('canvas');
-            canvas.width = clip.duration * 50; // Match clip width
+            canvas.width = clip.duration * pixelsPerSecond; // Match clip width with zoom
             canvas.height = 60; // Fixed height for waveform
             canvas.style.width = '100%';
             canvas.style.height = '100%';
