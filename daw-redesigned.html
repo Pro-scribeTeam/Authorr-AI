@@ -337,7 +337,8 @@
             flex: 1;
             position: relative;
             overflow-y: auto;
-            overflow-x: hidden;
+            overflow-x: visible;
+            /* Allow horizontal scrolling to see full timeline */
         }
         
         .track-row {
@@ -419,6 +420,7 @@
             max-height: 80px;
             flex: 1;
             transition: all 0.2s;
+            overflow: visible;
             /* Width set dynamically by renderTimelineRuler() */
         }
         
