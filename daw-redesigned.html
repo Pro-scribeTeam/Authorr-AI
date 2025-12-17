@@ -405,11 +405,11 @@
         }
         
         .track-canvas {
-            flex: 1;
             position: relative;
             background-color: var(--daw-bg-track);
             min-height: 80px;
             transition: all 0.2s;
+            /* Width set dynamically by renderTimelineRuler() */
         }
         
         .audio-clip {
@@ -974,17 +974,25 @@
             const ruler = document.getElementById('timelineRuler');
             ruler.innerHTML = '';
             
-            // Calculate how many seconds to show based on zoom and total duration
-            const visibleDuration = Math.max(60, dawState.totalDuration || 60); // At least 60 seconds
-            const secondsToShow = visibleDuration / dawState.zoom;
+            // Calculate timeline width based on total duration + buffer
+            const pixelsPerSecond = 50 * dawState.zoom;
+            const totalDuration = Math.max(60, dawState.totalDuration + 10); // Add 10s buffer
+            const timelineWidth = totalDuration * pixelsPerSecond;
+            
+            // Set explicit width for ruler and all track canvases
+            ruler.style.width = `${timelineWidth}px`;
+            ruler.style.minWidth = `${timelineWidth}px`;
+            
+            // Update all track canvas widths
+            document.querySelectorAll('.track-canvas').forEach(canvas => {
+                canvas.style.width = `${timelineWidth}px`;
+                canvas.style.minWidth = `${timelineWidth}px`;
+            });
             
             // Determine marker interval (every 5 or 10 seconds depending on zoom)
             const markerInterval = dawState.zoom < 0.5 ? 10 : 5;
             
-            const rulerWidth = ruler.offsetWidth || 1000;
-            const pixelsPerSecond = rulerWidth / secondsToShow;
-            
-            for (let seconds = 0; seconds <= secondsToShow; seconds += markerInterval) {
+            for (let seconds = 0; seconds <= totalDuration; seconds += markerInterval) {
                 const marker = document.createElement('div');
                 marker.style.position = 'absolute';
                 marker.style.left = (seconds * pixelsPerSecond) + 'px';
@@ -1400,9 +1408,10 @@
                     const track = dawState.tracks.find(t => t.id === trackId);
                     const trackVolume = track ? track.volume : 1.0;
                     
-                    // Apply volume scaling with 3x boost for better visibility
+                    // Apply volume scaling with 6x boost for high visibility
                     // Higher fader = more LEDs light up
-                    const rawLevel = (average / 255) * 15 * 3.0; // 3x boost
+                    // With 2x volume boost, this ensures LEDs reach yellow/red zones
+                    const rawLevel = (average / 255) * 15 * 6.0; // 6x boost (doubled from 3x)
                     const level = Math.min(15, Math.floor(rawLevel * trackVolume));
                     
                     const segments = meter.querySelectorAll('.led-segment');
@@ -1867,13 +1876,13 @@
                 audio.addEventListener('loadedmetadata', function() {
                     const duration = audio.duration;
                     
-                    // Create clip object at current playhead position
+                    // Create clip object at current playhead position (never before 0)
                     const clip = {
                         id: `clip_${Date.now()}`,
                         name: file.name,
                         data: audioData,
                         duration: duration,
-                        startTime: dawState.currentTime, // Place at playhead
+                        startTime: Math.max(0, dawState.currentTime), // Place at playhead, min 0
                         trackId: trackId
                     };
                     
@@ -1999,12 +2008,20 @@
                 // Update clip data
                 clip.startTime = newStartTime;
                 
-                // Update total duration if needed
-                const endTime = clip.startTime + clip.duration;
-                if (endTime > dawState.totalDuration) {
-                    dawState.totalDuration = endTime;
-                    document.getElementById('totalTime').textContent = formatTime(Math.ceil(endTime));
-                }
+                // Recalculate total duration based on all clips
+                let maxEndTime = 0;
+                dawState.tracks.forEach(track => {
+                    track.clips.forEach(c => {
+                        const clipEnd = c.startTime + c.duration;
+                        if (clipEnd > maxEndTime) maxEndTime = clipEnd;
+                    });
+                });
+                
+                dawState.totalDuration = maxEndTime;
+                document.getElementById('totalTime').textContent = formatTime(Math.ceil(maxEndTime));
+                
+                // Re-render timeline to extend/contract as needed
+                renderTimelineRuler();
                 
                 console.log(`📍 Clip moved to: ${newStartTime.toFixed(2)}s`);
             });
