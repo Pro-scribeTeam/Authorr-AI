@@ -329,6 +329,7 @@
             background-color: var(--daw-bg-secondary);
             border-bottom: 1px solid var(--daw-border);
             position: relative;
+            margin-left: 200px; /* Align with track content area */
         }
         
         .timeline-tracks {
@@ -440,13 +441,25 @@
         
         #playhead {
             position: absolute;
-            top: 0;
+            top: 30px; /* Start below ruler */
+            left: 200px; /* Start after track headers */
             width: 2px;
-            height: 100%;
+            height: calc(100% - 30px);
             background-color: var(--playhead-color);
             z-index: 1000;
             pointer-events: none;
             display: none;
+        }
+        
+        #playhead::before {
+            content: '';
+            position: absolute;
+            top: -30px;
+            left: -4px;
+            width: 10px;
+            height: 10px;
+            background-color: var(--playhead-color);
+            border-radius: 50%;
         }
         
         .audio-clip {
@@ -1135,11 +1148,11 @@
             
             const timelineWrapper = document.querySelector('.timeline-canvas-wrapper');
             const rect = timelineWrapper.getBoundingClientRect();
-            const clickX = e.clientX - rect.left;
+            const clickX = e.clientX - rect.left - 200; // Subtract track header width
             
             // Calculate time based on click position and zoom
             const pixelsPerSecond = 50 * dawState.zoom;
-            const clickTime = clickX / pixelsPerSecond;
+            const clickTime = Math.max(0, clickX / pixelsPerSecond);
             
             // Update playhead position
             dawState.currentTime = Math.max(0, Math.min(clickTime, dawState.totalDuration));
@@ -1336,7 +1349,7 @@
             // Calculate playhead position based on time and zoom
             // Using 50px per second as base (same as clip rendering)
             const pixelsPerSecond = 50 * dawState.zoom;
-            const position = currentTime * pixelsPerSecond;
+            const position = 200 + (currentTime * pixelsPerSecond); // 200px offset for track headers
             
             playhead.style.left = `${position}px`;
             playhead.style.display = 'block';
@@ -1399,11 +1412,8 @@
             document.querySelector('#playBtn i').className = 'fas fa-play';
             document.getElementById('currentTime').textContent = '00:00.0';
             
-            // Reset playhead position
-            const playhead = document.getElementById('playhead');
-            if (playhead) {
-                playhead.style.left = '0px';
-            }
+            // Reset playhead position to start (with offset)
+            updatePlayheadPosition(0);
             
             // Reset LED meters
             document.querySelectorAll('.led-segment').forEach(seg => seg.classList.remove('active'));
@@ -1600,6 +1610,18 @@
         
         // Clipboard for copy/paste
         let clipboardClips = [];
+        
+        function updateClipSelection() {
+            document.querySelectorAll('.audio-clip').forEach(clipEl => {
+                if (clipEl.classList.contains('selected')) {
+                    clipEl.style.border = '3px solid #FFD700';
+                    clipEl.style.boxShadow = '0 0 10px rgba(255, 215, 0, 0.5)';
+                } else {
+                    clipEl.style.border = '2px solid var(--daw-accent)';
+                    clipEl.style.boxShadow = 'none';
+                }
+            });
+        }
         
         function copySelected() {
             const selectedClips = document.querySelectorAll('.audio-clip.selected');
@@ -1808,13 +1830,13 @@
                 audio.addEventListener('loadedmetadata', function() {
                     const duration = audio.duration;
                     
-                    // Create clip object
+                    // Create clip object at current playhead position
                     const clip = {
                         id: `clip_${Date.now()}`,
                         name: file.name,
                         data: audioData,
                         duration: duration,
-                        startTime: 0,
+                        startTime: dawState.currentTime, // Place at playhead
                         trackId: trackId
                     };
                     
@@ -1892,14 +1914,62 @@
                     clipEl.classList.add('selected');
                 }
                 
-                // Update visual feedback
-                if (clipEl.classList.contains('selected')) {
-                    clipEl.style.border = '3px solid #FFD700'; // Gold border when selected
-                    clipEl.style.boxShadow = '0 0 10px rgba(255, 215, 0, 0.5)';
-                } else {
-                    clipEl.style.border = '2px solid var(--daw-accent)';
-                    clipEl.style.boxShadow = 'none';
+                updateClipSelection();
+            });
+            
+            // Add drag functionality
+            let isDragging = false;
+            let dragStartX = 0;
+            let clipStartTime = clip.startTime;
+            
+            clipEl.addEventListener('mousedown', function(e) {
+                if (e.button !== 0) return; // Only left mouse button
+                
+                isDragging = true;
+                dragStartX = e.clientX;
+                clipStartTime = clip.startTime;
+                clipEl.style.cursor = 'grabbing';
+                clipEl.style.zIndex = '100';
+                
+                e.stopPropagation();
+            });
+            
+            document.addEventListener('mousemove', function(e) {
+                if (!isDragging || !clipEl.parentElement) return;
+                
+                const deltaX = e.clientX - dragStartX;
+                const pixelsPerSecond = 50 * dawState.zoom;
+                const deltaTime = deltaX / pixelsPerSecond;
+                const newStartTime = Math.max(0, clipStartTime + deltaTime);
+                
+                // Update clip position visually
+                clipEl.style.left = `${newStartTime * pixelsPerSecond}px`;
+            });
+            
+            document.addEventListener('mouseup', function(e) {
+                if (!isDragging) return;
+                
+                isDragging = false;
+                clipEl.style.cursor = 'pointer';
+                clipEl.style.zIndex = '';
+                
+                // Calculate final position
+                const deltaX = e.clientX - dragStartX;
+                const pixelsPerSecond = 50 * dawState.zoom;
+                const deltaTime = deltaX / pixelsPerSecond;
+                const newStartTime = Math.max(0, clipStartTime + deltaTime);
+                
+                // Update clip data
+                clip.startTime = newStartTime;
+                
+                // Update total duration if needed
+                const endTime = clip.startTime + clip.duration;
+                if (endTime > dawState.totalDuration) {
+                    dawState.totalDuration = endTime;
+                    document.getElementById('totalTime').textContent = formatTime(Math.ceil(endTime));
                 }
+                
+                console.log(`📍 Clip moved to: ${newStartTime.toFixed(2)}s`);
             });
             
             // Create canvas for waveform
