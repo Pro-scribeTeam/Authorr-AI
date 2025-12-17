@@ -1269,7 +1269,7 @@
                 <div class="channel-label ${track.color}">${track.icon} ${track.name}</div>
                 <div class="fader-container">
                     <div class="fader-track">
-                        <div class="fader-thumb" data-track-id="${track.id}" style="bottom: ${(1 - track.volume) * 148}px;"></div>
+                        <div class="fader-thumb" data-track-id="${track.id}" style="bottom: ${track.volume * 148}px;"></div>
                     </div>
                     <div class="fader-scale">
                         <div class="fader-scale-mark"><span class="fader-scale-tick"></span><span class="fader-scale-label">60</span></div>
@@ -1932,8 +1932,9 @@
                     return;
                 }
                 
-                // Position knob: bottom edge = constrainedY (cyan center) - halfThumb
-                const bottomPx = constrainedY - halfThumb;
+                // Position knob: The cyan line is at constrainedY from TOP
+                // CSS bottom property measures from BOTTOM, so: bottom = height - constrainedY - halfThumb
+                const bottomPx = height - constrainedY - halfThumb;
                 faderThumb.style.bottom = `${bottomPx}px`;
                 
                 console.log(`📍 Fader - y:${y.toFixed(0)} cyan:${constrainedY.toFixed(0)} vol:${(volume * 100).toFixed(0)}% bottom:${bottomPx.toFixed(0)}px`);
