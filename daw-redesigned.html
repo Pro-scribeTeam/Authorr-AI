@@ -565,7 +565,7 @@
         }
         
         .channel-strip {
-            width: 80px;
+            width: 90px;
             background-color: var(--daw-bg-tertiary);
             border-radius: 8px;
             border: 1px solid var(--daw-border);
@@ -644,37 +644,113 @@
             flex: 1;
             display: flex;
             justify-content: center;
+            align-items: center;
             padding: 8px 0;
+            position: relative;
+            gap: 4px;
         }
         
         .fader-track {
-            width: 8px;
+            width: 6px;
             height: 100%;
-            background-color: var(--fader-bg);
-            border-radius: 4px;
+            background: linear-gradient(to bottom, #2a2a2a 0%, #1a1a1a 100%);
+            border-radius: 2px;
             position: relative;
             cursor: pointer;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.8);
         }
         
         .fader-thumb {
-            width: 20px;
-            height: 12px;
-            background-color: var(--fader-thumb);
-            border-radius: 3px;
+            width: 24px;
+            height: 32px;
             position: absolute;
             left: 50%;
             transform: translateX(-50%);
             cursor: grab;
-            transition: background-color 0.2s;
-            border: 1px solid var(--daw-border-light);
+            background: linear-gradient(to bottom,
+                #666 0%,
+                #444 12.5%,
+                #333 12.5%,
+                #333 25%,
+                #555 25%,
+                #555 37.5%,
+                #333 37.5%,
+                #333 50%,
+                #555 50%,
+                #555 62.5%,
+                #333 62.5%,
+                #333 75%,
+                #555 75%,
+                #555 87.5%,
+                #333 87.5%,
+                #333 100%
+            );
+            border-radius: 3px;
+            box-shadow: 
+                0 2px 4px rgba(0, 0, 0, 0.6),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1),
+                inset 0 -1px 0 rgba(0, 0, 0, 0.3);
+            border: 1px solid #1a1a1a;
         }
         
         .fader-thumb:hover {
-            background-color: var(--fader-thumb-hover);
+            background: linear-gradient(to bottom,
+                #777 0%,
+                #555 12.5%,
+                #444 12.5%,
+                #444 25%,
+                #666 25%,
+                #666 37.5%,
+                #444 37.5%,
+                #444 50%,
+                #666 50%,
+                #666 62.5%,
+                #444 62.5%,
+                #444 75%,
+                #666 75%,
+                #666 87.5%,
+                #444 87.5%,
+                #444 100%
+            );
         }
         
         .fader-thumb:active {
             cursor: grabbing;
+            box-shadow: 
+                0 1px 2px rgba(0, 0, 0, 0.8),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1),
+                inset 0 -1px 0 rgba(0, 0, 0, 0.3);
+        }
+        
+        .fader-scale {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            height: 100%;
+            font-size: 8px;
+            color: var(--daw-text-secondary);
+            line-height: 1;
+            padding: 2px 0;
+        }
+        
+        .fader-scale-mark {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            height: 0;
+            position: relative;
+        }
+        
+        .fader-scale-tick {
+            width: 3px;
+            height: 1px;
+            background-color: var(--daw-text-secondary);
+        }
+        
+        .fader-scale-label {
+            font-size: 7px;
+            font-weight: 500;
+            color: var(--daw-text-secondary);
         }
         
         .channel-controls {
@@ -1122,6 +1198,21 @@
                     <div class="fader-track">
                         <div class="fader-thumb" data-track-id="${track.id}" style="bottom: ${track.volume * 100}%;"></div>
                     </div>
+                    <div class="fader-scale">
+                        <div class="fader-scale-mark"><span class="fader-scale-tick"></span><span class="fader-scale-label">0</span></div>
+                        <div class="fader-scale-mark"><span class="fader-scale-tick"></span></div>
+                        <div class="fader-scale-mark"><span class="fader-scale-tick"></span><span class="fader-scale-label">10</span></div>
+                        <div class="fader-scale-mark"><span class="fader-scale-tick"></span></div>
+                        <div class="fader-scale-mark"><span class="fader-scale-tick"></span><span class="fader-scale-label">20</span></div>
+                        <div class="fader-scale-mark"><span class="fader-scale-tick"></span></div>
+                        <div class="fader-scale-mark"><span class="fader-scale-tick"></span><span class="fader-scale-label">30</span></div>
+                        <div class="fader-scale-mark"><span class="fader-scale-tick"></span></div>
+                        <div class="fader-scale-mark"><span class="fader-scale-tick"></span><span class="fader-scale-label">40</span></div>
+                        <div class="fader-scale-mark"><span class="fader-scale-tick"></span></div>
+                        <div class="fader-scale-mark"><span class="fader-scale-tick"></span><span class="fader-scale-label">50</span></div>
+                        <div class="fader-scale-mark"><span class="fader-scale-tick"></span></div>
+                        <div class="fader-scale-mark"><span class="fader-scale-tick"></span><span class="fader-scale-label">60</span></div>
+                    </div>
                 </div>
                 <div class="channel-controls">
                     <button class="ms-btn mute" data-track-id="${track.id}" data-action="mute" title="Mute">M</button>
@@ -1153,6 +1244,21 @@
                 <div class="fader-container">
                     <div class="fader-track">
                         <div class="fader-thumb" data-track-id="master" style="bottom: 100%;"></div>
+                    </div>
+                    <div class="fader-scale">
+                        <div class="fader-scale-mark"><span class="fader-scale-tick"></span><span class="fader-scale-label">0</span></div>
+                        <div class="fader-scale-mark"><span class="fader-scale-tick"></span></div>
+                        <div class="fader-scale-mark"><span class="fader-scale-tick"></span><span class="fader-scale-label">10</span></div>
+                        <div class="fader-scale-mark"><span class="fader-scale-tick"></span></div>
+                        <div class="fader-scale-mark"><span class="fader-scale-tick"></span><span class="fader-scale-label">20</span></div>
+                        <div class="fader-scale-mark"><span class="fader-scale-tick"></span></div>
+                        <div class="fader-scale-mark"><span class="fader-scale-tick"></span><span class="fader-scale-label">30</span></div>
+                        <div class="fader-scale-mark"><span class="fader-scale-tick"></span></div>
+                        <div class="fader-scale-mark"><span class="fader-scale-tick"></span><span class="fader-scale-label">40</span></div>
+                        <div class="fader-scale-mark"><span class="fader-scale-tick"></span></div>
+                        <div class="fader-scale-mark"><span class="fader-scale-tick"></span><span class="fader-scale-label">50</span></div>
+                        <div class="fader-scale-mark"><span class="fader-scale-tick"></span></div>
+                        <div class="fader-scale-mark"><span class="fader-scale-tick"></span><span class="fader-scale-label">60</span></div>
                     </div>
                 </div>
                 <div class="channel-controls" style="visibility: hidden;">
