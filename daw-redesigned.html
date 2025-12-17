@@ -1269,7 +1269,7 @@
                 <div class="channel-label ${track.color}">${track.icon} ${track.name}</div>
                 <div class="fader-container">
                     <div class="fader-track">
-                        <div class="fader-thumb" data-track-id="${track.id}" style="bottom: ${track.volume * 100}%;"></div>
+                        <div class="fader-thumb" data-track-id="${track.id}" style="bottom: ${track.volume * 148}px;"></div>
                     </div>
                     <div class="fader-scale">
                         <div class="fader-scale-mark"><span class="fader-scale-tick"></span><span class="fader-scale-label">60</span></div>
@@ -1316,7 +1316,7 @@
                 </div>
                 <div class="fader-container">
                     <div class="fader-track">
-                        <div class="fader-thumb" data-track-id="master" style="bottom: 50%;"></div>
+                        <div class="fader-thumb" data-track-id="master" style="bottom: 74px;"></div>
                     </div>
                     <div class="fader-scale">
                         <div class="fader-scale-mark"><span class="fader-scale-tick"></span><span class="fader-scale-label">60</span></div>
@@ -1919,10 +1919,14 @@
                     return;
                 }
                 
-                const bottomPercent = volume * 100;
-                faderThumb.style.bottom = `${bottomPercent}%`; // Direct positioning: volume 1.0 = 100% from bottom (top)
+                // Calculate position accounting for thumb height (32px)
+                // We want the CENTER of the thumb to be at the volume position
+                const thumbHeight = 32;
+                const availableHeight = height - thumbHeight;
+                const bottomPx = volume * availableHeight;
+                faderThumb.style.bottom = `${bottomPx}px`;
                 
-                console.log(`📍 Fader Debug - y: ${y.toFixed(0)}px, height: ${height.toFixed(0)}px, volume: ${(volume * 100).toFixed(0)}%, bottom: ${bottomPercent.toFixed(0)}%`);
+                console.log(`📍 Fader Debug - y: ${y.toFixed(0)}px, height: ${height.toFixed(0)}px, volume: ${(volume * 100).toFixed(0)}%, bottom: ${bottomPx.toFixed(0)}px`);
                 
                 // Update track volume
                 if (trackId === 'master') {
