@@ -658,6 +658,7 @@
             position: relative;
             cursor: pointer;
             box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.8);
+            z-index: 10;
         }
         
         .fader-thumb {
@@ -691,6 +692,7 @@
                 inset 0 1px 0 rgba(255, 255, 255, 0.1),
                 inset 0 -1px 0 rgba(0, 0, 0, 0.3);
             border: 1px solid #1a1a1a;
+            z-index: 20;
         }
         
         .fader-thumb::before {
@@ -744,6 +746,7 @@
             color: var(--daw-text-primary);
             line-height: 1;
             padding: 2px 0;
+            z-index: 1;
         }
         
         .fader-scale-mark {
@@ -1214,19 +1217,19 @@
                         <div class="fader-thumb" data-track-id="${track.id}" style="bottom: ${track.volume * 100}%;"></div>
                     </div>
                     <div class="fader-scale">
-                        <div class="fader-scale-mark"><span class="fader-scale-tick"></span><span class="fader-scale-label">0</span></div>
                         <div class="fader-scale-mark"><span class="fader-scale-tick"></span></div>
-                        <div class="fader-scale-mark"><span class="fader-scale-tick"></span><span class="fader-scale-label">10</span></div>
                         <div class="fader-scale-mark"><span class="fader-scale-tick"></span></div>
-                        <div class="fader-scale-mark"><span class="fader-scale-tick"></span><span class="fader-scale-label">20</span></div>
                         <div class="fader-scale-mark"><span class="fader-scale-tick"></span></div>
-                        <div class="fader-scale-mark"><span class="fader-scale-tick"></span><span class="fader-scale-label">30</span></div>
                         <div class="fader-scale-mark"><span class="fader-scale-tick"></span></div>
-                        <div class="fader-scale-mark"><span class="fader-scale-tick"></span><span class="fader-scale-label">40</span></div>
                         <div class="fader-scale-mark"><span class="fader-scale-tick"></span></div>
-                        <div class="fader-scale-mark"><span class="fader-scale-tick"></span><span class="fader-scale-label">50</span></div>
                         <div class="fader-scale-mark"><span class="fader-scale-tick"></span></div>
-                        <div class="fader-scale-mark"><span class="fader-scale-tick"></span><span class="fader-scale-label">60</span></div>
+                        <div class="fader-scale-mark"><span class="fader-scale-tick"></span></div>
+                        <div class="fader-scale-mark"><span class="fader-scale-tick"></span></div>
+                        <div class="fader-scale-mark"><span class="fader-scale-tick"></span></div>
+                        <div class="fader-scale-mark"><span class="fader-scale-tick"></span></div>
+                        <div class="fader-scale-mark"><span class="fader-scale-tick"></span></div>
+                        <div class="fader-scale-mark"><span class="fader-scale-tick"></span></div>
+                        <div class="fader-scale-mark"><span class="fader-scale-tick"></span></div>
                     </div>
                 </div>
                 <div class="channel-controls">
@@ -1579,35 +1582,77 @@
         function updateLEDMetersWithRealAudio() {
             if (!dawState.isPlaying) return;
             
+            let masterLevel = 0;
+            let activeTracks = 0;
+            
             document.querySelectorAll('.led-meter').forEach(meter => {
                 const trackId = meter.dataset.trackId;
-                const analyser = analyserNodes[trackId];
                 
-                if (analyser) {
-                    const dataArray = new Uint8Array(analyser.frequencyBinCount);
-                    analyser.getByteFrequencyData(dataArray);
+                // Handle master track specially - combine all track signals
+                if (trackId === 'master') {
+                    // Calculate combined level from all tracks
+                    let combinedLevel = 0;
+                    let trackCount = 0;
                     
-                    // Calculate average level
-                    const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
+                    dawState.tracks.forEach(track => {
+                        const analyser = analyserNodes[track.id];
+                        if (analyser && !track.muted) {
+                            const dataArray = new Uint8Array(analyser.frequencyBinCount);
+                            analyser.getByteFrequencyData(dataArray);
+                            
+                            const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
+                            const rawLevel = (average / 255) * 15 * 6.0;
+                            const scaledLevel = rawLevel * track.volume;
+                            
+                            combinedLevel += scaledLevel;
+                            trackCount++;
+                        }
+                    });
                     
-                    // Get track volume to scale LED display
-                    const track = dawState.tracks.find(t => t.id === trackId);
-                    const trackVolume = track ? track.volume : 1.0;
-                    
-                    // Apply volume scaling with 6x boost for high visibility
-                    // Higher fader = more LEDs light up
-                    // With 2x volume boost, this ensures LEDs reach yellow/red zones
-                    const rawLevel = (average / 255) * 15 * 6.0; // 6x boost (doubled from 3x)
-                    const level = Math.min(15, Math.floor(rawLevel * trackVolume));
+                    // Average the combined levels and apply master volume
+                    if (trackCount > 0) {
+                        const avgLevel = combinedLevel / trackCount;
+                        masterLevel = Math.min(15, Math.floor(avgLevel * dawState.masterVolume));
+                    }
                     
                     const segments = meter.querySelectorAll('.led-segment');
                     segments.forEach((segment, index) => {
-                        if (index < level) {
+                        if (index < masterLevel) {
                             segment.classList.add('active');
                         } else {
                             segment.classList.remove('active');
                         }
                     });
+                } else {
+                    // Regular track meters
+                    const analyser = analyserNodes[trackId];
+                    
+                    if (analyser) {
+                        const dataArray = new Uint8Array(analyser.frequencyBinCount);
+                        analyser.getByteFrequencyData(dataArray);
+                        
+                        // Calculate average level
+                        const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
+                        
+                        // Get track volume to scale LED display
+                        const track = dawState.tracks.find(t => t.id === trackId);
+                        const trackVolume = track ? track.volume : 1.0;
+                        
+                        // Apply volume scaling with 6x boost for high visibility
+                        // Higher fader = more LEDs light up
+                        // With 2x volume boost, this ensures LEDs reach yellow/red zones
+                        const rawLevel = (average / 255) * 15 * 6.0; // 6x boost (doubled from 3x)
+                        const level = Math.min(15, Math.floor(rawLevel * trackVolume));
+                        
+                        const segments = meter.querySelectorAll('.led-segment');
+                        segments.forEach((segment, index) => {
+                            if (index < level) {
+                                segment.classList.add('active');
+                            } else {
+                                segment.classList.remove('active');
+                            }
+                        });
+                    }
                 }
             });
             
