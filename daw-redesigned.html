@@ -1908,22 +1908,10 @@
                     return;
                 }
                 
-                // INVERTED: Top (y=0) = 100% volume, bottom (y=height) = 0% volume
-                // This matches traditional fader behavior: UP = louder, DOWN = quieter
-                let volume = 1 - (y / height);
-                volume = Math.max(0, Math.min(1, volume));
-                
-                // Check for NaN
-                if (isNaN(volume)) {
-                    console.warn('⚠️ Invalid volume calculation:', { y, height, volume });
-                    return;
-                }
-                
                 // CONSTRAINT: Cyan line aligns with scale 60-0, entire knob stays within bounds
                 const thumbHeight = 32;
                 const halfThumb = thumbHeight / 2; // 16px (cyan line is at center)
                 
-                // Scale padding: 2px top/bottom
                 // Movement range for cyan line: from 16px (top, aligned with "60") to (height - 16px) (bottom, aligned with "0")
                 // This ensures:
                 // 1. Cyan line aligns with scale markers
@@ -1933,10 +1921,16 @@
                 
                 const constrainedY = Math.max(minCyanY, Math.min(maxCyanY, y));
                 
-                // Recalculate volume based on constrained cyan line position
+                // Calculate volume based on constrained cyan line position
                 const effectiveHeight = maxCyanY - minCyanY;
-                volume = 1 - ((constrainedY - minCyanY) / effectiveHeight);
+                let volume = 1 - ((constrainedY - minCyanY) / effectiveHeight);
                 volume = Math.max(0, Math.min(1, volume));
+                
+                // Check for NaN
+                if (isNaN(volume) || isNaN(constrainedY)) {
+                    console.warn('⚠️ Invalid fader calculation:', { y, constrainedY, volume, height });
+                    return;
+                }
                 
                 // Position knob: bottom edge = constrainedY (cyan center) - halfThumb
                 const bottomPx = constrainedY - halfThumb;
