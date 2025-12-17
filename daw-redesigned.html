@@ -1899,7 +1899,6 @@
             const containerRect = faderContainer.getBoundingClientRect();
             
             function onMouseMove(moveEvent) {
-                const y = moveEvent.clientY - containerRect.top;
                 const height = containerRect.height;
                 
                 // Prevent division by zero
@@ -1908,9 +1907,15 @@
                     return;
                 }
                 
+                // Calculate mouse Y relative to container top
+                let y = moveEvent.clientY - containerRect.top;
+                
                 // CONSTRAINT: Cyan line aligns with scale 60-0, entire knob stays within bounds
                 const thumbHeight = 32;
                 const halfThumb = thumbHeight / 2; // 16px (cyan line is at center)
+                
+                // Constrain Y to container bounds FIRST (0 to height)
+                y = Math.max(0, Math.min(height, y));
                 
                 // Movement range for cyan line: from 16px (top, aligned with "60") to (height - 16px) (bottom, aligned with "0")
                 // This ensures:
