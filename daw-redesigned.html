@@ -693,6 +693,19 @@
             border: 1px solid #1a1a1a;
         }
         
+        .fader-thumb::before {
+            content: '';
+            position: absolute;
+            left: 2px;
+            right: 2px;
+            top: 50%;
+            transform: translateY(-50%);
+            height: 2px;
+            background-color: #00d4ff;
+            box-shadow: 0 0 4px rgba(0, 212, 255, 0.8);
+            border-radius: 1px;
+        }
+        
         .fader-thumb:hover {
             background: linear-gradient(to bottom,
                 #777 0%,
@@ -727,8 +740,8 @@
             flex-direction: column;
             justify-content: space-between;
             height: 100%;
-            font-size: 8px;
-            color: var(--daw-text-secondary);
+            font-size: 9px;
+            color: var(--daw-text-primary);
             line-height: 1;
             padding: 2px 0;
         }
@@ -736,21 +749,23 @@
         .fader-scale-mark {
             display: flex;
             align-items: center;
-            gap: 2px;
+            gap: 3px;
             height: 0;
             position: relative;
         }
         
         .fader-scale-tick {
-            width: 3px;
+            width: 5px;
             height: 1px;
-            background-color: var(--daw-text-secondary);
+            background-color: var(--daw-text-primary);
+            opacity: 0.8;
         }
         
         .fader-scale-label {
-            font-size: 7px;
-            font-weight: 500;
-            color: var(--daw-text-secondary);
+            font-size: 9px;
+            font-weight: 600;
+            color: var(--daw-text-primary);
+            opacity: 0.9;
         }
         
         .channel-controls {
