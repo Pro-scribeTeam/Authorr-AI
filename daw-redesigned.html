@@ -664,7 +664,7 @@
         
         .fader-track {
             width: 6px;
-            height: 100%;
+            height: 180px;
             background: linear-gradient(to bottom, #2a2a2a 0%, #1a1a1a 100%);
             border-radius: 2px;
             position: relative;
@@ -754,7 +754,7 @@
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            height: 100%;
+            height: 180px;
             font-size: 10px;
             color: var(--daw-text-primary);
             line-height: 1;
@@ -1112,11 +1112,18 @@
                 document.querySelectorAll('.fader-thumb').forEach(thumb => {
                     const trackId = thumb.dataset.trackId;
                     const container = thumb.closest('.fader-container');
+                    const track = thumb.closest('.fader-track');
                     const thumbRect = thumb.getBoundingClientRect();
                     const containerRect = container.getBoundingClientRect();
+                    const trackRect = track.getBoundingClientRect();
                     const topOffset = thumbRect.top - containerRect.top;
                     const bottomValue = thumb.style.bottom;
-                    console.log(`  ${trackId}: CSS bottom=${bottomValue}, actual top offset=${topOffset.toFixed(1)}px`);
+                    console.log(`  ${trackId}:`);
+                    console.log(`    Container: ${containerRect.height.toFixed(1)}px tall, top=${containerRect.top.toFixed(1)}`);
+                    console.log(`    Track: ${trackRect.height.toFixed(1)}px tall, top=${trackRect.top.toFixed(1)}`);
+                    console.log(`    Thumb: CSS bottom=${bottomValue}, height=${thumbRect.height.toFixed(1)}px`);
+                    console.log(`    Thumb actualTop=${topOffset.toFixed(1)}px (relative to container)`);
+                    console.log(`    Track offsetTop=${trackRect.top - containerRect.top}px (track relative to container)`);
                 });
             }, 100);
             
