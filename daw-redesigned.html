@@ -2184,6 +2184,14 @@
                     return;
                 }
                 
+                // Ensure clip has required properties with defaults
+                if (clipData.startTime === undefined) clipData.startTime = 0;
+                if (clipData.audioStart === undefined) clipData.audioStart = 0;
+                if (!clipData.duration) {
+                    console.log('⚠️ Clip has no duration');
+                    return;
+                }
+                
                 // Calculate cut times
                 const rect = clipEl.getBoundingClientRect();
                 const clipWidth = rect.width;
