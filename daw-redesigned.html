@@ -2196,6 +2196,7 @@
                 const cutDuration = cutEndTime - cutStartTime;
                 
                 console.log(`✂️ Cutting out section: ${cutStartTime.toFixed(2)}s to ${cutEndTime.toFixed(2)}s (${cutDuration.toFixed(2)}s will be removed)`);
+                console.log(`📊 Original clip: startTime=${clipData.startTime.toFixed(2)}s, audioStart=${clipData.audioStart.toFixed(2)}s, duration=${clipData.duration.toFixed(2)}s`);
                 
                 // Create TWO clips: before the cut and after the cut (selected section is removed)
                 const beforeClip = {
@@ -2213,6 +2214,9 @@
                     audioStart: clipData.audioStart + cutEndTime, // Skip the cut section in the audio
                     duration: clipData.duration - cutEndTime, // Remaining duration after cut
                 };
+                
+                console.log(`📊 Before clip: startTime=${beforeClip.startTime.toFixed(2)}s, audioStart=${beforeClip.audioStart.toFixed(2)}s, duration=${beforeClip.duration.toFixed(2)}s`);
+                console.log(`📊 After clip: startTime=${afterClip.startTime.toFixed(2)}s, audioStart=${afterClip.audioStart.toFixed(2)}s, duration=${afterClip.duration.toFixed(2)}s`);
                 
                 // Find clip index and replace with the two clips (removing the selected section)
                 const clipIndex = trackData.clips.findIndex(c => c.id === clipId);
