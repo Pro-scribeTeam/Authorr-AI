@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <!-- Cache-bust: 2025-12-22T16:45:00Z - Fader positioning fix verified -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Authorr AI - Professional DAW (Mozart Style)</title>
@@ -1104,6 +1105,20 @@
             
             // Render mixer channels
             renderMixerChannels();
+            
+            // Debug: Log fader positions after render
+            setTimeout(() => {
+                console.log('🔍 Fader Position Debug:');
+                document.querySelectorAll('.fader-thumb').forEach(thumb => {
+                    const trackId = thumb.dataset.trackId;
+                    const container = thumb.closest('.fader-container');
+                    const thumbRect = thumb.getBoundingClientRect();
+                    const containerRect = container.getBoundingClientRect();
+                    const topOffset = thumbRect.top - containerRect.top;
+                    const bottomValue = thumb.style.bottom;
+                    console.log(`  ${trackId}: CSS bottom=${bottomValue}, actual top offset=${topOffset.toFixed(1)}px`);
+                });
+            }, 100);
             
             // Setup event listeners
             setupEventListeners();
