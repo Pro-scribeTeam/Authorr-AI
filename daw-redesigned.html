@@ -43,8 +43,8 @@
             --led-red: #EF4444;
             
             /* Grid & Timeline */
-            --grid-line: #2A2A2A;
-            --grid-line-major: #3A3A3A;
+            --grid-line: #3A3A3A;
+            --grid-line-major: #555555;
             --playhead-color: #78e3fe;
             
             /* Fader Colors */
@@ -1231,12 +1231,29 @@
             // Determine marker interval (every 5 or 10 seconds depending on zoom)
             const markerInterval = dawState.zoom < 0.5 ? 10 : 5;
             
+            // Add minor grid lines (every second) for better visibility
+            for (let seconds = 1; seconds <= totalDuration; seconds++) {
+                // Skip if this is a major marker position
+                if (seconds % markerInterval === 0) continue;
+                
+                const minorLine = document.createElement('div');
+                minorLine.style.position = 'absolute';
+                minorLine.style.left = (seconds * pixelsPerSecond) + 'px';
+                minorLine.style.top = '0';
+                minorLine.style.width = '1px';
+                minorLine.style.height = '100%';
+                minorLine.style.backgroundColor = 'var(--grid-line)';
+                minorLine.style.opacity = '0.5';
+                ruler.appendChild(minorLine);
+            }
+            
+            // Add major grid lines with labels
             for (let seconds = markerInterval; seconds <= totalDuration; seconds += markerInterval) {
                 const marker = document.createElement('div');
                 marker.style.position = 'absolute';
                 marker.style.left = (seconds * pixelsPerSecond) + 'px';
                 marker.style.top = '0';
-                marker.style.width = '1px';
+                marker.style.width = '2px';
                 marker.style.height = '100%';
                 marker.style.backgroundColor = 'var(--grid-line-major)';
                 
@@ -1980,6 +1997,21 @@
                     // Update master gain node
                     if (masterGainNode) {
                         masterGainNode.gain.value = boostedMasterVolume;
+                    }
+                    
+                    // Update master LED meter to reflect fader position
+                    const masterMeter = document.querySelector('.led-meter[data-track-id="master"]');
+                    if (masterMeter) {
+                        const segments = masterMeter.querySelectorAll('.led-segment');
+                        // Map volume (0-1) to LED segments (0-15)
+                        const targetLevel = Math.floor(volume * 15);
+                        segments.forEach((segment, index) => {
+                            if (index <= targetLevel) {
+                                segment.classList.add('active');
+                            } else {
+                                segment.classList.remove('active');
+                            }
+                        });
                     }
                 } else {
                     const track = dawState.tracks.find(t => t.id === trackId);
