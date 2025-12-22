@@ -2195,34 +2195,24 @@
                 const cutEndTime = selectionEndRatio * clipData.duration;
                 const cutDuration = cutEndTime - cutStartTime;
                 
-                console.log(`✂️ Cutting section: ${cutStartTime.toFixed(2)}s to ${cutEndTime.toFixed(2)}s (${cutDuration.toFixed(2)}s removed)`);
+                console.log(`✂️ Keeping selected section: ${cutStartTime.toFixed(2)}s to ${cutEndTime.toFixed(2)}s (${cutDuration.toFixed(2)}s kept)`);
                 
-                // Create three clips: before cut, (removed section), after cut
-                const beforeClip = {
+                // Create a NEW clip with ONLY the selected section
+                const selectedClip = {
                     ...clipData,
-                    id: 'clip_' + Date.now() + '_before',
-                    duration: cutStartTime,
+                    id: 'clip_' + Date.now() + '_selected',
+                    startTime: clipData.startTime + cutStartTime, // Position at where selection started in timeline
+                    audioStart: clipData.audioStart + cutStartTime, // Start audio at selection start
+                    duration: cutDuration, // Only the selected duration
                 };
                 
-                const afterClip = {
-                    ...clipData,
-                    id: 'clip_' + Date.now() + '_after',
-                    startTime: clipData.startTime + cutStartTime, // Position right after before clip
-                    audioStart: clipData.audioStart + cutEndTime, // Skip the cut section in audio
-                    duration: clipData.duration - cutEndTime,
-                };
-                
-                // Find clip index and replace
+                // Find clip index and replace with just the selected portion
                 const clipIndex = trackData.clips.findIndex(c => c.id === clipId);
                 if (clipIndex !== -1) {
-                    // Remove original and add the two new clips
-                    const newClips = [];
-                    if (beforeClip.duration > 0.01) newClips.push(beforeClip);
-                    if (afterClip.duration > 0.01) newClips.push(afterClip);
+                    // Replace original clip with only the selected section
+                    trackData.clips.splice(clipIndex, 1, selectedClip);
                     
-                    trackData.clips.splice(clipIndex, 1, ...newClips);
-                    
-                    console.log(`✅ Cut complete: ${beforeClip.duration.toFixed(2)}s + [${cutDuration.toFixed(2)}s removed] + ${afterClip.duration.toFixed(2)}s`);
+                    console.log(`✅ Cut complete: Kept ${cutDuration.toFixed(2)}s (removed ${(clipData.duration - cutDuration).toFixed(2)}s)`);
                     
                     // Re-render to show changes
                     renderTracks();
@@ -2584,8 +2574,8 @@
                     const selectionStartTime = (Math.min(cutSelectionStart, cutSelectionEnd) / rect.width) * clip.duration;
                     const selectionEndTime = (Math.max(cutSelectionStart, cutSelectionEnd) / rect.width) * clip.duration;
                     
-                    console.log(`📏 Cut selection: ${selectionStartTime.toFixed(2)}s to ${selectionEndTime.toFixed(2)}s (${(selectionEndTime - selectionStartTime).toFixed(2)}s selected)`);
-                    console.log(`💡 Press Enter to cut out the selected section`);
+                    console.log(`📏 Selected section: ${selectionStartTime.toFixed(2)}s to ${selectionEndTime.toFixed(2)}s (${(selectionEndTime - selectionStartTime).toFixed(2)}s will be kept)`);
+                    console.log(`💡 Press Enter to keep ONLY the selected section (remove everything else)`);
                     return;
                 }
                 
