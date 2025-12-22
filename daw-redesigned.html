@@ -2072,6 +2072,16 @@
             dawState.selectedTool = tool;
             document.querySelectorAll('.tool-btn').forEach(btn => btn.classList.remove('active'));
             document.getElementById(`${tool}Tool`).classList.add('active');
+            
+            // Update cursor for all audio clips based on selected tool
+            document.querySelectorAll('.audio-clip').forEach(clipEl => {
+                if (tool === 'cut') {
+                    clipEl.style.cursor = 'crosshair';
+                } else if (tool === 'select') {
+                    clipEl.style.cursor = 'move';
+                }
+            });
+            
             console.log(`🛠️ Tool selected: ${tool}`);
         }
         
@@ -2364,14 +2374,62 @@
             clipEl.style.border = '2px solid var(--daw-accent)';
             clipEl.style.borderRadius = '4px';
             clipEl.style.overflow = 'hidden';
-            clipEl.style.cursor = 'pointer';
+            clipEl.style.cursor = dawState.selectedTool === 'cut' ? 'crosshair' : 'move';
             clipEl.style.position = 'relative';
             
-            // Add click handler for selection
+            // Add click handler for selection and cut tool
             clipEl.addEventListener('click', function(e) {
                 e.stopPropagation();
                 
-                // Toggle selection
+                // Check if cut tool is active
+                if (dawState.selectedTool === 'cut') {
+                    // Cut the clip at the click position
+                    const rect = clipEl.getBoundingClientRect();
+                    const clickX = e.clientX - rect.left;
+                    const clipWidth = rect.width;
+                    const clickPositionRatio = clickX / clipWidth;
+                    
+                    // Calculate the cut time within the clip
+                    const clipDuration = clip.duration;
+                    const cutTimeInClip = clickPositionRatio * clipDuration;
+                    const cutTimeInTimeline = clip.startTime + cutTimeInClip;
+                    
+                    console.log(`✂️ Cutting clip at ${cutTimeInTimeline.toFixed(2)}s (${cutTimeInClip.toFixed(2)}s into clip)`);
+                    
+                    // Create two new clips from the cut
+                    const leftClip = {
+                        ...clip,
+                        id: 'clip_' + Date.now() + '_left',
+                        duration: cutTimeInClip,
+                        // Keep same startTime and audioStart
+                    };
+                    
+                    const rightClip = {
+                        ...clip,
+                        id: 'clip_' + Date.now() + '_right',
+                        startTime: cutTimeInTimeline,
+                        audioStart: clip.audioStart + cutTimeInClip,
+                        duration: clip.duration - cutTimeInClip,
+                    };
+                    
+                    // Find the clip in the track and replace it with the two new clips
+                    const track = dawState.tracks.find(t => t.id === clip.trackId);
+                    if (track) {
+                        const clipIndex = track.clips.findIndex(c => c.id === clip.id);
+                        if (clipIndex !== -1) {
+                            // Remove the original clip and insert the two new ones
+                            track.clips.splice(clipIndex, 1, leftClip, rightClip);
+                            
+                            // Re-render the tracks to show the cut clips
+                            renderTracks();
+                            
+                            console.log(`✅ Clip cut into two pieces: ${leftClip.duration.toFixed(2)}s + ${rightClip.duration.toFixed(2)}s`);
+                        }
+                    }
+                    return; // Don't do selection when cutting
+                }
+                
+                // Toggle selection (only if not in cut mode)
                 if (e.ctrlKey || e.metaKey) {
                     // Multi-select with Ctrl/Cmd
                     clipEl.classList.toggle('selected');
@@ -2391,6 +2449,11 @@
             
             clipEl.addEventListener('mousedown', function(e) {
                 if (e.button !== 0) return; // Only left mouse button
+                
+                // Prevent dragging when cut tool is active
+                if (dawState.selectedTool === 'cut') {
+                    return;
+                }
                 
                 isDragging = true;
                 dragStartX = e.clientX;
@@ -2417,7 +2480,7 @@
                 if (!isDragging) return;
                 
                 isDragging = false;
-                clipEl.style.cursor = 'pointer';
+                clipEl.style.cursor = dawState.selectedTool === 'cut' ? 'crosshair' : 'move';
                 clipEl.style.zIndex = '';
                 
                 // Calculate final position
