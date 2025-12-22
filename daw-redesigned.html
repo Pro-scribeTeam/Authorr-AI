@@ -478,23 +478,42 @@
             position: absolute;
             top: 30px; /* Start below ruler */
             left: 200px; /* Start after track headers */
-            width: 2px;
+            width: 10px; /* Wider hit area for easier grabbing */
             height: calc(100% - 30px);
-            background-color: var(--playhead-color);
             z-index: 1000;
-            pointer-events: none;
+            pointer-events: auto; /* Allow dragging */
             display: none;
+            cursor: grab;
+            margin-left: -4px; /* Center the wider area on the line */
+        }
+        
+        /* Actual visual line (thin) */
+        #playhead::after {
+            content: '';
+            position: absolute;
+            left: 4px; /* Center in the wider hit area */
+            top: 0;
+            width: 2px;
+            height: 100%;
+            background-color: var(--playhead-color);
+            pointer-events: none;
+        }
+        
+        #playhead:active {
+            cursor: grabbing;
         }
         
         #playhead::before {
             content: '';
             position: absolute;
             top: -30px;
-            left: -4px;
+            left: 0px; /* Centered in the 10px wide element */
             width: 10px;
             height: 10px;
             background-color: var(--playhead-color);
             border-radius: 50%;
+            pointer-events: none;
+        }
         }
         
         .audio-clip {
@@ -1551,6 +1570,56 @@
             timelineRuler.addEventListener('click', handleTimelineClick);
             
             document.getElementById('timelineTracks').addEventListener('click', handleTimelineClick);
+            
+            // Playhead dragging
+            const playhead = document.getElementById('playhead');
+            let isDraggingPlayhead = false;
+            
+            playhead.addEventListener('mousedown', function(e) {
+                isDraggingPlayhead = true;
+                playhead.style.cursor = 'grabbing';
+                e.stopPropagation();
+            });
+            
+            document.addEventListener('mousemove', function(e) {
+                if (!isDraggingPlayhead) return;
+                
+                const timelineWrapper = document.querySelector('.timeline-canvas-wrapper');
+                const rect = timelineWrapper.getBoundingClientRect();
+                const mouseX = e.clientX - rect.left - 200; // Subtract track header width
+                
+                // Add current scroll position
+                const scrollX = timelineWrapper.scrollLeft;
+                const adjustedX = mouseX + scrollX;
+                
+                // Calculate time based on mouse position and zoom
+                const pixelsPerSecond = 50 * dawState.zoom;
+                const newTime = Math.max(0, adjustedX / pixelsPerSecond);
+                
+                // Update playhead position
+                dawState.currentTime = Math.max(0, Math.min(newTime, dawState.totalDuration));
+                updatePlayheadPosition(dawState.currentTime);
+                document.getElementById('currentTime').textContent = formatTime(dawState.currentTime);
+                
+                // If playing, update playback position
+                if (dawState.isPlaying) {
+                    pauseTime = dawState.currentTime;
+                    stopAllSources();
+                    playAllTracks();
+                } else {
+                    pauseTime = dawState.currentTime;
+                }
+            });
+            
+            document.addEventListener('mouseup', function(e) {
+                if (isDraggingPlayhead) {
+                    isDraggingPlayhead = false;
+                    playhead.style.cursor = 'grab';
+                }
+            });
+            
+            // Make playhead cursor indicate it's draggable
+            playhead.style.cursor = 'grab';
             
             // Keyboard shortcuts
             document.addEventListener('keydown', handleKeyboard);
