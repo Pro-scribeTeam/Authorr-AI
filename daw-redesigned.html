@@ -2239,8 +2239,16 @@
                     
                     console.log(`✅ Cut complete: ${beforeClip.duration.toFixed(2)}s + [${cutDuration.toFixed(2)}s REMOVED] + ${afterClip.duration.toFixed(2)}s`);
                     
-                    // Re-render to show changes
-                    renderTracks();
+                    // Remove the old clip element from DOM
+                    clipEl.remove();
+                    
+                    // Directly render the two new clips without re-rendering entire track
+                    const trackCanvas = document.querySelector(`.track-canvas[data-track-id="${trackData.id}"]`);
+                    if (trackCanvas) {
+                        newClips.forEach(newClip => {
+                            renderAudioClip(newClip, trackData.id);
+                        });
+                    }
                 }
             });
         }
