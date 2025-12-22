@@ -1596,8 +1596,8 @@
                 const pixelsPerSecond = 50 * dawState.zoom;
                 const newTime = Math.max(0, adjustedX / pixelsPerSecond);
                 
-                // Update playhead position
-                dawState.currentTime = Math.max(0, Math.min(newTime, dawState.totalDuration));
+                // Update playhead position (no max constraint - can go anywhere on timeline)
+                dawState.currentTime = newTime;
                 updatePlayheadPosition(dawState.currentTime);
                 document.getElementById('currentTime').textContent = formatTime(dawState.currentTime);
                 
@@ -1637,8 +1637,8 @@
             const pixelsPerSecond = 50 * dawState.zoom;
             const clickTime = Math.max(0, clickX / pixelsPerSecond);
             
-            // Update playhead position
-            dawState.currentTime = Math.max(0, Math.min(clickTime, dawState.totalDuration));
+            // Update playhead position (no max constraint - can go anywhere on timeline)
+            dawState.currentTime = clickTime;
             updatePlayheadPosition(dawState.currentTime);
             document.getElementById('currentTime').textContent = formatTime(dawState.currentTime);
             
