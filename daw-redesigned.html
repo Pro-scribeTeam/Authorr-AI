@@ -1021,6 +1021,17 @@
                 <div class="toolbar-divider"></div>
                 
                 <div class="toolbar-group">
+                    <button class="tool-btn" id="undoBtn" title="Undo (Ctrl+Z)">
+                        <i class="fas fa-undo"></i>
+                    </button>
+                    <button class="tool-btn" id="redoBtn" title="Redo (Ctrl+Y)">
+                        <i class="fas fa-redo"></i>
+                    </button>
+                </div>
+                
+                <div class="toolbar-divider"></div>
+                
+                <div class="toolbar-group">
                     <span class="zoom-label">Zoom: <span id="zoomLevel">100%</span></span>
                     <button class="tool-btn" id="zoomOutBtn" title="Zoom Out (-)">
                         <i class="fas fa-search-minus"></i>
@@ -1094,6 +1105,99 @@
         };
         
         // ========================================
+        // UNDO/REDO HISTORY SYSTEM
+        // ========================================
+        
+        const historyStack = [];
+        let historyIndex = -1;
+        const MAX_HISTORY = 50; // Keep last 50 states
+        
+        function saveState(action) {
+            // Create a deep copy of the current state
+            const state = {
+                action: action,
+                timestamp: Date.now(),
+                tracks: JSON.parse(JSON.stringify(dawState.tracks)),
+                masterVolume: dawState.masterVolume,
+                zoom: dawState.zoom
+            };
+            
+            // Remove any states after current index (if we're not at the end)
+            if (historyIndex < historyStack.length - 1) {
+                historyStack.splice(historyIndex + 1);
+            }
+            
+            // Add new state
+            historyStack.push(state);
+            
+            // Limit history size
+            if (historyStack.length > MAX_HISTORY) {
+                historyStack.shift();
+            } else {
+                historyIndex++;
+            }
+            
+            updateUndoRedoButtons();
+            console.log(`💾 Saved state: ${action} (history: ${historyIndex + 1}/${historyStack.length})`);
+        }
+        
+        function undo() {
+            if (historyIndex <= 0) {
+                console.log('⚠️ Nothing to undo');
+                return;
+            }
+            
+            historyIndex--;
+            const state = historyStack[historyIndex];
+            restoreState(state);
+            console.log(`↩️ Undo: ${state.action} (history: ${historyIndex + 1}/${historyStack.length})`);
+        }
+        
+        function redo() {
+            if (historyIndex >= historyStack.length - 1) {
+                console.log('⚠️ Nothing to redo');
+                return;
+            }
+            
+            historyIndex++;
+            const state = historyStack[historyIndex];
+            restoreState(state);
+            console.log(`↪️ Redo: ${state.action} (history: ${historyIndex + 1}/${historyStack.length})`);
+        }
+        
+        function restoreState(state) {
+            // Restore tracks (deep copy to avoid reference issues)
+            dawState.tracks = JSON.parse(JSON.stringify(state.tracks));
+            dawState.masterVolume = state.masterVolume;
+            dawState.zoom = state.zoom;
+            
+            // Re-render everything
+            renderTracks();
+            renderMixerChannels();
+            renderTimelineRuler();
+            
+            // Update zoom display
+            document.getElementById('zoomLevel').textContent = Math.round(state.zoom * 100) + '%';
+            
+            updateUndoRedoButtons();
+        }
+        
+        function updateUndoRedoButtons() {
+            const undoBtn = document.getElementById('undoBtn');
+            const redoBtn = document.getElementById('redoBtn');
+            
+            if (undoBtn) {
+                undoBtn.disabled = historyIndex <= 0;
+                undoBtn.style.opacity = historyIndex <= 0 ? '0.5' : '1.0';
+            }
+            
+            if (redoBtn) {
+                redoBtn.disabled = historyIndex >= historyStack.length - 1;
+                redoBtn.style.opacity = historyIndex >= historyStack.length - 1 ? '0.5' : '1.0';
+            }
+        }
+        
+        // ========================================
         // INITIALIZATION
         // ========================================
         
@@ -1132,6 +1236,9 @@
             
             // Initialize LED meters animation
             startLEDMeterAnimation();
+            
+            // Save initial state for undo/redo
+            saveState('Initial state');
             
             console.log('✅ DAW initialized successfully');
         }
@@ -1409,6 +1516,10 @@
             document.getElementById('copyBtn').addEventListener('click', copySelected);
             document.getElementById('pasteBtn').addEventListener('click', paste);
             document.getElementById('deleteBtn').addEventListener('click', deleteSelected);
+            
+            // Undo/Redo actions
+            document.getElementById('undoBtn').addEventListener('click', undo);
+            document.getElementById('redoBtn').addEventListener('click', redo);
             
             // Zoom controls
             document.getElementById('zoomInBtn').addEventListener('click', zoomIn);
@@ -2028,6 +2139,9 @@
             }
             
             function onMouseUp() {
+                // Save state after volume change
+                saveState('Adjust volume');
+                
                 document.removeEventListener('mousemove', onMouseMove);
                 document.removeEventListener('mouseup', onMouseUp);
             }
@@ -2174,6 +2288,9 @@
                 return;
             }
             
+            // Save state before pasting
+            saveState('Paste clips');
+            
             // Paste clips at current playhead position
             clipboardClips.forEach(clipData => {
                 const track = dawState.tracks[0]; // Paste to first track for now
@@ -2200,6 +2317,9 @@
                 console.log('⚠️ No cut selection active. Drag to select a section first.');
                 return;
             }
+            
+            // Save state before cutting
+            saveState('Cut clip section');
             
             clipsWithSelection.forEach(clipEl => {
                 const clipId = clipEl.dataset.clipId;
@@ -2299,6 +2419,9 @@
                 console.log('⚠️ No clips selected');
                 return;
             }
+            
+            // Save state before deletion
+            saveState('Delete clips');
             
             let deletedCount = 0;
             selectedClips.forEach(clipEl => {
@@ -2484,6 +2607,9 @@
                         renderAudioClip(clip, trackId);
                         renderTimelineRuler();
                         
+                        // Save state after loading audio
+                        saveState('Load audio file');
+                        
                         // Show notification
                         const trackName = track.name;
                         alert(`✅ Audio added to ${trackName}:\n${file.name}\nDuration: ${duration.toFixed(2)}s`);
@@ -2662,6 +2788,11 @@
                 const deltaTime = deltaX / pixelsPerSecond;
                 const newStartTime = Math.max(0, clipStartTime + deltaTime);
                 
+                // Save state before moving clip
+                if (Math.abs(deltaX) > 2) { // Only save if actually moved
+                    saveState('Move clip');
+                }
+                
                 // Update clip data
                 clip.startTime = newStartTime;
                 
@@ -2821,6 +2952,18 @@
             if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
                 e.preventDefault();
                 copySelected();
+            }
+            
+            // Ctrl/Cmd + Z = Undo
+            if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+                e.preventDefault();
+                undo();
+            }
+            
+            // Ctrl/Cmd + Y or Ctrl/Cmd + Shift + Z = Redo
+            if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
+                e.preventDefault();
+                redo();
             }
             
             // Ctrl/Cmd + V = Paste
