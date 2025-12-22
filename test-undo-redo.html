@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Undo/Redo Test - Authorr AI DAW</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 800px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 32px;
+        }
+        
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 16px;
+        }
+        
+        .status {
+            background: #f0f9ff;
+            border-left: 4px solid #3b82f6;
+            padding: 20px;
+            margin-bottom: 30px;
+            border-radius: 8px;
+        }
+        
+        .status-title {
+            font-weight: bold;
+            color: #1e40af;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+        
+        .feature-list {
+            list-style: none;
+            margin-top: 20px;
+        }
+        
+        .feature-list li {
+            padding: 12px 0;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        .feature-list li:last-child {
+            border-bottom: none;
+        }
+        
+        .icon {
+            font-size: 24px;
+            margin-right: 15px;
+            width: 30px;
+            text-align: center;
+        }
+        
+        .shortcuts {
+            background: #f9fafb;
+            padding: 20px;
+            border-radius: 12px;
+            margin-top: 20px;
+        }
+        
+        .shortcuts h3 {
+            color: #374151;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        
+        .shortcut-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        .shortcut-row:last-child {
+            border-bottom: none;
+        }
+        
+        .key {
+            background: #667eea;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+        
+        .btn {
+            flex: 1;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            text-align: center;
+            display: block;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-secondary {
+            background: #f3f4f6;
+            color: #374151;
+        }
+        
+        .btn-secondary:hover {
+            background: #e5e7eb;
+        }
+        
+        .check {
+            color: #22c55e;
+        }
+        
+        .tag {
+            display: inline-block;
+            background: #10b981;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎨 Undo/Redo Implementation <span class="tag">COMPLETE</span></h1>
+        <p class="subtitle">Authorr AI - Professional DAW (Mozart Style)</p>
+        
+        <div class="status">
+            <div class="status-title">✅ Implementation Status: FULLY FUNCTIONAL</div>
+            <p><strong>Commit:</strong> <code>5883bd1</code></p>
+            <p><strong>Branch:</strong> <code>main</code></p>
+            <p><strong>Date:</strong> <span id="date"></span></p>
+        </div>
+        
+        <h2 style="color: #374151; margin-bottom: 15px;">Supported Operations</h2>
+        <ul class="feature-list">
+            <li>
+                <span class="icon check">✓</span>
+                <span><strong>Load Audio Files</strong> - Track audio file additions</span>
+            </li>
+            <li>
+                <span class="icon check">✓</span>
+                <span><strong>Cut Clip Sections</strong> - Reverse cuts and splits</span>
+            </li>
+            <li>
+                <span class="icon check">✓</span>
+                <span><strong>Delete Clips</strong> - Restore deleted clips</span>
+            </li>
+            <li>
+                <span class="icon check">✓</span>
+                <span><strong>Paste Clips</strong> - Undo paste operations</span>
+            </li>
+            <li>
+                <span class="icon check">✓</span>
+                <span><strong>Move Clips</strong> - Revert clip position changes</span>
+            </li>
+            <li>
+                <span class="icon check">✓</span>
+                <span><strong>Volume Adjustments</strong> - Restore previous volume levels</span>
+            </li>
+        </ul>
+        
+        <div class="shortcuts">
+            <h3>⌨️ Keyboard Shortcuts</h3>
+            <div class="shortcut-row">
+                <span>Undo last action</span>
+                <span class="key">Ctrl+Z</span>
+            </div>
+            <div class="shortcut-row">
+                <span>Redo action</span>
+                <span class="key">Ctrl+Y</span>
+            </div>
+            <div class="shortcut-row">
+                <span>Redo (alternative)</span>
+                <span class="key">Ctrl+Shift+Z</span>
+            </div>
+        </div>
+        
+        <div class="action-buttons">
+            <a href="https://pro-scribeteam.github.io/Authorr-AI/daw-redesigned.html" class="btn btn-primary" target="_blank">
+                🚀 Open Live DAW
+            </a>
+            <a href="UNDO_REDO_DOCUMENTATION.md" class="btn btn-secondary" target="_blank">
+                📄 Read Documentation
+            </a>
+        </div>
+        
+        <div style="margin-top: 30px; padding: 20px; background: #fff7ed; border-radius: 10px; border-left: 4px solid #f59e0b;">
+            <h3 style="color: #92400e; margin-bottom: 10px;">💡 Quick Test</h3>
+            <ol style="color: #78350f; line-height: 1.8;">
+                <li>Load an audio file onto a track</li>
+                <li>Press <strong>C</strong> to activate cut tool</li>
+                <li>Drag to select a section and press <strong>Enter</strong></li>
+                <li>Press <strong>Ctrl+Z</strong> to undo the cut</li>
+                <li>Press <strong>Ctrl+Y</strong> to redo the cut</li>
+                <li>Check console for: <code>💾 Saved state</code> messages</li>
+            </ol>
+        </div>
+        
+        <div style="margin-top: 20px; text-align: center; color: #6b7280; font-size: 14px;">
+            <p>🎵 History Stack: Limited to 50 states</p>
+            <p>🔧 Full state restoration on undo/redo</p>
+            <p>🎨 Visual feedback with button states</p>
+        </div>
+    </div>
+    
+    <script>
+        document.getElementById('date').textContent = new Date().toLocaleDateString('en-US', { 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+        });
+    </script>
+</body>
+</html>
