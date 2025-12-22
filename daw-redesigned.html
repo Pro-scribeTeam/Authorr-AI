@@ -1174,6 +1174,13 @@
             dawState.masterVolume = state.masterVolume;
             dawState.zoom = state.zoom;
             
+            // Clear audioBuffer references so they get re-decoded on playback
+            dawState.tracks.forEach(track => {
+                track.clips.forEach(clip => {
+                    delete clip.audioBuffer;
+                });
+            });
+            
             // Re-render everything
             renderTracks();
             renderMixerChannels();
@@ -1619,11 +1626,20 @@
         async function decodeAudioClip(clip) {
             if (clip.audioBuffer) return clip.audioBuffer;
             
+            // Check if clip has audio data
+            if (!clip.data) {
+                console.error(`❌ No audio data for clip: ${clip.name}`);
+                return null;
+            }
+            
             try {
                 const ctx = initAudioContext();
                 
                 // Convert data URL to ArrayBuffer
                 const response = await fetch(clip.data);
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch audio data: ${response.status}`);
+                }
                 const arrayBuffer = await response.arrayBuffer();
                 
                 // Decode audio data
@@ -1678,13 +1694,23 @@
                 for (const clip of track.clips) {
                     // Decode audio if not already decoded
                     const audioBuffer = await decodeAudioClip(clip);
-                    if (!audioBuffer) continue;
+                    if (!audioBuffer) {
+                        console.warn(`⚠️ Skipping clip ${clip.name} - no audio buffer`);
+                        continue;
+                    }
                     
                     // Skip clips that have already finished playing
                     if (currentTime >= clip.startTime + clip.duration) continue;
                     
                     // Create buffer source
                     const source = ctx.createBufferSource();
+                    
+                    // Verify audioBuffer is valid before setting
+                    if (!audioBuffer || !(audioBuffer instanceof AudioBuffer)) {
+                        console.error(`❌ Invalid audio buffer for ${clip.name}`);
+                        continue;
+                    }
+                    
                     source.buffer = audioBuffer;
                     
                     // Create gain node for fade out if needed
