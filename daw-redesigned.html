@@ -1002,6 +1002,9 @@
                     <button class="tool-btn" id="cutTool" title="Cut (C)">
                         <i class="fas fa-cut"></i>
                     </button>
+                    <button class="tool-btn" id="fadeOutTool" title="Fade Out (F)">
+                        <i class="fas fa-volume-down"></i>
+                    </button>
                 </div>
                 
                 <div class="toolbar-divider"></div>
@@ -1511,6 +1514,7 @@
             document.getElementById('selectTool').addEventListener('click', () => setTool('select'));
             document.getElementById('handTool').addEventListener('click', () => setTool('hand'));
             document.getElementById('cutTool').addEventListener('click', () => setTool('cut'));
+            document.getElementById('fadeOutTool').addEventListener('click', () => setTool('fadeOut'));
             
             // Edit actions
             document.getElementById('copyBtn').addEventListener('click', copySelected);
@@ -1682,7 +1686,44 @@
                     // Create buffer source
                     const source = ctx.createBufferSource();
                     source.buffer = audioBuffer;
-                    source.connect(gainNodes[track.id]);
+                    
+                    // Create gain node for fade out if needed
+                    if (clip.fadeOut && clip.fadeOut.duration > 0) {
+                        const fadeGainNode = ctx.createGain();
+                        source.connect(fadeGainNode);
+                        fadeGainNode.connect(gainNodes[track.id]);
+                        
+                        // Calculate fade timing
+                        const fadeStart = clip.fadeOut.start;
+                        const fadeDuration = clip.fadeOut.duration;
+                        const fadeEnd = fadeStart + fadeDuration;
+                        
+                        // Set initial gain
+                        fadeGainNode.gain.setValueAtTime(1.0, ctx.currentTime);
+                        
+                        // Calculate when fade starts relative to current playback position
+                        const currentPlayPosition = Math.max(0, currentTime - clip.startTime);
+                        const fadeStartTime = ctx.currentTime + Math.max(0, fadeStart - currentPlayPosition);
+                        const fadeEndTime = fadeStartTime + Math.max(0, fadeDuration - Math.max(0, currentPlayPosition - fadeStart));
+                        
+                        // Schedule fade out
+                        if (currentPlayPosition < fadeEnd) {
+                            if (currentPlayPosition < fadeStart) {
+                                // Haven't started fading yet
+                                fadeGainNode.gain.setValueAtTime(1.0, fadeStartTime);
+                                fadeGainNode.gain.linearRampToValueAtTime(0.0, fadeEndTime);
+                            } else {
+                                // Already in fade region
+                                const fadeProgress = (currentPlayPosition - fadeStart) / fadeDuration;
+                                const currentGain = Math.max(0, 1.0 - fadeProgress);
+                                fadeGainNode.gain.setValueAtTime(currentGain, ctx.currentTime);
+                                fadeGainNode.gain.linearRampToValueAtTime(0.0, fadeEndTime);
+                            }
+                        }
+                    } else {
+                        // No fade, connect directly
+                        source.connect(gainNodes[track.id]);
+                    }
                     
                     // Calculate when to start this clip
                     const clipStartTime = Math.max(0, clip.startTime - currentTime);
@@ -2231,6 +2272,8 @@
             document.querySelectorAll('.audio-clip').forEach(clipEl => {
                 if (tool === 'cut') {
                     clipEl.style.cursor = 'crosshair';
+                } else if (tool === 'fadeOut') {
+                    clipEl.style.cursor = 'cell'; // Grid cursor for fade selection
                 } else if (tool === 'select') {
                     clipEl.style.cursor = 'move';
                 }
@@ -2241,6 +2284,15 @@
                     const overlay = clipEl.querySelector('div[style*="rgba(0, 212, 255"]');
                     if (overlay) {
                         overlay.remove();
+                    }
+                }
+                
+                // Clear fade selections when switching away from fadeOut tool
+                if (tool !== 'fadeOut') {
+                    clipEl.dataset.fadeSelectionActive = 'false';
+                    const fadeOverlay = clipEl.querySelector('div[style*="rgba(255, 165, 0"]');
+                    if (fadeOverlay) {
+                        fadeOverlay.remove();
                     }
                 }
             });
@@ -2410,6 +2462,93 @@
                         });
                     }
                 }
+            });
+        }
+        
+        function executeFadeOutSelection() {
+            // Find all clips with active fade selections
+            const clipsWithSelection = document.querySelectorAll('.audio-clip[data-fade-selection-active="true"]');
+            
+            if (clipsWithSelection.length === 0) {
+                console.log('⚠️ No fade selection active. Drag to select a section first.');
+                return;
+            }
+            
+            // Save state before applying fade
+            saveState('Apply fade out');
+            
+            clipsWithSelection.forEach(clipEl => {
+                const clipId = clipEl.dataset.clipId;
+                const fadeStart = parseFloat(clipEl.dataset.fadeSelectionStart);
+                const fadeEnd = parseFloat(clipEl.dataset.fadeSelectionEnd);
+                
+                // Find the clip data
+                let clipData = null;
+                let trackData = null;
+                
+                for (const track of dawState.tracks) {
+                    const foundClip = track.clips.find(c => c.id === clipId);
+                    if (foundClip) {
+                        clipData = foundClip;
+                        trackData = track;
+                        break;
+                    }
+                }
+                
+                if (!clipData || !trackData) {
+                    console.log('⚠️ Clip not found');
+                    return;
+                }
+                
+                // Calculate fade times
+                const rect = clipEl.getBoundingClientRect();
+                const clipWidth = rect.width;
+                
+                const fadeStartRatio = Math.min(fadeStart, fadeEnd) / clipWidth;
+                const fadeEndRatio = Math.max(fadeStart, fadeEnd) / clipWidth;
+                
+                const fadeStartTime = fadeStartRatio * clipData.duration;
+                const fadeEndTime = fadeEndRatio * clipData.duration;
+                const fadeDuration = fadeEndTime - fadeStartTime;
+                
+                console.log(`🔊 Applying fade out: ${fadeStartTime.toFixed(2)}s to ${fadeEndTime.toFixed(2)}s (${fadeDuration.toFixed(2)}s fade duration)`);
+                
+                // Store fade information on the clip for playback
+                if (!clipData.fadeOut) {
+                    clipData.fadeOut = {};
+                }
+                
+                clipData.fadeOut.start = fadeStartTime;
+                clipData.fadeOut.duration = fadeDuration;
+                
+                console.log(`✅ Fade out applied to "${clipData.name}"`);
+                console.log(`   Start: ${fadeStartTime.toFixed(2)}s, Duration: ${fadeDuration.toFixed(2)}s`);
+                
+                // Remove the fade selection overlay
+                const fadeOverlay = clipEl.querySelector('div[style*="rgba(255, 165, 0"]');
+                if (fadeOverlay) {
+                    fadeOverlay.remove();
+                }
+                
+                // Clear fade selection data
+                clipEl.dataset.fadeSelectionActive = 'false';
+                delete clipEl.dataset.fadeSelectionStart;
+                delete clipEl.dataset.fadeSelectionEnd;
+                
+                // Add visual indicator for fade (orange gradient overlay on waveform)
+                const fadeIndicator = document.createElement('div');
+                fadeIndicator.className = 'fade-out-indicator';
+                fadeIndicator.style.position = 'absolute';
+                fadeIndicator.style.top = '0';
+                fadeIndicator.style.height = '100%';
+                fadeIndicator.style.left = `${fadeStartRatio * 100}%`;
+                fadeIndicator.style.width = `${(fadeEndRatio - fadeStartRatio) * 100}%`;
+                fadeIndicator.style.background = 'linear-gradient(to right, rgba(255, 165, 0, 0.2), rgba(255, 69, 0, 0.5))';
+                fadeIndicator.style.pointerEvents = 'none';
+                fadeIndicator.style.zIndex = '5';
+                fadeIndicator.style.borderLeft = '2px solid rgba(255, 140, 0, 0.8)';
+                fadeIndicator.style.borderRight = '2px solid rgba(255, 69, 0, 0.8)';
+                clipEl.appendChild(fadeIndicator);
             });
         }
         
@@ -2685,6 +2824,11 @@
             let cutSelectionEnd = 0;
             let cutSelectionOverlay = null;
             
+            // Variables for fade out selection
+            let fadeSelectionStart = 0;
+            let fadeSelectionEnd = 0;
+            let fadeSelectionOverlay = null;
+            
             clipEl.addEventListener('mousedown', function(e) {
                 if (e.button !== 0) return; // Only left mouse button
                 
@@ -2708,6 +2852,33 @@
                         cutSelectionOverlay.style.pointerEvents = 'none';
                         cutSelectionOverlay.style.zIndex = '50';
                         clipEl.appendChild(cutSelectionOverlay);
+                    }
+                    
+                    isDragging = true;
+                    e.stopPropagation();
+                    return;
+                }
+                
+                // Handle fade out tool selection
+                if (dawState.selectedTool === 'fadeOut') {
+                    const rect = clipEl.getBoundingClientRect();
+                    const clickX = e.clientX - rect.left;
+                    
+                    // Start fade selection
+                    fadeSelectionStart = clickX;
+                    fadeSelectionEnd = clickX;
+                    
+                    // Create fade selection overlay (orange color)
+                    if (!fadeSelectionOverlay) {
+                        fadeSelectionOverlay = document.createElement('div');
+                        fadeSelectionOverlay.style.position = 'absolute';
+                        fadeSelectionOverlay.style.top = '0';
+                        fadeSelectionOverlay.style.height = '100%';
+                        fadeSelectionOverlay.style.background = 'linear-gradient(to right, rgba(255, 165, 0, 0.4), rgba(255, 69, 0, 0.6))';
+                        fadeSelectionOverlay.style.border = '2px solid #ff8c00';
+                        fadeSelectionOverlay.style.pointerEvents = 'none';
+                        fadeSelectionOverlay.style.zIndex = '50';
+                        clipEl.appendChild(fadeSelectionOverlay);
                     }
                     
                     isDragging = true;
@@ -2739,6 +2910,20 @@
                     const width = Math.abs(cutSelectionEnd - cutSelectionStart);
                     cutSelectionOverlay.style.left = `${left}px`;
                     cutSelectionOverlay.style.width = `${width}px`;
+                    return;
+                }
+                
+                // Handle fade out selection dragging
+                if (dawState.selectedTool === 'fadeOut' && fadeSelectionOverlay) {
+                    const rect = clipEl.getBoundingClientRect();
+                    const currentX = e.clientX - rect.left;
+                    fadeSelectionEnd = Math.max(0, Math.min(rect.width, currentX));
+                    
+                    // Update overlay visual
+                    const left = Math.min(fadeSelectionStart, fadeSelectionEnd);
+                    const width = Math.abs(fadeSelectionEnd - fadeSelectionStart);
+                    fadeSelectionOverlay.style.left = `${left}px`;
+                    fadeSelectionOverlay.style.width = `${width}px`;
                     return;
                 }
                 
@@ -2778,8 +2963,29 @@
                     return;
                 }
                 
+                // Handle fade out selection complete
+                if (dawState.selectedTool === 'fadeOut' && fadeSelectionOverlay) {
+                    // Keep the selection overlay visible for Enter key
+                    clipEl.style.cursor = 'cell';
+                    clipEl.style.zIndex = '';
+                    
+                    // Store selection data on the clip element for Enter key handler
+                    clipEl.dataset.fadeSelectionStart = fadeSelectionStart;
+                    clipEl.dataset.fadeSelectionEnd = fadeSelectionEnd;
+                    clipEl.dataset.fadeSelectionActive = 'true';
+                    
+                    const rect = clipEl.getBoundingClientRect();
+                    const selectionWidth = Math.abs(fadeSelectionEnd - fadeSelectionStart);
+                    const selectionStartTime = (Math.min(fadeSelectionStart, fadeSelectionEnd) / rect.width) * clip.duration;
+                    const selectionEndTime = (Math.max(fadeSelectionStart, fadeSelectionEnd) / rect.width) * clip.duration;
+                    
+                    console.log(`🔊 Selected section to fade out: ${selectionStartTime.toFixed(2)}s to ${selectionEndTime.toFixed(2)}s (${(selectionEndTime - selectionStartTime).toFixed(2)}s fade duration)`);
+                    console.log(`💡 Press Enter to apply fade out effect`);
+                    return;
+                }
+                
                 // Normal clip drag complete
-                clipEl.style.cursor = dawState.selectedTool === 'cut' ? 'crosshair' : 'move';
+                clipEl.style.cursor = dawState.selectedTool === 'cut' ? 'crosshair' : (dawState.selectedTool === 'fadeOut' ? 'cell' : 'move');
                 clipEl.style.zIndex = '';
                 
                 // Calculate final position
@@ -2931,6 +3137,12 @@
                 executeCutSelection();
             }
             
+            // Enter = Execute fade out selection
+            if (e.key === 'Enter' && dawState.selectedTool === 'fadeOut') {
+                e.preventDefault();
+                executeFadeOutSelection();
+            }
+            
             // V = Select tool
             if (e.key === 'v' || e.key === 'V') {
                 setTool('select');
@@ -2945,6 +3157,13 @@
             if (e.key === 'c' || e.key === 'C') {
                 if (!e.ctrlKey && !e.metaKey) {
                     setTool('cut');
+                }
+            }
+            
+            // F = Fade Out tool
+            if (e.key === 'f' || e.key === 'F') {
+                if (!e.ctrlKey && !e.metaKey) {
+                    setTool('fadeOut');
                 }
             }
             
