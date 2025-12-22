@@ -1558,13 +1558,19 @@
                     
                     // Calculate when to start this clip
                     const clipStartTime = Math.max(0, clip.startTime - currentTime);
-                    const offset = Math.max(0, currentTime - clip.startTime);
                     
-                    // Start playback
-                    if (offset < audioBuffer.duration) {
-                        source.start(ctx.currentTime + clipStartTime, offset);
+                    // Calculate offset into the audio file (respecting audioStart for cut clips)
+                    const audioStart = clip.audioStart || 0; // Where in the audio file this clip starts
+                    const offset = Math.max(0, currentTime - clip.startTime) + audioStart;
+                    
+                    // Calculate how long to play (respecting clip duration)
+                    const playDuration = clip.duration - Math.max(0, currentTime - clip.startTime);
+                    
+                    // Start playback with proper offset and duration
+                    if (offset < audioBuffer.duration && playDuration > 0) {
+                        source.start(ctx.currentTime + clipStartTime, offset, playDuration);
                         audioSources.push(source);
-                        console.log(`▶️ Playing: ${clip.name} on ${track.name}`);
+                        console.log(`▶️ Playing: ${clip.name} on ${track.name} (audioStart=${audioStart.toFixed(2)}s, offset=${offset.toFixed(2)}s, duration=${playDuration.toFixed(2)}s)`);
                     }
                 }
             }
