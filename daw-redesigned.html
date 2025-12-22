@@ -2195,24 +2195,37 @@
                 const cutEndTime = selectionEndRatio * clipData.duration;
                 const cutDuration = cutEndTime - cutStartTime;
                 
-                console.log(`✂️ Keeping selected section: ${cutStartTime.toFixed(2)}s to ${cutEndTime.toFixed(2)}s (${cutDuration.toFixed(2)}s kept)`);
+                console.log(`✂️ Cutting out section: ${cutStartTime.toFixed(2)}s to ${cutEndTime.toFixed(2)}s (${cutDuration.toFixed(2)}s will be removed)`);
                 
-                // Create a NEW clip with ONLY the selected section
-                const selectedClip = {
+                // Create TWO clips: before the cut and after the cut (selected section is removed)
+                const beforeClip = {
                     ...clipData,
-                    id: 'clip_' + Date.now() + '_selected',
-                    startTime: clipData.startTime + cutStartTime, // Position at where selection started in timeline
-                    audioStart: clipData.audioStart + cutStartTime, // Start audio at selection start
-                    duration: cutDuration, // Only the selected duration
+                    id: 'clip_' + Date.now() + '_before',
+                    startTime: clipData.startTime, // Keep original start position
+                    audioStart: clipData.audioStart, // Keep original audio start
+                    duration: cutStartTime, // Duration up to the cut point
                 };
                 
-                // Find clip index and replace with just the selected portion
+                const afterClip = {
+                    ...clipData,
+                    id: 'clip_' + Date.now() + '_after',
+                    startTime: clipData.startTime + cutStartTime, // Position right after before clip (no gap)
+                    audioStart: clipData.audioStart + cutEndTime, // Skip the cut section in the audio
+                    duration: clipData.duration - cutEndTime, // Remaining duration after cut
+                };
+                
+                // Find clip index and replace with the two clips (removing the selected section)
                 const clipIndex = trackData.clips.findIndex(c => c.id === clipId);
                 if (clipIndex !== -1) {
-                    // Replace original clip with only the selected section
-                    trackData.clips.splice(clipIndex, 1, selectedClip);
+                    // Create array of clips to insert (only if they have duration)
+                    const newClips = [];
+                    if (beforeClip.duration > 0.01) newClips.push(beforeClip);
+                    if (afterClip.duration > 0.01) newClips.push(afterClip);
                     
-                    console.log(`✅ Cut complete: Kept ${cutDuration.toFixed(2)}s (removed ${(clipData.duration - cutDuration).toFixed(2)}s)`);
+                    // Replace original clip with the two new clips
+                    trackData.clips.splice(clipIndex, 1, ...newClips);
+                    
+                    console.log(`✅ Cut complete: ${beforeClip.duration.toFixed(2)}s + [${cutDuration.toFixed(2)}s REMOVED] + ${afterClip.duration.toFixed(2)}s`);
                     
                     // Re-render to show changes
                     renderTracks();
@@ -2574,8 +2587,8 @@
                     const selectionStartTime = (Math.min(cutSelectionStart, cutSelectionEnd) / rect.width) * clip.duration;
                     const selectionEndTime = (Math.max(cutSelectionStart, cutSelectionEnd) / rect.width) * clip.duration;
                     
-                    console.log(`📏 Selected section: ${selectionStartTime.toFixed(2)}s to ${selectionEndTime.toFixed(2)}s (${(selectionEndTime - selectionStartTime).toFixed(2)}s will be kept)`);
-                    console.log(`💡 Press Enter to keep ONLY the selected section (remove everything else)`);
+                    console.log(`📏 Selected section to cut: ${selectionStartTime.toFixed(2)}s to ${selectionEndTime.toFixed(2)}s (${(selectionEndTime - selectionStartTime).toFixed(2)}s will be removed)`);
+                    console.log(`💡 Press Enter to remove the highlighted section`);
                     return;
                 }
                 
