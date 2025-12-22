@@ -2080,6 +2080,15 @@
                 } else if (tool === 'select') {
                     clipEl.style.cursor = 'move';
                 }
+                
+                // Clear cut selections when switching away from cut tool
+                if (tool !== 'cut') {
+                    clipEl.dataset.cutSelectionActive = 'false';
+                    const overlay = clipEl.querySelector('div[style*="rgba(0, 212, 255"]');
+                    if (overlay) {
+                        overlay.remove();
+                    }
+                }
             });
             
             console.log(`🛠️ Tool selected: ${tool}`);
@@ -2141,6 +2150,84 @@
             });
             
             console.log(`📋 Pasted ${clipboardClips.length} clip(s) at ${dawState.currentTime.toFixed(2)}s`);
+        }
+        
+        function executeCutSelection() {
+            // Find all clips with active cut selections
+            const clipsWithSelection = document.querySelectorAll('.audio-clip[data-cut-selection-active="true"]');
+            
+            if (clipsWithSelection.length === 0) {
+                console.log('⚠️ No cut selection active. Drag to select a section first.');
+                return;
+            }
+            
+            clipsWithSelection.forEach(clipEl => {
+                const clipId = clipEl.dataset.clipId;
+                const cutStart = parseFloat(clipEl.dataset.cutSelectionStart);
+                const cutEnd = parseFloat(clipEl.dataset.cutSelectionEnd);
+                
+                // Find the clip data
+                let clipData = null;
+                let trackData = null;
+                
+                for (const track of dawState.tracks) {
+                    const foundClip = track.clips.find(c => c.id === clipId);
+                    if (foundClip) {
+                        clipData = foundClip;
+                        trackData = track;
+                        break;
+                    }
+                }
+                
+                if (!clipData || !trackData) {
+                    console.log('⚠️ Clip not found');
+                    return;
+                }
+                
+                // Calculate cut times
+                const rect = clipEl.getBoundingClientRect();
+                const clipWidth = rect.width;
+                
+                const selectionStartRatio = Math.min(cutStart, cutEnd) / clipWidth;
+                const selectionEndRatio = Math.max(cutStart, cutEnd) / clipWidth;
+                
+                const cutStartTime = selectionStartRatio * clipData.duration;
+                const cutEndTime = selectionEndRatio * clipData.duration;
+                const cutDuration = cutEndTime - cutStartTime;
+                
+                console.log(`✂️ Cutting section: ${cutStartTime.toFixed(2)}s to ${cutEndTime.toFixed(2)}s (${cutDuration.toFixed(2)}s removed)`);
+                
+                // Create three clips: before cut, (removed section), after cut
+                const beforeClip = {
+                    ...clipData,
+                    id: 'clip_' + Date.now() + '_before',
+                    duration: cutStartTime,
+                };
+                
+                const afterClip = {
+                    ...clipData,
+                    id: 'clip_' + Date.now() + '_after',
+                    startTime: clipData.startTime + cutStartTime, // Position right after before clip
+                    audioStart: clipData.audioStart + cutEndTime, // Skip the cut section in audio
+                    duration: clipData.duration - cutEndTime,
+                };
+                
+                // Find clip index and replace
+                const clipIndex = trackData.clips.findIndex(c => c.id === clipId);
+                if (clipIndex !== -1) {
+                    // Remove original and add the two new clips
+                    const newClips = [];
+                    if (beforeClip.duration > 0.01) newClips.push(beforeClip);
+                    if (afterClip.duration > 0.01) newClips.push(afterClip);
+                    
+                    trackData.clips.splice(clipIndex, 1, ...newClips);
+                    
+                    console.log(`✅ Cut complete: ${beforeClip.duration.toFixed(2)}s + [${cutDuration.toFixed(2)}s removed] + ${afterClip.duration.toFixed(2)}s`);
+                    
+                    // Re-render to show changes
+                    renderTracks();
+                }
+            });
         }
         
         function deleteSelected() {
@@ -2381,52 +2468,9 @@
             clipEl.addEventListener('click', function(e) {
                 e.stopPropagation();
                 
-                // Check if cut tool is active
+                // Don't handle clicks in cut mode (drag selection only)
                 if (dawState.selectedTool === 'cut') {
-                    // Cut the clip at the click position
-                    const rect = clipEl.getBoundingClientRect();
-                    const clickX = e.clientX - rect.left;
-                    const clipWidth = rect.width;
-                    const clickPositionRatio = clickX / clipWidth;
-                    
-                    // Calculate the cut time within the clip
-                    const clipDuration = clip.duration;
-                    const cutTimeInClip = clickPositionRatio * clipDuration;
-                    const cutTimeInTimeline = clip.startTime + cutTimeInClip;
-                    
-                    console.log(`✂️ Cutting clip at ${cutTimeInTimeline.toFixed(2)}s (${cutTimeInClip.toFixed(2)}s into clip)`);
-                    
-                    // Create two new clips from the cut
-                    const leftClip = {
-                        ...clip,
-                        id: 'clip_' + Date.now() + '_left',
-                        duration: cutTimeInClip,
-                        // Keep same startTime and audioStart
-                    };
-                    
-                    const rightClip = {
-                        ...clip,
-                        id: 'clip_' + Date.now() + '_right',
-                        startTime: cutTimeInTimeline,
-                        audioStart: clip.audioStart + cutTimeInClip,
-                        duration: clip.duration - cutTimeInClip,
-                    };
-                    
-                    // Find the clip in the track and replace it with the two new clips
-                    const track = dawState.tracks.find(t => t.id === clip.trackId);
-                    if (track) {
-                        const clipIndex = track.clips.findIndex(c => c.id === clip.id);
-                        if (clipIndex !== -1) {
-                            // Remove the original clip and insert the two new ones
-                            track.clips.splice(clipIndex, 1, leftClip, rightClip);
-                            
-                            // Re-render the tracks to show the cut clips
-                            renderTracks();
-                            
-                            console.log(`✅ Clip cut into two pieces: ${leftClip.duration.toFixed(2)}s + ${rightClip.duration.toFixed(2)}s`);
-                        }
-                    }
-                    return; // Don't do selection when cutting
+                    return;
                 }
                 
                 // Toggle selection (only if not in cut mode)
@@ -2447,14 +2491,42 @@
             let dragStartX = 0;
             let clipStartTime = clip.startTime;
             
+            // Variables for cut selection
+            let cutSelectionStart = 0;
+            let cutSelectionEnd = 0;
+            let cutSelectionOverlay = null;
+            
             clipEl.addEventListener('mousedown', function(e) {
                 if (e.button !== 0) return; // Only left mouse button
                 
-                // Prevent dragging when cut tool is active
+                // Handle cut tool selection
                 if (dawState.selectedTool === 'cut') {
+                    const rect = clipEl.getBoundingClientRect();
+                    const clickX = e.clientX - rect.left;
+                    
+                    // Start cut selection
+                    cutSelectionStart = clickX;
+                    cutSelectionEnd = clickX;
+                    
+                    // Create selection overlay
+                    if (!cutSelectionOverlay) {
+                        cutSelectionOverlay = document.createElement('div');
+                        cutSelectionOverlay.style.position = 'absolute';
+                        cutSelectionOverlay.style.top = '0';
+                        cutSelectionOverlay.style.height = '100%';
+                        cutSelectionOverlay.style.backgroundColor = 'rgba(0, 212, 255, 0.3)';
+                        cutSelectionOverlay.style.border = '2px solid #00d4ff';
+                        cutSelectionOverlay.style.pointerEvents = 'none';
+                        cutSelectionOverlay.style.zIndex = '50';
+                        clipEl.appendChild(cutSelectionOverlay);
+                    }
+                    
+                    isDragging = true;
+                    e.stopPropagation();
                     return;
                 }
                 
+                // Normal drag to move
                 isDragging = true;
                 dragStartX = e.clientX;
                 clipStartTime = clip.startTime;
@@ -2467,6 +2539,21 @@
             document.addEventListener('mousemove', function(e) {
                 if (!isDragging || !clipEl.parentElement) return;
                 
+                // Handle cut selection dragging
+                if (dawState.selectedTool === 'cut' && cutSelectionOverlay) {
+                    const rect = clipEl.getBoundingClientRect();
+                    const currentX = e.clientX - rect.left;
+                    cutSelectionEnd = Math.max(0, Math.min(rect.width, currentX));
+                    
+                    // Update overlay visual
+                    const left = Math.min(cutSelectionStart, cutSelectionEnd);
+                    const width = Math.abs(cutSelectionEnd - cutSelectionStart);
+                    cutSelectionOverlay.style.left = `${left}px`;
+                    cutSelectionOverlay.style.width = `${width}px`;
+                    return;
+                }
+                
+                // Normal clip dragging
                 const deltaX = e.clientX - dragStartX;
                 const pixelsPerSecond = 50 * dawState.zoom;
                 const deltaTime = deltaX / pixelsPerSecond;
@@ -2480,6 +2567,29 @@
                 if (!isDragging) return;
                 
                 isDragging = false;
+                
+                // Handle cut selection complete
+                if (dawState.selectedTool === 'cut' && cutSelectionOverlay) {
+                    // Keep the selection overlay visible for Enter key
+                    clipEl.style.cursor = 'crosshair';
+                    clipEl.style.zIndex = '';
+                    
+                    // Store selection data on the clip element for Enter key handler
+                    clipEl.dataset.cutSelectionStart = cutSelectionStart;
+                    clipEl.dataset.cutSelectionEnd = cutSelectionEnd;
+                    clipEl.dataset.cutSelectionActive = 'true';
+                    
+                    const rect = clipEl.getBoundingClientRect();
+                    const selectionWidth = Math.abs(cutSelectionEnd - cutSelectionStart);
+                    const selectionStartTime = (Math.min(cutSelectionStart, cutSelectionEnd) / rect.width) * clip.duration;
+                    const selectionEndTime = (Math.max(cutSelectionStart, cutSelectionEnd) / rect.width) * clip.duration;
+                    
+                    console.log(`📏 Cut selection: ${selectionStartTime.toFixed(2)}s to ${selectionEndTime.toFixed(2)}s (${(selectionEndTime - selectionStartTime).toFixed(2)}s selected)`);
+                    console.log(`💡 Press Enter to cut out the selected section`);
+                    return;
+                }
+                
+                // Normal clip drag complete
                 clipEl.style.cursor = dawState.selectedTool === 'cut' ? 'crosshair' : 'move';
                 clipEl.style.zIndex = '';
                 
@@ -2619,6 +2729,12 @@
             if (e.code === 'Space' && e.target.tagName !== 'INPUT') {
                 e.preventDefault();
                 togglePlay();
+            }
+            
+            // Enter = Execute cut selection
+            if (e.key === 'Enter' && dawState.selectedTool === 'cut') {
+                e.preventDefault();
+                executeCutSelection();
             }
             
             // V = Select tool
