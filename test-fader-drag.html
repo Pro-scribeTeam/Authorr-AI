@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Fader Drag Test</title>
+    <style>
+        body { background: #1a1a1a; color: #fff; font-family: monospace; padding: 20px; }
+        .test-wrapper { display: flex; gap: 40px; }
+        .fader-wrapper { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+        .fader-container { 
+            position: relative; 
+            height: 180px; 
+            width: 80px;
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 0;
+            gap: 6px;
+            border: 1px solid #444;
+            background: #2a2a2a;
+        }
+        .fader-track { 
+            width: 6px; 
+            height: 180px;
+            background: linear-gradient(to bottom, #2a2a2a, #1a1a1a);
+            border-radius: 2px;
+            position: relative;
+            cursor: pointer;
+        }
+        .fader-thumb { 
+            width: 24px; 
+            height: 32px;
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(to bottom, #666, #444, #333, #555);
+            border-radius: 3px;
+            cursor: grab;
+            z-index: 20;
+        }
+        .fader-thumb:active { cursor: grabbing; }
+        .fader-thumb::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 50%;
+            height: 2px;
+            background-color: #00d4ff;
+            box-shadow: 0 0 4px rgba(0, 212, 255, 0.8);
+        }
+        .fader-scale {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            height: 180px;
+            font-size: 10px;
+            padding: 2px 0;
+        }
+        .fader-scale-mark { display: flex; align-items: center; gap: 4px; color: #999; }
+        .fader-scale-tick { width: 4px; height: 1px; background: #666; }
+        .info { padding: 10px; background: #333; border-radius: 4px; margin-bottom: 20px; }
+        .volume-display { margin-top: 10px; padding: 8px; background: #00d4ff; color: #000; border-radius: 4px; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h2>Fader Drag Test</h2>
+    <div class="info">
+        <strong>Instructions:</strong> Drag the fader up and down<br>
+        • TOP (60 mark) = 100% volume (LOUDEST)<br>
+        • BOTTOM (0 mark) = 0% volume (SILENT)<br>
+        • Middle (30 mark) = 50% volume
+    </div>
+    
+    <div class="test-wrapper">
+        <div class="fader-wrapper">
+            <div>Interactive Fader</div>
+            <div class="fader-container">
+                <div class="fader-track">
+                    <div class="fader-thumb" id="testThumb" style="bottom: 74px;"></div>
+                </div>
+                <div class="fader-scale">
+                    <div class="fader-scale-mark"><span class="fader-scale-tick"></span><span>60</span></div>
+                    <div class="fader-scale-mark"><span class="fader-scale-tick"></span><span>50</span></div>
+                    <div class="fader-scale-mark"><span class="fader-scale-tick"></span><span>40</span></div>
+                    <div class="fader-scale-mark"><span class="fader-scale-tick"></span><span>30</span></div>
+                    <div class="fader-scale-mark"><span class="fader-scale-tick"></span><span>20</span></div>
+                    <div class="fader-scale-mark"><span class="fader-scale-tick"></span><span>10</span></div>
+                    <div class="fader-scale-mark"><span class="fader-scale-tick"></span><span>0</span></div>
+                </div>
+            </div>
+            <div class="volume-display" id="volumeDisplay">Volume: 50%</div>
+        </div>
+    </div>
+    
+    <script>
+        const thumb = document.getElementById('testThumb');
+        const track = thumb.closest('.fader-track');
+        const container = track.closest('.fader-container');
+        const volumeDisplay = document.getElementById('volumeDisplay');
+        
+        thumb.addEventListener('mousedown', function(e) {
+            e.preventDefault();
+            const containerRect = container.getBoundingClientRect();
+            const height = 180;
+            const thumbHeight = 32;
+            const halfThumb = 16;
+            
+            function onMouseMove(moveEvent) {
+                // Calculate Y relative to container top
+                let y = moveEvent.clientY - containerRect.top;
+                
+                // Constrain to container bounds
+                y = Math.max(0, Math.min(height, y));
+                
+                // Constrain cyan line (16px to 164px)
+                const minCyanY = halfThumb;
+                const maxCyanY = height - halfThumb;
+                const constrainedY = Math.max(minCyanY, Math.min(maxCyanY, y));
+                
+                // Calculate volume (TOP = 100%, BOTTOM = 0%)
+                const effectiveHeight = maxCyanY - minCyanY;
+                let volume = 1 - ((constrainedY - minCyanY) / effectiveHeight);
+                volume = Math.max(0, Math.min(1, volume));
+                
+                // Position thumb
+                const bottomPx = height - constrainedY - halfThumb;
+                thumb.style.bottom = `${bottomPx}px`;
+                
+                // Update display
+                volumeDisplay.textContent = `Volume: ${(volume * 100).toFixed(0)}%`;
+                volumeDisplay.style.background = volume > 0.8 ? '#ff4444' : 
+                                                   volume > 0.5 ? '#00d4ff' : '#666';
+                
+                console.log(`y:${y.toFixed(0)} cyan:${constrainedY.toFixed(0)} vol:${(volume*100).toFixed(0)}% bottom:${bottomPx.toFixed(0)}px`);
+            }
+            
+            function onMouseUp() {
+                document.removeEventListener('mousemove', onMouseMove);
+                document.removeEventListener('mouseup', onMouseUp);
+            }
+            
+            document.addEventListener('mousemove', onMouseMove);
+            document.addEventListener('mouseup', onMouseUp);
+        });
+    </script>
+</body>
+</html>

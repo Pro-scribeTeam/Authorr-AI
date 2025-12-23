@@ -9138,10 +9138,47 @@ Format as clean, readable text ready for narration.`;
 
         // Open the comprehensive Audio DAW
         function openAudioDAW() {
-            // Create DAW modal
+            console.log('🎚️ Opening Professional Audio DAW...');
+            
+            // Create full-screen DAW modal with iframe
             const dawModal = document.createElement('div');
             dawModal.id = 'audioDAWModal';
-            dawModal.className = 'fixed inset-0 bg-black bg-opacity-90 flex flex-col z-50';
+            dawModal.className = 'fixed inset-0 bg-black flex flex-col z-[9999]';
+            dawModal.innerHTML = `
+                <div class="flex-1 flex flex-col">
+                    <!-- DAW Header Bar -->
+                    <div class="bg-gray-900 px-6 py-3 border-b-2 border-cyan-500 flex items-center justify-between">
+                        <div class="flex items-center space-x-4">
+                            <h2 class="text-xl font-bold text-cyan-400">
+                                <i class="fas fa-sliders-h mr-2"></i>Professional Audio DAW
+                            </h2>
+                            <span class="text-xs text-gray-400 bg-gray-800 px-3 py-1 rounded-full">
+                                Full-Featured Editor
+                            </span>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <button onclick="closeAudioDAW()" class="bg-red-600 hover:bg-red-500 px-6 py-2 rounded-lg font-semibold transition-all">
+                                <i class="fas fa-times mr-2"></i>Close DAW
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Full DAW Interface (iframe) -->
+                    <div class="flex-1 relative">
+                        <iframe 
+                            id="dawIframe" 
+                            src="daw-redesigned.html" 
+                            class="w-full h-full border-0"
+                            style="background: #0A0A0A;"
+                            title="Professional Audio DAW"
+                        ></iframe>
+                    </div>
+                </div>
+            `;
+            
+            // OLD INLINE DAW CODE PRESERVED BELOW FOR REFERENCE/BACKUP
+            // (Can be removed after testing iframe integration)
+            /* BACKUP START
             dawModal.innerHTML = `
                 <div class="flex-1 flex flex-col">
                     <!-- DAW Header -->
@@ -9424,13 +9461,20 @@ Format as clean, readable text ready for narration.`;
                     </div>
                 </div>
             `;
-
+            BACKUP END */
+            
+            // Append the modal to document body
             document.body.appendChild(dawModal);
             
-            // Wait for DOM to be ready then initialize
-            setTimeout(() => {
-                initializeAudioDAW();
-            }, 100);
+            console.log('✅ Professional Audio DAW loaded in iframe');
+            
+            // Setup communication with iframe if needed
+            window.addEventListener('message', function(event) {
+                // Handle messages from DAW iframe (for future audio transfer features)
+                if (event.data && event.data.type === 'DAW_READY') {
+                    console.log('🎵 DAW iframe is ready');
+                }
+            });
         }
 
         // Professional DAW Fader Functions
@@ -13486,19 +13530,7 @@ Format as clean, readable text ready for narration.`;
         function closeAudioDAW() {
             console.log('🔄 Closing Audio DAW...');
             
-            // Stop any playing audio
-            stopDAWAudio();
-            
-            // Clean up blob URLs to prevent memory leaks
-            if (audioDAW.audioClips) {
-                audioDAW.audioClips.forEach(clip => {
-                    if (clip.blobUrl && clip.blobUrl.startsWith('blob:')) {
-                        URL.revokeObjectURL(clip.blobUrl);
-                    }
-                });
-            }
-            
-            // Remove modal
+            // Remove modal (iframe will be automatically cleaned up)
             const modal = document.getElementById('audioDAWModal');
             if (modal) {
                 modal.remove();

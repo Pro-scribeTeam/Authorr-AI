@@ -2748,8 +2748,17 @@
         }
         
         function closeDaw() {
-            if (confirm('Close DAW? Any unsaved changes will be lost.')) {
-                window.close();
+            // Check if running in iframe (embedded in main website)
+            if (window.parent && window.parent !== window) {
+                // Embedded mode - notify parent to close the modal
+                if (confirm('Close DAW? Any unsaved changes will be lost.')) {
+                    window.parent.closeAudioDAW();
+                }
+            } else {
+                // Standalone mode - close window
+                if (confirm('Close DAW? Any unsaved changes will be lost.')) {
+                    window.close();
+                }
             }
         }
         
