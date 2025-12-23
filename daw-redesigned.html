@@ -1956,15 +1956,15 @@
                         }
                     });
                     
-                    // Average the combined levels and apply master volume
+                    // Average the combined levels and apply master volume with 2x boost
                     if (trackCount > 0) {
                         const avgLevel = combinedLevel / trackCount;
-                        masterLevel = Math.min(15, Math.floor(avgLevel * dawState.masterVolume));
+                        masterLevel = Math.min(14, Math.floor(avgLevel * dawState.masterVolume * 2.0));
                     }
                     
                     const segments = meter.querySelectorAll('.led-segment');
                     segments.forEach((segment, index) => {
-                        if (index < masterLevel) {
+                        if (index <= masterLevel) {
                             segment.classList.add('active');
                         } else {
                             segment.classList.remove('active');
@@ -1985,15 +1985,15 @@
                         const track = dawState.tracks.find(t => t.id === trackId);
                         const trackVolume = track ? track.volume : 1.0;
                         
-                        // Apply volume scaling with 6x boost for high visibility
+                        // Apply volume scaling with 8x boost for high visibility
                         // Higher fader = more LEDs light up
                         // With 2x volume boost, this ensures LEDs reach yellow/red zones
-                        const rawLevel = (average / 255) * 15 * 6.0; // 6x boost (doubled from 3x)
-                        const level = Math.min(15, Math.floor(rawLevel * trackVolume));
+                        const rawLevel = (average / 255) * 15 * 8.0; // 8x boost for better visibility
+                        const level = Math.min(14, Math.floor(rawLevel * trackVolume * 2.0)); // Apply 2x boost
                         
                         const segments = meter.querySelectorAll('.led-segment');
                         segments.forEach((segment, index) => {
-                            if (index < level) {
+                            if (index <= level) {
                                 segment.classList.add('active');
                             } else {
                                 segment.classList.remove('active');
