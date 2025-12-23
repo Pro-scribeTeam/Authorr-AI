@@ -1315,7 +1315,7 @@
             // Calculate timeline width based on total duration + generous buffer
             const pixelsPerSecond = 50 * dawState.zoom;
             const bufferTime = 30; // 30 seconds of empty space after last clip
-            const totalDuration = Math.max(60, dawState.totalDuration + bufferTime);
+            const totalDuration = Math.max(180, dawState.totalDuration + bufferTime); // Min 3 minutes
             const timelineWidth = totalDuration * pixelsPerSecond;
             
             // Set explicit width for ruler and all track canvases
