@@ -3320,6 +3320,43 @@
         
         window.addEventListener('DOMContentLoaded', initializeDAW);
         
+        // Listen for narration audio from parent window
+        window.addEventListener('message', function(event) {
+            console.log('📨 DAW received message:', event.data);
+            
+            if (event.data && event.data.type === 'LOAD_NARRATION') {
+                console.log('🎵 Loading narration audio into DAW...');
+                
+                const audioData = event.data.audioData;
+                if (!audioData || !audioData.url) {
+                    console.error('❌ Invalid audio data received');
+                    return;
+                }
+                
+                // Fetch the audio blob from URL
+                fetch(audioData.url)
+                    .then(response => response.blob())
+                    .then(blob => {
+                        // Create a File object from the blob
+                        const file = new File([blob], audioData.title || 'Narration.wav', { type: 'audio/wav' });
+                        
+                        // Load into narration track (first track - id: 'narration')
+                        loadAudioFile(file, 'narration');
+                        
+                        console.log('✅ Narration audio loaded into DAW successfully');
+                        
+                        // Notify parent that DAW is ready
+                        if (window.parent && window.parent !== window) {
+                            window.parent.postMessage({ type: 'DAW_READY' }, '*');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('❌ Error loading narration audio:', error);
+                        alert('Failed to load narration audio into DAW');
+                    });
+            }
+        });
+        
         // Re-render timeline ruler on window resize
         window.addEventListener('resize', () => {
             renderTimelineRuler();

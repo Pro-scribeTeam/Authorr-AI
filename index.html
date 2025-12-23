@@ -8116,6 +8116,11 @@ Format as clean, readable text ready for narration.`;
                 // Display results
                 if (audioBlobs.length > 0) {
                     console.log(`✅ Generated ${audioBlobs.length} audio segments successfully`);
+                    
+                    // Store audio blobs globally for DAW transfer
+                    window.generatedNarrationAudio = audioBlobs;
+                    console.log('💾 Stored narration audio for DAW transfer');
+                    
                     displayNarratorOnlyResults(audioBlobs);
                     hideLoading();
                     
@@ -8569,6 +8574,9 @@ Format as clean, readable text ready for narration.`;
                             </div>
                         ` : ''}
                         <div class="space-y-2">
+                            <button onclick="transferNarrationToDAW()" class="btn-primary px-6 py-3 rounded-lg w-full font-semibold">
+                                <i class="fas fa-paper-plane mr-2"></i>Send to DAW Narration Channel
+                            </button>
                             <button onclick="openAudioDAW()" class="btn-secondary px-6 py-2 rounded-lg w-full">
                                 <i class="fas fa-sliders-h mr-2"></i>Open Audio DAW
                             </button>
@@ -8578,6 +8586,169 @@ Format as clean, readable text ready for narration.`;
             `;
             
             narrationResults.innerHTML = resultsHTML;
+        }
+
+        // Transfer narration audio to DAW
+        async function transferNarrationToDAW() {
+            console.log('🎵 === TRANSFERRING NARRATION TO DAW ===');
+            
+            if (!window.generatedNarrationAudio || window.generatedNarrationAudio.length === 0) {
+                showNotification('No narration audio available. Please generate narration first.', 'error');
+                return;
+            }
+            
+            showLoading('Combining audio segments and preparing for DAW...');
+            
+            try {
+                const audioBlobs = window.generatedNarrationAudio;
+                console.log(`📦 Processing ${audioBlobs.length} audio segment(s)`);
+                
+                let combinedAudioBuffer;
+                let combinedBlob;
+                
+                if (audioBlobs.length === 1) {
+                    // Single segment - use directly
+                    console.log('✅ Single segment - using directly');
+                    combinedBlob = audioBlobs[0].blob;
+                } else {
+                    // Multiple segments - combine them
+                    console.log('🔗 Multiple segments - combining...');
+                    
+                    // Create audio context
+                    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    
+                    // Decode all audio blobs
+                    const audioBuffers = [];
+                    for (let i = 0; i < audioBlobs.length; i++) {
+                        console.log(`📥 Decoding segment ${i + 1}/${audioBlobs.length}...`);
+                        const arrayBuffer = await audioBlobs[i].blob.arrayBuffer();
+                        const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+                        audioBuffers.push(audioBuffer);
+                    }
+                    
+                    // Calculate total length
+                    const totalLength = audioBuffers.reduce((sum, buffer) => sum + buffer.length, 0);
+                    const sampleRate = audioBuffers[0].sampleRate;
+                    const numberOfChannels = audioBuffers[0].numberOfChannels;
+                    
+                    console.log(`🎵 Total duration: ${(totalLength / sampleRate).toFixed(2)} seconds`);
+                    
+                    // Create combined buffer
+                    combinedAudioBuffer = audioContext.createBuffer(numberOfChannels, totalLength, sampleRate);
+                    
+                    // Copy each segment into the combined buffer
+                    let offset = 0;
+                    for (let i = 0; i < audioBuffers.length; i++) {
+                        const buffer = audioBuffers[i];
+                        for (let channel = 0; channel < numberOfChannels; channel++) {
+                            const channelData = buffer.getChannelData(channel);
+                            combinedAudioBuffer.getChannelData(channel).set(channelData, offset);
+                        }
+                        offset += buffer.length;
+                        console.log(`✅ Segment ${i + 1} added (offset: ${offset})`);
+                    }
+                    
+                    // Convert to WAV blob
+                    combinedBlob = audioBufferToWav(combinedAudioBuffer);
+                    console.log('✅ Combined audio created:', combinedBlob.size, 'bytes');
+                }
+                
+                // Store for DAW
+                const combinedUrl = URL.createObjectURL(combinedBlob);
+                window.dawNarrationAudio = {
+                    blob: combinedBlob,
+                    url: combinedUrl,
+                    buffer: combinedAudioBuffer,
+                    duration: combinedAudioBuffer ? combinedAudioBuffer.duration : 0,
+                    title: storyData?.title ? `${storyData.title} - Narration` : 'Narration',
+                    timestamp: Date.now()
+                };
+                
+                hideLoading();
+                showNotification('✅ Narration ready! Opening Audio DAW...', 'success');
+                
+                console.log('✅ Narration prepared for DAW transfer');
+                console.log('🎵 Opening DAW...');
+                
+                // Open DAW with slight delay to ensure notification is visible
+                setTimeout(() => {
+                    openAudioDAW();
+                    
+                    // Send message to DAW iframe after it loads
+                    setTimeout(() => {
+                        const dawIframe = document.getElementById('dawIframe');
+                        if (dawIframe && dawIframe.contentWindow) {
+                            dawIframe.contentWindow.postMessage({
+                                type: 'LOAD_NARRATION',
+                                audioData: {
+                                    url: combinedUrl,
+                                    title: window.dawNarrationAudio.title,
+                                    duration: window.dawNarrationAudio.duration
+                                }
+                            }, '*');
+                            console.log('📤 Sent narration data to DAW iframe');
+                        }
+                    }, 1000);
+                }, 500);
+                
+            } catch (error) {
+                console.error('❌ Error transferring to DAW:', error);
+                hideLoading();
+                showNotification(`Failed to transfer to DAW: ${error.message}`, 'error');
+            }
+        }
+        
+        // Helper function to convert AudioBuffer to WAV blob
+        function audioBufferToWav(audioBuffer) {
+            const numberOfChannels = audioBuffer.numberOfChannels;
+            const sampleRate = audioBuffer.sampleRate;
+            const format = 1; // PCM
+            const bitDepth = 16;
+            
+            const bytesPerSample = bitDepth / 8;
+            const blockAlign = numberOfChannels * bytesPerSample;
+            
+            const data = [];
+            for (let channel = 0; channel < numberOfChannels; channel++) {
+                data.push(audioBuffer.getChannelData(channel));
+            }
+            
+            const length = audioBuffer.length * numberOfChannels * bytesPerSample;
+            const buffer = new ArrayBuffer(44 + length);
+            const view = new DataView(buffer);
+            
+            // WAV header
+            writeString(view, 0, 'RIFF');
+            view.setUint32(4, 36 + length, true);
+            writeString(view, 8, 'WAVE');
+            writeString(view, 12, 'fmt ');
+            view.setUint32(16, 16, true); // fmt chunk size
+            view.setUint16(20, format, true);
+            view.setUint16(22, numberOfChannels, true);
+            view.setUint32(24, sampleRate, true);
+            view.setUint32(28, sampleRate * blockAlign, true);
+            view.setUint16(32, blockAlign, true);
+            view.setUint16(34, bitDepth, true);
+            writeString(view, 36, 'data');
+            view.setUint32(40, length, true);
+            
+            // Write audio data
+            let offset = 44;
+            for (let i = 0; i < audioBuffer.length; i++) {
+                for (let channel = 0; channel < numberOfChannels; channel++) {
+                    const sample = Math.max(-1, Math.min(1, data[channel][i]));
+                    view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7FFF, true);
+                    offset += 2;
+                }
+            }
+            
+            return new Blob([buffer], { type: 'audio/wav' });
+        }
+        
+        function writeString(view, offset, string) {
+            for (let i = 0; i < string.length; i++) {
+                view.setUint8(offset + i, string.charCodeAt(i));
+            }
         }
 
         // Combine All Chapters function
