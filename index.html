@@ -8610,6 +8610,12 @@ Format as clean, readable text ready for narration.`;
                     // Single segment - use directly
                     console.log('✅ Single segment - using directly');
                     combinedBlob = audioBlobs[0].blob;
+                    
+                    // Decode to get duration
+                    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    const arrayBuffer = await combinedBlob.arrayBuffer();
+                    combinedAudioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+                    console.log(`✅ Single segment duration: ${combinedAudioBuffer.duration.toFixed(2)}s`);
                 } else {
                     // Multiple segments - combine them
                     console.log('🔗 Multiple segments - combining...');

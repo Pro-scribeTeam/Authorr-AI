@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Narration Transfer Debug Test</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .log-entry {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            padding: 8px;
+            margin: 4px 0;
+            border-left: 3px solid #10b981;
+            background: rgba(16, 185, 129, 0.1);
+        }
+        .log-error {
+            border-left-color: #ef4444;
+            background: rgba(239, 68, 68, 0.1);
+        }
+        .log-warning {
+            border-left-color: #f59e0b;
+            background: rgba(245, 158, 11, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="max-w-4xl mx-auto bg-white rounded-2xl shadow-2xl p-8">
+        <h1 class="text-3xl font-bold text-gray-800 mb-6">
+            <i class="fas fa-bug mr-3 text-red-500"></i>
+            Narration Transfer Debug Tool
+        </h1>
+
+        <!-- Test Controls -->
+        <div class="space-y-4 mb-8">
+            <button onclick="testFunctionExists()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg">
+                1. Check if transferNarrationToDAW() exists
+            </button>
+            
+            <button onclick="testGenerateSimpleAudio()" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg">
+                2. Generate Test Audio (Mock)
+            </button>
+            
+            <button onclick="testAudioCombining()" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg">
+                3. Test Audio Combining
+            </button>
+            
+            <button onclick="testDAWCommunication()" class="w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 px-6 rounded-lg">
+                4. Test DAW Communication
+            </button>
+            
+            <button onclick="testFullTransfer()" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg">
+                5. Test Full Transfer Flow
+            </button>
+            
+            <button onclick="clearLogs()" class="w-full bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-6 rounded-lg">
+                Clear Logs
+            </button>
+        </div>
+
+        <!-- Console Log Display -->
+        <div class="bg-gray-900 rounded-lg p-4 text-white" style="max-height: 500px; overflow-y: auto;">
+            <h2 class="text-xl font-bold mb-3 text-cyan-400">
+                <i class="fas fa-terminal mr-2"></i>Debug Console
+            </h2>
+            <div id="debugConsole"></div>
+        </div>
+
+        <!-- Status Display -->
+        <div id="statusDisplay" class="mt-4 p-4 bg-blue-50 border-l-4 border-blue-500 rounded hidden">
+            <div id="statusText"></div>
+        </div>
+    </div>
+
+    <script>
+        // Debug logger
+        function log(message, type = 'info') {
+            const console = document.getElementById('debugConsole');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type === 'error' ? 'log-error' : type === 'warning' ? 'log-warning' : ''}`;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            console.appendChild(entry);
+            console.scrollTop = console.scrollHeight;
+            
+            // Also log to browser console
+            console[type === 'error' ? 'error' : 'log'](message);
+        }
+
+        function clearLogs() {
+            document.getElementById('debugConsole').innerHTML = '';
+            log('Logs cleared');
+        }
+
+        function showStatus(text, type = 'info') {
+            const status = document.getElementById('statusDisplay');
+            const statusText = document.getElementById('statusText');
+            status.className = `mt-4 p-4 border-l-4 rounded ${
+                type === 'success' ? 'bg-green-50 border-green-500' :
+                type === 'error' ? 'bg-red-50 border-red-500' :
+                'bg-blue-50 border-blue-500'
+            }`;
+            statusText.textContent = text;
+            status.classList.remove('hidden');
+        }
+
+        // Test 1: Check if function exists
+        function testFunctionExists() {
+            log('=== TEST 1: Checking Function Existence ===');
+            
+            // Try to access from parent window (main site)
+            if (window.opener && typeof window.opener.transferNarrationToDAW === 'function') {
+                log('✅ transferNarrationToDAW found in parent window');
+                showStatus('✅ Function exists in parent window', 'success');
+            } else if (typeof transferNarrationToDAW === 'function') {
+                log('✅ transferNarrationToDAW found in current window');
+                showStatus('✅ Function exists in current window', 'success');
+            } else {
+                log('❌ transferNarrationToDAW NOT FOUND', 'error');
+                log('Available window properties:', 'warning');
+                log(Object.keys(window).filter(k => k.includes('transfer')).join(', '));
+                showStatus('❌ Function NOT FOUND', 'error');
+            }
+            
+            log('Checking window.generatedNarrationAudio...');
+            if (window.generatedNarrationAudio) {
+                log(`✅ window.generatedNarrationAudio exists (${window.generatedNarrationAudio.length} segments)`);
+            } else {
+                log('ℹ️  window.generatedNarrationAudio not set (no narration generated yet)');
+            }
+        }
+
+        // Test 2: Generate mock audio
+        function testGenerateSimpleAudio() {
+            log('=== TEST 2: Generating Mock Audio ===');
+            
+            try {
+                // Create a simple audio context
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const duration = 2; // 2 seconds
+                const sampleRate = audioContext.sampleRate;
+                const frameCount = sampleRate * duration;
+                
+                // Create buffer with sine wave
+                const buffer = audioContext.createBuffer(2, frameCount, sampleRate);
+                
+                for (let channel = 0; channel < 2; channel++) {
+                    const data = buffer.getChannelData(channel);
+                    for (let i = 0; i < frameCount; i++) {
+                        data[i] = Math.sin(2 * Math.PI * 440 * i / sampleRate) * 0.5;
+                    }
+                }
+                
+                log('✅ Created audio buffer: ' + duration + 's @ ' + sampleRate + 'Hz');
+                
+                // Store as mock narration
+                window.generatedNarrationAudio = [{
+                    blob: new Blob(['mock'], { type: 'audio/wav' }),
+                    segment: {
+                        type: 'test',
+                        text: 'Test narration',
+                        voice: 'test_voice',
+                        character: 'Narrator'
+                    },
+                    buffer: buffer
+                }];
+                
+                log('✅ Stored mock narration in window.generatedNarrationAudio');
+                showStatus('✅ Mock audio generated and stored', 'success');
+                
+            } catch (error) {
+                log('❌ Error generating mock audio: ' + error.message, 'error');
+                showStatus('❌ Error: ' + error.message, 'error');
+            }
+        }
+
+        // Test 3: Test audio combining
+        function testAudioCombining() {
+            log('=== TEST 3: Testing Audio Combining ===');
+            
+            if (!window.generatedNarrationAudio || window.generatedNarrationAudio.length === 0) {
+                log('❌ No audio to combine. Run Test 2 first.', 'error');
+                showStatus('❌ Run Test 2 first to generate audio', 'error');
+                return;
+            }
+            
+            try {
+                log('Found ' + window.generatedNarrationAudio.length + ' audio segment(s)');
+                
+                // Try to use the audioBufferToWav function if it exists
+                if (typeof audioBufferToWav === 'function') {
+                    log('✅ audioBufferToWav function exists');
+                    const testBuffer = window.generatedNarrationAudio[0].buffer;
+                    if (testBuffer) {
+                        const wavBlob = audioBufferToWav(testBuffer);
+                        log('✅ Successfully converted buffer to WAV (' + wavBlob.size + ' bytes)');
+                        showStatus('✅ Audio combining works!', 'success');
+                    } else {
+                        log('⚠️  No buffer in audio data', 'warning');
+                    }
+                } else {
+                    log('❌ audioBufferToWav function not found', 'error');
+                    showStatus('❌ Audio combining function missing', 'error');
+                }
+                
+            } catch (error) {
+                log('❌ Error testing audio combining: ' + error.message, 'error');
+                showStatus('❌ Error: ' + error.message, 'error');
+            }
+        }
+
+        // Test 4: Test DAW communication
+        function testDAWCommunication() {
+            log('=== TEST 4: Testing DAW Communication ===');
+            
+            try {
+                // Open a test iframe
+                const testUrl = 'daw-redesigned.html';
+                log('Creating test iframe...');
+                
+                const iframe = document.createElement('iframe');
+                iframe.src = testUrl;
+                iframe.style.width = '1px';
+                iframe.style.height = '1px';
+                iframe.style.position = 'absolute';
+                iframe.style.left = '-9999px';
+                document.body.appendChild(iframe);
+                
+                log('✅ Test iframe created');
+                
+                // Try to send message after delay
+                setTimeout(() => {
+                    try {
+                        iframe.contentWindow.postMessage({
+                            type: 'LOAD_NARRATION',
+                            audioData: {
+                                url: 'blob:test',
+                                title: 'Test',
+                                duration: 5
+                            }
+                        }, '*');
+                        log('✅ Message sent to iframe');
+                        showStatus('✅ DAW communication test passed', 'success');
+                        
+                        // Clean up
+                        setTimeout(() => iframe.remove(), 2000);
+                    } catch (error) {
+                        log('❌ Error sending message: ' + error.message, 'error');
+                        showStatus('❌ Error: ' + error.message, 'error');
+                    }
+                }, 2000);
+                
+            } catch (error) {
+                log('❌ Error in DAW communication test: ' + error.message, 'error');
+                showStatus('❌ Error: ' + error.message, 'error');
+            }
+        }
+
+        // Test 5: Full transfer flow
+        function testFullTransfer() {
+            log('=== TEST 5: Testing Full Transfer Flow ===');
+            
+            if (!window.generatedNarrationAudio || window.generatedNarrationAudio.length === 0) {
+                log('⚠️  No audio generated. Running Test 2 first...', 'warning');
+                testGenerateSimpleAudio();
+                setTimeout(() => continueFullTransfer(), 1000);
+            } else {
+                continueFullTransfer();
+            }
+        }
+
+        function continueFullTransfer() {
+            try {
+                log('Checking transfer function...');
+                
+                if (typeof transferNarrationToDAW === 'function') {
+                    log('✅ Function found, calling...');
+                    transferNarrationToDAW();
+                } else {
+                    log('❌ transferNarrationToDAW function not available', 'error');
+                    log('This debug page must be opened from the main website', 'warning');
+                    showStatus('❌ Open this from the main website', 'error');
+                }
+                
+            } catch (error) {
+                log('❌ Error in full transfer: ' + error.message, 'error');
+                log('Stack: ' + error.stack, 'error');
+                showStatus('❌ Error: ' + error.message, 'error');
+            }
+        }
+
+        // Initial setup
+        log('🔧 Debug tool initialized');
+        log('Run tests in order (1 → 2 → 3 → 4 → 5)');
+        log('Or open main website and test there');
+    </script>
+</body>
+</html>
