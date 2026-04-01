@@ -2091,9 +2091,16 @@
                         
                         <div>
                             <label class="block text-sm font-semibold mb-2">ElevenLabs API Key</label>
-                            <input type="password" id="elevenlabsKey" placeholder="Enter your ElevenLabs API key..." 
+                            <input type="password" id="elevenlabsKey" placeholder="Enter your ElevenLabs API key..."
                                    class="w-full px-4 py-2 rounded-lg form-field bg-theme-primary text-theme-primary">
                             <p class="text-xs text-theme-secondary mt-1">Optional: Enables advanced voice cloning and additional voices</p>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-semibold mb-2">RunPod API Key</label>
+                            <input type="password" id="runpodKey" placeholder="rpa_..."
+                                   class="w-full px-4 py-2 rounded-lg form-field bg-theme-primary text-theme-primary">
+                            <p class="text-xs text-theme-secondary mt-1">Required for Chatterbox TTS narration</p>
                         </div>
                         
                         <div>
@@ -6341,51 +6348,68 @@ Format as clean, readable text ready for narration.`;
         function saveSettings() {
             const apiKey = document.getElementById('openaiKey')?.value?.trim();
             const elevenlabsKey = document.getElementById('elevenlabsKey')?.value?.trim();
+            const runpodKey = document.getElementById('runpodKey')?.value?.trim();
             const model = document.getElementById('modelSelection')?.value;
             const autoSave = document.getElementById('autoSave')?.checked;
-            
+
             if (apiKey) {
                 localStorage.setItem('openaiApiKey', apiKey);
             }
             if (elevenlabsKey) {
                 localStorage.setItem('elevenlabsApiKey', elevenlabsKey);
             }
+            if (runpodKey) {
+                localStorage.setItem('runpodApiKey', runpodKey);
+            }
             if (model) {
                 localStorage.setItem('selectedModel', model);
             }
             localStorage.setItem('autoSave', autoSave);
-            
+
             showNotification('Settings saved successfully!', 'success');
-            
+
             // Mask the API keys display for security
             const keyInput = document.getElementById('openaiKey');
             if (keyInput && apiKey) {
                 keyInput.value = '••••••••••••••••••••••••••••••••••••••••••••••••••••' + apiKey.slice(-4);
             }
-            
+
             const elevenlabsInput = document.getElementById('elevenlabsKey');
             if (elevenlabsInput && elevenlabsKey) {
                 elevenlabsInput.value = '••••••••••••••••••••••••••••••••••••••••••••••••••••' + elevenlabsKey.slice(-4);
+            }
+
+            const runpodInput = document.getElementById('runpodKey');
+            if (runpodInput && runpodKey) {
+                runpodInput.value = '••••••••••••••••••••••••••••••••••••••••••••••••••••' + runpodKey.slice(-4);
             }
         }
 
         function loadSettings() {
             const apiKey = localStorage.getItem('openaiApiKey');
             const elevenlabsKey = localStorage.getItem('elevenlabsApiKey');
+            const runpodKey = localStorage.getItem('runpodApiKey');
             const model = localStorage.getItem('selectedModel');
             const autoSave = localStorage.getItem('autoSave');
-            
+
             if (apiKey) {
                 const keyInput = document.getElementById('openaiKey');
                 if (keyInput) {
                     keyInput.value = '••••••••••••••••••••••••••••••••••••••••••••••••••••' + apiKey.slice(-4);
                 }
             }
-            
+
             if (elevenlabsKey) {
                 const elevenlabsInput = document.getElementById('elevenlabsKey');
                 if (elevenlabsInput) {
                     elevenlabsInput.value = '••••••••••••••••••••••••••••••••••••••••••••••••••••' + elevenlabsKey.slice(-4);
+                }
+            }
+
+            if (runpodKey) {
+                const runpodInput = document.getElementById('runpodKey');
+                if (runpodInput) {
+                    runpodInput.value = '••••••••••••••••••••••••••••••••••••••••••••••••••••' + runpodKey.slice(-4);
                 }
             }
             
@@ -6543,6 +6567,8 @@ Format as clean, readable text ready for narration.`;
                         return;
                     }
                     audioBlob = await generateElevenLabsAudio(previewText, voiceId, apiKey);
+                } else if (provider === 'chatterbox') {
+                    audioBlob = await generateChatterboxAudio(previewText);
                 } else {
                     showNotification('Unknown voice provider', 'error');
                     return;
@@ -7089,6 +7115,18 @@ Format as clean, readable text ready for narration.`;
                     elevenlabsOptgroup.appendChild(option);
                 });
             }
+
+            // Add Chatterbox voices
+            const chatterboxOptgroup = document.createElement('optgroup');
+            chatterboxOptgroup.label = '🔊 Chatterbox TTS';
+            voiceSelect.appendChild(chatterboxOptgroup);
+
+            const chatterboxOption = document.createElement('option');
+            chatterboxOption.value = 'chatterbox_default';
+            chatterboxOption.textContent = 'Chatterbox - Natural, Expressive';
+            chatterboxOption.dataset.provider = 'chatterbox';
+            chatterboxOption.dataset.voice = 'default';
+            chatterboxOptgroup.appendChild(chatterboxOption);
 
             // Select first OpenAI voice by default
             if (voiceSelect.options.length > 0) {
@@ -8216,11 +8254,43 @@ Format as clean, readable text ready for narration.`;
             return chunks;
         }
 
+        async function generateChatterboxAudio(text, exaggeration = 0.5, cfg_weight = 0.5) {
+            console.log(`🎙️ Generating Chatterbox audio: text="${text.substring(0, 50)}..."`);
+            const RUNPOD_API_KEY = localStorage.getItem('runpodApiKey') || '';
+            const ENDPOINT_ID = '7p5r8y4d9ky4u6';
+            if (!RUNPOD_API_KEY) {
+                throw new Error('RunPod API key not configured. Please add it in Settings.');
+            }
+
+            const response = await fetch(`https://api.runpod.io/v2/${ENDPOINT_ID}/runsync`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${RUNPOD_API_KEY}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    input: { text, exaggeration, cfg_weight }
+                })
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Chatterbox TTS Error: ${response.status} - ${errorText}`);
+            }
+
+            const result = await response.json();
+            const audioB64 = result.output.audio;
+            const binary = atob(audioB64);
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+            return new Blob([bytes], { type: 'audio/wav' });
+        }
+
         async function generateSegmentAudio(segment) {
             const voiceInfo = segment.voice.split('_');
             const provider = voiceInfo[0];
             const voiceId = voiceInfo[1];
-            
+
             if (provider === 'openai') {
                 return await generateOpenAIAudio(segment.text, voiceId);
             } else if (provider === 'elevenlabs') {
@@ -8229,6 +8299,8 @@ Format as clean, readable text ready for narration.`;
                     throw new Error('ElevenLabs API key not configured');
                 }
                 return await generateElevenLabsAudio(segment.text, voiceId, apiKey);
+            } else if (provider === 'chatterbox') {
+                return await generateChatterboxAudio(segment.text);
             } else {
                 throw new Error(`Unknown voice provider: ${provider}`);
             }
