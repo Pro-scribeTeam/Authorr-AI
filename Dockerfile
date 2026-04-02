@@ -7,9 +7,6 @@ RUN pip install --no-cache-dir \
     soundfile \
     chatterbox-tts
 
-# Pre-download model weights into the image
-RUN python -c "from chatterbox.tts import ChatterboxTTS; ChatterboxTTS.from_pretrained(device='cpu')"
-
 COPY handler.py .
 
-CMD ["python", "handler.py"]
+CMD ["python", "-u", "handler.py"]
