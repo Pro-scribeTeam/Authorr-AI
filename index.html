@@ -8262,7 +8262,7 @@ Format as clean, readable text ready for narration.`;
                 throw new Error('RunPod API key not configured. Please add it in Settings.');
             }
 
-            const response = await fetch(`https://api.runpod.io/v2/${ENDPOINT_ID}/runsync`, {
+            const response = await fetch(`https://api.runpod.ai/v2/${ENDPOINT_ID}/runsync`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${RUNPOD_API_KEY}`,
