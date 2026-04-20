@@ -1,23 +1,18 @@
-FROM runpod/pytorch:2.4.0-py3.11-cuda12.4.1-devel-ubuntu22.04
+# Use a pre-built Chatterbox TTS image that already has PyTorch, CUDA,
+# chatterbox-tts, and the model weights baked in.
+# This avoids GitHub Actions disk space limits (~14GB free) that were
+# causing the build to fail when installing everything from scratch.
+FROM liamvisionary/chatterbox-tts-runpod:v2
 
 WORKDIR /app
 
-# Install dependencies
+# Install RunPod serverless SDK and audio deps on top of the base image
 RUN pip install --no-cache-dir \
     runpod \
     soundfile \
-    numpy \
-    chatterbox-tts
+    numpy
 
-# Pre-download the Chatterbox model at build time so it's baked into the image.
-# This prevents cold-start timeouts on RunPod serverless where jobs would otherwise
-# sit IN_QUEUE while the model downloads from HuggingFace at runtime.
-RUN python3 -c "\
-from chatterbox.tts import ChatterboxTTS; \
-print('Downloading Chatterbox model...'); \
-ChatterboxTTS.from_pretrained(device='cpu'); \
-print('Model downloaded and cached successfully.')"
-
+# Copy our handler
 COPY handler.py .
 
 CMD ["python", "-u", "handler.py"]
