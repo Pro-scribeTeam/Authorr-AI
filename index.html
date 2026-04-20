@@ -2657,11 +2657,11 @@
             }
             
             const apiKey = getOpenAIApiKey();
-            if (!apiKey) {
+            if (!apiKey && getAIProvider() !== 'ollama') {
                 showNotification('Please configure your API key first', 'error');
                 return;
             }
-            
+
             showNotification('Generating all chapter content...', 'info');
             
             try {
@@ -5843,7 +5843,7 @@ Return the COMPLETE text with DRAMATICALLY humanized writing that's obviously di
 
         async function createVariations() {
             const apiKey = getOpenAIApiKey();
-            if (!apiKey) {
+            if (!apiKey && getAIProvider() !== 'ollama') {
                 showNotification('Please configure your API key first', 'error');
                 return;
             }
@@ -6094,7 +6094,7 @@ Return the COMPLETE text with DRAMATICALLY humanized writing that's obviously di
         // OpenAI GPT-4 Writing Assistance Functions
         async function generateChapterPlan() {
             const apiKey = getOpenAIApiKey();
-            if (!apiKey) {
+            if (!apiKey && getAIProvider() !== 'ollama') {
                 showNotification('Please configure your API key in Config section first', 'error');
                 return;
             }
@@ -6350,9 +6350,9 @@ JSON Structure:
             
             // Clear dialogue data when generating new content
             clearAllDialogueData(true);
-            
+
             const apiKey = getOpenAIApiKey();
-            if (!apiKey) {
+            if (!apiKey && getAIProvider() !== 'ollama') {
                 showNotification('Please configure your API key first', 'error');
                 return;
             }
@@ -6627,7 +6627,7 @@ Format as clean, readable text ready for narration.`;
             }
 
             const apiKey = getOpenAIApiKey();
-            if (!apiKey) {
+            if (!apiKey && getAIProvider() !== 'ollama') {
                 showNotification('Please configure your API key first', 'error');
                 return;
             }
