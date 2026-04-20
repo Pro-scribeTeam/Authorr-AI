@@ -1,0 +1,4 @@
+runpod
+soundfile
+numpy
+chatterbox-tts
