@@ -6146,7 +6146,7 @@ JSON Structure:
                 let content = await callOpenAI([
                     {
                         role: "system",
-                        content: "You are a professional book planning assistant. Create detailed, engaging chapter plans that follow proper story structure and pacing. Always respond with valid JSON only, no markdown formatting or code blocks."
+                        content: "You are a professional book planning assistant. You MUST respond with ONLY a valid JSON object — no explanations, no markdown, no code blocks, no thinking, no preamble. Start your response with { and end with }. Include ALL requested chapters in the chapters array."
                     },
                     {
                         role: "user",
@@ -6154,19 +6154,31 @@ JSON Structure:
                     }
                 ]);
                 
-                // Clean the response - remove markdown formatting
+                // Clean the response — strip markdown, thinking tags, and preamble
+                content = content.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
                 content = content.replace(/```json\s*/gi, '').replace(/```\s*/gi, '').trim();
-                
-                // Additional cleaning for common AI response issues
-                content = content.replace(/^Here's.*?:/gi, '').trim();
-                content = content.replace(/^Based on.*?:/gi, '').trim();
-                
+                content = content.replace(/^Here's.*?:/gim, '').trim();
+                content = content.replace(/^Based on.*?:/gim, '').trim();
+                content = content.replace(/^Sure.*?:/gim, '').trim();
+
+                // Extract JSON object — find the first { and last } in the response
+                const jsonStart = content.indexOf('{');
+                const jsonEnd = content.lastIndexOf('}');
+                if (jsonStart !== -1 && jsonEnd !== -1) {
+                    content = content.substring(jsonStart, jsonEnd + 1);
+                }
+
                 let chapterPlan;
                 try {
                     chapterPlan = JSON.parse(content);
                 } catch (parseError) {
                     console.error('JSON parsing failed, raw content:', content);
-                    throw new Error('Invalid JSON response from AI. Please try again.');
+                    throw new Error('AI returned invalid JSON. Please try again.');
+                }
+
+                // Validate we got multiple chapters
+                if (!chapterPlan.chapters || chapterPlan.chapters.length === 0) {
+                    throw new Error('AI did not return any chapters. Please try again.');
                 }
                 
                 displayChapterPlan(chapterPlan);
