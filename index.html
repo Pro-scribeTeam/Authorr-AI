@@ -1076,12 +1076,25 @@
                             <i class="fas fa-list-ol text-cyan-400 mr-2"></i>
                             Chapter Plan
                         </h2>
-                        <div class="flex space-x-2">
-                            <button onclick="generateAllChapters()" id="generateAllBtn" class="btn-secondary px-4 py-2 rounded-lg text-sm font-semibold" disabled>
-                                <i class="fas fa-bolt mr-1"></i>Generate All Chapters
+                        <div class="flex space-x-2 flex-wrap gap-2">
+                            <button onclick="generateAllChapters('auto')" id="generateAllBtn" class="btn-secondary px-4 py-2 rounded-lg text-sm font-semibold" disabled>
+                                <i class="fas fa-bolt mr-1"></i>Auto — All Chapters
+                            </button>
+                            <button onclick="generateAllChapters('step')" id="generateStepBtn" class="btn-secondary px-4 py-2 rounded-lg text-sm font-semibold" disabled>
+                                <i class="fas fa-step-forward mr-1"></i>Step — One at a Time
                             </button>
                             <button onclick="combineAllChapters()" id="combineAllBtn" class="btn-primary px-4 py-2 rounded-lg text-sm font-semibold" disabled>
                                 <i class="fas fa-book mr-1"></i>Combine All
+                            </button>
+                        </div>
+                        <!-- Step mode controls — shown during step-by-step generation -->
+                        <div id="stepControls" class="hidden mt-2 flex items-center space-x-3 bg-theme-primary p-3 rounded-lg border border-cyan-400">
+                            <span id="stepStatus" class="text-sm text-cyan-400 flex-1"></span>
+                            <button onclick="nextChapterStep()" id="nextStepBtn" class="btn-primary px-4 py-2 rounded-lg text-sm font-semibold">
+                                <i class="fas fa-arrow-right mr-1"></i>Generate Next Chapter
+                            </button>
+                            <button onclick="cancelChapterStep()" class="btn-gray px-3 py-2 rounded-lg text-sm">
+                                <i class="fas fa-times mr-1"></i>Stop
                             </button>
                         </div>
                     </div>
@@ -2426,6 +2439,8 @@
                 storyData.chapters = chapterPlan.map(chapter => ({ ...chapter, content: '' }));
                 
                 document.getElementById('generateAllBtn').disabled = false;
+                const stepBtn = document.getElementById('generateStepBtn');
+                if (stepBtn) stepBtn.disabled = false;
                 hideLoading();
             } catch (error) {
                 console.error('Chapter generation error:', error);
@@ -2645,75 +2660,128 @@
             }
         }
         
-        async function generateAllChapters() {
-            console.log('📚 Generating ALL chapter content - clearing old dialogue data...');
-            
-            // Clear dialogue data when generating new story content
+        // Step-mode state
+        let stepModeState = { active: false, currentIndex: 0, allContent: '', successCount: 0 };
+
+        async function generateAllChapters(mode = 'auto') {
+            console.log(`📚 Generating chapters — mode: ${mode}`);
             clearAllDialogueData(true);
-            
+
             if (!storyData.chapters || storyData.chapters.length === 0) {
                 showNotification('Please generate a chapter plan first.', 'error');
                 return;
             }
-            
             const apiKey = getOpenAIApiKey();
             if (!apiKey && getAIProvider() !== 'ollama') {
                 showNotification('Please configure your API key first', 'error');
                 return;
             }
 
-            showNotification('Generating all chapter content...', 'info');
-            
-            try {
-                let allContent = '';
-                let successCount = 0;
-                
-                for (let i = 0; i < storyData.chapters.length; i++) {
-                    const chapter = storyData.chapters[i];
-                    const chapterNumber = chapter.number || (i + 1);
-                    
-                    showNotification(`Generating Chapter ${chapterNumber} of ${storyData.chapters.length}...`, 'info');
-                    
-                    try {
-                        // Generate content for this chapter
-                        await generateChapterContent(chapterNumber);
-                        
-                        // Get the generated content from the chapter
-                        const chapterContent = chapter.content || '';
-                        if (chapterContent.trim()) {
-                            allContent += `\n\n=== Chapter ${chapterNumber}: ${chapter.title || 'Untitled'} ===\n\n${chapterContent}`;
-                            successCount++;
-                            
-                            // Update chapter status with actual word count
-                            updateChapterStatus(chapterNumber, 'complete', `Story complete (${countWords(chapterContent)} words)`);
-                            showNotification(`Chapter ${chapterNumber} generated successfully (${countWords(chapterContent)} words)`, 'success');
-                        } else {
-                            updateChapterStatus(chapterNumber, 'error', 'Failed to generate');
-                            showNotification(`Chapter ${chapterNumber}: No content generated`, 'warning');
+            if (mode === 'step') {
+                // Step-by-step mode — generate first chapter and wait for user
+                stepModeState = { active: true, currentIndex: 0, allContent: '', successCount: 0 };
+                document.getElementById('stepControls').classList.remove('hidden');
+                document.getElementById('generateAllBtn').disabled = true;
+                document.getElementById('generateStepBtn').disabled = true;
+                await runChapterStep();
+            } else {
+                // Auto mode — generate all chapters sequentially
+                showNotification('Auto-generating all chapters...', 'info');
+                try {
+                    let allContent = '';
+                    let successCount = 0;
+                    for (let i = 0; i < storyData.chapters.length; i++) {
+                        const chapter = storyData.chapters[i];
+                        const chapterNumber = chapter.number || (i + 1);
+                        showNotification(`Generating Chapter ${chapterNumber} of ${storyData.chapters.length}...`, 'info');
+                        try {
+                            await generateChapterContent(chapterNumber);
+                            const chapterContent = chapter.content || '';
+                            if (chapterContent.trim()) {
+                                allContent += `\n\n=== Chapter ${chapterNumber}: ${chapter.title || 'Untitled'} ===\n\n${chapterContent}`;
+                                successCount++;
+                                updateChapterStatus(chapterNumber, 'complete', `${countWords(chapterContent)} words`);
+                                showNotification(`✅ Chapter ${chapterNumber} done (${countWords(chapterContent)} words)`, 'success');
+                            }
+                        } catch (chapterError) {
+                            updateChapterStatus(chapterNumber, 'error', 'Failed');
+                            showNotification(`Chapter ${chapterNumber} failed: ${chapterError.message}`, 'error');
                         }
-                    } catch (chapterError) {
-                        console.error(`Error generating chapter ${chapterNumber}:`, chapterError);
-                        updateChapterStatus(chapterNumber, 'error', 'Generation failed');
-                        showNotification(`Failed to generate Chapter ${chapterNumber}: ${chapterError.message}`, 'error');
-                        // Continue with next chapter instead of stopping
+                        await new Promise(resolve => setTimeout(resolve, 500));
                     }
-                    
-                    // Small delay between chapters to prevent rate limiting
-                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    if (allContent.trim()) {
+                        addToStoryEditor(allContent.trim());
+                        showNotification(`✅ All ${successCount}/${storyData.chapters.length} chapters generated!`, 'success');
+                    }
+                } catch (error) {
+                    showNotification(`Failed: ${error.message}`, 'error');
                 }
-                
-                // Add all content to Story Editor if any was generated
-                if (allContent.trim()) {
-                    addToStoryEditor(allContent.trim());
-                    showNotification(`Successfully generated ${successCount}/${storyData.chapters.length} chapters! Content added to Story Editor.`, 'success');
-                } else {
-                    showNotification('No content was generated for any chapters. Please check your API key and try again.', 'error');
-                }
-                
-            } catch (error) {
-                console.error('Chapter generation error:', error);
-                showNotification(`Failed to generate all chapters: ${error.message}`, 'error');
             }
+        }
+
+        async function runChapterStep() {
+            const { currentIndex } = stepModeState;
+            const total = storyData.chapters.length;
+
+            if (currentIndex >= total) {
+                // All done
+                finishChapterStep();
+                return;
+            }
+
+            const chapter = storyData.chapters[currentIndex];
+            const chapterNumber = chapter.number || (currentIndex + 1);
+            const stepStatus = document.getElementById('stepStatus');
+            const nextBtn = document.getElementById('nextStepBtn');
+
+            stepStatus.textContent = `Generating Chapter ${chapterNumber} of ${total}...`;
+            if (nextBtn) nextBtn.disabled = true;
+
+            try {
+                await generateChapterContent(chapterNumber);
+                const chapterContent = chapter.content || '';
+                if (chapterContent.trim()) {
+                    stepModeState.allContent += `\n\n=== Chapter ${chapterNumber}: ${chapter.title || 'Untitled'} ===\n\n${chapterContent}`;
+                    stepModeState.successCount++;
+                    updateChapterStatus(chapterNumber, 'complete', `${countWords(chapterContent)} words`);
+                    addToStoryEditor(`=== Chapter ${chapterNumber}: ${chapter.title} ===\n\n${chapterContent}`);
+                }
+            } catch (err) {
+                updateChapterStatus(chapterNumber, 'error', 'Failed');
+                showNotification(`Chapter ${chapterNumber} failed: ${err.message}`, 'error');
+            }
+
+            stepModeState.currentIndex++;
+
+            if (stepModeState.currentIndex >= total) {
+                finishChapterStep();
+            } else {
+                const next = storyData.chapters[stepModeState.currentIndex];
+                const nextNum = next.number || (stepModeState.currentIndex + 1);
+                stepStatus.textContent = `✅ Chapter ${chapterNumber} done. Ready for Chapter ${nextNum} of ${total}.`;
+                if (nextBtn) nextBtn.disabled = false;
+                nextBtn.innerHTML = `<i class="fas fa-arrow-right mr-1"></i>Generate Chapter ${nextNum}`;
+            }
+        }
+
+        function nextChapterStep() {
+            if (stepModeState.active) runChapterStep();
+        }
+
+        function cancelChapterStep() {
+            stepModeState.active = false;
+            document.getElementById('stepControls').classList.add('hidden');
+            document.getElementById('generateAllBtn').disabled = false;
+            document.getElementById('generateStepBtn').disabled = false;
+            showNotification('Step generation stopped.', 'info');
+        }
+
+        function finishChapterStep() {
+            stepModeState.active = false;
+            document.getElementById('stepControls').classList.add('hidden');
+            document.getElementById('generateAllBtn').disabled = false;
+            document.getElementById('generateStepBtn').disabled = false;
+            showNotification(`✅ All ${stepModeState.successCount}/${storyData.chapters.length} chapters generated!`, 'success');
         }
         
         function updateChapterStatus(chapterNum, status, message) {
@@ -6232,6 +6300,8 @@ JSON Structure:
             if (generateAllBtn) {
                 generateAllBtn.disabled = false;
                 generateAllBtn.classList.remove('opacity-50');
+                const stepBtn2 = document.getElementById('generateStepBtn');
+                if (stepBtn2) { stepBtn2.disabled = false; stepBtn2.classList.remove('opacity-50'); }
             }
             
             const combineAllBtn = document.getElementById('combineAllBtn');
