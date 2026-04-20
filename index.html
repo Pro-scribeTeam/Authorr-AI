@@ -5666,10 +5666,11 @@ Return the COMPLETE text with DRAMATICALLY humanized writing that's obviously di
             return frame;
         }
 
-        // OpenAI DALL-E Cover Generation Functions
+        // AI Cover Generation Functions
         async function generateAICover() {
             const apiKey = getOpenAIApiKey();
-            if (!apiKey) {
+            const imageProvider = localStorage.getItem('imageProvider') || 'cloudflare';
+            if (!apiKey && imageProvider !== 'cloudflare') {
                 showNotification('Please configure your API key in the Config section first', 'error');
                 return;
             }
@@ -8175,14 +8176,14 @@ Format as clean, readable text ready for narration.`;
             
             console.log('✅ Using narrator voice for ALL content (dialogue and narrative)');
             
-            // Check if API key is available
+            // Check if API key is available (not needed for Chatterbox/Ollama)
             const apiKey = getOpenAIApiKey();
-            if (!apiKey) {
-                console.log('❌ No OpenAI API key found');
+            if (!apiKey && getAIProvider() !== 'ollama') {
+                console.log('❌ No API key found');
                 showNotification('Please configure your API key in Settings first.', 'error');
                 return;
             }
-            console.log('✅ OpenAI API key found');
+            console.log('✅ API provider ready');
             
             showLoading('Generating narration (narrator voice only)...');
             
