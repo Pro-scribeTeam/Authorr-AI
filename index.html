@@ -14,31 +14,21 @@
     <!-- Supabase Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-        // Supabase Configuration
+        // Supabase Configuration — Authorr AI project
         window.SUPABASE_CONFIG = {
-            url: 'https://hemykozfrrvvzrcqrpac.supabase.co',
-            anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhlbXlrb3pmcnJ2dnpyY3FycGFjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg1MDYwMDIsImV4cCI6MjA3NDA4MjAwMn0.oNIqDHC3TQHyVj6lgkKtKEhO2cT--MJauqDor0VnAjc'
+            url: 'https://svyjvvogjkhszijlaxig.supabase.co',
+            anonKey: 'sb_publishable_oUXEAggMxzhOhrEHHvEVBA_FCDko3v_'
         };
-        
+
         // Initialize Supabase client
-        if (window.supabase) {
+        if (window.supabase && window.supabase.createClient) {
             window.supabaseClient = window.supabase.createClient(
                 window.SUPABASE_CONFIG.url,
                 window.SUPABASE_CONFIG.anonKey
             );
-            console.log('✅ Supabase client initialized successfully');
-            console.log('📡 Connected to:', window.SUPABASE_CONFIG.url);
-        }
-    </script>
-    <script type="module">
-        // Optional Supabase modules - only load if available
-        try {
-            const { storyManager } = await import('./src/story-manager.js');
-            window.storyManager = storyManager;
-            console.log('Supabase StoryManager loaded successfully');
-        } catch (error) {
-            console.log('Supabase not available, using standalone dialogue scanning:', error.message);
-            window.storyManager = null;
+            console.log('✅ Supabase client initialized');
+        } else {
+            console.warn('⚠️ Supabase JS not loaded yet — will retry after DOMContentLoaded');
         }
     </script>
     <style>
@@ -214,74 +204,228 @@
           box-shadow: var(--brand-silver-glow);
         }
         
-        /* Loading Animation */
-        .loading-spinner {
+        /* Loading spinner kept for inline uses (save button etc) */
+        .loading-spinner-inline {
+          display: inline-block;
           border: 3px solid rgba(120, 227, 254, 0.3);
           border-radius: 50%;
           border-top: 3px solid var(--brand-cyan);
-          width: 30px;
-          height: 30px;
-          animation: spin 1s linear infinite;
+          width: 20px;
+          height: 20px;
+          animation: spin 0.8s linear infinite;
+          vertical-align: middle;
         }
-        
+
         @keyframes spin {
           0% { transform: rotate(0deg); }
           100% { transform: rotate(360deg); }
         }
 
-        /* Book Flipping Animation */
+        /* =============================================
+           AUTHORR AI — Rich Book Flipping Animation
+           ============================================= */
+
         .book-loader {
           position: relative;
-          width: 80px;
-          height: 60px;
-          margin: 0 auto;
+          width: 120px;
+          height: 90px;
+          margin: 0 auto 8px;
+          perspective: 600px;
         }
-        
-        .book-pages {
+
+        /* The closed book base (back cover) */
+        .book-base {
           position: absolute;
-          width: 100%;
-          height: 100%;
-          background: linear-gradient(45deg, var(--brand-cyan), var(--brand-silver));
-          border-radius: 4px;
+          bottom: 0;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 100px;
+          height: 80px;
+          background: linear-gradient(160deg, #1a3a4a 0%, #0d2535 60%, #0a1e2e 100%);
+          border-radius: 2px 6px 6px 2px;
+          box-shadow: -4px 4px 18px rgba(0,0,0,0.6), 2px 2px 0 rgba(120,227,254,0.08);
+        }
+
+        /* Spine */
+        .book-spine-el {
+          position: absolute;
+          bottom: 0;
+          left: calc(50% - 52px);
+          width: 10px;
+          height: 80px;
+          background: linear-gradient(90deg, #0a1e2e 0%, #78e3fe 40%, #5dd8fc 60%, #0d2535 100%);
+          border-radius: 2px 0 0 2px;
+          box-shadow: -2px 0 8px rgba(120,227,254,0.4);
+          z-index: 10;
+        }
+
+        /* Pages stack on right side of spine */
+        .book-pages-stack {
+          position: absolute;
+          bottom: 2px;
+          left: calc(50% - 42px);
+          width: 88px;
+          height: 76px;
+          background: linear-gradient(90deg, #e8e8e8 0%, #f5f5f5 40%, #ffffff 100%);
+          border-radius: 0 4px 4px 0;
+        }
+
+        /* Page lines on the stack edge */
+        .book-pages-stack::before {
+          content: '';
+          position: absolute;
+          right: 0;
+          top: 4px;
+          bottom: 4px;
+          width: 6px;
+          background: repeating-linear-gradient(
+            to bottom,
+            #e0e0e0 0px, #e0e0e0 1px,
+            #f0f0f0 1px, #f0f0f0 3px
+          );
+          border-radius: 0 4px 4px 0;
+        }
+
+        /* Flipping pages */
+        .book-page {
+          position: absolute;
+          bottom: 2px;
+          left: calc(50% - 42px);
+          width: 88px;
+          height: 76px;
           transform-origin: left center;
-          animation: flip-pages 2s ease-in-out infinite;
+          transform-style: preserve-3d;
+          border-radius: 0 4px 4px 0;
         }
-        
-        .book-pages:nth-child(1) { animation-delay: 0s; z-index: 3; }
-        .book-pages:nth-child(2) { animation-delay: 0.4s; z-index: 2; }
-        .book-pages:nth-child(3) { animation-delay: 0.8s; z-index: 1; }
-        
-        .book-spine {
+
+        .book-page .page-front,
+        .book-page .page-back {
           position: absolute;
-          left: -2px;
+          inset: 0;
+          border-radius: 0 4px 4px 0;
+          backface-visibility: hidden;
+        }
+
+        .book-page .page-front {
+          background: linear-gradient(135deg, #f8f8f8 0%, #ffffff 50%, #f0f0f0 100%);
+          box-shadow: inset -3px 0 8px rgba(0,0,0,0.08);
+        }
+
+        /* Text lines on the page front */
+        .book-page .page-front::after {
+          content: '';
+          position: absolute;
+          top: 10px;
+          left: 8px;
+          right: 8px;
+          bottom: 10px;
+          background: repeating-linear-gradient(
+            to bottom,
+            transparent 0px, transparent 7px,
+            rgba(120,227,254,0.25) 7px, rgba(120,227,254,0.25) 8px
+          );
+        }
+
+        .book-page .page-back {
+          background: linear-gradient(135deg, #f0f0f0 0%, #f8f8f8 100%);
+          transform: rotateY(180deg);
+        }
+
+        /* Page curl shadow on front */
+        .book-page .page-front::before {
+          content: '';
+          position: absolute;
+          right: 0;
           top: 0;
+          bottom: 0;
+          width: 20px;
+          background: linear-gradient(90deg, transparent, rgba(0,0,0,0.06));
+          border-radius: 0 4px 4px 0;
+        }
+
+        /* Animate each page flipping */
+        .book-page:nth-child(3) { z-index: 6; animation: flipPage 2.4s ease-in-out infinite; }
+        .book-page:nth-child(4) { z-index: 5; animation: flipPage 2.4s ease-in-out infinite 0.6s; }
+        .book-page:nth-child(5) { z-index: 4; animation: flipPage 2.4s ease-in-out infinite 1.2s; }
+        .book-page:nth-child(6) { z-index: 3; animation: flipPage 2.4s ease-in-out infinite 1.8s; }
+
+        @keyframes flipPage {
+          0%        { transform: rotateY(0deg);    z-index: 6; }
+          5%        { transform: rotateY(-8deg); }
+          45%       { transform: rotateY(-90deg); }
+          55%       { transform: rotateY(-90deg); }
+          95%       { transform: rotateY(-172deg); }
+          99%, 100% { transform: rotateY(-180deg); z-index: 2; }
+        }
+
+        /* Glow under the book */
+        .book-loader::after {
+          content: '';
+          position: absolute;
+          bottom: -8px;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 80px;
+          height: 10px;
+          background: radial-gradient(ellipse, rgba(120,227,254,0.35) 0%, transparent 70%);
+          animation: bookGlow 2.4s ease-in-out infinite;
+        }
+
+        @keyframes bookGlow {
+          0%, 100% { opacity: 0.4; transform: translateX(-50%) scaleX(0.8); }
+          50%       { opacity: 0.9; transform: translateX(-50%) scaleX(1.2); }
+        }
+
+        /* Floating particles around the book */
+        .book-particle {
+          position: absolute;
           width: 4px;
-          height: 100%;
-          background: var(--brand-gold);
-          border-radius: 2px;
-          z-index: 4;
+          height: 4px;
+          border-radius: 50%;
+          background: var(--brand-cyan);
+          opacity: 0;
+          animation: floatParticle 2.4s ease-in-out infinite;
         }
-        
-        @keyframes flip-pages {
-          0%, 20% {
-            transform: rotateY(0deg);
-            opacity: 1;
-          }
-          50% {
-            transform: rotateY(-90deg);
-            opacity: 0.7;
-          }
-          80%, 100% {
-            transform: rotateY(-180deg);
-            opacity: 0.3;
-          }
+
+        .book-particle:nth-child(7)  { left: 10px;  top: 20px; animation-delay: 0.2s; }
+        .book-particle:nth-child(8)  { left: 95px;  top: 30px; animation-delay: 0.8s; width: 3px; height: 3px; }
+        .book-particle:nth-child(9)  { left: 55px;  top: 5px;  animation-delay: 1.4s; width: 5px; height: 5px; }
+        .book-particle:nth-child(10) { left: 25px;  top: 10px; animation-delay: 1.9s; width: 3px; height: 3px; }
+
+        @keyframes floatParticle {
+          0%        { opacity: 0;   transform: translateY(0)    scale(0.5); }
+          30%       { opacity: 0.9; transform: translateY(-12px) scale(1); }
+          100%      { opacity: 0;   transform: translateY(-28px) scale(0.3); }
         }
-        
+
         .loading-content {
           display: flex;
           flex-direction: column;
           align-items: center;
-          gap: 16px;
+          gap: 20px;
+        }
+
+        /* Pulsing dots below the book */
+        .loading-dots {
+          display: flex;
+          gap: 6px;
+          justify-content: center;
+        }
+
+        .loading-dots span {
+          width: 7px;
+          height: 7px;
+          border-radius: 50%;
+          background: var(--brand-cyan);
+          animation: dotPulse 1.2s ease-in-out infinite;
+        }
+
+        .loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes dotPulse {
+          0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+          40%           { transform: scale(1.1); opacity: 1; }
         }
         
         /* Word Count Display */
@@ -787,9 +931,21 @@
                         <i class="fas fa-cog mr-2"></i>Config
                     </button>
                 </div>
-                <button onclick="toggleTheme()" class="text-cyan-400 hover:text-cyan-300 text-xl">
-                    <i id="themeIcon" class="fas fa-moon"></i>
-                </button>
+                <!-- Auth Status -->
+                <div class="flex items-center gap-3">
+                    <div id="authStatus" class="hidden items-center gap-2">
+                        <span id="authUserEmail" class="text-cyan-400 text-sm font-semibold max-w-[140px] truncate"></span>
+                        <button onclick="signOutUser()" class="text-xs border border-cyan-400 text-cyan-400 hover:bg-cyan-400 hover:text-black px-3 py-1 rounded-lg font-semibold transition-all">
+                            Sign Out
+                        </button>
+                    </div>
+                    <button id="authLoginBtn" onclick="showAuthModal()" class="hidden text-xs border border-cyan-400 text-cyan-400 hover:bg-cyan-400 hover:text-black px-3 py-1 rounded-lg font-semibold transition-all">
+                        <i class="fas fa-user mr-1"></i>Sign In / Sign Up
+                    </button>
+                    <button onclick="toggleTheme()" class="text-cyan-400 hover:text-cyan-300 text-xl ml-2">
+                        <i id="themeIcon" class="fas fa-moon"></i>
+                    </button>
+                </div>
             </div>
         </div>
     </nav>
@@ -922,6 +1078,35 @@
                         <p class="text-sm text-theme-secondary">Download your complete audiobook and share with the world</p>
                     </div>
                 </div>
+            </div>
+
+            <!-- My Projects (shown when logged in) -->
+            <div id="myProjectsSection" class="mt-12 hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold">
+                        <i class="fas fa-folder-open text-cyan-400 mr-2"></i>
+                        My Projects
+                    </h2>
+                    <button onclick="showPage('workspace')" class="btn-primary px-4 py-2 rounded-lg font-semibold text-sm">
+                        <i class="fas fa-plus mr-2"></i>New Project
+                    </button>
+                </div>
+                <div id="projectsList" class="grid md:grid-cols-3 gap-6">
+                    <div class="text-center text-theme-secondary py-8 col-span-3">
+                        <i class="fas fa-book text-4xl mb-3 text-cyan-400 opacity-50"></i>
+                        <p>Loading your projects...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sign In prompt (shown when logged out) -->
+            <div id="signInPrompt" class="mt-12 bg-theme-secondary p-8 rounded-xl border-2 border-cyan-400 text-center hidden">
+                <i class="fas fa-cloud text-5xl text-cyan-400 mb-4"></i>
+                <h2 class="text-2xl font-bold mb-2">Save Your Projects to the Cloud</h2>
+                <p class="text-theme-secondary mb-6 max-w-lg mx-auto">Sign in to save your audiobook projects, pick up where you left off on any device, and keep all your work safe.</p>
+                <button onclick="showAuthModal()" class="btn-primary px-8 py-3 rounded-lg font-semibold text-lg">
+                    <i class="fas fa-user mr-2"></i>Sign In or Create Account — It's Free
+                </button>
             </div>
         </div>
     </div>
@@ -1103,6 +1288,27 @@
                         <div class="text-center text-theme-secondary py-8">
                             <i class="fas fa-lightbulb text-4xl mb-3 opacity-50"></i>
                             <p>Generate a chapter plan to get started</p>
+                        </div>
+                    </div>
+
+                    <!-- Write All Chapters CTA — appears after chapter plan is generated -->
+                    <div id="writeAllCTA" class="hidden mt-4">
+                        <div class="border-t-2 border-cyan-400 pt-4">
+                            <p class="text-sm text-theme-secondary mb-3 text-center">Chapter plan ready! Choose how to write your book:</p>
+                            <div class="grid grid-cols-1 gap-3">
+                                <button onclick="combineAllChapters()" class="w-full py-3 rounded-xl font-bold text-base flex items-center justify-center gap-2" style="background: linear-gradient(135deg, #78e3fe, #5dd8fc); color: #000; box-shadow: 0 0 18px rgba(120,227,254,0.5);">
+                                    <i class="fas fa-book-open text-lg"></i>
+                                    Write All Chapters &amp; Send to Story Editor
+                                </button>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <button onclick="generateAllChapters('auto')" class="py-2 rounded-lg font-semibold text-sm btn-secondary flex items-center justify-center gap-1">
+                                        <i class="fas fa-bolt"></i> Auto — Write All
+                                    </button>
+                                    <button onclick="generateAllChapters('step')" class="py-2 rounded-lg font-semibold text-sm btn-secondary flex items-center justify-center gap-1">
+                                        <i class="fas fa-step-forward"></i> Step — One at a Time
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1326,7 +1532,7 @@
                     <div class="space-y-4">
                         <div>
                             <label class="block text-sm font-semibold mb-2">Voice Actors</label>
-                            <select id="voiceSelection" class="w-full px-4 py-2 rounded-lg form-field bg-theme-primary text-theme-primary">
+                            <select id="voiceSelection" onchange="toggleChatterboxVoicePanel()" class="w-full px-4 py-2 rounded-lg form-field bg-theme-primary text-theme-primary">
                                 <option value="alloy">Alloy - Balanced, Clear</option>
                                 <option value="echo">Echo - Male, Authoritative</option>
                                 <option value="fable">Fable - Warm, Storytelling</option>
@@ -1334,6 +1540,34 @@
                                 <option value="nova">Nova - Female, Engaging</option>
                                 <option value="shimmer">Shimmer - Soft, Gentle</option>
                             </select>
+
+                            <!-- Chatterbox Voice Clone Panel — shown when a Chatterbox voice is selected -->
+                            <div id="chatterboxVoicePanel" class="hidden mt-3 p-4 rounded-xl border-2 border-cyan-400" style="background: rgba(120,227,254,0.06);">
+                                <h4 class="text-sm font-bold text-cyan-400 mb-2"><i class="fas fa-microphone-alt mr-1"></i> Chatterbox Voice Clone</h4>
+                                <p class="text-xs text-theme-secondary mb-3">Upload a 5–30 second WAV or MP3 clip of any speaker and Chatterbox will clone that voice. No clip = default AI voice.</p>
+
+                                <!-- Saved voices list -->
+                                <div id="savedVoicesList" class="space-y-2 mb-3"></div>
+
+                                <!-- Upload new voice -->
+                                <div class="border border-dashed border-cyan-400 rounded-lg p-3 text-center cursor-pointer hover:bg-cyan-400/10 transition-all" onclick="document.getElementById('voiceClipUpload').click()">
+                                    <i class="fas fa-cloud-upload-alt text-cyan-400 text-xl mb-1"></i>
+                                    <p class="text-xs text-theme-secondary">Click to upload a voice sample</p>
+                                    <p class="text-xs text-cyan-400 mt-1" id="voiceClipFileName">WAV or MP3 · 5–30 seconds</p>
+                                </div>
+                                <input type="file" id="voiceClipUpload" accept="audio/wav,audio/mp3,audio/mpeg" class="hidden" onchange="handleVoiceClipUpload(event)">
+
+                                <div id="voiceClipPreviewRow" class="hidden mt-2 flex items-center gap-2">
+                                    <input type="text" id="voiceClipName" placeholder="Name this voice (e.g. David, Female narrator)" class="flex-1 px-3 py-1.5 rounded-lg text-sm form-field bg-theme-primary text-theme-primary">
+                                    <button onclick="saveVoiceClip()" class="btn-primary px-3 py-1.5 rounded-lg text-sm font-semibold whitespace-nowrap">
+                                        <i class="fas fa-save mr-1"></i>Save Voice
+                                    </button>
+                                    <button onclick="clearVoiceClip()" class="text-gray-400 hover:text-red-400 px-2 py-1.5 text-sm">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
+
                             <button onclick="previewSelectedVoice()" class="btn-secondary w-full mt-2 py-2 rounded-lg text-sm">
                                 <i class="fas fa-play mr-2"></i>Preview Voice
                             </button>
@@ -2127,9 +2361,10 @@
                             <label class="block text-sm font-semibold mb-2">✍️ Writing AI Provider</label>
                             <select id="aiProvider" onchange="toggleAIProviderFields()" class="w-full px-4 py-2 rounded-lg form-field bg-theme-primary text-theme-primary">
                                 <option value="ollama">Ollama — Local & Free (Qwen2.5)</option>
+                                <option value="openrouter">OpenRouter — Fast Cloud (Qwen2.5:72b) ⭐ Recommended</option>
                                 <option value="openai">OpenAI — Cloud (GPT-4o-mini)</option>
                             </select>
-                            <p class="text-xs text-theme-secondary mt-1">Ollama runs on your Mac for free. OpenAI requires an API key.</p>
+                            <p class="text-xs text-theme-secondary mt-1">OpenRouter gives you fast, high-quality Qwen models for ~$0.01/chapter.</p>
                         </div>
 
                         <div id="ollamaModelField">
@@ -2140,23 +2375,32 @@
                             </select>
                         </div>
 
+                        <div id="openrouterFields">
+                            <label class="block text-sm font-semibold mb-2">OpenRouter API Key</label>
+                            <input type="password" id="openrouterKey" placeholder="sk-or-v1-..."
+                                   class="w-full px-4 py-2 rounded-lg form-field bg-theme-primary text-theme-primary mb-2">
+                            <label class="block text-sm font-semibold mb-2">OpenRouter Model</label>
+                            <select id="openrouterModel" class="w-full px-4 py-2 rounded-lg form-field bg-theme-primary text-theme-primary">
+                                <option value="qwen/qwen-2.5-72b-instruct">Qwen2.5 72B — Best quality ⭐</option>
+                                <option value="qwen/qwen3-32b">Qwen3 32B — Fast &amp; smart</option>
+                                <option value="qwen/qwen-2.5-7b-instruct">Qwen2.5 7B — Cheapest</option>
+                                <option value="meta-llama/llama-3.3-70b-instruct">Llama 3.3 70B — Great writing</option>
+                                <option value="mistralai/mistral-large">Mistral Large — Strong prose</option>
+                            </select>
+                            <p class="text-xs text-theme-secondary mt-1">Get a free API key at <a href="https://openrouter.ai" target="_blank" class="text-cyan-400 underline">openrouter.ai</a> — ~$0.01 per chapter</p>
+                        </div>
+
                         <div>
                             <label class="block text-sm font-semibold mb-2">🎨 Image Generation Provider</label>
                             <select id="imageProvider" onchange="toggleImageProviderFields()" class="w-full px-4 py-2 rounded-lg form-field bg-theme-primary text-theme-primary">
-                                <option value="cloudflare">Cloudflare AI — Free (Flux)</option>
+                                <option value="cloudflare">Flux AI via Pollinations — Free, No Key Needed</option>
                                 <option value="openai">OpenAI DALL-E 3</option>
                             </select>
-                            <p class="text-xs text-theme-secondary mt-1">Cloudflare AI is free with your Cloudflare account.</p>
+                            <p class="text-xs text-theme-secondary mt-1">Pollinations.ai is completely free — no account or API key required.</p>
                         </div>
 
-                        <div id="cloudflareFields">
-                            <label class="block text-sm font-semibold mb-2">Cloudflare Account ID</label>
-                            <input type="text" id="cfAccountId" placeholder="Your Cloudflare Account ID"
-                                   class="w-full px-4 py-2 rounded-lg form-field bg-theme-primary text-theme-primary mb-2">
-                            <label class="block text-sm font-semibold mb-2">Cloudflare AI API Token</label>
-                            <input type="password" id="cfApiToken" placeholder="Cloudflare API Token with AI permissions"
-                                   class="w-full px-4 py-2 rounded-lg form-field bg-theme-primary text-theme-primary">
-                            <p class="text-xs text-theme-secondary mt-1">Get these from dash.cloudflare.com → AI → Workers AI</p>
+                        <div id="cloudflareFields" style="display:none;">
+                            <!-- No config needed for Pollinations free tier -->
                         </div>
 
                         <div>
@@ -2258,18 +2502,36 @@
     </div>
 
     <!-- Loading Overlay -->
-    <div id="loadingOverlay" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
-        <div class="bg-theme-secondary p-8 rounded-xl border-2 border-cyan-400 text-center">
+    <div id="loadingOverlay" class="fixed inset-0 flex items-center justify-center z-50 hidden" style="background: rgba(0,0,0,0.72); backdrop-filter: blur(4px);">
+        <div class="text-center px-10 py-10 rounded-2xl border-2 border-cyan-400" style="background: linear-gradient(160deg, #0d1f2d 0%, #0a1520 100%); box-shadow: 0 0 40px rgba(120,227,254,0.2), 0 8px 40px rgba(0,0,0,0.6); min-width: 280px;">
             <div class="loading-content">
+                <!-- Rich Book Animation -->
                 <div class="book-loader">
-                    <div class="book-spine"></div>
-                    <div class="book-pages"></div>
-                    <div class="book-pages"></div>
-                    <div class="book-pages"></div>
+                    <!-- Spine -->
+                    <div class="book-spine-el"></div>
+                    <!-- Back cover / pages stack -->
+                    <div class="book-base"></div>
+                    <div class="book-pages-stack"></div>
+                    <!-- Flipping pages (4 pages cycle) -->
+                    <div class="book-page"><div class="page-front"></div><div class="page-back"></div></div>
+                    <div class="book-page"><div class="page-front"></div><div class="page-back"></div></div>
+                    <div class="book-page"><div class="page-front"></div><div class="page-back"></div></div>
+                    <div class="book-page"><div class="page-front"></div><div class="page-back"></div></div>
+                    <!-- Floating particles -->
+                    <div class="book-particle"></div>
+                    <div class="book-particle"></div>
+                    <div class="book-particle"></div>
+                    <div class="book-particle"></div>
                 </div>
-                <div class="loading-spinner mx-auto" style="display: none;"></div>
+
+                <!-- Loading text -->
+                <div>
+                    <p id="loadingText" class="text-base font-semibold text-white mb-3" style="letter-spacing:0.02em;">Processing...</p>
+                    <div class="loading-dots">
+                        <span></span><span></span><span></span>
+                    </div>
+                </div>
             </div>
-            <p id="loadingText" class="text-lg font-semibold">Processing...</p>
         </div>
     </div>
 
@@ -2332,9 +2594,9 @@
             try {
                 console.log('🔍 Testing Supabase connection...');
                 
-                // Test database connectivity by querying stories table
+                // Test database connectivity by querying projects table
                 const { data, error } = await window.supabaseClient
-                    .from('stories')
+                    .from('projects')
                     .select('count')
                     .limit(1);
                 
@@ -2672,7 +2934,7 @@
                 return;
             }
             const apiKey = getOpenAIApiKey();
-            if (!apiKey && getAIProvider() !== 'ollama') {
+            if (!apiKey && getAIProvider() !== 'ollama' && getAIProvider() !== 'openrouter') {
                 showNotification('Please configure your API key first', 'error');
                 return;
             }
@@ -4170,6 +4432,34 @@ Return the COMPLETE text with DRAMATICALLY humanized writing that's obviously di
             return data.message.content;
         }
 
+        // Call OpenRouter (fast cloud Qwen/Llama, cheap per-token)
+        async function callOpenRouter(messages) {
+            const apiKey = localStorage.getItem('openrouterApiKey');
+            if (!apiKey) throw new Error('OpenRouter API key not configured. Add it in Config → API Configuration.');
+            const model = localStorage.getItem('openrouterModel') || 'qwen/qwen-2.5-72b-instruct';
+            const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${apiKey}`,
+                    'HTTP-Referer': 'https://authorr.ai',
+                    'X-Title': 'Authorr AI'
+                },
+                body: JSON.stringify({
+                    model: model,
+                    messages: messages,
+                    temperature: 0.7,
+                    max_tokens: 3000
+                })
+            });
+            if (!response.ok) {
+                const err = await response.json().catch(() => ({}));
+                throw new Error(`OpenRouter error: ${err?.error?.message || response.status}`);
+            }
+            const data = await response.json();
+            return data.choices[0].message.content;
+        }
+
         // Call OpenAI (cloud, requires API key)
         async function callOpenAIChat(messages) {
             const apiKey = getOpenAIApiKey();
@@ -4193,17 +4483,21 @@ Return the COMPLETE text with DRAMATICALLY humanized writing that's obviously di
             return data.choices[0].message.content;
         }
 
-        // Main AI call — uses Ollama or OpenAI based on settings, with fallback
+        // Main AI call — routes to Ollama, OpenRouter, or OpenAI based on settings
         async function callOpenAI(messages) {
             const provider = getAIProvider();
             if (provider === 'ollama') {
                 try {
                     return await callOllama(messages);
                 } catch (err) {
-                    console.warn('Ollama failed, falling back to OpenAI:', err.message);
-                    showNotification('Ollama unavailable, falling back to OpenAI...', 'warning');
+                    console.warn('Ollama failed, falling back to OpenRouter:', err.message);
+                    showNotification('Ollama unavailable — trying OpenRouter...', 'warning');
+                    try { return await callOpenRouter(messages); } catch(e2) {}
+                    showNotification('Falling back to OpenAI...', 'warning');
                     return await callOpenAIChat(messages);
                 }
+            } else if (provider === 'openrouter') {
+                return await callOpenRouter(messages);
             } else {
                 return await callOpenAIChat(messages);
             }
@@ -4608,34 +4902,40 @@ Return the COMPLETE text with DRAMATICALLY humanized writing that's obviously di
             }
         }
         
-        function saveStory() {
+        async function saveStory() {
             const editor = document.getElementById('storyEditor');
-            const content = editor.value;
-            
-            // Save to localStorage with timestamp
+            const content = editor ? editor.value : '';
+
+            // Local save first (instant)
             const saveData = {
                 content: content,
                 storyData: storyData,
                 timestamp: new Date().toISOString(),
                 wordCount: countWords(content)
             };
-            
             localStorage.setItem('authorr_story_save', JSON.stringify(saveData));
             localStorage.setItem('authorr_story_content', content);
             localStorage.setItem('authorr_story_data', JSON.stringify(storyData));
-            
+
             // Visual feedback
             const saveBtn = document.getElementById('saveBtn');
-            const originalText = saveBtn.innerHTML;
-            saveBtn.innerHTML = '<i class="fas fa-check"></i> Saved';
-            saveBtn.classList.add('success-border');
-            
-            showStatusMessage(`Story saved! (${countWords(content)} words)`);
-            
-            setTimeout(() => {
-                saveBtn.innerHTML = originalText;
-                saveBtn.classList.remove('success-border');
-            }, 2000);
+            if (saveBtn) {
+                const originalText = saveBtn.innerHTML;
+                saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+                saveBtn.classList.add('success-border');
+                setTimeout(() => { saveBtn.innerHTML = originalText; saveBtn.classList.remove('success-border'); }, 2500);
+            }
+
+            showStatusMessage(`Story saved locally! (${countWords(content)} words)`);
+
+            // Cloud save if logged in
+            if (typeof currentUser !== 'undefined' && currentUser && typeof saveProjectToSupabase === 'function') {
+                const ok = await saveProjectToSupabase();
+                if (ok) {
+                    showStatusMessage(`☁️ Saved to cloud! (${countWords(content)} words)`);
+                    if (typeof loadUserProjects === 'function') loadUserProjects();
+                }
+            }
         }
         
         function setupAutoSave() {
@@ -4976,19 +5276,8 @@ Return the COMPLETE text with DRAMATICALLY humanized writing that's obviously di
         
         // Utility Functions
         function showLoading(text = 'Processing...', animationType = 'book') {
-            document.getElementById('loadingText').textContent = text;
-            
-            const bookLoader = document.querySelector('.book-loader');
-            const spinnerLoader = document.querySelector('.loading-spinner');
-            
-            if (animationType === 'book') {
-                bookLoader.style.display = 'block';
-                spinnerLoader.style.display = 'none';
-            } else {
-                bookLoader.style.display = 'none';
-                spinnerLoader.style.display = 'block';
-            }
-            
+            const el = document.getElementById('loadingText');
+            if (el) el.textContent = text;
             document.getElementById('loadingOverlay').classList.remove('hidden');
         }
         
@@ -5797,29 +6086,17 @@ Return the COMPLETE text with DRAMATICALLY humanized writing that's obviously di
                 let imageUrl;
 
                 if (imageProvider === 'cloudflare') {
-                    progressMessage.textContent = 'Connecting to Cloudflare AI (free)...';
-                    const cfAccountId = localStorage.getItem('cfAccountId') || '';
-                    const cfApiToken = localStorage.getItem('cfApiToken') || '';
-                    if (!cfAccountId || !cfApiToken) {
-                        throw new Error('Cloudflare Account ID and API Token required. Please add them in Settings.');
-                    }
-                    const cfResponse = await fetch(
-                        `https://api.cloudflare.com/client/v4/accounts/${cfAccountId}/ai/run/@cf/black-forest-labs/flux-1-schnell`,
-                        {
-                            method: 'POST',
-                            headers: {
-                                'Authorization': `Bearer ${cfApiToken}`,
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify({ prompt: prompt, num_steps: 8 })
-                        }
-                    );
-                    if (!cfResponse.ok) {
-                        throw new Error(`Cloudflare AI Error: ${cfResponse.status} ${cfResponse.statusText}`);
-                    }
-                    // Cloudflare returns the image as binary — convert to blob URL
-                    const imgBlob = await cfResponse.blob();
-                    imageUrl = URL.createObjectURL(imgBlob);
+                    progressMessage.textContent = 'Generating cover with AI — please wait (this may take 15-30 seconds)...';
+
+                    // Use Pollinations.ai — completely free, no API key, no signup, browser-compatible
+                    // Works by setting the prompt as a URL path — image is served directly (no CORS issues)
+                    const encodedPrompt = encodeURIComponent(prompt);
+                    const seed = Math.floor(Math.random() * 999999);
+                    const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=768&height=1024&seed=${seed}&nologo=true&model=flux`;
+
+                    // Return the URL directly — displayGeneratedCover sets it as img.src
+                    // No fetch needed — browser loads it natively without CORS issues
+                    imageUrl = pollinationsUrl;
 
                 } else {
                     // Fall back to DALL-E
@@ -5847,13 +6124,16 @@ Return the COMPLETE text with DRAMATICALLY humanized writing that's obviously di
                 }
 
                 clearInterval(stepInterval);
-                progressBar.style.width = '100%';
-                stepText.textContent = 'Cover generated successfully!';
+                progressBar.style.width = '85%';
+                stepText.textContent = imageProvider === 'cloudflare'
+                    ? 'Prompt sent — loading image from AI server...'
+                    : 'Cover generated successfully!';
 
-                setTimeout(() => {
-                    progressDiv.classList.add('hidden');
-                    displayGeneratedCover(imageUrl, platform);
-                }, 1500);
+                // For Pollinations, image loads async — pass progressDiv so we can hide it on image load
+                displayGeneratedCover(imageUrl, platform, imageProvider === 'cloudflare' ? progressDiv : null);
+                if (imageProvider !== 'cloudflare') {
+                    setTimeout(() => { progressDiv.classList.add('hidden'); }, 1500);
+                }
 
             } catch (error) {
                 clearInterval(stepInterval);
@@ -5881,26 +6161,48 @@ Return the COMPLETE text with DRAMATICALLY humanized writing that's obviously di
             return prompt;
         }
 
-        function displayGeneratedCover(imageUrl, platform) {
+        function displayGeneratedCover(imageUrl, platform, pendingProgressDiv) {
             const coverPreview = document.getElementById('coverPreview');
             const generatedCover = document.getElementById('generatedCover');
             const placeholderPreview = document.getElementById('placeholderPreview');
             const dimensionDisplay = document.getElementById('dimensionDisplay');
-            
+
+            // Show a loading placeholder while the image loads
+            generatedCover.style.minHeight = '300px';
+            generatedCover.style.background = 'linear-gradient(135deg, #0d1f2d, #0a1520)';
+            generatedCover.alt = 'Generating cover — AI is painting your image...';
+
+            // Show preview area immediately so user sees loading state
+            placeholderPreview.classList.add('hidden');
+            coverPreview.classList.remove('hidden');
+
+            // Set src — browser loads it natively, no CORS issues for image display
             generatedCover.src = imageUrl;
-            
+            generatedCover.onload = () => {
+                generatedCover.style.minHeight = '';
+                generatedCover.style.background = '';
+                generatedCover.alt = 'Generated book cover';
+                // Hide the progress bar now that the image has actually appeared
+                if (pendingProgressDiv) {
+                    pendingProgressDiv.classList.add('hidden');
+                }
+                showNotification('AI book cover generated successfully!', 'success');
+                updateEmbedButtonVisibility();
+            };
+            generatedCover.onerror = () => {
+                generatedCover.style.minHeight = '';
+                generatedCover.style.background = 'linear-gradient(135deg, #2d0d0d, #200a0a)';
+                generatedCover.alt = 'Cover failed to load';
+                if (pendingProgressDiv) {
+                    pendingProgressDiv.classList.add('hidden');
+                }
+                showNotification('Cover image failed to load. Please click Regenerate to try again.', 'error');
+            };
+
             const dimensions = platformDimensions[platform];
             if (dimensionDisplay && dimensions) {
                 dimensionDisplay.textContent = `${dimensions.width}×${dimensions.height}px`;
             }
-            
-            placeholderPreview.classList.add('hidden');
-            coverPreview.classList.remove('hidden');
-            
-            // Update embed button visibility now that cover is available
-            updateEmbedButtonVisibility();
-            
-            showNotification('AI book cover generated successfully!', 'success');
         }
 
         async function regenerateAICover() {
@@ -5912,7 +6214,7 @@ Return the COMPLETE text with DRAMATICALLY humanized writing that's obviously di
 
         async function createVariations() {
             const apiKey = getOpenAIApiKey();
-            if (!apiKey && getAIProvider() !== 'ollama') {
+            if (!apiKey && getAIProvider() !== 'ollama' && getAIProvider() !== 'openrouter') {
                 showNotification('Please configure your API key first', 'error');
                 return;
             }
@@ -6163,7 +6465,7 @@ Return the COMPLETE text with DRAMATICALLY humanized writing that's obviously di
         // OpenAI GPT-4 Writing Assistance Functions
         async function generateChapterPlan() {
             const apiKey = getOpenAIApiKey();
-            if (!apiKey && getAIProvider() !== 'ollama') {
+            if (!apiKey && getAIProvider() !== 'ollama' && getAIProvider() !== 'openrouter') {
                 showNotification('Please configure your API key in Config section first', 'error');
                 return;
             }
@@ -6180,8 +6482,8 @@ Return the COMPLETE text with DRAMATICALLY humanized writing that's obviously di
                 return;
             }
 
-            showNotification('Generating AI chapter plan...', 'info');
-            
+            showLoading('✍️ Writing your chapter plan...', 'book');
+
             const prompt = `Create a detailed chapter plan for a ${genre} book titled "${title}".
 
 Story Outline: ${outline}
@@ -6249,10 +6551,12 @@ JSON Structure:
                     throw new Error('AI did not return any chapters. Please try again.');
                 }
                 
+                hideLoading();
                 displayChapterPlan(chapterPlan);
                 showNotification('Chapter plan generated successfully!', 'success');
-                
+
             } catch (error) {
+                hideLoading();
                 console.error('Chapter generation error:', error);
                 showNotification(`Failed to generate chapters: ${error.message}`, 'error');
             }
@@ -6303,11 +6607,18 @@ JSON Structure:
                 const stepBtn2 = document.getElementById('generateStepBtn');
                 if (stepBtn2) { stepBtn2.disabled = false; stepBtn2.classList.remove('opacity-50'); }
             }
-            
             const combineAllBtn = document.getElementById('combineAllBtn');
             if (combineAllBtn) {
                 combineAllBtn.disabled = false;
                 combineAllBtn.classList.remove('opacity-50');
+            }
+
+            // Show the big Write All CTA panel
+            const writeAllCTA = document.getElementById('writeAllCTA');
+            if (writeAllCTA) {
+                writeAllCTA.classList.remove('hidden');
+                // Smooth scroll to show it
+                setTimeout(() => writeAllCTA.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 300);
             }
         }
 
@@ -6435,7 +6746,7 @@ JSON Structure:
             clearAllDialogueData(true);
 
             const apiKey = getOpenAIApiKey();
-            if (!apiKey && getAIProvider() !== 'ollama') {
+            if (!apiKey && getAIProvider() !== 'ollama' && getAIProvider() !== 'openrouter') {
                 showNotification('Please configure your API key first', 'error');
                 return;
             }
@@ -6512,22 +6823,27 @@ Format as clean, readable text ready for narration.`;
             if (elevenlabsKey) {
                 localStorage.setItem('elevenlabsApiKey', elevenlabsKey);
             }
-            if (runpodKey) {
-                localStorage.setItem('runpodApiKey', runpodKey);
+            if (runpodKey && !runpodKey.startsWith('••')) {
+                // Strip any invisible / non-ASCII characters before saving
+                localStorage.setItem('runpodApiKey', runpodKey.replace(/[^\x20-\x7E]/g, '').trim());
             }
             if (runpodEndpointId) {
-                localStorage.setItem('runpodEndpointId', runpodEndpointId);
+                localStorage.setItem('runpodEndpointId', runpodEndpointId.replace(/[^\x20-\x7E]/g, '').trim());
             }
             const aiProvider = document.getElementById('aiProvider')?.value;
             const ollamaModel = document.getElementById('ollamaModel')?.value;
+            const openrouterKey = document.getElementById('openrouterKey')?.value?.trim();
+            const openrouterModel = document.getElementById('openrouterModel')?.value;
             const imageProvider = document.getElementById('imageProvider')?.value;
             const cfAccountId = document.getElementById('cfAccountId')?.value?.trim();
             const cfApiToken = document.getElementById('cfApiToken')?.value?.trim();
             if (aiProvider) localStorage.setItem('aiProvider', aiProvider);
             if (ollamaModel) localStorage.setItem('ollamaModel', ollamaModel);
+            if (openrouterKey && !openrouterKey.startsWith('••')) localStorage.setItem('openrouterApiKey', openrouterKey);
+            if (openrouterModel) localStorage.setItem('openrouterModel', openrouterModel);
             if (imageProvider) localStorage.setItem('imageProvider', imageProvider);
             if (cfAccountId) localStorage.setItem('cfAccountId', cfAccountId);
-            if (cfApiToken) localStorage.setItem('cfApiToken', cfApiToken);
+            if (cfApiToken && !cfApiToken.startsWith('••')) localStorage.setItem('cfApiToken', cfApiToken);
             if (model) {
                 localStorage.setItem('selectedModel', model);
             }
@@ -6549,6 +6865,11 @@ Format as clean, readable text ready for narration.`;
             const runpodInput = document.getElementById('runpodKey');
             if (runpodInput && runpodKey) {
                 runpodInput.value = '••••••••••••••••••••••••••••••••••••••••••••••••••••' + runpodKey.slice(-4);
+            }
+
+            const orKeyInput = document.getElementById('openrouterKey');
+            if (orKeyInput && openrouterKey && !openrouterKey.startsWith('••')) {
+                orKeyInput.value = '••••••••••••••••••••••••••••••••••••' + openrouterKey.slice(-4);
             }
         }
 
@@ -6593,6 +6914,11 @@ Format as clean, readable text ready for narration.`;
             const ollamaModel = localStorage.getItem('ollamaModel') || 'qwen2.5:7b';
             const ollamaModelSelect = document.getElementById('ollamaModel');
             if (ollamaModelSelect) ollamaModelSelect.value = ollamaModel;
+            const openrouterKey = localStorage.getItem('openrouterApiKey');
+            if (openrouterKey) { const el = document.getElementById('openrouterKey'); if (el) el.value = '••••••••••••••••••••••••••••••••••••' + openrouterKey.slice(-4); }
+            const openrouterModel = localStorage.getItem('openrouterModel') || 'qwen/qwen-2.5-72b-instruct';
+            const openrouterModelSelect = document.getElementById('openrouterModel');
+            if (openrouterModelSelect) openrouterModelSelect.value = openrouterModel;
             const imageProvider = localStorage.getItem('imageProvider') || 'cloudflare';
             const imageProviderSelect = document.getElementById('imageProvider');
             if (imageProviderSelect) imageProviderSelect.value = imageProvider;
@@ -6621,7 +6947,9 @@ Format as clean, readable text ready for narration.`;
         function toggleAIProviderFields() {
             const provider = document.getElementById('aiProvider')?.value || 'ollama';
             const ollamaField = document.getElementById('ollamaModelField');
+            const openrouterField = document.getElementById('openrouterFields');
             if (ollamaField) ollamaField.style.display = provider === 'ollama' ? '' : 'none';
+            if (openrouterField) openrouterField.style.display = provider === 'openrouter' ? '' : 'none';
         }
 
         function toggleImageProviderFields() {
@@ -6636,28 +6964,32 @@ Format as clean, readable text ready for narration.`;
 
             try {
                 if (provider === 'ollama') {
-                    // Test Ollama
                     const response = await fetch('http://localhost:11434/api/tags');
                     if (response.ok) {
                         const data = await response.json();
                         const models = data.models.map(m => m.name).join(', ');
-                        showNotification(`✅ Ollama connected! Models available: ${models}`, 'success');
+                        showNotification(`✅ Ollama connected! Models: ${models}`, 'success');
                     } else {
                         throw new Error('Ollama not responding. Make sure it is running.');
                     }
-                } else {
-                    // Test OpenAI
-                    const apiKey = getOpenAIApiKey();
-                    if (!apiKey) {
-                        showNotification('Please enter your OpenAI API key first', 'error');
-                        return;
+                } else if (provider === 'openrouter') {
+                    const apiKey = localStorage.getItem('openrouterApiKey');
+                    if (!apiKey) { showNotification('Please enter your OpenRouter API key first', 'error'); return; }
+                    const response = await fetch('https://openrouter.ai/api/v1/models', {
+                        headers: { 'Authorization': `Bearer ${apiKey}` }
+                    });
+                    if (response.ok) {
+                        const data = await response.json();
+                        const model = localStorage.getItem('openrouterModel') || 'qwen/qwen-2.5-72b-instruct';
+                        showNotification(`✅ OpenRouter connected! Using: ${model}`, 'success');
+                    } else {
+                        throw new Error(`OpenRouter error: ${response.status}. Check your API key.`);
                     }
+                } else {
+                    const apiKey = getOpenAIApiKey();
+                    if (!apiKey) { showNotification('Please enter your OpenAI API key first', 'error'); return; }
                     const response = await fetch('https://api.openai.com/v1/models', {
-                        method: 'GET',
-                        headers: {
-                            'Authorization': `Bearer ${apiKey}`,
-                            'Content-Type': 'application/json'
-                        }
+                        headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' }
                     });
                     if (response.ok) {
                         showNotification('✅ OpenAI API connection successful!', 'success');
@@ -6722,7 +7054,7 @@ Format as clean, readable text ready for narration.`;
             }
 
             const apiKey = getOpenAIApiKey();
-            if (!apiKey && getAIProvider() !== 'ollama') {
+            if (!apiKey && getAIProvider() !== 'ollama' && getAIProvider() !== 'openrouter') {
                 showNotification('Please configure your API key first', 'error');
                 return;
             }
@@ -6782,7 +7114,9 @@ Format as clean, readable text ready for narration.`;
                     }
                     audioBlob = await generateElevenLabsAudio(previewText, voiceId, apiKey);
                 } else if (provider === 'chatterbox') {
-                    audioBlob = await generateChatterboxAudio(previewText);
+                    const exaggeration = parseFloat(selectedOption.dataset.exaggeration || 0.5);
+                    const cfg = parseFloat(selectedOption.dataset.cfg || 0.5);
+                    audioBlob = await generateChatterboxAudio(previewText, exaggeration, cfg);
                 } else {
                     showNotification('Unknown voice provider', 'error');
                     return;
@@ -7332,15 +7666,27 @@ Format as clean, readable text ready for narration.`;
 
             // Add Chatterbox voices
             const chatterboxOptgroup = document.createElement('optgroup');
-            chatterboxOptgroup.label = '🔊 Chatterbox TTS';
+            chatterboxOptgroup.label = '🔊 Chatterbox TTS (RunPod)';
             voiceSelect.appendChild(chatterboxOptgroup);
 
-            const chatterboxOption = document.createElement('option');
-            chatterboxOption.value = 'chatterbox_default';
-            chatterboxOption.textContent = 'Chatterbox - Natural, Expressive';
-            chatterboxOption.dataset.provider = 'chatterbox';
-            chatterboxOption.dataset.voice = 'default';
-            chatterboxOptgroup.appendChild(chatterboxOption);
+            const chatterboxVoices = [
+                { value: 'chatterbox_neutral',    label: 'Chatterbox — Neutral (balanced)',         exaggeration: 0.5, cfg: 0.5 },
+                { value: 'chatterbox_expressive', label: 'Chatterbox — Expressive (lively)',         exaggeration: 0.75, cfg: 0.5 },
+                { value: 'chatterbox_calm',        label: 'Chatterbox — Calm (relaxed, slow)',        exaggeration: 0.3, cfg: 0.3 },
+                { value: 'chatterbox_dramatic',    label: 'Chatterbox — Dramatic (intense)',          exaggeration: 0.9, cfg: 0.7 },
+                { value: 'chatterbox_audiobook',   label: 'Chatterbox — Audiobook (clear narration)', exaggeration: 0.45, cfg: 0.6 },
+            ];
+
+            chatterboxVoices.forEach(v => {
+                const opt = document.createElement('option');
+                opt.value = v.value;
+                opt.textContent = v.label;
+                opt.dataset.provider = 'chatterbox';
+                opt.dataset.voice = v.value.replace('chatterbox_', '');
+                opt.dataset.exaggeration = v.exaggeration;
+                opt.dataset.cfg = v.cfg;
+                chatterboxOptgroup.appendChild(opt);
+            });
 
             // Select first OpenAI voice by default
             if (voiceSelect.options.length > 0) {
@@ -8202,20 +8548,25 @@ Format as clean, readable text ready for narration.`;
                 const voiceInfo = voice.split('_');
                 const provider = voiceInfo[0];
                 const voiceId = voiceInfo[1];
-                
+
                 if (provider === 'openai') {
                     return await generateOpenAIAudio(text, voiceId);
                 } else if (provider === 'elevenlabs') {
                     const apiKey = getElevenLabsApiKey();
-                    if (!apiKey) {
-                        throw new Error('ElevenLabs API key not configured');
-                    }
+                    if (!apiKey) throw new Error('ElevenLabs API key not configured');
                     return await generateElevenLabsAudio(text, voiceId, apiKey);
+                } else if (provider === 'chatterbox') {
+                    // Look up exaggeration/cfg from the voice option dataset
+                    const voiceSelect = document.getElementById('narratorVoiceSelect') || document.getElementById('voiceSelection');
+                    const selectedOption = voiceSelect ? voiceSelect.options[voiceSelect.selectedIndex] : null;
+                    const exaggeration = parseFloat(selectedOption?.dataset?.exaggeration || 0.5);
+                    const cfg = parseFloat(selectedOption?.dataset?.cfg || 0.5);
+                    return await generateChatterboxAudio(text, exaggeration, cfg);
                 } else {
                     throw new Error(`Unknown voice provider: ${provider}`);
                 }
             } catch (error) {
-                console.error('❌ Preview audio generation failed:', error);
+                console.error('Preview audio generation failed:', error);
                 throw error;
             }
         }
@@ -8272,7 +8623,7 @@ Format as clean, readable text ready for narration.`;
             
             // Check if API key is available (not needed for Chatterbox/Ollama)
             const apiKey = getOpenAIApiKey();
-            if (!apiKey && getAIProvider() !== 'ollama') {
+            if (!apiKey && getAIProvider() !== 'ollama' && getAIProvider() !== 'openrouter') {
                 console.log('❌ No API key found');
                 showNotification('Please configure your API key in Settings first.', 'error');
                 return;
@@ -8468,25 +8819,152 @@ Format as clean, readable text ready for narration.`;
             return chunks;
         }
 
+        // ── Chatterbox Voice Clone Helpers ──────────────────────────────
+
+        let chatterboxVoiceClipB64 = null; // base64 of the currently active voice sample
+
+        function toggleChatterboxVoicePanel() {
+            const sel = document.getElementById('voiceSelection');
+            const panel = document.getElementById('chatterboxVoicePanel');
+            if (!sel || !panel) return;
+            const isChatterbox = sel.value.startsWith('chatterbox_');
+            panel.classList.toggle('hidden', !isChatterbox);
+            if (isChatterbox) renderSavedVoicesList();
+        }
+
+        function handleVoiceClipUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const nameEl = document.getElementById('voiceClipFileName');
+            const previewRow = document.getElementById('voiceClipPreviewRow');
+            const nameInput = document.getElementById('voiceClipName');
+            if (nameEl) nameEl.textContent = file.name;
+            // Read file as base64
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                // Store raw base64 (strip the data:...;base64, prefix)
+                chatterboxVoiceClipB64 = e.target.result.split(',')[1];
+                if (previewRow) previewRow.classList.remove('hidden');
+                // Pre-fill name from filename
+                if (nameInput && !nameInput.value) {
+                    nameInput.value = file.name.replace(/\.[^/.]+$/, '');
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function saveVoiceClip() {
+            const name = document.getElementById('voiceClipName')?.value?.trim();
+            if (!name) { showNotification('Please enter a name for this voice', 'error'); return; }
+            if (!chatterboxVoiceClipB64) { showNotification('No audio clip loaded', 'error'); return; }
+            // Save to localStorage as JSON array
+            const saved = JSON.parse(localStorage.getItem('chatterboxVoices') || '[]');
+            // Replace if same name exists
+            const idx = saved.findIndex(v => v.name === name);
+            if (idx >= 0) saved[idx] = { name, b64: chatterboxVoiceClipB64 };
+            else saved.push({ name, b64: chatterboxVoiceClipB64 });
+            localStorage.setItem('chatterboxVoices', JSON.stringify(saved));
+            showNotification(`Voice "${name}" saved!`, 'success');
+            document.getElementById('voiceClipPreviewRow').classList.add('hidden');
+            document.getElementById('voiceClipFileName').textContent = 'WAV or MP3 · 5–30 seconds';
+            document.getElementById('voiceClipName').value = '';
+            document.getElementById('voiceClipUpload').value = '';
+            renderSavedVoicesList();
+            // Auto-select the saved voice
+            setActiveChatterboxVoice(name);
+        }
+
+        function clearVoiceClip() {
+            chatterboxVoiceClipB64 = null;
+            document.getElementById('voiceClipPreviewRow').classList.add('hidden');
+            document.getElementById('voiceClipFileName').textContent = 'WAV or MP3 · 5–30 seconds';
+            document.getElementById('voiceClipName').value = '';
+            document.getElementById('voiceClipUpload').value = '';
+        }
+
+        function renderSavedVoicesList() {
+            const container = document.getElementById('savedVoicesList');
+            if (!container) return;
+            const saved = JSON.parse(localStorage.getItem('chatterboxVoices') || '[]');
+            const active = localStorage.getItem('chatterboxActiveVoice') || '';
+            if (saved.length === 0) {
+                container.innerHTML = '<p class="text-xs text-theme-secondary italic">No saved voices yet — upload one below.</p>';
+                return;
+            }
+            container.innerHTML = saved.map(v => `
+                <div class="flex items-center gap-2 p-2 rounded-lg border ${active === v.name ? 'border-cyan-400 bg-cyan-400/10' : 'border-theme bg-theme-primary'}">
+                    <i class="fas fa-user-circle text-cyan-400"></i>
+                    <span class="flex-1 text-sm font-medium">${v.name}</span>
+                    ${active === v.name ? '<span class="text-xs text-cyan-400 font-bold">Active</span>' : ''}
+                    <button onclick="setActiveChatterboxVoice('${v.name}')" class="text-xs text-cyan-400 hover:underline px-2">Use</button>
+                    <button onclick="deleteChatterboxVoice('${v.name}')" class="text-xs text-red-400 hover:text-red-300 px-1"><i class="fas fa-trash"></i></button>
+                </div>
+            `).join('');
+        }
+
+        function setActiveChatterboxVoice(name) {
+            const saved = JSON.parse(localStorage.getItem('chatterboxVoices') || '[]');
+            const voice = saved.find(v => v.name === name);
+            if (voice) {
+                chatterboxVoiceClipB64 = voice.b64;
+                localStorage.setItem('chatterboxActiveVoice', name);
+                showNotification(`Voice set to "${name}"`, 'success');
+                renderSavedVoicesList();
+            }
+        }
+
+        function deleteChatterboxVoice(name) {
+            if (!confirm(`Delete voice "${name}"?`)) return;
+            let saved = JSON.parse(localStorage.getItem('chatterboxVoices') || '[]');
+            saved = saved.filter(v => v.name !== name);
+            localStorage.setItem('chatterboxVoices', JSON.stringify(saved));
+            if (localStorage.getItem('chatterboxActiveVoice') === name) {
+                localStorage.removeItem('chatterboxActiveVoice');
+                chatterboxVoiceClipB64 = null;
+            }
+            renderSavedVoicesList();
+        }
+
+        function getActiveChatterboxVoiceB64() {
+            // Returns base64 audio prompt if one is active, otherwise null
+            if (chatterboxVoiceClipB64) return chatterboxVoiceClipB64;
+            const active = localStorage.getItem('chatterboxActiveVoice');
+            if (active) {
+                const saved = JSON.parse(localStorage.getItem('chatterboxVoices') || '[]');
+                const voice = saved.find(v => v.name === active);
+                if (voice) return voice.b64;
+            }
+            return null;
+        }
+
+        // ────────────────────────────────────────────────────────────────
+
         async function generateChatterboxAudio(text, exaggeration = 0.5, cfg_weight = 0.5) {
-            console.log(`🎙️ Generating Chatterbox audio: text="${text.substring(0, 50)}..."`);
-            const RUNPOD_API_KEY = localStorage.getItem('runpodApiKey') || '';
-            const ENDPOINT_ID = localStorage.getItem('runpodEndpointId') || '7p5r8y4d9ky4u6';
+            console.log('Generating Chatterbox audio...');
+            // Strip any non-ASCII / non-printable characters that cause header errors
+            const RUNPOD_API_KEY = (localStorage.getItem('runpodApiKey') || '').replace(/[^\x20-\x7E]/g, '').trim();
+            const ENDPOINT_ID = (localStorage.getItem('runpodEndpointId') || 'k8os825pttn2zo').replace(/[^\x20-\x7E]/g, '').trim();
             if (!RUNPOD_API_KEY) {
-                throw new Error('RunPod API key not configured. Please add it in Settings.');
+                throw new Error('RunPod API key not configured. Please add it in Config > Settings.');
             }
             if (!ENDPOINT_ID) {
-                throw new Error('RunPod Endpoint ID not configured. Please add it in Settings.');
+                throw new Error('RunPod Endpoint ID not configured. Please add it in Config > Settings.');
             }
 
-            const response = await fetch(`https://api.runpod.ai/v2/${ENDPOINT_ID}/runsync`, {
+            const response = await fetch('https://api.runpod.ai/v2/' + ENDPOINT_ID + '/runsync', {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${RUNPOD_API_KEY}`,
+                    'Authorization': 'Bearer ' + RUNPOD_API_KEY,
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    input: { text, exaggeration, cfg_weight }
+                    input: {
+                        text,
+                        exaggeration,
+                        cfg_weight,
+                        // Include voice clone sample if one is active
+                        ...(getActiveChatterboxVoiceB64() ? { audio_prompt: getActiveChatterboxVoiceB64() } : {})
+                    }
                 })
             });
 
@@ -9110,8 +9588,17 @@ Format as clean, readable text ready for narration.`;
                 }
                 
                 hideLoading();
-                showNotification(`Successfully combined ${storyData.chapters.length} chapters! Ready for narration.`, 'success');
-                
+                showNotification(`✅ ${storyData.chapters.length} chapters written and sent to Story Editor!`, 'success');
+
+                // Scroll down to the Story Editor and flash it so user knows where to look
+                const editorSection = document.getElementById('storyEditor');
+                if (editorSection) {
+                    editorSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    editorSection.style.transition = 'box-shadow 0.3s ease';
+                    editorSection.style.boxShadow = '0 0 0 3px #78e3fe, 0 0 30px rgba(120,227,254,0.5)';
+                    setTimeout(() => { editorSection.style.boxShadow = ''; }, 2500);
+                }
+
                 // Show preview modal
                 showCombinedPreview(combinedContent, bookTitle);
                 
@@ -14387,7 +14874,334 @@ Format as clean, readable text ready for narration.`;
             // Give other initializers time to complete first
             setTimeout(initializeGenreSystem, 200);
         });
-        
+
+        // ============================================================
+        // SUPABASE AUTH & PROJECT CLOUD SAVE
+        // ============================================================
+
+        let currentUser = null;
+
+        // Initialize Supabase if not already done (fallback for CDN load timing)
+        function ensureSupabase() {
+            if (!window.supabaseClient && window.supabase && window.supabase.createClient) {
+                window.supabaseClient = window.supabase.createClient(
+                    window.SUPABASE_CONFIG.url,
+                    window.SUPABASE_CONFIG.anonKey
+                );
+            }
+            return window.supabaseClient;
+        }
+
+        // Listen for auth state changes
+        document.addEventListener('DOMContentLoaded', () => {
+            const client = ensureSupabase();
+            if (!client) return;
+            client.auth.onAuthStateChange((event, session) => {
+                currentUser = session?.user || null;
+                updateAuthUI();
+                if (currentUser) {
+                    loadUserProjects();
+                }
+            });
+            // Check existing session on load
+            client.auth.getSession().then(({ data: { session } }) => {
+                currentUser = session?.user || null;
+                updateAuthUI();
+                if (currentUser) loadUserProjects();
+            });
+        });
+
+        function updateAuthUI() {
+            const authStatus = document.getElementById('authStatus');
+            const authLoginBtn = document.getElementById('authLoginBtn');
+            const authUserEmail = document.getElementById('authUserEmail');
+            const myProjectsSection = document.getElementById('myProjectsSection');
+            const signInPrompt = document.getElementById('signInPrompt');
+
+            if (currentUser) {
+                if (authStatus) { authStatus.classList.remove('hidden'); authStatus.classList.add('flex'); }
+                if (authLoginBtn) authLoginBtn.classList.add('hidden');
+                if (authUserEmail) authUserEmail.textContent = currentUser.email;
+                if (myProjectsSection) myProjectsSection.classList.remove('hidden');
+                if (signInPrompt) signInPrompt.classList.add('hidden');
+            } else {
+                if (authStatus) { authStatus.classList.add('hidden'); authStatus.classList.remove('flex'); }
+                if (authLoginBtn) authLoginBtn.classList.remove('hidden');
+                if (myProjectsSection) myProjectsSection.classList.add('hidden');
+                if (signInPrompt) signInPrompt.classList.remove('hidden');
+            }
+        }
+
+        function showAuthModal(mode) {
+            mode = mode || 'signin';
+            document.getElementById('authModal').classList.remove('hidden');
+            switchAuthMode(mode);
+        }
+
+        function hideAuthModal() {
+            document.getElementById('authModal').classList.add('hidden');
+            document.getElementById('authError').textContent = '';
+        }
+
+        function switchAuthMode(mode) {
+            const signinPanel = document.getElementById('authSigninPanel');
+            const signupPanel = document.getElementById('authSignupPanel');
+            if (mode === 'signup') {
+                signinPanel.classList.add('hidden');
+                signupPanel.classList.remove('hidden');
+            } else {
+                signinPanel.classList.remove('hidden');
+                signupPanel.classList.add('hidden');
+            }
+            document.getElementById('authError').textContent = '';
+        }
+
+        async function signInUser() {
+            const client = ensureSupabase();
+            if (!client) return showNotification('Supabase not connected', 'error');
+            const email = document.getElementById('authEmail').value.trim();
+            const password = document.getElementById('authPassword').value;
+            const btn = document.getElementById('signinBtn');
+            btn.disabled = true;
+            btn.textContent = 'Signing in...';
+            const { error } = await client.auth.signInWithPassword({ email, password });
+            btn.disabled = false;
+            btn.textContent = 'Sign In';
+            if (error) {
+                document.getElementById('authError').textContent = error.message;
+            } else {
+                hideAuthModal();
+                showNotification('✅ Signed in successfully!', 'success');
+            }
+        }
+
+        async function signUpUser() {
+            const client = ensureSupabase();
+            if (!client) return showNotification('Supabase not connected', 'error');
+            const email = document.getElementById('signupEmail').value.trim();
+            const password = document.getElementById('signupPassword').value;
+            const name = document.getElementById('signupName').value.trim();
+            if (!email || !password) {
+                document.getElementById('authError').textContent = 'Please enter email and password.';
+                return;
+            }
+            const btn = document.getElementById('signupBtn');
+            btn.disabled = true;
+            btn.textContent = 'Creating account...';
+            const { data, error } = await client.auth.signUp({ email, password, options: { data: { display_name: name } } });
+            btn.disabled = false;
+            btn.textContent = 'Create Account';
+            if (error) {
+                document.getElementById('authError').textContent = error.message;
+            } else {
+                hideAuthModal();
+                showNotification('✅ Account created! Check your email to confirm.', 'success');
+            }
+        }
+
+        async function signOutUser() {
+            const client = ensureSupabase();
+            if (client) await client.auth.signOut();
+            showNotification('👋 Signed out', 'info');
+        }
+
+        // ---- Project Save / Load ----
+
+        async function saveProjectToSupabase() {
+            const client = ensureSupabase();
+            if (!client || !currentUser) return false;
+            const editor = document.getElementById('storyEditor');
+            const title = storyData.title || document.getElementById('storyTitle')?.value || 'Untitled Project';
+            const content = editor ? editor.value : '';
+            const projectPayload = {
+                user_id: currentUser.id,
+                title: title,
+                author: storyData.author || '',
+                genre: storyData.settings?.genre || '',
+                tone: storyData.settings?.tone || '',
+                outline: storyData.outline || '',
+                word_count: countWords(content),
+                chapter_count: storyData.chapters ? storyData.chapters.length : 0,
+                status: 'in_progress',
+                settings: storyData.settings || {}
+            };
+
+            // Check if project already has a Supabase ID
+            const existingId = localStorage.getItem('authorr_supabase_project_id');
+            let result;
+            if (existingId) {
+                result = await client.from('projects').update({ ...projectPayload, updated_at: new Date().toISOString() }).eq('id', existingId).eq('user_id', currentUser.id).select().single();
+            } else {
+                result = await client.from('projects').insert(projectPayload).select().single();
+                if (result.data?.id) localStorage.setItem('authorr_supabase_project_id', result.data.id);
+            }
+
+            if (result.error) {
+                console.error('Supabase save error:', result.error);
+                return false;
+            }
+
+            // Save chapters
+            if (storyData.chapters && storyData.chapters.length > 0 && result.data?.id) {
+                const projectId = result.data.id;
+                for (const ch of storyData.chapters) {
+                    const chapterPayload = {
+                        project_id: projectId,
+                        user_id: currentUser.id,
+                        chapter_number: ch.chapterNumber || ch.number || 1,
+                        title: ch.title || `Chapter ${ch.chapterNumber || ch.number || 1}`,
+                        summary: ch.summary || '',
+                        content: ch.content || '',
+                        word_count: countWords(ch.content || ''),
+                        status: ch.content ? 'generated' : 'planned'
+                    };
+                    await client.from('chapters').upsert(chapterPayload, { onConflict: 'project_id,chapter_number' });
+                }
+            }
+
+            return true;
+        }
+
+        async function loadUserProjects() {
+            const client = ensureSupabase();
+            if (!client || !currentUser) return;
+            const listEl = document.getElementById('projectsList');
+            if (!listEl) return;
+            listEl.innerHTML = '<div class="col-span-3 text-center text-theme-secondary py-6"><i class="fas fa-spinner fa-spin text-2xl text-cyan-400"></i></div>';
+
+            const { data: projects, error } = await client.from('projects').select('*').eq('user_id', currentUser.id).order('updated_at', { ascending: false });
+
+            if (error) {
+                listEl.innerHTML = `<div class="col-span-3 text-center text-red-400 py-6">Error loading projects: ${error.message}</div>`;
+                return;
+            }
+
+            if (!projects || projects.length === 0) {
+                listEl.innerHTML = `<div class="col-span-3 text-center text-theme-secondary py-8">
+                    <i class="fas fa-book text-4xl mb-3 text-cyan-400 opacity-40"></i>
+                    <p class="font-semibold">No saved projects yet.</p>
+                    <p class="text-sm mt-1">Start writing and click Save — your work will appear here.</p>
+                </div>`;
+                return;
+            }
+
+            listEl.innerHTML = projects.map(p => `
+                <div class="bg-theme-secondary border-2 border-theme hover:border-cyan-400 transition-all p-5 rounded-xl cursor-pointer" onclick="loadProjectFromSupabase('${p.id}')">
+                    <div class="flex justify-between items-start mb-3">
+                        <span class="text-xs px-2 py-1 rounded-full ${p.status === 'complete' ? 'bg-green-500/20 text-green-400' : 'bg-cyan-400/20 text-cyan-400'}">${p.status.replace('_',' ')}</span>
+                        <span class="text-xs text-theme-secondary">${new Date(p.updated_at).toLocaleDateString()}</span>
+                    </div>
+                    <h3 class="text-lg font-bold mb-1 truncate">${p.title || 'Untitled'}</h3>
+                    <p class="text-sm text-theme-secondary mb-3">${p.genre || 'No genre'} · ${p.chapter_count || 0} chapters · ${(p.word_count || 0).toLocaleString()} words</p>
+                    <div class="flex gap-2">
+                        <button onclick="event.stopPropagation(); loadProjectFromSupabase('${p.id}')" class="flex-1 text-xs btn-primary py-1.5 rounded-lg">
+                            <i class="fas fa-folder-open mr-1"></i>Open
+                        </button>
+                        <button onclick="event.stopPropagation(); deleteProjectFromSupabase('${p.id}')" class="text-xs border border-red-500 text-red-400 hover:bg-red-500 hover:text-white px-3 py-1.5 rounded-lg transition-all">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function loadProjectFromSupabase(projectId) {
+            const client = ensureSupabase();
+            if (!client || !currentUser) return;
+            showNotification('Loading project...', 'info');
+            const { data: project, error } = await client.from('projects').select('*').eq('id', projectId).single();
+            if (error || !project) { showNotification('Failed to load project', 'error'); return; }
+
+            // Load chapters too
+            const { data: chapters } = await client.from('chapters').select('*').eq('project_id', projectId).order('chapter_number');
+
+            // Restore storyData
+            storyData.title = project.title;
+            storyData.author = project.author;
+            storyData.outline = project.outline;
+            storyData.settings = project.settings || storyData.settings;
+            storyData.chapters = (chapters || []).map(ch => ({
+                chapterNumber: ch.chapter_number,
+                number: ch.chapter_number,
+                title: ch.title,
+                summary: ch.summary,
+                content: ch.content,
+            }));
+
+            // Restore editor with combined chapter content
+            const editor = document.getElementById('storyEditor');
+            if (editor) {
+                const combined = storyData.chapters.filter(c => c.content).map(c => `## ${c.title}\n\n${c.content}`).join('\n\n---\n\n');
+                editor.value = combined || project.outline || '';
+                updateWordCount();
+            }
+
+            // Remember project ID for future saves
+            localStorage.setItem('authorr_supabase_project_id', projectId);
+
+            // Populate workspace fields if available
+            const titleEl = document.getElementById('storyTitle');
+            if (titleEl) titleEl.value = project.title || '';
+
+            showPage('workspace');
+            showNotification(`✅ Project "${project.title}" loaded!`, 'success');
+        }
+
+        async function deleteProjectFromSupabase(projectId) {
+            if (!confirm('Delete this project? This cannot be undone.')) return;
+            const client = ensureSupabase();
+            if (!client || !currentUser) return;
+            await client.from('projects').delete().eq('id', projectId).eq('user_id', currentUser.id);
+            showNotification('Project deleted', 'info');
+            loadUserProjects();
+        }
+
     </script>
+
+    <!-- Auth Modal -->
+    <div id="authModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-gray-900 border-2 border-cyan-400 rounded-2xl w-full max-w-md p-8 relative">
+            <button onclick="hideAuthModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white text-xl">
+                <i class="fas fa-times"></i>
+            </button>
+            <div class="text-center mb-6">
+                <h2 class="text-2xl font-bold authorr-brand-text">AUTHORR AI</h2>
+                <p class="text-gray-400 text-sm mt-1">Save your work to the cloud</p>
+            </div>
+
+            <p id="authError" class="text-red-400 text-sm text-center mb-3 min-h-[20px]"></p>
+
+            <!-- Sign In Panel -->
+            <div id="authSigninPanel">
+                <h3 class="text-lg font-bold mb-4 text-center">Sign In</h3>
+                <div class="space-y-3">
+                    <input type="email" id="authEmail" placeholder="Email address" class="w-full px-4 py-3 rounded-lg bg-gray-800 border border-gray-600 focus:border-cyan-400 text-white outline-none">
+                    <input type="password" id="authPassword" placeholder="Password" class="w-full px-4 py-3 rounded-lg bg-gray-800 border border-gray-600 focus:border-cyan-400 text-white outline-none" onkeydown="if(event.key==='Enter') signInUser()">
+                    <button id="signinBtn" onclick="signInUser()" class="w-full btn-primary py-3 rounded-lg font-semibold">
+                        Sign In
+                    </button>
+                </div>
+                <p class="text-center text-sm text-gray-400 mt-4">
+                    Don't have an account? <button onclick="switchAuthMode('signup')" class="text-cyan-400 hover:underline">Create one free</button>
+                </p>
+            </div>
+
+            <!-- Sign Up Panel -->
+            <div id="authSignupPanel" class="hidden">
+                <h3 class="text-lg font-bold mb-4 text-center">Create Free Account</h3>
+                <div class="space-y-3">
+                    <input type="text" id="signupName" placeholder="Your name (optional)" class="w-full px-4 py-3 rounded-lg bg-gray-800 border border-gray-600 focus:border-cyan-400 text-white outline-none">
+                    <input type="email" id="signupEmail" placeholder="Email address" class="w-full px-4 py-3 rounded-lg bg-gray-800 border border-gray-600 focus:border-cyan-400 text-white outline-none">
+                    <input type="password" id="signupPassword" placeholder="Password (min 6 characters)" class="w-full px-4 py-3 rounded-lg bg-gray-800 border border-gray-600 focus:border-cyan-400 text-white outline-none" onkeydown="if(event.key==='Enter') signUpUser()">
+                    <button id="signupBtn" onclick="signUpUser()" class="w-full btn-primary py-3 rounded-lg font-semibold">
+                        Create Account
+                    </button>
+                </div>
+                <p class="text-center text-sm text-gray-400 mt-4">
+                    Already have an account? <button onclick="switchAuthMode('signin')" class="text-cyan-400 hover:underline">Sign in</button>
+                </p>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
