@@ -73,7 +73,7 @@ def handler(job):
             exaggeration=exaggeration,
             cfg_weight=cfg_weight,
             temperature=temperature,
-            speed_factor=speed_factor,
+            
         )
         if seed is not None:
             generate_kwargs["seed"] = int(seed)
