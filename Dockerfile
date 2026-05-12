@@ -16,6 +16,7 @@ RUN pip install --no-cache-dir runpod
 RUN pip install --no-cache-dir soundfile
 RUN pip install --no-cache-dir numpy
 RUN pip install --no-cache-dir chatterbox-tts
+RUN pip install --no-cache-dir "transformers==4.44.2"
 
 COPY handler.py .
 
