@@ -62,8 +62,6 @@ def handler(job):
     # ── Determine mode: "turbo" or "classic" (default) ──────────────────────
     mode = job_input.get("mode", "classic").lower()
 
-    # Also auto-detect from 'prompt' (Turbo) vs 'text' (Classic) field names
-    # so both naming conventions work
     text = job_input.get("text") or job_input.get("prompt", "")
     if not text:
         return {"error": "Missing required field: text (or prompt)"}
@@ -77,13 +75,12 @@ def handler(job):
         if turbo_model is None:
             return {"error": "Chatterbox Turbo model failed to load on startup"}
 
-        voice      = job_input.get("voice", "laura").lower()
-        temperature  = float(job_input.get("temperature", 0.8))
-        speed_factor = float(job_input.get("speed_factor", 1.0))
-        seed         = job_input.get("seed", None)
+        voice       = job_input.get("voice", "laura").lower()
+        temperature = float(job_input.get("temperature", 0.8))
+        seed        = job_input.get("seed", None)
 
-        # voice_url / audio_prompt for custom voice cloning in Turbo
-        audio_prompt_b64 = job_input.get("audio_prompt", None)
+        # voice cloning via audio prompt
+        audio_prompt_b64  = job_input.get("audio_prompt", None)
         audio_prompt_path = None
         if audio_prompt_b64:
             print("Turbo voice-clone mode: decoding reference audio...", flush=True)
@@ -91,7 +88,7 @@ def handler(job):
 
         print(
             f"[Turbo] Generating: {len(text)} chars | voice={voice} | "
-            f"temp={temperature} | speed={speed_factor} | seed={seed}",
+            f"temp={temperature} | seed={seed}",
             flush=True
         )
 
@@ -99,7 +96,6 @@ def handler(job):
             generate_kwargs = dict(
                 text=text,
                 temperature=temperature,
-                speed_factor=speed_factor,
             )
             if seed is not None:
                 generate_kwargs["seed"] = int(seed)
