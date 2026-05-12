@@ -1,5 +1,4 @@
 import runpod
-from chatterbox.tts import ChatterboxTTS
 import soundfile as sf
 import base64
 import io
@@ -7,74 +6,168 @@ import os
 import tempfile
 import traceback
 
-print("Starting Chatterbox TTS handler...", flush=True)
+print("Starting Chatterbox TTS handler (Classic + Turbo)...", flush=True)
 
+# ── Load Classic model ──────────────────────────────────────────────────────
+classic_model = None
 try:
     from chatterbox.tts import ChatterboxTTS
-    print("Chatterbox imported successfully.", flush=True)
-    model = ChatterboxTTS.from_pretrained(device="cuda")
-    print("Chatterbox model loaded.", flush=True)
+    print("Loading Chatterbox Classic...", flush=True)
+    classic_model = ChatterboxTTS.from_pretrained(device="cuda")
+    print("Chatterbox Classic loaded.", flush=True)
 except Exception as e:
-    print(f"ERROR loading model: {e}", flush=True)
+    print(f"ERROR loading Classic model: {e}", flush=True)
     traceback.print_exc()
-    model = None
+
+# ── Load Turbo model ────────────────────────────────────────────────────────
+turbo_model = None
+try:
+    from chatterbox.tts_turbo import ChatterboxTurboTTS
+    print("Loading Chatterbox Turbo...", flush=True)
+    turbo_model = ChatterboxTurboTTS.from_pretrained(device="cuda")
+    print("Chatterbox Turbo loaded.", flush=True)
+except Exception as e:
+    print(f"ERROR loading Turbo model: {e}", flush=True)
+    traceback.print_exc()
+
+# ── Preset voice map (Turbo named voices) ───────────────────────────────────
+# These are the 20 built-in Turbo speaker IDs
+TURBO_VOICES = {
+    "aaron", "abigail", "anaya", "andy", "archer", "brian", "chloe",
+    "dylan", "emmanuel", "ethan", "evelyn", "gavin", "gordon", "ivan",
+    "laura", "lucy", "madison", "marisol", "meera", "walter"
+}
+
+
+def audio_to_b64(wav_tensor, sample_rate=24000, fmt="wav"):
+    """Convert a waveform tensor to a base64-encoded audio string."""
+    buf = io.BytesIO()
+    sf.write(buf, wav_tensor.squeeze().numpy(), sample_rate, format=fmt.upper())
+    buf.seek(0)
+    return base64.b64encode(buf.read()).decode()
+
+
+def decode_audio_prompt(audio_b64):
+    """Decode a base64 audio reference clip to a temp WAV file path."""
+    audio_bytes = base64.b64decode(audio_b64)
+    tmp = tempfile.NamedTemporaryFile(suffix=".wav", delete=False)
+    tmp.write(audio_bytes)
+    tmp.close()
+    return tmp.name
+
 
 def handler(job):
-    if model is None:
-        return {"error": "Model failed to load on startup"}
+    job_input = job.get("input", {})
 
-    try:
-        job_input = job["input"]
+    # ── Determine mode: "turbo" or "classic" (default) ──────────────────────
+    mode = job_input.get("mode", "classic").lower()
 
-        text = job_input.get("text", "")
-        if not text:
-            return {"error": "Missing required field: text"}
+    # Also auto-detect from 'prompt' (Turbo) vs 'text' (Classic) field names
+    # so both naming conventions work
+    text = job_input.get("text") or job_input.get("prompt", "")
+    if not text:
+        return {"error": "Missing required field: text (or prompt)"}
 
-        exaggeration = float(job_input.get("exaggeration", 0.5))
-        cfg_weight = float(job_input.get("cfg_weight", 0.5))
+    fmt = job_input.get("format", "wav").lower()
+    if fmt not in ("wav", "flac", "ogg"):
+        fmt = "wav"
 
-        # Optional: base64-encoded reference audio for voice cloning
+    # ── TURBO mode ───────────────────────────────────────────────────────────
+    if mode == "turbo":
+        if turbo_model is None:
+            return {"error": "Chatterbox Turbo model failed to load on startup"}
+
+        voice      = job_input.get("voice", "laura").lower()
+        temperature  = float(job_input.get("temperature", 0.8))
+        speed_factor = float(job_input.get("speed_factor", 1.0))
+        seed         = job_input.get("seed", None)
+
+        # voice_url / audio_prompt for custom voice cloning in Turbo
         audio_prompt_b64 = job_input.get("audio_prompt", None)
         audio_prompt_path = None
-
         if audio_prompt_b64:
-            print("Voice cloning mode: decoding reference audio...", flush=True)
-            audio_bytes = base64.b64decode(audio_prompt_b64)
-            tmp = tempfile.NamedTemporaryFile(suffix=".wav", delete=False)
-            tmp.write(audio_bytes)
-            tmp.close()
-            audio_prompt_path = tmp.name
+            print("Turbo voice-clone mode: decoding reference audio...", flush=True)
+            audio_prompt_path = decode_audio_prompt(audio_prompt_b64)
 
-        print(f"Generating audio: {len(text)} chars, exaggeration={exaggeration}, cfg_weight={cfg_weight}", flush=True)
+        print(
+            f"[Turbo] Generating: {len(text)} chars | voice={voice} | "
+            f"temp={temperature} | speed={speed_factor} | seed={seed}",
+            flush=True
+        )
 
-        if audio_prompt_path:
-            wav = model.generate(
-                text,
-                audio_prompt_path=audio_prompt_path,
-                exaggeration=exaggeration,
-                cfg_weight=cfg_weight
+        try:
+            generate_kwargs = dict(
+                text=text,
+                temperature=temperature,
+                speed_factor=speed_factor,
             )
-        else:
-            wav = model.generate(
-                text,
+            if seed is not None:
+                generate_kwargs["seed"] = int(seed)
+            if audio_prompt_path:
+                generate_kwargs["audio_prompt_path"] = audio_prompt_path
+            elif voice in TURBO_VOICES:
+                generate_kwargs["voice"] = voice
+
+            wav = turbo_model.generate(**generate_kwargs)
+            audio_b64 = audio_to_b64(wav, sample_rate=24000, fmt=fmt)
+            print("[Turbo] Generation complete.", flush=True)
+            return {"audio": audio_b64, "format": fmt, "mode": "turbo"}
+
+        except Exception as e:
+            traceback.print_exc()
+            return {"error": str(e)}
+        finally:
+            if audio_prompt_path and os.path.exists(audio_prompt_path):
+                os.remove(audio_prompt_path)
+
+    # ── CLASSIC mode (default) ───────────────────────────────────────────────
+    else:
+        if classic_model is None:
+            return {"error": "Chatterbox Classic model failed to load on startup"}
+
+        exaggeration = float(job_input.get("exaggeration", 0.5))
+        cfg_weight   = float(job_input.get("cfg_weight", 0.5))
+        temperature  = float(job_input.get("temperature", 0.8))
+        speed_factor = float(job_input.get("speed_factor", 1.0))
+        seed         = job_input.get("seed", None)
+
+        audio_prompt_b64  = job_input.get("audio_prompt", None)
+        audio_prompt_path = None
+        if audio_prompt_b64:
+            print("Classic voice-clone mode: decoding reference audio...", flush=True)
+            audio_prompt_path = decode_audio_prompt(audio_prompt_b64)
+
+        print(
+            f"[Classic] Generating: {len(text)} chars | "
+            f"exag={exaggeration} | cfg={cfg_weight} | "
+            f"temp={temperature} | speed={speed_factor} | seed={seed}",
+            flush=True
+        )
+
+        try:
+            generate_kwargs = dict(
+                text=text,
                 exaggeration=exaggeration,
-                cfg_weight=cfg_weight
+                cfg_weight=cfg_weight,
+                temperature=temperature,
+                speed_factor=speed_factor,
             )
+            if seed is not None:
+                generate_kwargs["seed"] = int(seed)
+            if audio_prompt_path:
+                generate_kwargs["audio_prompt_path"] = audio_prompt_path
 
-        buf = io.BytesIO()
-        sf.write(buf, wav.squeeze().numpy(), 22050, format="WAV")
-        buf.seek(0)
-        audio_b64 = base64.b64encode(buf.read()).decode()
+            wav = classic_model.generate(**generate_kwargs)
+            audio_b64 = audio_to_b64(wav, sample_rate=22050, fmt=fmt)
+            print("[Classic] Generation complete.", flush=True)
+            return {"audio": audio_b64, "format": fmt, "mode": "classic"}
 
-        # Clean up temp file if used
-        if audio_prompt_path and os.path.exists(audio_prompt_path):
-            os.remove(audio_prompt_path)
+        except Exception as e:
+            traceback.print_exc()
+            return {"error": str(e)}
+        finally:
+            if audio_prompt_path and os.path.exists(audio_prompt_path):
+                os.remove(audio_prompt_path)
 
-        print("Audio generation complete.", flush=True)
-        return {"audio": audio_b64, "format": "wav"}
-
-    except Exception as e:
-        traceback.print_exc()
-        return {"error": str(e)}
 
 runpod.serverless.start({"handler": handler})

@@ -1568,6 +1568,89 @@
                                 </div>
                             </div>
 
+                            <!-- ── Chatterbox Controls Panel ── shown for Classic & Turbo voices -->
+                            <div id="chatterboxControlsPanel" class="hidden mt-3 p-4 rounded-xl border-2 border-cyan-400/50" style="background: rgba(120,227,254,0.04);">
+                                <h4 class="text-sm font-bold text-cyan-400 mb-3"><i class="fas fa-sliders-h mr-1"></i> Chatterbox Controls</h4>
+
+                                <!-- Classic-only controls -->
+                                <div id="chatterboxClassicControls">
+                                    <div class="grid grid-cols-2 gap-3 mb-3">
+                                        <div>
+                                            <label class="block text-xs font-semibold text-theme-secondary mb-1">
+                                                Exaggeration
+                                                <span class="text-cyan-400 ml-1" id="exaggerationVal">0.5</span>
+                                            </label>
+                                            <input type="range" id="cbExaggeration" min="0" max="1" step="0.05" value="0.5"
+                                                   class="w-full accent-cyan-400"
+                                                   oninput="document.getElementById('exaggerationVal').textContent = parseFloat(this.value).toFixed(2)">
+                                            <div class="flex justify-between text-xs text-theme-secondary mt-0.5">
+                                                <span>Neutral</span><span>Intense</span>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-semibold text-theme-secondary mb-1">
+                                                CFG Weight
+                                                <span class="text-cyan-400 ml-1" id="cfgWeightVal">0.5</span>
+                                            </label>
+                                            <input type="range" id="cbCfgWeight" min="0" max="1" step="0.05" value="0.5"
+                                                   class="w-full accent-cyan-400"
+                                                   oninput="document.getElementById('cfgWeightVal').textContent = parseFloat(this.value).toFixed(2)">
+                                            <div class="flex justify-between text-xs text-theme-secondary mt-0.5">
+                                                <span>Free</span><span>Guided</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <p class="text-xs text-theme-secondary mb-3" style="opacity:0.7">💡 High exaggeration speeds up speech — lower CFG weight to compensate. Default 0.5 / 0.5 works for most content.</p>
+                                </div>
+
+                                <!-- Shared controls (Classic + Turbo) -->
+                                <div class="grid grid-cols-2 gap-3 mb-3">
+                                    <div>
+                                        <label class="block text-xs font-semibold text-theme-secondary mb-1">
+                                            Temperature
+                                            <span class="text-cyan-400 ml-1" id="cbTempVal">0.8</span>
+                                        </label>
+                                        <input type="range" id="cbTemperature" min="0.05" max="2.0" step="0.05" value="0.8"
+                                               class="w-full accent-cyan-400"
+                                               oninput="document.getElementById('cbTempVal').textContent = parseFloat(this.value).toFixed(2)">
+                                        <div class="flex justify-between text-xs text-theme-secondary mt-0.5">
+                                            <span>Steady</span><span>Varied</span>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-semibold text-theme-secondary mb-1">Speed Factor
+                                            <span class="text-cyan-400 ml-1" id="cbSpeedVal">1.0</span>
+                                        </label>
+                                        <input type="range" id="cbSpeedFactor" min="0.5" max="2.0" step="0.05" value="1.0"
+                                               class="w-full accent-cyan-400"
+                                               oninput="document.getElementById('cbSpeedVal').textContent = parseFloat(this.value).toFixed(2)">
+                                        <div class="flex justify-between text-xs text-theme-secondary mt-0.5">
+                                            <span>Slow</span><span>Fast</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label class="block text-xs font-semibold text-theme-secondary mb-1">Output Format</label>
+                                        <select id="cbFormat" class="w-full px-3 py-1.5 rounded-lg text-sm form-field bg-theme-primary text-theme-primary">
+                                            <option value="wav" selected>WAV (Best Quality)</option>
+                                            <option value="flac">FLAC (Lossless)</option>
+                                            <option value="ogg">OGG (Compressed)</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-semibold text-theme-secondary mb-1">Seed <span class="text-theme-secondary font-normal">(blank = random)</span></label>
+                                        <input type="number" id="cbSeed" placeholder="e.g. 42"
+                                               class="w-full px-3 py-1.5 rounded-lg text-sm form-field bg-theme-primary text-theme-primary">
+                                    </div>
+                                </div>
+
+                                <button onclick="resetChatterboxControls()" class="mt-3 text-xs text-cyan-400 hover:text-cyan-300 underline">
+                                    <i class="fas fa-undo mr-1"></i>Reset to defaults
+                                </button>
+                            </div>
+
                             <button onclick="previewSelectedVoice()" class="btn-secondary w-full mt-2 py-2 rounded-lg text-sm">
                                 <i class="fas fa-play mr-2"></i>Preview Voice
                             </button>
@@ -2351,10 +2434,10 @@
                         </div>
 
                         <div>
-                            <label class="block text-sm font-semibold mb-2">RunPod Endpoint ID</label>
+                            <label class="block text-sm font-semibold mb-2">⚡ RunPod Endpoint ID — Chatterbox (Classic + Turbo)</label>
                             <input type="text" id="runpodEndpointId" placeholder="e.g. 7p5r8y4d9ky4u6"
                                    class="w-full px-4 py-2 rounded-lg form-field bg-theme-primary text-theme-primary">
-                            <p class="text-xs text-theme-secondary mt-1">Your Chatterbox TTS serverless endpoint ID from RunPod dashboard</p>
+                            <p class="text-xs text-theme-secondary mt-1">One endpoint runs both Classic and Turbo — deploy your updated handler from GitHub.</p>
                         </div>
                         
                         <div>
@@ -6086,17 +6169,45 @@ Return the COMPLETE text with DRAMATICALLY humanized writing that's obviously di
                 let imageUrl;
 
                 if (imageProvider === 'cloudflare') {
-                    progressMessage.textContent = 'Generating cover with AI — please wait (this may take 15-30 seconds)...';
+                    progressMessage.textContent = 'Generating cover with Flux AI — please wait (up to 45 seconds)...';
 
-                    // Use Pollinations.ai — completely free, no API key, no signup, browser-compatible
-                    // Works by setting the prompt as a URL path — image is served directly (no CORS issues)
+                    // Use Pollinations.ai — completely free, no API key, no signup
+                    // Fetch as blob so we get a local object URL that always displays correctly
                     const encodedPrompt = encodeURIComponent(prompt);
                     const seed = Math.floor(Math.random() * 999999);
                     const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=768&height=1024&seed=${seed}&nologo=true&model=flux`;
 
-                    // Return the URL directly — displayGeneratedCover sets it as img.src
-                    // No fetch needed — browser loads it natively without CORS issues
-                    imageUrl = pollinationsUrl;
+                    // Pollinations can be slow — retry up to 3 times with increasing timeout
+                    let imgBlob = null;
+                    const maxAttempts = 3;
+                    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+                        try {
+                            progressMessage.textContent = attempt > 1
+                                ? `Attempt ${attempt}/${maxAttempts} — AI is still painting your cover...`
+                                : 'AI is generating your cover image — please wait...';
+
+                            const controller = new AbortController();
+                            const timeoutId = setTimeout(() => controller.abort(), 60000); // 60s timeout per attempt
+
+                            const pollResp = await fetch(pollinationsUrl, { signal: controller.signal });
+                            clearTimeout(timeoutId);
+
+                            if (pollResp.ok) {
+                                imgBlob = await pollResp.blob();
+                                if (imgBlob.size > 1000) break; // valid image received
+                            }
+                        } catch (fetchErr) {
+                            if (attempt === maxAttempts) throw new Error('Cover generation timed out. Please try again.');
+                            // Wait 5 seconds before retrying
+                            await new Promise(r => setTimeout(r, 5000));
+                        }
+                    }
+
+                    if (!imgBlob || imgBlob.size < 1000) {
+                        throw new Error('Image generation failed. Please try again in a moment.');
+                    }
+
+                    imageUrl = URL.createObjectURL(imgBlob);
 
                 } else {
                     // Fall back to DALL-E
@@ -6124,16 +6235,13 @@ Return the COMPLETE text with DRAMATICALLY humanized writing that's obviously di
                 }
 
                 clearInterval(stepInterval);
-                progressBar.style.width = '85%';
-                stepText.textContent = imageProvider === 'cloudflare'
-                    ? 'Prompt sent — loading image from AI server...'
-                    : 'Cover generated successfully!';
+                progressBar.style.width = '100%';
+                stepText.textContent = 'Cover generated successfully!';
 
-                // For Pollinations, image loads async — pass progressDiv so we can hide it on image load
-                displayGeneratedCover(imageUrl, platform, imageProvider === 'cloudflare' ? progressDiv : null);
-                if (imageProvider !== 'cloudflare') {
-                    setTimeout(() => { progressDiv.classList.add('hidden'); }, 1500);
-                }
+                setTimeout(() => {
+                    progressDiv.classList.add('hidden');
+                    displayGeneratedCover(imageUrl, platform);
+                }, 1000);
 
             } catch (error) {
                 clearInterval(stepInterval);
@@ -6161,48 +6269,29 @@ Return the COMPLETE text with DRAMATICALLY humanized writing that's obviously di
             return prompt;
         }
 
-        function displayGeneratedCover(imageUrl, platform, pendingProgressDiv) {
+        function displayGeneratedCover(imageUrl, platform) {
             const coverPreview = document.getElementById('coverPreview');
             const generatedCover = document.getElementById('generatedCover');
             const placeholderPreview = document.getElementById('placeholderPreview');
             const dimensionDisplay = document.getElementById('dimensionDisplay');
 
-            // Show a loading placeholder while the image loads
-            generatedCover.style.minHeight = '300px';
-            generatedCover.style.background = 'linear-gradient(135deg, #0d1f2d, #0a1520)';
-            generatedCover.alt = 'Generating cover — AI is painting your image...';
-
-            // Show preview area immediately so user sees loading state
-            placeholderPreview.classList.add('hidden');
-            coverPreview.classList.remove('hidden');
-
-            // Set src — browser loads it natively, no CORS issues for image display
             generatedCover.src = imageUrl;
+            generatedCover.alt = 'Generated book cover';
             generatedCover.onload = () => {
-                generatedCover.style.minHeight = '';
-                generatedCover.style.background = '';
-                generatedCover.alt = 'Generated book cover';
-                // Hide the progress bar now that the image has actually appeared
-                if (pendingProgressDiv) {
-                    pendingProgressDiv.classList.add('hidden');
-                }
                 showNotification('AI book cover generated successfully!', 'success');
                 updateEmbedButtonVisibility();
             };
             generatedCover.onerror = () => {
-                generatedCover.style.minHeight = '';
-                generatedCover.style.background = 'linear-gradient(135deg, #2d0d0d, #200a0a)';
-                generatedCover.alt = 'Cover failed to load';
-                if (pendingProgressDiv) {
-                    pendingProgressDiv.classList.add('hidden');
-                }
-                showNotification('Cover image failed to load. Please click Regenerate to try again.', 'error');
+                showNotification('Cover display error. Please click Regenerate.', 'error');
             };
 
             const dimensions = platformDimensions[platform];
             if (dimensionDisplay && dimensions) {
                 dimensionDisplay.textContent = `${dimensions.width}×${dimensions.height}px`;
             }
+
+            placeholderPreview.classList.add('hidden');
+            coverPreview.classList.remove('hidden');
         }
 
         async function regenerateAICover() {
@@ -6814,6 +6903,7 @@ Format as clean, readable text ready for narration.`;
             const elevenlabsKey = document.getElementById('elevenlabsKey')?.value?.trim();
             const runpodKey = document.getElementById('runpodKey')?.value?.trim();
             const runpodEndpointId = document.getElementById('runpodEndpointId')?.value?.trim();
+            const runpodTurboEndpointId = document.getElementById('runpodTurboEndpointId')?.value?.trim();
             const model = document.getElementById('modelSelection')?.value;
             const autoSave = document.getElementById('autoSave')?.checked;
 
@@ -6829,6 +6919,9 @@ Format as clean, readable text ready for narration.`;
             }
             if (runpodEndpointId) {
                 localStorage.setItem('runpodEndpointId', runpodEndpointId.replace(/[^\x20-\x7E]/g, '').trim());
+            }
+            if (runpodTurboEndpointId) {
+                localStorage.setItem('runpodTurboEndpointId', runpodTurboEndpointId.replace(/[^\x20-\x7E]/g, '').trim());
             }
             const aiProvider = document.getElementById('aiProvider')?.value;
             const ollamaModel = document.getElementById('ollamaModel')?.value;
@@ -6904,9 +6997,12 @@ Format as clean, readable text ready for narration.`;
             const runpodEndpointId = localStorage.getItem('runpodEndpointId');
             if (runpodEndpointId) {
                 const endpointInput = document.getElementById('runpodEndpointId');
-                if (endpointInput) {
-                    endpointInput.value = runpodEndpointId;
-                }
+                if (endpointInput) endpointInput.value = runpodEndpointId;
+            }
+            const runpodTurboEndpointId = localStorage.getItem('runpodTurboEndpointId');
+            if (runpodTurboEndpointId) {
+                const turboInput = document.getElementById('runpodTurboEndpointId');
+                if (turboInput) turboInput.value = runpodTurboEndpointId;
             }
             const aiProvider = localStorage.getItem('aiProvider') || 'ollama';
             const aiProviderSelect = document.getElementById('aiProvider');
@@ -7114,9 +7210,13 @@ Format as clean, readable text ready for narration.`;
                     }
                     audioBlob = await generateElevenLabsAudio(previewText, voiceId, apiKey);
                 } else if (provider === 'chatterbox') {
-                    const exaggeration = parseFloat(selectedOption.dataset.exaggeration || 0.5);
-                    const cfg = parseFloat(selectedOption.dataset.cfg || 0.5);
+                    // Use slider values if available, fall back to preset defaults
+                    const exaggeration = parseFloat(document.getElementById('cbExaggeration')?.value ?? selectedOption.dataset.exaggeration ?? 0.5);
+                    const cfg = parseFloat(document.getElementById('cbCfgWeight')?.value ?? selectedOption.dataset.cfg ?? 0.5);
                     audioBlob = await generateChatterboxAudio(previewText, exaggeration, cfg);
+                } else if (provider === 'cbturbo') {
+                    const voiceName = selectedOption.dataset.voice;
+                    audioBlob = await generateChatterboxTurboAudio(previewText, voiceName);
                 } else {
                     showNotification('Unknown voice provider', 'error');
                     return;
@@ -7664,17 +7764,54 @@ Format as clean, readable text ready for narration.`;
                 });
             }
 
-            // Add Chatterbox voices
+            // ── Chatterbox Turbo — 20 built-in named voices, ~4x faster ──
+            const turboOptgroup = document.createElement('optgroup');
+            turboOptgroup.label = '⚡ Chatterbox Turbo (RunPod) — Fast';
+            voiceSelect.appendChild(turboOptgroup);
+
+            const turboVoices = [
+                { id: 'aaron',     label: 'Aaron — Male, Confident' },
+                { id: 'abigail',   label: 'Abigail — Female, Clear' },
+                { id: 'anaya',     label: 'Anaya — Female, Warm' },
+                { id: 'andy',      label: 'Andy — Male, Casual' },
+                { id: 'archer',    label: 'Archer — Male, Authoritative' },
+                { id: 'brian',     label: 'Brian — Male, Friendly' },
+                { id: 'chloe',     label: 'Chloe — Female, Bright' },
+                { id: 'dylan',     label: 'Dylan — Male, Engaging' },
+                { id: 'emmanuel',  label: 'Emmanuel — Male, Deep' },
+                { id: 'ethan',     label: 'Ethan — Male, Neutral' },
+                { id: 'evelyn',    label: 'Evelyn — Female, Elegant' },
+                { id: 'gavin',     label: 'Gavin — Male, Professional' },
+                { id: 'gordon',    label: 'Gordon — Male, Gruff' },
+                { id: 'ivan',      label: 'Ivan — Male, Serious' },
+                { id: 'laura',     label: 'Laura — Female, Conversational' },
+                { id: 'lucy',      label: 'Lucy — Female, Gentle' },
+                { id: 'madison',   label: 'Madison — Female, Upbeat' },
+                { id: 'marisol',   label: 'Marisol — Female, Expressive' },
+                { id: 'meera',     label: 'Meera — Female, Soft' },
+                { id: 'walter',    label: 'Walter — Male, Classic' },
+            ];
+
+            turboVoices.forEach(v => {
+                const opt = document.createElement('option');
+                opt.value = 'cbturbo_' + v.id;
+                opt.textContent = v.label;
+                opt.dataset.provider = 'cbturbo';
+                opt.dataset.voice = v.id;
+                turboOptgroup.appendChild(opt);
+            });
+
+            // ── Chatterbox Classic — voice clone + style control ──
             const chatterboxOptgroup = document.createElement('optgroup');
-            chatterboxOptgroup.label = '🔊 Chatterbox TTS (RunPod)';
+            chatterboxOptgroup.label = '🔊 Chatterbox Classic (RunPod) — Voice Clone';
             voiceSelect.appendChild(chatterboxOptgroup);
 
             const chatterboxVoices = [
-                { value: 'chatterbox_neutral',    label: 'Chatterbox — Neutral (balanced)',         exaggeration: 0.5, cfg: 0.5 },
-                { value: 'chatterbox_expressive', label: 'Chatterbox — Expressive (lively)',         exaggeration: 0.75, cfg: 0.5 },
-                { value: 'chatterbox_calm',        label: 'Chatterbox — Calm (relaxed, slow)',        exaggeration: 0.3, cfg: 0.3 },
-                { value: 'chatterbox_dramatic',    label: 'Chatterbox — Dramatic (intense)',          exaggeration: 0.9, cfg: 0.7 },
-                { value: 'chatterbox_audiobook',   label: 'Chatterbox — Audiobook (clear narration)', exaggeration: 0.45, cfg: 0.6 },
+                { value: 'chatterbox_neutral',    label: 'Classic — Neutral (balanced)',         exaggeration: 0.5, cfg: 0.5 },
+                { value: 'chatterbox_expressive', label: 'Classic — Expressive (lively)',         exaggeration: 0.75, cfg: 0.5 },
+                { value: 'chatterbox_calm',        label: 'Classic — Calm (relaxed)',              exaggeration: 0.3, cfg: 0.3 },
+                { value: 'chatterbox_dramatic',    label: 'Classic — Dramatic (intense)',          exaggeration: 0.9, cfg: 0.7 },
+                { value: 'chatterbox_audiobook',   label: 'Classic — Audiobook (clear narration)', exaggeration: 0.45, cfg: 0.6 },
             ];
 
             chatterboxVoices.forEach(v => {
@@ -8562,6 +8699,10 @@ Format as clean, readable text ready for narration.`;
                     const exaggeration = parseFloat(selectedOption?.dataset?.exaggeration || 0.5);
                     const cfg = parseFloat(selectedOption?.dataset?.cfg || 0.5);
                     return await generateChatterboxAudio(text, exaggeration, cfg);
+                } else if (provider === 'cbturbo') {
+                    // cbturbo_voicename — split on first underscore only
+                    const turboVoice = voice.replace('cbturbo_', '');
+                    return await generateChatterboxTurboAudio(text, turboVoice);
                 } else {
                     throw new Error(`Unknown voice provider: ${provider}`);
                 }
@@ -8826,10 +8967,66 @@ Format as clean, readable text ready for narration.`;
         function toggleChatterboxVoicePanel() {
             const sel = document.getElementById('voiceSelection');
             const panel = document.getElementById('chatterboxVoicePanel');
+            const controlsPanel = document.getElementById('chatterboxControlsPanel');
+            const classicControls = document.getElementById('chatterboxClassicControls');
             if (!sel || !panel) return;
-            const isChatterbox = sel.value.startsWith('chatterbox_');
+            const isClassic = sel.value.startsWith('chatterbox_');
+            const isTurbo   = sel.value.startsWith('cbturbo_');
+            const isChatterbox = isClassic || isTurbo;
+
+            // Show/hide clone panel
             panel.classList.toggle('hidden', !isChatterbox);
-            if (isChatterbox) renderSavedVoicesList();
+            // Show/hide controls panel
+            if (controlsPanel) controlsPanel.classList.toggle('hidden', !isChatterbox);
+            // Show/hide Classic-only sliders (exaggeration / cfg)
+            if (classicControls) classicControls.style.display = isClassic ? '' : 'none';
+
+            if (isChatterbox) {
+                const heading = panel.querySelector('h4');
+                const desc    = panel.querySelector('p');
+                if (isTurbo) {
+                    if (heading) heading.innerHTML = '<i class="fas fa-bolt mr-1"></i> Chatterbox Turbo — Named Voices';
+                    if (desc)    desc.textContent  = 'Turbo uses built-in named voices (~4x faster). Voice cloning is not available in Turbo mode.';
+                    const uploadArea = panel.querySelector('.border-dashed');
+                    if (uploadArea) uploadArea.style.display = 'none';
+                    const savedList = document.getElementById('savedVoicesList');
+                    if (savedList) savedList.style.display = 'none';
+                } else {
+                    if (heading) heading.innerHTML = '<i class="fas fa-microphone-alt mr-1"></i> Chatterbox Voice Clone';
+                    if (desc)    desc.textContent  = 'Upload a 5–30 second WAV or MP3 clip of any speaker and Chatterbox will clone that voice. No clip = default AI voice.';
+                    const uploadArea = panel.querySelector('.border-dashed');
+                    if (uploadArea) uploadArea.style.display = '';
+                    const savedList = document.getElementById('savedVoicesList');
+                    if (savedList) savedList.style.display = '';
+                    renderSavedVoicesList();
+                }
+                // Sync exaggeration/cfg sliders with the selected preset values
+                if (isClassic) {
+                    const selectedOption = sel.options[sel.selectedIndex];
+                    const exag = parseFloat(selectedOption?.dataset?.exaggeration || 0.5);
+                    const cfg  = parseFloat(selectedOption?.dataset?.cfg || 0.5);
+                    const exagSlider = document.getElementById('cbExaggeration');
+                    const cfgSlider  = document.getElementById('cbCfgWeight');
+                    if (exagSlider) { exagSlider.value = exag; document.getElementById('exaggerationVal').textContent = exag.toFixed(2); }
+                    if (cfgSlider)  { cfgSlider.value  = cfg;  document.getElementById('cfgWeightVal').textContent  = cfg.toFixed(2); }
+                }
+            }
+        }
+
+        function resetChatterboxControls() {
+            const defaults = { cbExaggeration: 0.5, cbCfgWeight: 0.5, cbTemperature: 0.8, cbSpeedFactor: 1.0 };
+            const labels   = { cbExaggeration: 'exaggerationVal', cbCfgWeight: 'cfgWeightVal', cbTemperature: 'cbTempVal', cbSpeedFactor: 'cbSpeedVal' };
+            for (const [id, val] of Object.entries(defaults)) {
+                const el = document.getElementById(id);
+                if (el) el.value = val;
+                const lbl = document.getElementById(labels[id]);
+                if (lbl) lbl.textContent = val.toFixed(2);
+            }
+            const fmt = document.getElementById('cbFormat');
+            if (fmt) fmt.value = 'wav';
+            const seed = document.getElementById('cbSeed');
+            if (seed) seed.value = '';
+            showNotification('Chatterbox controls reset to defaults', 'info');
         }
 
         function handleVoiceClipUpload(event) {
@@ -8939,17 +9136,36 @@ Format as clean, readable text ready for narration.`;
 
         // ────────────────────────────────────────────────────────────────
 
+        // Read current control panel values (falls back to passed-in values)
+        function getChatterboxControlValues(exaggeration, cfg_weight) {
+            const exagEl  = document.getElementById('cbExaggeration');
+            const cfgEl   = document.getElementById('cbCfgWeight');
+            const tempEl  = document.getElementById('cbTemperature');
+            const speedEl = document.getElementById('cbSpeedFactor');
+            const fmtEl   = document.getElementById('cbFormat');
+            const seedEl  = document.getElementById('cbSeed');
+            return {
+                exaggeration: exagEl  ? parseFloat(exagEl.value)  : (exaggeration ?? 0.5),
+                cfg_weight:   cfgEl   ? parseFloat(cfgEl.value)   : (cfg_weight   ?? 0.5),
+                temperature:  tempEl  ? parseFloat(tempEl.value)  : 0.8,
+                speed_factor: speedEl ? parseFloat(speedEl.value) : 1.0,
+                format:       fmtEl   ? fmtEl.value               : 'wav',
+                seed:         (seedEl && seedEl.value.trim() !== '') ? parseInt(seedEl.value) : undefined
+            };
+        }
+
         async function generateChatterboxAudio(text, exaggeration = 0.5, cfg_weight = 0.5) {
             console.log('Generating Chatterbox audio...');
-            // Strip any non-ASCII / non-printable characters that cause header errors
             const RUNPOD_API_KEY = (localStorage.getItem('runpodApiKey') || '').replace(/[^\x20-\x7E]/g, '').trim();
-            const ENDPOINT_ID = (localStorage.getItem('runpodEndpointId') || 'k8os825pttn2zo').replace(/[^\x20-\x7E]/g, '').trim();
+            const ENDPOINT_ID = (localStorage.getItem('runpodEndpointId') || '').replace(/[^\x20-\x7E]/g, '').trim();
             if (!RUNPOD_API_KEY) {
                 throw new Error('RunPod API key not configured. Please add it in Config > Settings.');
             }
             if (!ENDPOINT_ID) {
-                throw new Error('RunPod Endpoint ID not configured. Please add it in Config > Settings.');
+                throw new Error('RunPod Classic Endpoint ID not configured. Please add it in Config > Settings.');
             }
+
+            const ctrl = getChatterboxControlValues(exaggeration, cfg_weight);
 
             const response = await fetch('https://api.runpod.ai/v2/' + ENDPOINT_ID + '/runsync', {
                 method: 'POST',
@@ -8959,9 +9175,13 @@ Format as clean, readable text ready for narration.`;
                 },
                 body: JSON.stringify({
                     input: {
+                        mode: 'classic',
                         text,
-                        exaggeration,
-                        cfg_weight,
+                        exaggeration: ctrl.exaggeration,
+                        cfg_weight:   ctrl.cfg_weight,
+                        temperature:  ctrl.temperature,
+                        speed_factor: ctrl.speed_factor,
+                        ...(ctrl.seed !== undefined ? { seed: ctrl.seed } : {}),
                         // Include voice clone sample if one is active
                         ...(getActiveChatterboxVoiceB64() ? { audio_prompt: getActiveChatterboxVoiceB64() } : {})
                     }
@@ -8975,6 +9195,55 @@ Format as clean, readable text ready for narration.`;
 
             const result = await response.json();
             const audioB64 = result.output.audio;
+            const binary = atob(audioB64);
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+            return new Blob([bytes], { type: 'audio/wav' });
+        }
+
+        // ── Chatterbox Turbo — 20 named voices, ~4x faster, no exaggeration/cfg ──
+        async function generateChatterboxTurboAudio(text, voiceName = 'laura') {
+            console.log('Generating Chatterbox Turbo audio, voice:', voiceName);
+            const RUNPOD_API_KEY = (localStorage.getItem('runpodApiKey') || '').replace(/[^\x20-\x7E]/g, '').trim();
+            const TURBO_ENDPOINT_ID = (localStorage.getItem('runpodEndpointId') || '').replace(/[^\x20-\x7E]/g, '').trim();
+
+            if (!RUNPOD_API_KEY) {
+                throw new Error('RunPod API key not configured. Please add it in Config > Settings.');
+            }
+            if (!TURBO_ENDPOINT_ID) {
+                throw new Error('RunPod Endpoint ID not configured. Please add it in Config > Settings.');
+            }
+
+            const ctrl = getChatterboxControlValues();
+
+            const response = await fetch('https://api.runpod.ai/v2/' + TURBO_ENDPOINT_ID + '/runsync', {
+                method: 'POST',
+                headers: {
+                    'Authorization': 'Bearer ' + RUNPOD_API_KEY,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    input: {
+                        mode: 'turbo',
+                        text,
+                        voice: voiceName,
+                        format: ctrl.format || 'wav',
+                        temperature:  ctrl.temperature,
+                        speed_factor: ctrl.speed_factor,
+                        ...(ctrl.seed !== undefined ? { seed: ctrl.seed } : {})
+                    }
+                })
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Chatterbox Turbo Error: ${response.status} - ${errorText}`);
+            }
+
+            const result = await response.json();
+            // RunPod returns audio as base64 in result.output.audio
+            const audioB64 = result.output?.audio || result.output;
+            if (!audioB64) throw new Error('No audio data returned from Chatterbox Turbo');
             const binary = atob(audioB64);
             const bytes = new Uint8Array(binary.length);
             for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
@@ -8996,6 +9265,9 @@ Format as clean, readable text ready for narration.`;
                 return await generateElevenLabsAudio(segment.text, voiceId, apiKey);
             } else if (provider === 'chatterbox') {
                 return await generateChatterboxAudio(segment.text);
+            } else if (provider === 'cbturbo') {
+                const turboVoice = segment.voice.replace('cbturbo_', '');
+                return await generateChatterboxTurboAudio(segment.text, turboVoice);
             } else {
                 throw new Error(`Unknown voice provider: ${provider}`);
             }
