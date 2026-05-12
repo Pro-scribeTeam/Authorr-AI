@@ -1,4 +1,4 @@
 runpod
 soundfile
 numpy
-chatterbox-tts>=0.1.7
+chatterbox-tts
