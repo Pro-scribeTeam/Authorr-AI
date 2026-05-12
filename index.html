@@ -9224,10 +9224,11 @@ Format as clean, readable text ready for narration.`;
                 },
                 body: JSON.stringify({
                     input: {
-                        mode: 'turbo',
+                        mode: 'classic',
                         text,
-                        voice: voiceName,
                         format: ctrl.format || 'wav',
+                        exaggeration: ctrl.exaggeration,
+                        cfg_weight:   ctrl.cfg_weight,
                         temperature:  ctrl.temperature,
                         speed_factor: ctrl.speed_factor,
                         ...(ctrl.seed !== undefined ? { seed: ctrl.seed } : {})
