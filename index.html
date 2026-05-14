@@ -9184,7 +9184,7 @@ Format as clean, readable text ready for narration.`;
         }
 
         // ── Shared RunPod async runner — submits job then polls until done ──
-        async function runpodSubmitAndPoll(endpointId, apiKey, inputPayload, labelForErrors) {
+        async function runpodSubmitAndPoll(endpointId, apiKey, inputPayload, labelForErrors, retryCount = 0) {
             const BASE = 'https://api.runpod.ai/v2/' + endpointId;
             const headers = {
                 'Authorization': 'Bearer ' + apiKey,
@@ -9221,7 +9221,14 @@ Format as clean, readable text ready for narration.`;
                 if (statusData.status === 'COMPLETED') {
                     return statusData.output;
                 } else if (statusData.status === 'FAILED') {
-                    throw new Error(`${labelForErrors} job failed: ${JSON.stringify(statusData.error || statusData)}`);
+                    // Auto-retry up to 2 times for transient GPU failures
+                    if (retryCount < 2) {
+                        console.warn(`${labelForErrors} job failed — retrying (attempt ${retryCount + 1}/2)...`);
+                        await new Promise(r => setTimeout(r, 3000)); // wait 3s before retry
+                        return runpodSubmitAndPoll(endpointId, apiKey, inputPayload, labelForErrors, retryCount + 1);
+                    }
+                    const errDetail = statusData.error ? JSON.stringify(statusData.error) : 'Unknown error';
+                    throw new Error(`${labelForErrors} failed after 3 attempts: ${errDetail}`);
                 }
                 // IN_QUEUE or IN_PROGRESS — keep polling
             }
