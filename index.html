@@ -8829,10 +8829,13 @@ Format as clean, readable text ready for narration.`;
                 const MAX_TTS_CHARS = 1200; // Keep well under Chatterbox GPU limits
                 let audioBlobs = [];
                 
+                // Ensure content ends with punctuation so Chatterbox doesn't clip the last word
+                if (!/[.!?,;:]$/.test(content.trim())) content = content.trim() + '.';
+
                 if (content.length <= MAX_TTS_CHARS) {
                     // Single chunk - process normally
                     console.log('📝 Content fits in single chunk, processing normally');
-                    
+
                     try {
                         const audioBlob = await generateSegmentAudio({
                             type: 'all_content',
@@ -8993,13 +8996,20 @@ Format as clean, readable text ready for narration.`;
             if (currentChunk.trim()) {
                 chunks.push(currentChunk.trim());
             }
-            
-            console.log(`📚 Text split into ${chunks.length} chunks:`);
-            chunks.forEach((chunk, i) => {
+
+            // Ensure every chunk ends with punctuation so Chatterbox doesn't clip the last word
+            const punctuationRe = /[.!?,;:]$/;
+            const finalChunks = chunks.map(chunk => {
+                const trimmed = chunk.trim();
+                return punctuationRe.test(trimmed) ? trimmed : trimmed + '.';
+            });
+
+            console.log(`📚 Text split into ${finalChunks.length} chunks:`);
+            finalChunks.forEach((chunk, i) => {
                 console.log(`  Chunk ${i + 1}: ${chunk.length} characters`);
             });
-            
-            return chunks;
+
+            return finalChunks;
         }
 
         // ── Chatterbox Voice Clone Helpers ──────────────────────────────
@@ -10744,13 +10754,28 @@ Format as clean, readable text ready for narration.`;
             
             console.log('✅ Professional Audio DAW loaded in iframe');
             
-            // Setup communication with iframe if needed
-            window.addEventListener('message', function(event) {
-                // Handle messages from DAW iframe (for future audio transfer features)
+            // Re-send stored narration when DAW iframe signals it is ready
+            const dawReadyHandler = function(event) {
                 if (event.data && event.data.type === 'DAW_READY') {
                     console.log('🎵 DAW iframe is ready');
+                    if (window.dawNarrationAudio && window.dawNarrationAudio.url) {
+                        const dawIframe = document.getElementById('dawIframe');
+                        if (dawIframe && dawIframe.contentWindow) {
+                            dawIframe.contentWindow.postMessage({
+                                type: 'LOAD_NARRATION',
+                                audioData: {
+                                    url: window.dawNarrationAudio.url,
+                                    title: window.dawNarrationAudio.title,
+                                    duration: window.dawNarrationAudio.duration
+                                }
+                            }, '*');
+                            console.log('📤 Re-sent stored narration to DAW iframe');
+                        }
+                    }
+                    window.removeEventListener('message', dawReadyHandler);
                 }
-            });
+            };
+            window.addEventListener('message', dawReadyHandler);
         }
 
         // Professional DAW Fader Functions
