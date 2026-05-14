@@ -8820,8 +8820,8 @@ Format as clean, readable text ready for narration.`;
                 
                 console.log('🎙️ NARRATOR-ONLY GENERATION - Using FULL content:', content.length, 'characters');
 
-                // Check if content needs chunking (OpenAI TTS limit is 4096 characters)
-                const MAX_TTS_CHARS = 4000; // Leave some buffer
+                // Chatterbox TTS works best with short chunks to avoid CUDA assertion errors
+                const MAX_TTS_CHARS = 1200; // Keep well under Chatterbox GPU limits
                 let audioBlobs = [];
                 
                 if (content.length <= MAX_TTS_CHARS) {
