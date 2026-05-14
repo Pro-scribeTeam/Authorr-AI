@@ -4569,15 +4569,33 @@ Return the COMPLETE text with DRAMATICALLY humanized writing that's obviously di
         // Main AI call — routes to Ollama, OpenRouter, or OpenAI based on settings
         async function callOpenAI(messages) {
             const provider = getAIProvider();
+            const isLiveSite = !window.location.hostname.includes('localhost') && !window.location.hostname.includes('127.0.0.1');
+
             if (provider === 'ollama') {
+                if (isLiveSite) {
+                    // Ollama only works locally — guide the user
+                    const openrouterKey = localStorage.getItem('openrouterApiKey');
+                    if (openrouterKey) {
+                        showNotification('Ollama only works locally. Using OpenRouter instead.', 'warning');
+                        return await callOpenRouter(messages);
+                    }
+                    throw new Error('Ollama only works when running the app locally on your Mac. On the live site, please go to Config → Writing AI Provider → switch to OpenRouter, then add your free API key from openrouter.ai');
+                }
                 try {
                     return await callOllama(messages);
                 } catch (err) {
                     console.warn('Ollama failed, falling back to OpenRouter:', err.message);
-                    showNotification('Ollama unavailable — trying OpenRouter...', 'warning');
-                    try { return await callOpenRouter(messages); } catch(e2) {}
-                    showNotification('Falling back to OpenAI...', 'warning');
-                    return await callOpenAIChat(messages);
+                    const openrouterKey = localStorage.getItem('openrouterApiKey');
+                    if (openrouterKey) {
+                        showNotification('Ollama unavailable — using OpenRouter...', 'warning');
+                        return await callOpenRouter(messages);
+                    }
+                    const openaiKey = localStorage.getItem('openaiApiKey');
+                    if (openaiKey) {
+                        showNotification('Ollama unavailable — using OpenAI...', 'warning');
+                        return await callOpenAIChat(messages);
+                    }
+                    throw new Error('Ollama is not running. Start it with: ollama serve — or switch to OpenRouter in Config > Settings.');
                 }
             } else if (provider === 'openrouter') {
                 return await callOpenRouter(messages);
