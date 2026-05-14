@@ -1469,8 +1469,9 @@
                         <i class="fas fa-magic"></i>
                     </button>
                 </div>
+                ${buildJamendoPanel(track)}
             `;
-            
+
             return strip;
         }
         
@@ -3363,6 +3364,186 @@
         });
         
         console.log('🎨 Mozart-style DAW script loaded');
+
+        // ── Jamendo Background Music & SFX ────────────────────────────────────
+
+        const MUSIC_GENRES = [
+            { value: 'ambient',     label: 'Ambient / Atmospheric' },
+            { value: 'cinematic',   label: 'Cinematic / Soundtrack' },
+            { value: 'classical',   label: 'Classical' },
+            { value: 'downtempo',   label: 'Electronic / Downtempo' },
+            { value: 'jazz',        label: 'Jazz' },
+            { value: 'folk',        label: 'Folk / Acoustic' },
+            { value: 'lounge',      label: 'Lounge / Chill' },
+            { value: 'orchestral',  label: 'Orchestral' },
+            { value: 'meditation',  label: 'Meditation / Relaxing' },
+            { value: 'piano',       label: 'Piano' },
+            { value: 'newage',      label: 'New Age' },
+            { value: 'world',       label: 'World / Ethnic' },
+        ];
+
+        const SFX_CATEGORIES = [
+            { value: 'nature',   label: 'Nature Sounds' },
+            { value: 'rain',     label: 'Rain / Storm' },
+            { value: 'forest',   label: 'Forest / Woodland' },
+            { value: 'ocean',    label: 'Ocean / Water' },
+            { value: 'fire',     label: 'Fire / Crackling' },
+            { value: 'urban',    label: 'Urban / City' },
+            { value: 'horror',   label: 'Horror / Suspense' },
+            { value: 'fantasy',  label: 'Fantasy / Magical' },
+            { value: 'scifi',    label: 'Sci-Fi / Futuristic' },
+            { value: 'medieval', label: 'Medieval / Historical' },
+        ];
+
+        function buildJamendoPanel(track) {
+            if (track.type !== 'music' && track.type !== 'sfx') return '';
+            const isMusic = track.type === 'music';
+            const id = track.id;
+            const list = isMusic ? MUSIC_GENRES : SFX_CATEGORIES;
+            const placeholder = isMusic ? '— Genre —' : '— Category —';
+            const btnLabel = isMusic ? 'Find Tracks' : 'Find Sounds';
+            const btnColor = isMusic ? '#0e7490' : '#7e22ce';
+            const searchFn = isMusic ? `dawSearchMusic('${id}')` : `dawSearchSFX('${id}')`;
+
+            const options = list.map(o => `<option value="${o.value}">${o.label}</option>`).join('');
+
+            return `
+            <div style="margin-top:8px;font-size:11px;">
+                <select id="${id}Select" style="width:100%;background:#374151;color:#fff;border:1px solid #4B5563;border-radius:4px;padding:3px 4px;margin-bottom:3px;">
+                    <option value="">${placeholder}</option>
+                    ${options}
+                </select>
+                <button onclick="${searchFn}"
+                    style="width:100%;background:${btnColor};color:#fff;border:none;border-radius:4px;padding:3px 0;cursor:pointer;margin-bottom:3px;">
+                    🔍 ${btnLabel}
+                </button>
+                <div id="${id}Results" style="display:none;max-height:100px;overflow-y:auto;background:#1f2937;border:1px solid #374151;border-radius:4px;"></div>
+                <div id="${id}Info" style="color:#9ca3af;font-style:italic;font-size:10px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">No track loaded</div>
+                <label style="color:#6b7280;cursor:pointer;font-size:10px;">
+                    ↑ Or upload file
+                    <input type="file" accept="audio/*" style="display:none"
+                           onchange="dawLoadFile('${id}', this.files[0])">
+                </label>
+            </div>`;
+        }
+
+        let dawPreviewAudio = null;
+
+        function dawPreview(url, btn) {
+            if (dawPreviewAudio) {
+                dawPreviewAudio.pause();
+                dawPreviewAudio = null;
+                document.querySelectorAll('[data-daw-preview]').forEach(b => b.textContent = '▶');
+                if (btn.dataset.dawPreview === url) return;
+            }
+            btn.dataset.dawPreview = url;
+            btn.textContent = '⏹';
+            dawPreviewAudio = new Audio(url);
+            dawPreviewAudio.play().catch(() => btn.textContent = '▶');
+            dawPreviewAudio.onended = () => { btn.textContent = '▶'; btn.dataset.dawPreview = ''; dawPreviewAudio = null; };
+        }
+
+        async function dawLoadTrack(trackId, audioUrl, trackName) {
+            if (dawPreviewAudio) { dawPreviewAudio.pause(); dawPreviewAudio = null; }
+            const infoEl = document.getElementById(`${trackId}Info`);
+            if (infoEl) infoEl.textContent = 'Loading…';
+            try {
+                const res = await fetch(audioUrl);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const blob = await res.blob();
+                const file = new File([blob], `${trackName}.mp3`, { type: 'audio/mpeg' });
+                loadAudioFile(file, trackId);
+                if (infoEl) infoEl.textContent = trackName;
+                const resultsEl = document.getElementById(`${trackId}Results`);
+                if (resultsEl) resultsEl.style.display = 'none';
+            } catch (e) {
+                if (infoEl) infoEl.textContent = 'Load failed: ' + e.message;
+            }
+        }
+
+        function dawLoadFile(trackId, file) {
+            if (!file) return;
+            loadAudioFile(file, trackId);
+            const infoEl = document.getElementById(`${trackId}Info`);
+            if (infoEl) infoEl.textContent = file.name;
+        }
+
+        function renderJamendoList(resultsEl, tracks, trackId) {
+            if (!tracks || tracks.length === 0) {
+                resultsEl.innerHTML = '<div style="padding:4px;color:#9ca3af;">No tracks found. Try a different genre.</div>';
+                return;
+            }
+            resultsEl.innerHTML = tracks.map(t => {
+                const dur = t.duration ? `${Math.floor(t.duration/60)}:${String(t.duration%60).padStart(2,'0')}` : '';
+                const artist = t.artist_name ? `${t.artist_name} · ` : '';
+                const safeUrl  = (t.audio || '').replace(/'/g, '%27');
+                const safeName = (t.name  || 'Track').replace(/'/g, '').replace(/"/g, '');
+                return `<div style="display:flex;align-items:center;gap:4px;padding:3px 4px;border-bottom:1px solid #374151;">
+                    <div style="flex:1;min-width:0;overflow:hidden;">
+                        <div style="color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${t.name || 'Track'}</div>
+                        <div style="color:#9ca3af;font-size:9px;">${artist}${dur}</div>
+                    </div>
+                    <button onclick="dawPreview('${safeUrl}',this)"
+                        style="flex-shrink:0;background:#4b5563;color:#fff;border:none;border-radius:3px;padding:1px 4px;cursor:pointer;">▶</button>
+                    <button onclick="dawLoadTrack('${trackId}','${safeUrl}','${safeName}')"
+                        style="flex-shrink:0;background:#0e7490;color:#fff;border:none;border-radius:3px;padding:1px 4px;cursor:pointer;">Load</button>
+                </div>`;
+            }).join('');
+        }
+
+        async function dawFetchTracks(genre, extra = {}) {
+            const clientId = localStorage.getItem('jamendoClientId');
+            if (!clientId) {
+                alert('Add your Jamendo Client ID in Config (main app settings) first.');
+                return null;
+            }
+            const params = new URLSearchParams({
+                client_id: clientId,
+                format: 'json',
+                limit: 12,
+                tags: genre,
+                vocalinstrumental: 'instrumental',
+                audioformat: 'mp31',
+                boost: 'popularity_total',
+                ...extra
+            });
+            const res = await fetch(`https://api.jamendo.com/v3.0/tracks/?${params}`);
+            if (!res.ok) throw new Error(`Jamendo API ${res.status}`);
+            const data = await res.json();
+            if (data.headers?.status === 'failed') throw new Error(data.headers.error_message);
+            return data.results;
+        }
+
+        async function dawSearchMusic(trackId) {
+            const sel = document.getElementById(`${trackId}Select`);
+            const genre = sel?.value;
+            if (!genre) { alert('Select a genre first.'); return; }
+            const resultsEl = document.getElementById(`${trackId}Results`);
+            resultsEl.innerHTML = '<div style="padding:4px;color:#9ca3af;">Searching…</div>';
+            resultsEl.style.display = 'block';
+            try {
+                const tracks = await dawFetchTracks(genre);
+                renderJamendoList(resultsEl, tracks, trackId);
+            } catch (e) {
+                resultsEl.innerHTML = `<div style="padding:4px;color:#f87171;">Error: ${e.message}</div>`;
+            }
+        }
+
+        async function dawSearchSFX(trackId) {
+            const sel = document.getElementById(`${trackId}Select`);
+            const category = sel?.value;
+            if (!category) { alert('Select a category first.'); return; }
+            const resultsEl = document.getElementById(`${trackId}Results`);
+            resultsEl.innerHTML = '<div style="padding:4px;color:#9ca3af;">Searching…</div>';
+            resultsEl.style.display = 'block';
+            try {
+                const tracks = await dawFetchTracks(category);
+                renderJamendoList(resultsEl, tracks, trackId);
+            } catch (e) {
+                resultsEl.innerHTML = `<div style="padding:4px;color:#f87171;">Error: ${e.message}</div>`;
+            }
+        }
+
     </script>
 </body>
 </html>
