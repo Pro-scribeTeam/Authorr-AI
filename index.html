@@ -2413,20 +2413,6 @@
                     
                     <div class="space-y-4">
                         <div>
-                            <label class="block text-sm font-semibold mb-2">OpenAI API Key</label>
-                            <input type="password" id="openaiKey" placeholder="sk-..." 
-                                   class="w-full px-4 py-2 rounded-lg form-field bg-theme-primary text-theme-primary">
-                            <p class="text-xs text-theme-secondary mt-1">Required for AI writing and narration features</p>
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-semibold mb-2">ElevenLabs API Key</label>
-                            <input type="password" id="elevenlabsKey" placeholder="Enter your ElevenLabs API key..."
-                                   class="w-full px-4 py-2 rounded-lg form-field bg-theme-primary text-theme-primary">
-                            <p class="text-xs text-theme-secondary mt-1">Optional: Enables advanced voice cloning and additional voices</p>
-                        </div>
-
-                        <div>
                             <label class="block text-sm font-semibold mb-2">RunPod API Key</label>
                             <input type="password" id="runpodKey" placeholder="rpa_..."
                                    class="w-full px-4 py-2 rounded-lg form-field bg-theme-primary text-theme-primary">
@@ -7922,49 +7908,7 @@ Format as clean, readable text ready for narration.`;
             const voiceSelect = document.getElementById('voiceSelection');
             if (!voiceSelect) return;
 
-            // Clear existing options
             voiceSelect.innerHTML = '';
-
-            // Add OpenAI voices
-            const openaiVoices = [
-                { id: 'openai_alloy', name: 'Alloy - Balanced, Clear', provider: 'openai', voice: 'alloy' },
-                { id: 'openai_echo', name: 'Echo - Male, Authoritative', provider: 'openai', voice: 'echo' },
-                { id: 'openai_fable', name: 'Fable - Warm, Storytelling', provider: 'openai', voice: 'fable' },
-                { id: 'openai_onyx', name: 'Onyx - Deep, Professional', provider: 'openai', voice: 'onyx' },
-                { id: 'openai_nova', name: 'Nova - Female, Engaging', provider: 'openai', voice: 'nova' },
-                { id: 'openai_shimmer', name: 'Shimmer - Soft, Gentle', provider: 'openai', voice: 'shimmer' }
-            ];
-
-            // Add OpenAI section header
-            const openaiOptgroup = document.createElement('optgroup');
-            openaiOptgroup.label = '🤖 OpenAI Voices';
-            voiceSelect.appendChild(openaiOptgroup);
-
-            openaiVoices.forEach(voice => {
-                const option = document.createElement('option');
-                option.value = voice.id;
-                option.textContent = voice.name;
-                option.dataset.provider = voice.provider;
-                option.dataset.voice = voice.voice;
-                openaiOptgroup.appendChild(option);
-            });
-
-            // Add ElevenLabs voices if API key is available
-            const elevenlabsVoices = await fetchElevenLabsVoices();
-            if (elevenlabsVoices.length > 0) {
-                const elevenlabsOptgroup = document.createElement('optgroup');
-                elevenlabsOptgroup.label = '🎭 ElevenLabs Voices';
-                voiceSelect.appendChild(elevenlabsOptgroup);
-
-                elevenlabsVoices.forEach(voice => {
-                    const option = document.createElement('option');
-                    option.value = `elevenlabs_${voice.voice_id}`;
-                    option.textContent = `${voice.name} - ${voice.labels?.accent || 'Professional'}`;
-                    option.dataset.provider = 'elevenlabs';
-                    option.dataset.voice = voice.voice_id;
-                    elevenlabsOptgroup.appendChild(option);
-                });
-            }
 
             // ── Chatterbox Turbo — 20 built-in named voices, ~4x faster ──
             const turboOptgroup = document.createElement('optgroup');
@@ -8040,10 +7984,10 @@ Format as clean, readable text ready for narration.`;
                 chatterboxOptgroup.appendChild(opt);
             });
 
-            // Select first OpenAI voice by default
-            if (voiceSelect.options.length > 0) {
-                voiceSelect.selectedIndex = 0;
-            }
+            // Default to Diana (first Chatterbox Turbo voice)
+            const defaultOpt = voiceSelect.querySelector('option[value="cbturbo_diana"]');
+            if (defaultOpt) defaultOpt.selected = true;
+            else if (voiceSelect.options.length > 0) voiceSelect.selectedIndex = 0;
         }
 
         // ============ DIALOGUE-SPECIFIC VOICE ASSIGNMENT ============
@@ -9486,133 +9430,35 @@ Format as clean, readable text ready for narration.`;
         }
 
         async function generateSegmentAudio(segment) {
-            const voiceInfo = segment.voice.split('_');
-            const provider = voiceInfo[0];
-            const voiceId = voiceInfo[1];
-
-            if (provider === 'openai') {
-                return await generateOpenAIAudio(segment.text, voiceId);
-            } else if (provider === 'elevenlabs') {
-                const apiKey = getElevenLabsApiKey();
-                if (!apiKey) {
-                    throw new Error('ElevenLabs API key not configured');
-                }
-                return await generateElevenLabsAudio(segment.text, voiceId, apiKey);
-            } else if (provider === 'chatterbox') {
-                return await generateChatterboxAudio(segment.text);
-            } else if (provider === 'cbturbo') {
-                const turboVoice = segment.voice.replace('cbturbo_', '');
+            const voice = segment.voice || '';
+            if (voice.startsWith('cbturbo_')) {
+                const turboVoice = voice.replace('cbturbo_', '');
                 return await generateChatterboxTurboAudio(segment.text, turboVoice);
+            } else if (voice.startsWith('chatterbox_')) {
+                return await generateChatterboxAudio(segment.text);
             } else {
-                throw new Error(`Unknown voice provider: ${provider}`);
+                // Fallback: treat bare voice name as Chatterbox Turbo
+                return await generateChatterboxTurboAudio(segment.text, voice);
             }
         }
 
+        // [OpenAI TTS removed — using Chatterbox via RunPod]
         async function generateOpenAIAudio(text, voice) {
-            console.log(`🎙️ Generating OpenAI audio: voice="${voice}", text="${text.substring(0, 50)}..."`);
-            
-            const apiKey = getOpenAIApiKey();
-            if (!apiKey) {
-                console.log('❌ No OpenAI API key found');
-                throw new Error('OpenAI API key not configured');
-            }
-            
-            console.log('✅ API key found, making request to OpenAI...');
+            throw new Error('OpenAI TTS removed. Please select a Chatterbox voice.');
 
-            const requestBody = {
-                model: 'tts-1-hd',
-                input: text,
-                voice: voice,
-                response_format: 'mp3'
-            };
-            
-            console.log('Request payload:', requestBody);
-
-            const response = await fetch('https://api.openai.com/v1/audio/speech', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${apiKey}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(requestBody)
-            });
-
-            console.log(`OpenAI API Response: ${response.status} ${response.statusText}`);
-
-            if (!response.ok) {
-                const errorText = await response.text();
-                console.log('❌ OpenAI API Error response:', errorText);
-                throw new Error(`OpenAI TTS API Error: ${response.status} - ${errorText}`);
-            }
-
-            const blob = await response.blob();
-            console.log(`✅ Audio blob received: ${blob.size} bytes, type: ${blob.type}`);
-            return blob;
         }
-        
-        // DEBUG: Simple TTS test function for console testing
-        async function debugTestTTS() {
-            console.log('🧪 Starting TTS Debug Test...');
-            try {
-                const testText = "Hello, this is a test of the text to speech system.";
-                const testVoice = "alloy";
-                
-                console.log(`Testing with text: "${testText}"`);
-                console.log(`Testing with voice: "${testVoice}"`);
-                
-                const blob = await generateOpenAIAudio(testText, testVoice);
-                
-                if (blob && blob.size > 0) {
-                    console.log('🎉 TTS Test SUCCESSFUL!');
-                    console.log(`Blob size: ${blob.size} bytes`);
-                    console.log(`Blob type: ${blob.type}`);
-                    
-                    // Create audio element to test playback
-                    const audio = document.createElement('audio');
-                    audio.controls = true;
-                    audio.src = URL.createObjectURL(blob);
-                    document.body.appendChild(audio);
-                    console.log('🎵 Audio element added to page - check for audio controls');
-                    
-                    return blob;
-                } else {
-                    console.log('❌ TTS Test FAILED - No blob or empty blob');
-                    return null;
-                }
-            } catch (error) {
-                console.error('❌ TTS Test FAILED with error:', error);
-                return null;
-            }
-        }
-        
+
         // DEBUG: Test complete multi-voice pipeline with simple content
         async function debugTestMultiVoice() {
             console.log('🧪 Starting Multi-Voice Debug Test...');
-            
-            // Set up test story content
-            const testContent = `Sarah walked into the coffee shop.
-
-"Welcome!" called the barista.
-
-"Thanks," Sarah replied.`;
-            
-            // Set up minimal dialogue data
+            const testContent = `Sarah walked into the coffee shop.\n\n"Welcome!" called the barista.\n\n"Thanks," Sarah replied.`;
             window.dialogueData = {
                 characters: ['Sarah', 'Barista', 'Narrator'],
-                voiceAssignments: {
-                    'Sarah': 'openai_nova',
-                    'Barista': 'openai_echo', 
-                    'Narrator': 'openai_alloy'
-                },
-                dialogueSections: [
-                    { character: 'Sarah', text: 'Thanks', line: 3 }
-                ]
+                voiceAssignments: { 'Sarah': 'cbturbo_diana', 'Barista': 'cbturbo_edward', 'Narrator': 'cbturbo_helen' },
+                dialogueSections: [{ character: 'Sarah', text: 'Thanks', line: 3 }]
             };
-            
-            // Set test content
             window.storyData = window.storyData || {};
             window.storyData.currentContent = testContent;
-            
             console.log('Test setup complete. Dialogue data:', dialogueData);
             
             // Call the multi-voice function
@@ -9627,11 +9473,10 @@ Format as clean, readable text ready for narration.`;
         // DEBUG: Simple test to see what happens when generateSegmentAudio fails
         async function debugTestSegmentGeneration() {
             console.log('🧪 Testing individual segment generation...');
-            
             const testSegment = {
                 type: 'dialogue',
                 text: 'Hello, this is a test.',
-                voice: 'openai_alloy',
+                voice: 'cbturbo_diana',
                 character: 'TestCharacter'
             };
             
@@ -9663,7 +9508,7 @@ Format as clean, readable text ready for narration.`;
             `;
             
             Object.entries(assignments).forEach(([character, voice]) => {
-                const voiceDisplay = voice.replace('openai_', 'OpenAI: ').replace('elevenlabs_', 'ElevenLabs: ');
+                const voiceDisplay = voice.replace('cbturbo_', '').replace('chatterbox_', 'Classic: ');
                 resultsHTML += `<div>• <span class="text-cyan-300">${character}:</span> ${voiceDisplay}</div>`;
             });
             
@@ -9828,7 +9673,7 @@ Format as clean, readable text ready for narration.`;
                     <div class="mb-4 p-3 bg-theme-primary rounded-lg border border-theme">
                         <h4 class="font-semibold mb-2 text-cyan-400">Content Statistics:</h4>
                         <div class="text-sm space-y-1">
-                            <div>• <span class="text-cyan-300">Voice:</span> ${voiceName.replace('openai_', 'OpenAI ').replace('elevenlabs_', 'ElevenLabs ')}</div>
+                            <div>• <span class="text-cyan-300">Voice:</span> ${voiceName.replace('cbturbo_', '').replace('chatterbox_', 'Classic: ')}</div>
                             <div>• <span class="text-cyan-300">Words:</span> ${totalWordCount.toLocaleString()}</div>
                             <div>• <span class="text-cyan-300">Characters:</span> ${totalCharCount.toLocaleString()}</div>
                             <div>• <span class="text-cyan-300">Estimated Duration:</span> ~${Math.floor(estimatedDuration / 60)}:${(estimatedDuration % 60).toString().padStart(2, '0')} minutes</div>
