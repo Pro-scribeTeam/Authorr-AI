@@ -17,7 +17,7 @@
         // Supabase Configuration — Authorr AI project
         window.SUPABASE_CONFIG = {
             url: 'https://svyjvvogjkhszijlaxig.supabase.co',
-            anonKey: 'sb_publishable_oUXEAggMxzhOhrEHHvEVBA_FCDko3v_'
+            anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN2eWp2dm9namtoc3ppamxheGlnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3MjkwMzIsImV4cCI6MjA5MjMwNTAzMn0.vcjTQFi3DL9eHESRr7YY9LnTd22hWF0AW6NQXdTTTco'
         };
 
         // Initialize Supabase client
@@ -2439,7 +2439,14 @@
                                    class="w-full px-4 py-2 rounded-lg form-field bg-theme-primary text-theme-primary">
                             <p class="text-xs text-theme-secondary mt-1">One endpoint runs both Classic and Turbo — deploy your updated handler from GitHub.</p>
                         </div>
-                        
+
+                        <div>
+                            <label class="block text-sm font-semibold mb-2">🎵 Jamendo Client ID — Background Music & SFX</label>
+                            <input type="text" id="jamendoClientId" placeholder="Enter your Jamendo Client ID..."
+                                   class="w-full px-4 py-2 rounded-lg form-field bg-theme-primary text-theme-primary">
+                            <p class="text-xs text-theme-secondary mt-1">Free API key for royalty-free background music in the DAW. Register at <a href="https://developer.jamendo.com" target="_blank" class="text-cyan-400 underline">developer.jamendo.com</a></p>
+                        </div>
+
                         <div>
                             <label class="block text-sm font-semibold mb-2">✍️ Writing AI Provider</label>
                             <select id="aiProvider" onchange="toggleAIProviderFields()" class="w-full px-4 py-2 rounded-lg form-field bg-theme-primary text-theme-primary">
@@ -7128,6 +7135,8 @@ Format as clean, readable text ready for narration.`;
             if (imageProvider) localStorage.setItem('imageProvider', imageProvider);
             if (cfAccountId) localStorage.setItem('cfAccountId', cfAccountId);
             if (cfApiToken && !cfApiToken.startsWith('••')) localStorage.setItem('cfApiToken', cfApiToken);
+            const jamendoId = document.getElementById('jamendoClientId')?.value?.trim();
+            if (jamendoId) localStorage.setItem('jamendoClientId', jamendoId);
             if (model) {
                 localStorage.setItem('selectedModel', model);
             }
@@ -7213,6 +7222,8 @@ Format as clean, readable text ready for narration.`;
             if (cfAccountId) { const el = document.getElementById('cfAccountId'); if (el) el.value = cfAccountId; }
             const cfApiToken = localStorage.getItem('cfApiToken');
             if (cfApiToken) { const el = document.getElementById('cfApiToken'); if (el) el.value = '••••••••••••••••' + cfApiToken.slice(-4); }
+            const jamendoClientId = localStorage.getItem('jamendoClientId');
+            if (jamendoClientId) { const el = document.getElementById('jamendoClientId'); if (el) el.value = jamendoClientId; }
             toggleAIProviderFields();
             toggleImageProviderFields();
 
@@ -10699,16 +10710,33 @@ Format as clean, readable text ready for narration.`;
                                     </div>
                                 </div>
                                 <div class="flex justify-center">
-                                    <div id="music1FaderContainer" class="daw-fader-container">
-                                        <!-- Professional fader will be inserted here by JavaScript -->
-                                    </div>
+                                    <div id="music1FaderContainer" class="daw-fader-container"></div>
                                 </div>
-                                <div class="mt-2">
-                                    <input type="file" accept="audio/*" onchange="loadAudioTrack('music1', this.files[0])" 
-                                           class="w-full text-xs bg-gray-600 border border-gray-500 rounded px-2 py-1">
-                                    <div class="track-info mt-1 text-xs text-gray-400 min-h-[20px] p-1 border-dashed border border-gray-600 rounded bg-gray-800">
-                                        <small>Drop audio here or use file input</small>
-                                    </div>
+                                <div class="mt-2 space-y-1">
+                                    <select id="music1Genre" class="w-full text-xs bg-gray-600 border border-gray-500 rounded px-2 py-1 text-white">
+                                        <option value="">— Select Genre —</option>
+                                        <option value="ambient">Ambient / Atmospheric</option>
+                                        <option value="cinematic">Cinematic / Soundtrack</option>
+                                        <option value="classical">Classical</option>
+                                        <option value="downtempo">Electronic / Downtempo</option>
+                                        <option value="jazz">Jazz</option>
+                                        <option value="folk">Folk / Acoustic</option>
+                                        <option value="lounge">Lounge / Chill</option>
+                                        <option value="orchestral">Orchestral</option>
+                                        <option value="meditation">Meditation / Relaxing</option>
+                                        <option value="piano">Piano</option>
+                                        <option value="newage">New Age</option>
+                                        <option value="world">World / Ethnic</option>
+                                    </select>
+                                    <button onclick="searchJamendoMusic('music1')" class="w-full text-xs bg-cyan-700 hover:bg-cyan-600 text-white rounded px-2 py-1">
+                                        <i class="fas fa-search mr-1"></i>Find Tracks
+                                    </button>
+                                    <div id="music1Results" class="hidden max-h-28 overflow-y-auto rounded bg-gray-800 border border-gray-600 text-xs"></div>
+                                    <div id="music1Info" class="text-xs text-gray-400 italic truncate">No track loaded</div>
+                                    <label class="text-xs text-gray-500 hover:text-gray-300 cursor-pointer">
+                                        <i class="fas fa-upload mr-1"></i>Or upload file
+                                        <input type="file" accept="audio/*" onchange="loadAudioTrack('music1', this.files[0])" class="hidden">
+                                    </label>
                                 </div>
                             </div>
 
@@ -10724,16 +10752,33 @@ Format as clean, readable text ready for narration.`;
                                     </div>
                                 </div>
                                 <div class="flex justify-center">
-                                    <div id="music2FaderContainer" class="daw-fader-container">
-                                        <!-- Professional fader will be inserted here by JavaScript -->
-                                    </div>
+                                    <div id="music2FaderContainer" class="daw-fader-container"></div>
                                 </div>
-                                <div class="mt-2">
-                                    <input type="file" accept="audio/*" onchange="loadAudioTrack('music2', this.files[0])" 
-                                           class="w-full text-xs bg-gray-600 border border-gray-500 rounded px-2 py-1">
-                                    <div class="track-info mt-1 text-xs text-gray-400 min-h-[20px] p-1 border-dashed border border-gray-600 rounded bg-gray-800">
-                                        <small>Drop audio here or use file input</small>
-                                    </div>
+                                <div class="mt-2 space-y-1">
+                                    <select id="music2Genre" class="w-full text-xs bg-gray-600 border border-gray-500 rounded px-2 py-1 text-white">
+                                        <option value="">— Select Genre —</option>
+                                        <option value="ambient">Ambient / Atmospheric</option>
+                                        <option value="cinematic">Cinematic / Soundtrack</option>
+                                        <option value="classical">Classical</option>
+                                        <option value="downtempo">Electronic / Downtempo</option>
+                                        <option value="jazz">Jazz</option>
+                                        <option value="folk">Folk / Acoustic</option>
+                                        <option value="lounge">Lounge / Chill</option>
+                                        <option value="orchestral">Orchestral</option>
+                                        <option value="meditation">Meditation / Relaxing</option>
+                                        <option value="piano">Piano</option>
+                                        <option value="newage">New Age</option>
+                                        <option value="world">World / Ethnic</option>
+                                    </select>
+                                    <button onclick="searchJamendoMusic('music2')" class="w-full text-xs bg-cyan-700 hover:bg-cyan-600 text-white rounded px-2 py-1">
+                                        <i class="fas fa-search mr-1"></i>Find Tracks
+                                    </button>
+                                    <div id="music2Results" class="hidden max-h-28 overflow-y-auto rounded bg-gray-800 border border-gray-600 text-xs"></div>
+                                    <div id="music2Info" class="text-xs text-gray-400 italic truncate">No track loaded</div>
+                                    <label class="text-xs text-gray-500 hover:text-gray-300 cursor-pointer">
+                                        <i class="fas fa-upload mr-1"></i>Or upload file
+                                        <input type="file" accept="audio/*" onchange="loadAudioTrack('music2', this.files[0])" class="hidden">
+                                    </label>
                                 </div>
                             </div>
 
@@ -10749,16 +10794,31 @@ Format as clean, readable text ready for narration.`;
                                     </div>
                                 </div>
                                 <div class="flex justify-center">
-                                    <div id="sfx1FaderContainer" class="daw-fader-container">
-                                        <!-- Professional fader will be inserted here by JavaScript -->
-                                    </div>
+                                    <div id="sfx1FaderContainer" class="daw-fader-container"></div>
                                 </div>
-                                <div class="mt-2">
-                                    <input type="file" accept="audio/*" onchange="loadAudioTrack('sfx1', this.files[0])" 
-                                           class="w-full text-xs bg-gray-600 border border-gray-500 rounded px-2 py-1">
-                                    <div class="track-info mt-1 text-xs text-gray-400 min-h-[20px] p-1 border-dashed border border-gray-600 rounded bg-gray-800">
-                                        <small>Drop audio here or use file input</small>
-                                    </div>
+                                <div class="mt-2 space-y-1">
+                                    <select id="sfx1Category" class="w-full text-xs bg-gray-600 border border-gray-500 rounded px-2 py-1 text-white">
+                                        <option value="">— Select Category —</option>
+                                        <option value="nature">Nature Sounds</option>
+                                        <option value="rain">Rain / Storm</option>
+                                        <option value="forest">Forest / Woodland</option>
+                                        <option value="ocean">Ocean / Water</option>
+                                        <option value="fire">Fire / Crackling</option>
+                                        <option value="urban">Urban / City</option>
+                                        <option value="horror">Horror / Suspense</option>
+                                        <option value="fantasy">Fantasy / Magical</option>
+                                        <option value="scifi">Sci-Fi / Futuristic</option>
+                                        <option value="medieval">Medieval / Historical</option>
+                                    </select>
+                                    <button onclick="searchJamendoSFX('sfx1')" class="w-full text-xs bg-purple-700 hover:bg-purple-600 text-white rounded px-2 py-1">
+                                        <i class="fas fa-search mr-1"></i>Find Sounds
+                                    </button>
+                                    <div id="sfx1Results" class="hidden max-h-28 overflow-y-auto rounded bg-gray-800 border border-gray-600 text-xs"></div>
+                                    <div id="sfx1Info" class="text-xs text-gray-400 italic truncate">No sound loaded</div>
+                                    <label class="text-xs text-gray-500 hover:text-gray-300 cursor-pointer">
+                                        <i class="fas fa-upload mr-1"></i>Or upload file
+                                        <input type="file" accept="audio/*" onchange="loadAudioTrack('sfx1', this.files[0])" class="hidden">
+                                    </label>
                                 </div>
                             </div>
 
@@ -10774,16 +10834,31 @@ Format as clean, readable text ready for narration.`;
                                     </div>
                                 </div>
                                 <div class="flex justify-center">
-                                    <div id="sfx2FaderContainer" class="daw-fader-container">
-                                        <!-- Professional fader will be inserted here by JavaScript -->
-                                    </div>
+                                    <div id="sfx2FaderContainer" class="daw-fader-container"></div>
                                 </div>
-                                <div class="mt-2">
-                                    <input type="file" accept="audio/*" onchange="loadAudioTrack('sfx2', this.files[0])" 
-                                           class="w-full text-xs bg-gray-600 border border-gray-500 rounded px-2 py-1">
-                                    <div class="track-info mt-1 text-xs text-gray-400 min-h-[20px] p-1 border-dashed border border-gray-600 rounded bg-gray-800">
-                                        <small>Drop audio here or use file input</small>
-                                    </div>
+                                <div class="mt-2 space-y-1">
+                                    <select id="sfx2Category" class="w-full text-xs bg-gray-600 border border-gray-500 rounded px-2 py-1 text-white">
+                                        <option value="">— Select Category —</option>
+                                        <option value="nature">Nature Sounds</option>
+                                        <option value="rain">Rain / Storm</option>
+                                        <option value="forest">Forest / Woodland</option>
+                                        <option value="ocean">Ocean / Water</option>
+                                        <option value="fire">Fire / Crackling</option>
+                                        <option value="urban">Urban / City</option>
+                                        <option value="horror">Horror / Suspense</option>
+                                        <option value="fantasy">Fantasy / Magical</option>
+                                        <option value="scifi">Sci-Fi / Futuristic</option>
+                                        <option value="medieval">Medieval / Historical</option>
+                                    </select>
+                                    <button onclick="searchJamendoSFX('sfx2')" class="w-full text-xs bg-purple-700 hover:bg-purple-600 text-white rounded px-2 py-1">
+                                        <i class="fas fa-search mr-1"></i>Find Sounds
+                                    </button>
+                                    <div id="sfx2Results" class="hidden max-h-28 overflow-y-auto rounded bg-gray-800 border border-gray-600 text-xs"></div>
+                                    <div id="sfx2Info" class="text-xs text-gray-400 italic truncate">No sound loaded</div>
+                                    <label class="text-xs text-gray-500 hover:text-gray-300 cursor-pointer">
+                                        <i class="fas fa-upload mr-1"></i>Or upload file
+                                        <input type="file" accept="audio/*" onchange="loadAudioTrack('sfx2', this.files[0])" class="hidden">
+                                    </label>
                                 </div>
                             </div>
 
@@ -14995,6 +15070,145 @@ Format as clean, readable text ready for narration.`;
         }
 
         // Close DAW modal
+        // ── Jamendo Music & SFX Integration ─────────────────────────────────────
+
+        let jamendoPreviewAudio = null;
+
+        function getJamendoClientId() {
+            const id = localStorage.getItem('jamendoClientId');
+            if (!id) {
+                showNotification('Add your Jamendo Client ID in Config → Settings first', 'error');
+                return null;
+            }
+            return id;
+        }
+
+        function renderJamendoResults(resultsEl, tracks, trackId, isMusic) {
+            if (!tracks || tracks.length === 0) {
+                resultsEl.innerHTML = '<div class="p-2 text-gray-400">No tracks found. Try a different genre.</div>';
+                return;
+            }
+            resultsEl.innerHTML = tracks.map(t => {
+                const dur = t.duration ? `${Math.floor(t.duration/60)}:${String(t.duration%60).padStart(2,'0')}` : '--:--';
+                const artist = t.artist_name ? ` · ${t.artist_name}` : '';
+                const safeAudio = (t.audio || '').replace(/'/g, '%27');
+                const safeName  = (t.name  || 'Track').replace(/'/g, '').replace(/"/g, '');
+                return `
+                <div class="flex items-center gap-1 p-1 border-b border-gray-700 hover:bg-gray-700">
+                    <div class="flex-1 min-w-0">
+                        <div class="font-medium text-white truncate">${t.name || 'Track'}</div>
+                        <div class="text-gray-400 truncate">${artist} ${dur}</div>
+                    </div>
+                    <button onclick="jamendoPreview('${safeAudio}', this)"
+                            class="flex-shrink-0 bg-gray-600 hover:bg-gray-500 px-1.5 py-0.5 rounded">▶</button>
+                    <button onclick="jamendoLoad('${trackId}', '${safeAudio}', '${safeName}')"
+                            class="flex-shrink-0 bg-cyan-700 hover:bg-cyan-600 px-1.5 py-0.5 rounded">Load</button>
+                </div>`;
+            }).join('');
+        }
+
+        function jamendoPreview(audioUrl, btn) {
+            // Stop any existing preview
+            if (jamendoPreviewAudio) {
+                jamendoPreviewAudio.pause();
+                jamendoPreviewAudio = null;
+                document.querySelectorAll('[data-jamendo-preview]').forEach(b => b.textContent = '▶');
+                if (btn.dataset.jamendoPreview === audioUrl) return;
+            }
+            btn.dataset.jamendoPreview = audioUrl;
+            btn.textContent = '⏹';
+            jamendoPreviewAudio = new Audio(audioUrl);
+            jamendoPreviewAudio.play().catch(e => {
+                showNotification('Preview failed — check your Jamendo Client ID', 'error');
+                btn.textContent = '▶';
+            });
+            jamendoPreviewAudio.onended = () => { btn.textContent = '▶'; btn.dataset.jamendoPreview = ''; jamendoPreviewAudio = null; };
+        }
+
+        async function jamendoLoad(trackId, audioUrl, trackName) {
+            if (jamendoPreviewAudio) { jamendoPreviewAudio.pause(); jamendoPreviewAudio = null; }
+            const infoEl = document.getElementById(`${trackId}Info`);
+            if (infoEl) infoEl.textContent = 'Loading…';
+            try {
+                const res = await fetch(audioUrl);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const blob = await res.blob();
+                const file = new File([blob], `${trackName}.mp3`, { type: 'audio/mpeg' });
+                await loadAudioTrack(trackId, file);
+                if (infoEl) infoEl.textContent = trackName;
+                const resultsEl = document.getElementById(`${trackId}Results`);
+                if (resultsEl) resultsEl.classList.add('hidden');
+                showNotification(`✅ Loaded: ${trackName}`, 'success');
+            } catch (e) {
+                if (infoEl) infoEl.textContent = 'Load failed';
+                showNotification(`Failed to load track: ${e.message}`, 'error');
+            }
+        }
+
+        async function searchJamendoMusic(trackId) {
+            const clientId = getJamendoClientId();
+            if (!clientId) return;
+            const genreEl = document.getElementById(`${trackId}Genre`);
+            const genre = genreEl?.value;
+            if (!genre) { showNotification('Select a genre first', 'error'); return; }
+
+            const resultsEl = document.getElementById(`${trackId}Results`);
+            resultsEl.innerHTML = '<div class="p-2 text-gray-400">Searching…</div>';
+            resultsEl.classList.remove('hidden');
+
+            try {
+                const params = new URLSearchParams({
+                    client_id: clientId,
+                    format: 'json',
+                    limit: 12,
+                    tags: genre,
+                    vocalinstrumental: 'instrumental',
+                    audioformat: 'mp31',
+                    boost: 'popularity_total',
+                    include: 'musicinfo'
+                });
+                const res = await fetch(`https://api.jamendo.com/v3.0/tracks/?${params}`);
+                if (!res.ok) throw new Error(`Jamendo API error ${res.status}`);
+                const data = await res.json();
+                if (data.headers?.status === 'failed') throw new Error(data.headers.error_message || 'API error');
+                renderJamendoResults(resultsEl, data.results, trackId, true);
+            } catch (e) {
+                resultsEl.innerHTML = `<div class="p-2 text-red-400">Error: ${e.message}</div>`;
+            }
+        }
+
+        async function searchJamendoSFX(trackId) {
+            const clientId = getJamendoClientId();
+            if (!clientId) return;
+            const catEl = document.getElementById(`${trackId}Category`);
+            const category = catEl?.value;
+            if (!category) { showNotification('Select a category first', 'error'); return; }
+
+            const resultsEl = document.getElementById(`${trackId}Results`);
+            resultsEl.innerHTML = '<div class="p-2 text-gray-400">Searching…</div>';
+            resultsEl.classList.remove('hidden');
+
+            try {
+                // Search instrumental tracks tagged with the SFX category
+                const params = new URLSearchParams({
+                    client_id: clientId,
+                    format: 'json',
+                    limit: 12,
+                    tags: category,
+                    vocalinstrumental: 'instrumental',
+                    audioformat: 'mp31',
+                    boost: 'popularity_total'
+                });
+                const res = await fetch(`https://api.jamendo.com/v3.0/tracks/?${params}`);
+                if (!res.ok) throw new Error(`Jamendo API error ${res.status}`);
+                const data = await res.json();
+                if (data.headers?.status === 'failed') throw new Error(data.headers.error_message || 'API error');
+                renderJamendoResults(resultsEl, data.results, trackId, false);
+            } catch (e) {
+                resultsEl.innerHTML = `<div class="p-2 text-red-400">Error: ${e.message}</div>`;
+            }
+        }
+
         function closeAudioDAW() {
             console.log('🔄 Closing Audio DAW...');
             
