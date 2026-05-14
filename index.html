@@ -6855,12 +6855,6 @@ JSON Structure:
             // Clear dialogue data when generating new content
             clearAllDialogueData(true);
 
-            const apiKey = getOpenAIApiKey();
-            if (!apiKey && getAIProvider() !== 'ollama' && getAIProvider() !== 'openrouter') {
-                showNotification('Please configure your API key first', 'error');
-                return;
-            }
-
             const chapter = storyData.chapters.find(c => c.number === chapterNumber);
             if (!chapter) return;
 
@@ -6902,6 +6896,7 @@ Format as clean, readable text ready for narration.`;
             } catch (error) {
                 console.error('Content generation error:', error);
                 showNotification(`Failed to generate content: ${error.message}`, 'error');
+                throw error; // re-throw so combineAllChapters can handle it
             }
         }
 
@@ -9865,12 +9860,11 @@ Format as clean, readable text ready for narration.`;
                         // Generate chapter content if it doesn't exist
                         updateLoadingText(`Generating content for Chapter ${chapter.number}...`);
                         try {
-                            const content = await generateChapterContent(chapter.number);
-                            if (content && content.trim()) {
-                                combinedContent += content + '\n\n';
+                            await generateChapterContent(chapter.number);
+                            // generateChapterContent sets chapter.content directly
+                            if (chapter.content && chapter.content.trim()) {
+                                combinedContent += chapter.content + '\n\n';
                                 hasContent = true;
-                                // Store generated content
-                                chapter.content = content;
                             } else {
                                 combinedContent += `[Chapter ${chapter.number} content will be generated here]\n\n`;
                             }
