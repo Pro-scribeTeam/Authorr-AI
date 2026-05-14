@@ -5006,20 +5006,180 @@ Return the COMPLETE text with DRAMATICALLY humanized writing that's obviously di
             }
         }
         
+        // ── IndexedDB helpers for persisting generated audio across sessions ──────
+        const IDB_NAME = 'authorr_audio';
+        const IDB_STORE = 'blobs';
+
+        function openAudioDB() {
+            return new Promise((resolve, reject) => {
+                const req = indexedDB.open(IDB_NAME, 1);
+                req.onupgradeneeded = e => e.target.result.createObjectStore(IDB_STORE);
+                req.onsuccess = e => resolve(e.target.result);
+                req.onerror = e => reject(e.target.error);
+            });
+        }
+
+        async function saveAudioToDB(key, blob) {
+            try {
+                const db = await openAudioDB();
+                const tx = db.transaction(IDB_STORE, 'readwrite');
+                tx.objectStore(IDB_STORE).put(blob, key);
+                await new Promise((res, rej) => { tx.oncomplete = res; tx.onerror = rej; });
+            } catch (e) {
+                console.warn('IndexedDB audio save failed:', e);
+            }
+        }
+
+        async function loadAudioFromDB(key) {
+            try {
+                const db = await openAudioDB();
+                const tx = db.transaction(IDB_STORE, 'readonly');
+                return await new Promise((res, rej) => {
+                    const req = tx.objectStore(IDB_STORE).get(key);
+                    req.onsuccess = e => res(e.target.result || null);
+                    req.onerror = e => rej(e.target.error);
+                });
+            } catch (e) {
+                console.warn('IndexedDB audio load failed:', e);
+                return null;
+            }
+        }
+
+        // Restore DAW audio from IndexedDB on page load
+        async function restoreDAWAudio() {
+            const blob = await loadAudioFromDB('narration_combined');
+            if (!blob) return;
+            const url = URL.createObjectURL(blob);
+            window.dawNarrationAudio = {
+                blob, url,
+                title: storyData?.title ? `${storyData.title} - Narration` : 'Narration',
+                duration: 0,
+                timestamp: Date.now()
+            };
+            console.log('🎵 Restored narration audio from IndexedDB');
+        }
+
+        // Save all project state — editor + storyData + form fields + narration settings
+        function saveProjectState() {
+            const editor = document.getElementById('storyEditor');
+            const content = editor ? editor.value : '';
+
+            // Collect form field values
+            const outline  = document.getElementById('storyOutline')?.value || '';
+            const title    = document.getElementById('bookTitle')?.value || storyData.title || '';
+            const chapters = document.getElementById('chapterCount')?.value || '';
+            const words    = document.getElementById('wordsPerChapter')?.value || '';
+            const narrator = document.getElementById('narratorVoiceSelect')?.value || '';
+            const mainVoice = document.getElementById('voiceSelection')?.value || '';
+
+            // Merge current UI values into storyData before saving
+            if (title) storyData.title = title;
+
+            const state = {
+                content,
+                storyData,
+                outline,
+                chapterCount: chapters,
+                wordsPerChapter: words,
+                narratorVoice: narrator,
+                mainVoice,
+                timestamp: new Date().toISOString()
+            };
+
+            try {
+                localStorage.setItem('authorr_project_state', JSON.stringify(state));
+                // Keep legacy keys for backward compat
+                localStorage.setItem('authorr_story_content', content);
+                localStorage.setItem('authorr_story_data', JSON.stringify(storyData));
+            } catch (e) {
+                console.warn('localStorage save failed (quota?):', e);
+            }
+        }
+
+        // Restore all project state on page load
+        function restoreProjectState() {
+            const raw = localStorage.getItem('authorr_project_state');
+            if (!raw) {
+                // Fall back to legacy keys
+                const savedContent = localStorage.getItem('authorr_story_content');
+                if (savedContent) {
+                    const editor = document.getElementById('storyEditor');
+                    if (editor) { editor.value = savedContent; updateWordCount(); }
+                }
+                const savedDataRaw = localStorage.getItem('authorr_story_data');
+                if (savedDataRaw) {
+                    try { storyData = JSON.parse(savedDataRaw); } catch (e) {}
+                    if (storyData.title) {
+                        const titleEl = document.getElementById('bookTitle');
+                        if (titleEl) titleEl.value = storyData.title;
+                    }
+                }
+                return;
+            }
+
+            let state;
+            try { state = JSON.parse(raw); } catch (e) { return; }
+
+            // Restore editor content
+            if (state.content) {
+                const editor = document.getElementById('storyEditor');
+                if (editor) { editor.value = state.content; updateWordCount(); }
+            }
+
+            // Restore storyData
+            if (state.storyData) {
+                storyData = state.storyData;
+            }
+
+            // Restore form fields
+            if (state.outline) {
+                const el = document.getElementById('storyOutline');
+                if (el) el.value = state.outline;
+            }
+            if (storyData.title) {
+                const el = document.getElementById('bookTitle');
+                if (el) el.value = storyData.title;
+            }
+            if (state.chapterCount) {
+                const el = document.getElementById('chapterCount');
+                if (el) el.value = state.chapterCount;
+            }
+            if (state.wordsPerChapter) {
+                const el = document.getElementById('wordsPerChapter');
+                if (el) el.value = state.wordsPerChapter;
+            }
+
+            // Restore narrator voice (after a tick so the select is populated)
+            if (state.narratorVoice) {
+                setTimeout(() => {
+                    const el = document.getElementById('narratorVoiceSelect');
+                    if (el) el.value = state.narratorVoice;
+                }, 500);
+            }
+            if (state.mainVoice) {
+                setTimeout(() => {
+                    const el = document.getElementById('voiceSelection');
+                    if (el) el.value = state.mainVoice;
+                }, 500);
+            }
+
+            // Rebuild chapter plan UI if chapters exist
+            if (storyData.chapters && storyData.chapters.length > 0) {
+                setTimeout(() => {
+                    displayChapterPlan({ chapters: storyData.chapters });
+                    showStatusMessage(`Project restored — ${storyData.chapters.length} chapters loaded`);
+                }, 200);
+            } else if (state.content) {
+                showStatusMessage('Project restored from last session');
+            }
+        }
+
         async function saveStory() {
             const editor = document.getElementById('storyEditor');
             const content = editor ? editor.value : '';
 
-            // Local save first (instant)
-            const saveData = {
-                content: content,
-                storyData: storyData,
-                timestamp: new Date().toISOString(),
-                wordCount: countWords(content)
-            };
-            localStorage.setItem('authorr_story_save', JSON.stringify(saveData));
-            localStorage.setItem('authorr_story_content', content);
-            localStorage.setItem('authorr_story_data', JSON.stringify(storyData));
+            // Save everything
+            saveProjectState();
 
             // Visual feedback
             const saveBtn = document.getElementById('saveBtn');
@@ -5425,40 +5585,40 @@ Return the COMPLETE text with DRAMATICALLY humanized writing that's obviously di
             }
         }
         
-        // Initialize word count tracking and event listeners
+        // Initialize word count tracking, event listeners, and restore project state
         document.addEventListener('DOMContentLoaded', function() {
             setTimeout(() => {
                 const editor = document.getElementById('storyEditor');
                 if (editor) {
-                    // Real-time word count updates
                     editor.addEventListener('input', updateWordCount);
                     editor.addEventListener('keyup', updateWordCount);
                     editor.addEventListener('paste', () => setTimeout(updateWordCount, 10));
-                    
-                    // Initialize history with empty state
                     saveToHistory();
                     updateHistoryButtons();
-                    
-                    // Load any saved content
-                    const savedContent = localStorage.getItem('authorr_story_content');
-                    if (savedContent) {
-                        editor.value = savedContent;
-                        updateWordCount();
-                        showStatusMessage('Previously saved content restored');
-                    }
                 }
-                
-                // Load saved story data
-                const savedData = localStorage.getItem('authorr_story_data');
-                if (savedData) {
-                    try {
-                        storyData = JSON.parse(savedData);
-                        if (storyData.title) {
-                            document.getElementById('bookTitle').value = storyData.title;
-                        }
-                    } catch (e) {
-                        console.warn('Failed to load saved story data:', e);
-                    }
+
+                // Restore full project state from last session
+                restoreProjectState();
+                restoreDAWAudio(); // load persisted narration audio from IndexedDB
+
+                // Auto-save outline changes
+                const outline = document.getElementById('storyOutline');
+                if (outline) {
+                    let outlineSaveTimer;
+                    outline.addEventListener('input', () => {
+                        clearTimeout(outlineSaveTimer);
+                        outlineSaveTimer = setTimeout(saveProjectState, 2000);
+                    });
+                }
+
+                // Auto-save narrator voice changes
+                const narratorSel = document.getElementById('narratorVoiceSelect');
+                if (narratorSel) {
+                    narratorSel.addEventListener('change', saveProjectState);
+                }
+                const mainVoiceSel = document.getElementById('voiceSelection');
+                if (mainVoiceSel) {
+                    mainVoiceSel.addEventListener('change', saveProjectState);
                 }
             }, 100);
         });
@@ -6668,6 +6828,7 @@ JSON Structure:
                 
                 hideLoading();
                 displayChapterPlan(chapterPlan);
+                saveProjectState(); // persist chapter plan immediately
                 showNotification('Chapter plan generated successfully!', 'success');
 
             } catch (error) {
@@ -6904,8 +7065,9 @@ Format as clean, readable text ready for narration.`;
                 ]);
                 
                 updateChapterDisplay(chapterNumber);
+                saveProjectState(); // persist chapter content immediately
                 showNotification(`Chapter ${chapterNumber} content generated!`, 'success');
-                
+
             } catch (error) {
                 console.error('Content generation error:', error);
                 showNotification(`Failed to generate content: ${error.message}`, 'error');
@@ -9770,7 +9932,12 @@ Format as clean, readable text ready for narration.`;
                     title: storyData?.title ? `${storyData.title} - Narration` : 'Narration',
                     timestamp: Date.now()
                 };
-                
+
+                // Persist audio to IndexedDB so it survives page refresh
+                saveAudioToDB('narration_combined', combinedBlob).then(() => {
+                    console.log('💾 Narration audio saved to IndexedDB');
+                });
+
                 hideLoading();
                 showNotification('✅ Narration ready! Opening Audio DAW...', 'success');
                 
