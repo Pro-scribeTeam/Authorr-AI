@@ -37,11 +37,27 @@ Currently **Min Workers = 0** (scales to zero when idle). This means:
 
 ---
 
+## ☁️ Supabase — Run the Schema
+
+Before user accounts and cloud saves will work, you need to run the SQL schema once in Supabase:
+
+1. Go to [supabase.com](https://supabase.com) → your **Authorr AI** project
+2. Click **SQL Editor** in the left sidebar
+3. Click **New Query**
+4. Open `authorr-ai-schema.sql` from your project folder and paste the entire contents
+5. Click **Run** (green button)
+
+This creates: `user_profiles`, `projects`, `chapters`, `audio_files`, `voice_profiles`, `auto_saves` tables with full security.
+
+**Do this before launching. Only needs to be done once.**
+
+---
+
 ## Other Pre-Launch Items
+- [ ] **Run authorr-ai-schema.sql in Supabase SQL Editor** ← DO THIS FIRST
 - [ ] Pin RunPod Docker image to specific SHA (see above)
 - [ ] Decide on Min Workers setting (always warm vs scale to zero)
-- [ ] Add RunPod Endpoint ID to settings (not hardcoded)
-- [ ] Set up production database (Cloudflare D1)
-- [ ] Enable user authentication
-- [ ] Set Cloudflare environment variables (OPENAI_API_KEY etc.)
 - [ ] Test full narration flow end-to-end with Chatterbox
+- [ ] Test Sign Up, Sign In, Sign Out on the app
+- [ ] Test Save Project (should appear in My Projects on Dashboard)
+- [ ] Enable email confirmations in Supabase Auth settings (optional)
