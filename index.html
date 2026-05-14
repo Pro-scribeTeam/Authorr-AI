@@ -5331,12 +5331,17 @@ Return the COMPLETE text with DRAMATICALLY humanized writing that's obviously di
             // Priority order: chapters > current content > editor
             let content = '';
             
-            // Try chapters first (most complete)
+            // Try chapters first (most complete) - only if at least one chapter has written content
             if (storyData.chapters && storyData.chapters.length > 0) {
-                content = getAllChaptersText();
-                if (content && content.trim().length > 0) {
-                    console.log('✅ Using chapters content:', content.length, 'characters');
-                    return content;
+                const hasWrittenContent = storyData.chapters.some(c => c.content && c.content.trim().length > 50);
+                if (hasWrittenContent) {
+                    content = getAllChaptersText();
+                    if (content && content.trim().length > 0) {
+                        console.log('✅ Using chapters content:', content.length, 'characters');
+                        return content;
+                    }
+                } else {
+                    console.log('⚠️ Chapters exist but have no written content yet — falling through to editor');
                 }
             }
             
