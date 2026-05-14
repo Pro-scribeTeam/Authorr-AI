@@ -2464,9 +2464,12 @@
                                    class="w-full px-4 py-2 rounded-lg form-field bg-theme-primary text-theme-primary mb-2">
                             <label class="block text-sm font-semibold mb-2">OpenRouter Model</label>
                             <select id="openrouterModel" class="w-full px-4 py-2 rounded-lg form-field bg-theme-primary text-theme-primary">
-                                <option value="qwen/qwen-2.5-72b-instruct">Qwen2.5 72B — Best quality ⭐</option>
-                                <option value="qwen/qwen3-32b">Qwen3 32B — Fast &amp; smart</option>
-                                <option value="qwen/qwen-2.5-7b-instruct">Qwen2.5 7B — Cheapest</option>
+                                <option value="meta-llama/llama-3.3-70b-instruct:free">Llama 3.3 70B — Free ⭐ Recommended</option>
+                                <option value="qwen/qwen3-235b-a22b:free">Qwen3 235B — Free, highest quality</option>
+                                <option value="deepseek/deepseek-chat-v3-0324:free">DeepSeek V3 — Free, great writing</option>
+                                <option value="meta-llama/llama-3.1-8b-instruct:free">Llama 3.1 8B — Free, fastest</option>
+                                <option value="qwen/qwen-2.5-72b-instruct">Qwen2.5 72B — Paid, best quality</option>
+                                <option value="openai/gpt-4o-mini">GPT-4o Mini — Paid, fast</option>
                                 <option value="meta-llama/llama-3.3-70b-instruct">Llama 3.3 70B — Great writing</option>
                                 <option value="mistralai/mistral-large">Mistral Large — Strong prose</option>
                             </select>
@@ -4519,7 +4522,7 @@ Return the COMPLETE text with DRAMATICALLY humanized writing that's obviously di
         async function callOpenRouter(messages) {
             const apiKey = localStorage.getItem('openrouterApiKey');
             if (!apiKey) throw new Error('OpenRouter API key not configured. Add it in Config → API Configuration.');
-            const model = localStorage.getItem('openrouterModel') || 'qwen/qwen-2.5-72b-instruct';
+            const model = localStorage.getItem('openrouterModel') || 'meta-llama/llama-3.3-70b-instruct:free';
             const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
                 method: 'POST',
                 headers: {
@@ -7094,7 +7097,7 @@ Format as clean, readable text ready for narration.`;
                     });
                     if (response.ok) {
                         const data = await response.json();
-                        const model = localStorage.getItem('openrouterModel') || 'qwen/qwen-2.5-72b-instruct';
+                        const model = localStorage.getItem('openrouterModel') || 'meta-llama/llama-3.3-70b-instruct:free';
                         showNotification(`✅ OpenRouter connected! Using: ${model}`, 'success');
                     } else {
                         throw new Error(`OpenRouter error: ${response.status}. Check your API key.`);
@@ -9862,7 +9865,7 @@ Format as clean, readable text ready for narration.`;
                         // Generate chapter content if it doesn't exist
                         updateLoadingText(`Generating content for Chapter ${chapter.number}...`);
                         try {
-                            const content = await generateSingleChapterContent(chapter);
+                            const content = await generateChapterContent(chapter.number);
                             if (content && content.trim()) {
                                 combinedContent += content + '\n\n';
                                 hasContent = true;
