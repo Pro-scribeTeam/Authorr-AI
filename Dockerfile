@@ -19,5 +19,6 @@ RUN pip install --no-cache-dir chatterbox-tts
 RUN pip install --no-cache-dir "transformers==4.44.2"
 
 COPY handler.py .
+COPY *.mp3 .
 
 CMD ["python", "-u", "handler.py"]
