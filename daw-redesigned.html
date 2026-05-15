@@ -1112,6 +1112,9 @@
                 <button class="transport-btn" id="seekStartBtn" title="Go to Start">
                     <i class="fas fa-step-backward"></i>
                 </button>
+                <button class="transport-btn" id="nudgeBackBtn" title="Nudge Back 1s (←)">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
                 <button class="transport-btn play" id="playBtn" title="Play (Space)">
                     <i class="fas fa-play"></i>
                 </button>
@@ -1120,6 +1123,9 @@
                 </button>
                 <button class="transport-btn" id="loopBtn" title="Loop">
                     <i class="fas fa-repeat"></i>
+                </button>
+                <button class="transport-btn" id="nudgeFwdBtn" title="Nudge Forward 1s (→)">
+                    <i class="fas fa-chevron-right"></i>
                 </button>
                 
                 <div class="time-display">
@@ -1728,6 +1734,8 @@
             document.getElementById('playBtn').addEventListener('click', togglePlay);
             document.getElementById('stopBtn').addEventListener('click', stop);
             document.getElementById('seekStartBtn').addEventListener('click', seekToStart);
+            document.getElementById('nudgeBackBtn').addEventListener('click', () => nudgePlayhead(-1));
+            document.getElementById('nudgeFwdBtn').addEventListener('click',  () => nudgePlayhead(1));
             document.getElementById('loopBtn').addEventListener('click', toggleLoop);
             
             // Header actions
@@ -2314,6 +2322,18 @@
             console.log('⏹️ Stopped');
         }
         
+        function nudgePlayhead(seconds) {
+            const newTime = Math.max(0, dawState.currentTime + seconds);
+            dawState.currentTime = newTime;
+            pauseTime = newTime;
+            updatePlayheadPosition(newTime);
+            document.getElementById('currentTime').textContent = formatTime(newTime);
+            if (dawState.isPlaying) {
+                stopAllSources();
+                playAllTracks();
+            }
+        }
+
         function seekToStart() {
             const wasPlaying = dawState.isPlaying;
             
@@ -3348,7 +3368,6 @@
             clipEl.style.borderRadius = '4px';
             clipEl.style.overflow = 'hidden';
             clipEl.style.cursor = dawState.selectedTool === 'cut' ? 'crosshair' : 'move';
-            clipEl.style.position = 'relative';
             
             // Add click handler for selection and cut tool
             clipEl.addEventListener('click', function(e) {
@@ -3820,6 +3839,12 @@
             if (e.code === 'Space' && e.target.tagName !== 'INPUT') {
                 e.preventDefault();
                 togglePlay();
+            }
+
+            // Arrow keys nudge playhead (skip if typing in input)
+            if (e.target.tagName !== 'INPUT') {
+                if (e.code === 'ArrowRight') { e.preventDefault(); nudgePlayhead(e.shiftKey ? 5 : 1); }
+                if (e.code === 'ArrowLeft')  { e.preventDefault(); nudgePlayhead(e.shiftKey ? -5 : -1); }
             }
             
             // Enter = Execute cut selection
