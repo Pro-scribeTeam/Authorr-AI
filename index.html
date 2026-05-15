@@ -9429,17 +9429,68 @@ Format as clean, readable text ready for narration.`;
             return new Blob([bytes], { type: 'audio/wav' });
         }
 
+        // Append trailing runway so Chatterbox fully renders the last word before its natural clip point.
+        // The model clips the final ~0.3s of audio; these silent-sounding dots land in that window instead.
+        function padChatterboxText(text) {
+            const t = (text || '').trim();
+            // Already ends with sentence-ending punctuation — add a short trailing phrase
+            // that gives the TTS engine ~0.5s of extra "runway" before clipping.
+            return t + '  .  .  .';
+        }
+
+        // Append 500ms of silence to a WAV blob so abrupt hardware fade-outs don't eat real audio.
+        async function appendSilenceToWav(wavBlob, silenceMs = 500) {
+            try {
+                const arrayBuffer = await wavBlob.arrayBuffer();
+                const view = new DataView(arrayBuffer);
+
+                // Read WAV header fields (little-endian)
+                const numChannels   = view.getUint16(22, true);
+                const sampleRate    = view.getUint32(24, true);
+                const bitsPerSample = view.getUint16(34, true);
+                const bytesPerSample = bitsPerSample / 8;
+                const bytesPerFrame  = numChannels * bytesPerSample;
+
+                const silenceSamples = Math.floor((silenceMs / 1000) * sampleRate);
+                const silenceBytes   = silenceSamples * bytesPerFrame;
+                const silence        = new Uint8Array(silenceBytes); // zero-filled = silence
+
+                // Build new WAV: original header + original data + silence
+                const origBytes  = new Uint8Array(arrayBuffer);
+                const newTotal   = origBytes.length + silenceBytes;
+                const out        = new Uint8Array(newTotal);
+                out.set(origBytes);
+                out.set(silence, origBytes.length);
+
+                // Update RIFF chunk size (bytes 4-7) and data chunk size (bytes 40-43)
+                const outView = new DataView(out.buffer);
+                outView.setUint32(4,  newTotal - 8,                         true); // RIFF size
+                outView.setUint32(40, view.getUint32(40, true) + silenceBytes, true); // data size
+
+                return new Blob([out], { type: 'audio/wav' });
+            } catch (e) {
+                console.warn('appendSilenceToWav failed, returning original blob:', e.message);
+                return wavBlob;
+            }
+        }
+
         async function generateSegmentAudio(segment) {
             const voice = segment.voice || '';
+            const paddedText = padChatterboxText(segment.text);
+
+            let blob;
             if (voice.startsWith('cbturbo_')) {
                 const turboVoice = voice.replace('cbturbo_', '');
-                return await generateChatterboxTurboAudio(segment.text, turboVoice);
+                blob = await generateChatterboxTurboAudio(paddedText, turboVoice);
             } else if (voice.startsWith('chatterbox_')) {
-                return await generateChatterboxAudio(segment.text);
+                blob = await generateChatterboxAudio(paddedText);
             } else {
                 // Fallback: treat bare voice name as Chatterbox Turbo
-                return await generateChatterboxTurboAudio(segment.text, voice);
+                blob = await generateChatterboxTurboAudio(paddedText, voice);
             }
+
+            // Append 400ms silence so the model's natural tail-clip doesn't eat real audio
+            return appendSilenceToWav(blob, 400);
         }
 
         // [OpenAI TTS removed — using Chatterbox via RunPod]
@@ -9800,25 +9851,9 @@ Format as clean, readable text ready for narration.`;
                 console.log('✅ Narration prepared for DAW transfer');
                 console.log('🎵 Opening DAW...');
                 
-                // Open DAW with slight delay to ensure notification is visible
+                // Open DAW — the DAW_READY handler will send the narration once the iframe signals ready
                 setTimeout(() => {
                     openAudioDAW();
-                    
-                    // Send message to DAW iframe after it loads
-                    setTimeout(() => {
-                        const dawIframe = document.getElementById('dawIframe');
-                        if (dawIframe && dawIframe.contentWindow) {
-                            dawIframe.contentWindow.postMessage({
-                                type: 'LOAD_NARRATION',
-                                audioData: {
-                                    url: combinedUrl,
-                                    title: window.dawNarrationAudio.title,
-                                    duration: window.dawNarrationAudio.duration
-                                }
-                            }, '*');
-                            console.log('📤 Sent narration data to DAW iframe');
-                        }
-                    }, 1000);
                 }, 500);
                 
             } catch (error) {
@@ -10841,6 +10876,37 @@ Format as clean, readable text ready for narration.`;
             
             console.log('✅ Professional Audio DAW loaded in iframe');
             
+            // Handle messages from DAW iframe (Send to Cover, etc.)
+            window.addEventListener('message', function(event) {
+                if (!event.data || !event.data.type) return;
+
+                if (event.data.type === 'SEND_TO_COVER') {
+                    const { audioBlob, duration, title } = event.data;
+                    try {
+                        const audioUrl = URL.createObjectURL(audioBlob);
+                        window.dawMixedAudio = {
+                            blob:      audioBlob,
+                            url:       audioUrl,
+                            duration:  duration,
+                            title:     title || 'Mixed Audio from DAW',
+                            timestamp: Date.now()
+                        };
+                        closeAudioDAW();
+                        showPage('covers');
+                        setTimeout(() => {
+                            updateAudioTransferStatus('success', window.dawMixedAudio);
+                            if (typeof notifyCoverPageAudioReady === 'function') {
+                                notifyCoverPageAudioReady(window.dawMixedAudio);
+                            }
+                        }, 150);
+                        console.log('✅ Received mixed audio from DAW, navigating to Cover page');
+                    } catch (err) {
+                        console.error('❌ SEND_TO_COVER handler error:', err);
+                        showNotification('Failed to transfer audio to cover page: ' + err.message, 'error');
+                    }
+                }
+            });
+
             // Re-send stored narration when DAW iframe signals it is ready
             const dawReadyHandler = function(event) {
                 if (event.data && event.data.type === 'DAW_READY') {

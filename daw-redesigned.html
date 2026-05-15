@@ -503,18 +503,37 @@
             cursor: grabbing;
         }
         
-        #playhead::before {
-            content: '';
+        #playhead-marker {
             position: absolute;
             top: -30px;
-            left: 0px; /* Centered in the 10px wide element */
+            left: 0px;
             width: 10px;
-            height: 10px;
+            height: 32px; /* extends from top of ruler down to timeline */
             background-color: var(--playhead-color);
-            border-radius: 50%;
-            pointer-events: none;
+            clip-path: polygon(0% 0%, 100% 0%, 100% 50%, 50% 100%, 0% 50%);
+            cursor: grab;
+            pointer-events: auto;
+            z-index: 1001;
+        }
+        #playhead-marker:active {
+            cursor: grabbing;
         }
         }
+
+        /* Trim handles */
+        .trim-handle {
+            position: absolute;
+            top: 0;
+            width: 10px;
+            height: 100%;
+            background: rgba(255, 200, 0, 0.85);
+            z-index: 30;
+            display: none;
+            border: 1px solid rgba(255, 220, 0, 1);
+        }
+        .trim-handle-left  { left: 0;  cursor: w-resize; border-radius: 4px 0 0 4px; }
+        .trim-handle-right { right: 0; cursor: e-resize; border-radius: 0 4px 4px 0; }
+        body[data-tool="trim"] .audio-clip .trim-handle { display: block; }
         
         .audio-clip {
             transition: all 0.15s ease;
@@ -928,6 +947,121 @@
             background: linear-gradient(to bottom, #666, #444);
         }
         
+        /* ── DAW Logo ────────────────────────────────────────────── */
+        .daw-logo-wrap {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+            margin-right: 16px;
+        }
+        .daw-logo-img {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            object-fit: contain;
+            filter: drop-shadow(0 0 6px rgba(0, 212, 255, 0.4));
+        }
+        .daw-logo-text {
+            font-size: 14px;
+            font-weight: 800;
+            letter-spacing: 1.5px;
+            color: var(--daw-accent);
+            white-space: nowrap;
+        }
+
+        /* ── View toggle buttons ─────────────────────────────────── */
+        .view-btn {
+            padding: 5px 10px;
+            border-radius: 6px;
+            border: 1px solid var(--daw-border);
+            background: var(--daw-bg-tertiary);
+            color: var(--daw-text-secondary);
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            transition: all 0.2s;
+            height: 32px;
+        }
+        .view-btn:hover { background: var(--daw-bg-primary); color: var(--daw-text-primary); }
+        .view-btn.active { background: var(--daw-accent); color: #000; border-color: var(--daw-accent); }
+
+        /* ── Jamendo header bar ──────────────────────────────────── */
+        .jamendo-header-bar {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            min-width: 0;
+        }
+        .jamendo-header-bar select {
+            background: var(--daw-bg-tertiary);
+            color: var(--daw-text-primary);
+            border: 1px solid var(--daw-border);
+            border-radius: 5px;
+            padding: 4px 5px;
+            font-size: 11px;
+            cursor: pointer;
+            width: 140px;
+            height: 30px;
+        }
+        .jam-sep { width: 1px; height: 22px; background: var(--daw-border); margin: 0 3px; }
+        .jam-type-label {
+            color: var(--daw-text-dim);
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            white-space: nowrap;
+        }
+        .jam-find-btn {
+            padding: 0 10px;
+            height: 30px;
+            border-radius: 5px;
+            border: none;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .jam-find-btn.music { background: #0e7490; color: #fff; }
+        .jam-find-btn.sfx   { background: #7e22ce; color: #fff; }
+        .jam-find-btn:hover { filter: brightness(1.15); }
+
+        /* ── Floating results panel ──────────────────────────────── */
+        #headerJamResults {
+            position: fixed;
+            top: 70px;
+            left: 0;
+            width: 100%;
+            max-height: 240px;
+            overflow-y: auto;
+            background: #12121e;
+            border-bottom: 2px solid var(--daw-accent);
+            z-index: 500;
+            display: none;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+        }
+        .hjr-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 16px;
+            border-bottom: 1px solid #2a2a3a;
+        }
+        .hjr-row:hover { background: #1e1e30; }
+        .hjr-name { flex: 1; color: #fff; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .hjr-meta { color: #9ca3af; font-size: 10px; white-space: nowrap; }
+        .hjr-btn  { flex-shrink: 0; border: none; border-radius: 3px; padding: 2px 6px; cursor: pointer; font-size: 11px; }
+        .hjr-close-bar {
+            display: flex; align-items: center; gap: 8px; justify-content: flex-end; padding: 6px 16px;
+            background: #0e0e1a; border-bottom: 1px solid #2a2a3a; position: sticky; top: 0; z-index: 1;
+        }
+
+        /* ── View modes ──────────────────────────────────────────── */
+        .daw-container.view-mix  .timeline-section { display: none !important; }
+        .daw-container.view-mix  .mixer-section    { flex: 1; height: auto; }
+        .daw-container.view-edit .mixer-section    { display: none !important; }
+
         /* Enhanced scrollbar for mixer section */
         .mixer-channels::-webkit-scrollbar {
             width: 16px;
@@ -955,10 +1089,50 @@
         <!-- ========================================
              HEADER / TRANSPORT CONTROLS
              ======================================== -->
+        <div id="headerJamResults"></div>
         <div class="daw-header">
-            <div class="daw-title">
-                <i class="fas fa-sliders-h"></i>
-                Professional Audio DAW
+            <!-- Logo -->
+            <div class="daw-logo-wrap">
+                <img src="https://page.gensparksite.com/v1/base64_upload/5ec0a971230da95148e537dd473d0fb1"
+                     alt="AUTHORR AI Logo" class="daw-logo-img">
+                <span class="daw-logo-text">AUTHORR AI</span>
+            </div>
+
+            <!-- Jamendo Quick-Search -->
+            <div class="jamendo-header-bar">
+                <span class="jam-type-label">MUSIC</span>
+                <select id="headerMusicGenre">
+                    <option value="">— Genre —</option>
+                    <option value="ambient">Ambient / Atmospheric</option>
+                    <option value="cinematic">Cinematic / Soundtrack</option>
+                    <option value="classical">Classical</option>
+                    <option value="downtempo">Electronic / Downtempo</option>
+                    <option value="jazz">Jazz</option>
+                    <option value="folk">Folk / Acoustic</option>
+                    <option value="lounge">Lounge / Chill</option>
+                    <option value="orchestral">Orchestral</option>
+                    <option value="meditation">Meditation / Relaxing</option>
+                    <option value="piano">Piano</option>
+                    <option value="newage">New Age</option>
+                    <option value="world">World / Ethnic</option>
+                </select>
+                <button class="jam-find-btn music" onclick="headerSearchJamendo('music')">🔍 Find</button>
+                <div class="jam-sep"></div>
+                <span class="jam-type-label">SFX</span>
+                <select id="headerSfxCategory">
+                    <option value="">— Category —</option>
+                    <option value="nature">Nature Sounds</option>
+                    <option value="rain">Rain / Storm</option>
+                    <option value="forest">Forest / Woodland</option>
+                    <option value="ocean">Ocean / Water</option>
+                    <option value="fire">Fire / Crackling</option>
+                    <option value="urban">Urban / City</option>
+                    <option value="horror">Horror / Suspense</option>
+                    <option value="fantasy">Fantasy / Magical</option>
+                    <option value="scifi">Sci-Fi / Futuristic</option>
+                    <option value="medieval">Medieval / Historical</option>
+                </select>
+                <button class="jam-find-btn sfx" onclick="headerSearchJamendo('sfx')">🔍 Find</button>
             </div>
             
             <div class="transport-controls">
@@ -987,6 +1161,9 @@
             </div>
             
             <div class="header-actions">
+                <button class="view-btn" id="viewEditBtn" onclick="setView('edit')" title="Show editor only">EDIT</button>
+                <button class="view-btn" id="viewMixBtn" onclick="setView('mix')" title="Show mix console only">MIX</button>
+                <button class="view-btn active" id="viewBothBtn" onclick="setView('both')" title="Show both">MIXEDIT</button>
                 <button class="action-btn" id="exportBtn">
                     <i class="fas fa-download"></i>
                     Export
@@ -1023,6 +1200,9 @@
                     </button>
                     <button class="tool-btn" id="fadeOutTool" title="Fade Out (F)">
                         <i class="fas fa-volume-down"></i>
+                    </button>
+                    <button class="tool-btn" id="trimTool" title="Trim (T)">
+                        <i class="fas fa-arrows-alt-h"></i>
                     </button>
                 </div>
                 
@@ -1076,7 +1256,7 @@
                     <!-- Track rows will be generated dynamically -->
                 </div>
                 
-                <div id="playhead"></div>
+                <div id="playhead"><div id="playhead-marker"></div></div>
             </div>
         </div>
         
@@ -1270,6 +1450,11 @@
             saveState('Initial state');
             
             console.log('✅ DAW initialized successfully');
+
+            // Signal to parent that the DAW is ready to receive audio
+            if (window.parent && window.parent !== window) {
+                window.parent.postMessage({ type: 'DAW_READY' }, '*');
+            }
         }
         
         // ========================================
@@ -1542,7 +1727,8 @@
             document.getElementById('handTool').addEventListener('click', () => setTool('hand'));
             document.getElementById('cutTool').addEventListener('click', () => setTool('cut'));
             document.getElementById('fadeOutTool').addEventListener('click', () => setTool('fadeOut'));
-            
+            document.getElementById('trimTool').addEventListener('click', () => setTool('trim'));
+
             // Edit actions
             document.getElementById('copyBtn').addEventListener('click', copySelected);
             document.getElementById('pasteBtn').addEventListener('click', paste);
@@ -1574,34 +1760,41 @@
             
             // Playhead dragging
             const playhead = document.getElementById('playhead');
+            const playheadMarker = document.getElementById('playhead-marker');
             let isDraggingPlayhead = false;
-            
-            playhead.addEventListener('mousedown', function(e) {
+            let preventNextTimelineClick = false;
+
+            function startPlayheadDrag(e) {
                 isDraggingPlayhead = true;
                 playhead.style.cursor = 'grabbing';
+                playheadMarker.style.cursor = 'grabbing';
                 e.stopPropagation();
-            });
-            
+                e.preventDefault();
+            }
+
+            playhead.addEventListener('mousedown', startPlayheadDrag);
+            playheadMarker.addEventListener('mousedown', startPlayheadDrag);
+
             document.addEventListener('mousemove', function(e) {
                 if (!isDraggingPlayhead) return;
-                
+
                 const timelineWrapper = document.querySelector('.timeline-canvas-wrapper');
                 const rect = timelineWrapper.getBoundingClientRect();
                 const mouseX = e.clientX - rect.left - 200; // Subtract track header width
-                
+
                 // Add current scroll position
                 const scrollX = timelineWrapper.scrollLeft;
                 const adjustedX = mouseX + scrollX;
-                
+
                 // Calculate time based on mouse position and zoom
                 const pixelsPerSecond = 50 * dawState.zoom;
                 const newTime = Math.max(0, adjustedX / pixelsPerSecond);
-                
+
                 // Update playhead position (no max constraint - can go anywhere on timeline)
                 dawState.currentTime = newTime;
                 updatePlayheadPosition(dawState.currentTime);
                 document.getElementById('currentTime').textContent = formatTime(dawState.currentTime);
-                
+
                 // If playing, update playback position
                 if (dawState.isPlaying) {
                     pauseTime = dawState.currentTime;
@@ -1611,14 +1804,18 @@
                     pauseTime = dawState.currentTime;
                 }
             });
-            
+
             document.addEventListener('mouseup', function(e) {
                 if (isDraggingPlayhead) {
                     isDraggingPlayhead = false;
+                    preventNextTimelineClick = true;
                     playhead.style.cursor = 'grab';
+                    playheadMarker.style.cursor = 'grab';
+                    // Clear flag after click event has had a chance to fire
+                    setTimeout(() => { preventNextTimelineClick = false; }, 50);
                 }
             });
-            
+
             // Make playhead cursor indicate it's draggable
             playhead.style.cursor = 'grab';
             
@@ -1627,8 +1824,10 @@
         }
         
         function handleTimelineClick(e) {
-            // Don't seek if clicking on a clip
+            // Don't seek if clicking on a clip or the playhead (or just finished dragging it)
             if (e.target.closest('.audio-clip')) return;
+            if (e.target.closest('#playhead') || preventNextTimelineClick) return;
+            if (e.target.closest('.trim-handle')) return;
             
             const timelineWrapper = document.querySelector('.timeline-canvas-wrapper');
             const rect = timelineWrapper.getBoundingClientRect();
@@ -1769,9 +1968,6 @@
                         continue;
                     }
                     
-                    // Skip clips that have already finished playing
-                    if (currentTime >= clip.startTime + clip.duration) continue;
-                    
                     // Create buffer source
                     const source = ctx.createBufferSource();
                     
@@ -1821,21 +2017,35 @@
                         source.connect(gainNodes[track.id]);
                     }
                     
+                    // Trim values (seconds trimmed from each end)
+                    const trimStart = clip.trimStart || 0;
+                    const trimEnd   = clip.trimEnd   || 0;
+                    const trimmedDuration = clip.duration - trimStart - trimEnd;
+
+                    // Skip if fully trimmed away
+                    if (trimmedDuration <= 0) continue;
+
+                    // Effective clip start on timeline (shifted right by trimStart)
+                    const effectiveStart = clip.startTime + trimStart;
+
+                    // Skip clips that have already finished playing
+                    if (currentTime >= effectiveStart + trimmedDuration) continue;
+
                     // Calculate when to start this clip
-                    const clipStartTime = Math.max(0, clip.startTime - currentTime);
-                    
-                    // Calculate offset into the audio file (respecting audioStart for cut clips)
-                    const audioStart = clip.audioStart || 0; // Where in the audio file this clip starts
-                    const offset = Math.max(0, currentTime - clip.startTime) + audioStart;
-                    
-                    // Calculate how long to play (respecting clip duration)
-                    const playDuration = clip.duration - Math.max(0, currentTime - clip.startTime);
-                    
+                    const clipStartTime = Math.max(0, effectiveStart - currentTime);
+
+                    // Calculate offset into the audio file (audioStart from cuts + trimStart)
+                    const audioStart = (clip.audioStart || 0) + trimStart;
+                    const offset = Math.max(0, currentTime - effectiveStart) + audioStart;
+
+                    // Calculate how long to play
+                    const playDuration = trimmedDuration - Math.max(0, currentTime - effectiveStart);
+
                     // Start playback with proper offset and duration
                     if (offset < audioBuffer.duration && playDuration > 0) {
                         source.start(ctx.currentTime + clipStartTime, offset, playDuration);
                         audioSources.push(source);
-                        console.log(`▶️ Playing: ${clip.name} on ${track.name} (audioStart=${audioStart.toFixed(2)}s, offset=${offset.toFixed(2)}s, duration=${playDuration.toFixed(2)}s)`);
+                        console.log(`▶️ Playing: ${clip.name} on ${track.name} (audioStart=${audioStart.toFixed(2)}s, offset=${offset.toFixed(2)}s, duration=${playDuration.toFixed(2)}s, trim=${trimStart.toFixed(2)}-${trimEnd.toFixed(2)}s)`);
                     }
                 }
             }
@@ -2363,36 +2573,39 @@
             dawState.selectedTool = tool;
             document.querySelectorAll('.tool-btn').forEach(btn => btn.classList.remove('active'));
             document.getElementById(`${tool}Tool`).classList.add('active');
-            
+
+            // Update body attribute so CSS trim-handle visibility works
+            document.body.dataset.tool = tool;
+
             // Update cursor for all audio clips based on selected tool
             document.querySelectorAll('.audio-clip').forEach(clipEl => {
                 if (tool === 'cut') {
                     clipEl.style.cursor = 'crosshair';
                 } else if (tool === 'fadeOut') {
-                    clipEl.style.cursor = 'cell'; // Grid cursor for fade selection
+                    clipEl.style.cursor = 'cell';
+                } else if (tool === 'trim') {
+                    clipEl.style.cursor = 'default';
                 } else if (tool === 'select') {
                     clipEl.style.cursor = 'move';
+                } else {
+                    clipEl.style.cursor = 'default';
                 }
-                
+
                 // Clear cut selections when switching away from cut tool
                 if (tool !== 'cut') {
                     clipEl.dataset.cutSelectionActive = 'false';
                     const overlay = clipEl.querySelector('div[style*="rgba(0, 212, 255"]');
-                    if (overlay) {
-                        overlay.remove();
-                    }
+                    if (overlay) overlay.remove();
                 }
-                
+
                 // Clear fade selections when switching away from fadeOut tool
                 if (tool !== 'fadeOut') {
                     clipEl.dataset.fadeSelectionActive = 'false';
                     const fadeOverlay = clipEl.querySelector('div[style*="rgba(255, 165, 0"]');
-                    if (fadeOverlay) {
-                        fadeOverlay.remove();
-                    }
+                    if (fadeOverlay) fadeOverlay.remove();
                 }
             });
-            
+
             console.log(`🛠️ Tool selected: ${tool}`);
         }
         
@@ -2738,14 +2951,163 @@
         // EXPORT & ACTIONS
         // ========================================
         
-        function exportAudio() {
-            console.log('💾 Exporting audio...');
-            alert('Export functionality will be implemented in integration');
+        // ── WAV encoder (runs inside the DAW iframe) ─────────────────────────
+        function bufferToWavBlob(abuffer) {
+            const numChan = abuffer.numberOfChannels;
+            const len     = abuffer.length * numChan * 2 + 44;
+            const buf     = new ArrayBuffer(len);
+            const view    = new DataView(buf);
+            let pos = 0;
+            const w16 = v => { view.setUint16(pos, v, true); pos += 2; };
+            const w32 = v => { view.setUint32(pos, v, true); pos += 4; };
+            // RIFF header
+            w32(0x46464952); w32(len - 8); w32(0x45564157);
+            // fmt chunk
+            w32(0x20746d66); w32(16); w16(1); w16(numChan);
+            w32(abuffer.sampleRate);
+            w32(abuffer.sampleRate * 2 * numChan);
+            w16(numChan * 2); w16(16);
+            // data chunk
+            w32(0x61746164); w32(len - 44);
+            // interleaved samples
+            const chans = [];
+            for (let i = 0; i < numChan; i++) chans.push(abuffer.getChannelData(i));
+            let offset = 0;
+            while (pos < len) {
+                for (let i = 0; i < numChan; i++) {
+                    const s = Math.max(-1, Math.min(1, chans[i][offset]));
+                    view.setInt16(pos, s < 0 ? s * 32768 : s * 32767, true);
+                    pos += 2;
+                }
+                offset++;
+            }
+            return new Blob([buf], { type: 'audio/wav' });
         }
-        
-        function sendToCover() {
-            console.log('📸 Sending to cover page...');
-            alert('Send to cover functionality will be implemented in integration');
+
+        // ── Mix all DAW tracks into a single AudioBuffer ──────────────────────
+        async function mixDownTracks() {
+            const SAMPLE_RATE = 44100;
+
+            // Determine total rendered length
+            let maxEnd = 0;
+            for (const track of dawState.tracks) {
+                for (const clip of track.clips) {
+                    const trimStart = clip.trimStart || 0;
+                    const trimEnd   = clip.trimEnd   || 0;
+                    const end = clip.startTime + trimStart + (clip.duration - trimStart - trimEnd);
+                    if (end > maxEnd) maxEnd = end;
+                }
+            }
+            if (maxEnd === 0) throw new Error('No audio clips to export. Load some audio first.');
+
+            // Extra 0.5s tail
+            const totalSamples = Math.ceil((maxEnd + 0.5) * SAMPLE_RATE);
+            const offCtx = new OfflineAudioContext(2, totalSamples, SAMPLE_RATE);
+            const masterGain = offCtx.createGain();
+            masterGain.gain.value = dawState.masterVolume * 2;
+            masterGain.connect(offCtx.destination);
+
+            const hasSolo = dawState.tracks.some(t => t.solo);
+
+            for (const track of dawState.tracks) {
+                const shouldPlay = !track.muted && (!hasSolo || track.solo);
+                if (!shouldPlay || track.clips.length === 0) continue;
+
+                const trackGain = offCtx.createGain();
+                trackGain.gain.value = track.volume * 2;
+                trackGain.connect(masterGain);
+
+                for (const clip of track.clips) {
+                    const audioBuffer = await decodeAudioClip(clip);
+                    if (!audioBuffer) continue;
+
+                    const trimStart = clip.trimStart || 0;
+                    const trimEnd   = clip.trimEnd   || 0;
+                    const trimmedDuration = clip.duration - trimStart - trimEnd;
+                    if (trimmedDuration <= 0) continue;
+
+                    const source = offCtx.createBufferSource();
+                    source.buffer = audioBuffer;
+
+                    // Fade out if present
+                    if (clip.fadeOut && clip.fadeOut.duration > 0) {
+                        const fg = offCtx.createGain();
+                        source.connect(fg);
+                        fg.connect(trackGain);
+                        const fadeStartT = clip.startTime + trimStart + clip.fadeOut.start;
+                        const fadeEndT   = fadeStartT + clip.fadeOut.duration;
+                        fg.gain.setValueAtTime(1.0, fadeStartT);
+                        fg.gain.linearRampToValueAtTime(0.0, fadeEndT);
+                    } else {
+                        source.connect(trackGain);
+                    }
+
+                    const audioStart = (clip.audioStart || 0) + trimStart;
+                    source.start(clip.startTime + trimStart, audioStart, trimmedDuration);
+                }
+            }
+
+            return offCtx.startRendering();
+        }
+
+        // ── Show a status toast inside the DAW ────────────────────────────────
+        function dawToast(msg, color = '#0e7490', duration = 3500) {
+            const el = document.createElement('div');
+            el.style.cssText = `position:fixed;top:80px;right:24px;background:${color};color:#fff;
+                padding:10px 18px;border-radius:8px;font-size:13px;z-index:9999;
+                box-shadow:0 4px 12px rgba(0,0,0,0.4);`;
+            el.textContent = msg;
+            document.body.appendChild(el);
+            setTimeout(() => el.remove(), duration);
+        }
+
+        // ── EXPORT: mix down → WAV download ──────────────────────────────────
+        async function exportAudio() {
+            console.log('💾 Exporting mixed audio...');
+            dawToast('Mixing tracks for export…', '#0e7490', 60000);
+            try {
+                const buffer  = await mixDownTracks();
+                const wavBlob = bufferToWavBlob(buffer);
+                const url     = URL.createObjectURL(wavBlob);
+                const a       = document.createElement('a');
+                a.href        = url;
+                a.download    = 'authorr-mix.wav';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                setTimeout(() => URL.revokeObjectURL(url), 5000);
+                document.querySelectorAll('[style*="Mixing tracks"]').forEach(e => e.remove());
+                dawToast('✓ Export downloaded successfully!', '#16a34a');
+                console.log(`✅ Exported WAV: ${(wavBlob.size / 1024 / 1024).toFixed(1)} MB`);
+            } catch (err) {
+                document.querySelectorAll('[style*="Mixing tracks"]').forEach(e => e.remove());
+                dawToast(`✗ Export failed: ${err.message}`, '#dc2626');
+                console.error('❌ Export error:', err);
+            }
+        }
+
+        // ── SEND TO COVER: mix down → postMessage to parent ───────────────────
+        async function sendToCover() {
+            console.log('📸 Sending mixed audio to cover page...');
+            dawToast('Mixing tracks for cover…', '#7e22ce', 60000);
+            try {
+                const buffer  = await mixDownTracks();
+                const wavBlob = bufferToWavBlob(buffer);
+                document.querySelectorAll('[style*="Mixing tracks"]').forEach(e => e.remove());
+                dawToast('✓ Sending to Cover page…', '#16a34a');
+
+                // Send to parent window (main app)
+                window.parent.postMessage({
+                    type: 'SEND_TO_COVER',
+                    audioBlob: wavBlob,
+                    duration:  buffer.duration,
+                    title:     'Mixed Audio from DAW'
+                }, '*');
+            } catch (err) {
+                document.querySelectorAll('[style*="Mixing tracks"]').forEach(e => e.remove());
+                dawToast(`✗ Failed: ${err.message}`, '#dc2626');
+                console.error('❌ Send to cover error:', err);
+            }
         }
         
         function closeDaw() {
@@ -2936,7 +3298,10 @@
             
             clipEl.addEventListener('mousedown', function(e) {
                 if (e.button !== 0) return; // Only left mouse button
-                
+
+                // Trim handles have their own drag logic
+                if (dawState.selectedTool === 'trim') return;
+
                 // Handle cut tool selection
                 if (dawState.selectedTool === 'cut') {
                     const rect = clipEl.getBoundingClientRect();
@@ -3090,7 +3455,7 @@
                 }
                 
                 // Normal clip drag complete
-                clipEl.style.cursor = dawState.selectedTool === 'cut' ? 'crosshair' : (dawState.selectedTool === 'fadeOut' ? 'cell' : 'move');
+                clipEl.style.cursor = dawState.selectedTool === 'cut' ? 'crosshair' : (dawState.selectedTool === 'fadeOut' ? 'cell' : (dawState.selectedTool === 'trim' ? 'default' : 'move'));
                 clipEl.style.zIndex = '';
                 
                 // Calculate final position
@@ -3145,6 +3510,88 @@
             label.style.zIndex = '10';
             label.textContent = clip.name;
             
+            // ── Trim handles ──────────────────────────────────────────
+            if (!clip.trimStart) clip.trimStart = 0;
+            if (!clip.trimEnd)   clip.trimEnd   = 0;
+
+            const trimLeft  = document.createElement('div');
+            trimLeft.className  = 'trim-handle trim-handle-left';
+            trimLeft.title = 'Drag to trim start';
+
+            const trimRight = document.createElement('div');
+            trimRight.className = 'trim-handle trim-handle-right';
+            trimRight.title = 'Drag to trim end';
+
+            // Visual trim shading (dimmed region that's been trimmed away)
+            const trimShadeLeft  = document.createElement('div');
+            trimShadeLeft.style.cssText = 'position:absolute;top:0;left:0;height:100%;background:rgba(0,0,0,0.55);pointer-events:none;z-index:25;';
+            const trimShadeRight = document.createElement('div');
+            trimShadeRight.style.cssText = 'position:absolute;top:0;right:0;height:100%;background:rgba(0,0,0,0.55);pointer-events:none;z-index:25;';
+
+            function updateTrimShading() {
+                const pixPerSec = 50 * dawState.zoom;
+                const totalW = clip.duration * pixPerSec;
+                const leftPx  = (clip.trimStart / clip.duration) * totalW;
+                const rightPx = (clip.trimEnd   / clip.duration) * totalW;
+                trimShadeLeft.style.width  = `${leftPx}px`;
+                trimShadeRight.style.width = `${rightPx}px`;
+            }
+            updateTrimShading();
+
+            // Trim handle drag logic
+            function makeTrimDrag(handle, side) {
+                let trimDragging = false;
+                let startX = 0;
+                let startTrim = 0;
+
+                handle.addEventListener('mousedown', function(e) {
+                    if (dawState.selectedTool !== 'trim') return;
+                    trimDragging = true;
+                    startX = e.clientX;
+                    startTrim = (side === 'left') ? clip.trimStart : clip.trimEnd;
+                    e.stopPropagation();
+                    e.preventDefault();
+                });
+
+                document.addEventListener('mousemove', function(e) {
+                    if (!trimDragging) return;
+                    const pixPerSec = 50 * dawState.zoom;
+                    const deltaX = e.clientX - startX;
+                    const deltaSec = deltaX / pixPerSec;
+
+                    if (side === 'left') {
+                        const maxTrimStart = clip.duration - clip.trimEnd - 0.1;
+                        clip.trimStart = Math.max(0, Math.min(maxTrimStart, startTrim + deltaSec));
+                        // Shift clip visual start edge
+                        const pixPerSec2 = 50 * dawState.zoom;
+                        clipEl.style.left  = `${(clip.startTime + clip.trimStart) * pixPerSec2}px`;
+                        clipEl.style.width = `${(clip.duration - clip.trimStart - clip.trimEnd) * pixPerSec2}px`;
+                    } else {
+                        const maxTrimEnd = clip.duration - clip.trimStart - 0.1;
+                        clip.trimEnd = Math.max(0, Math.min(maxTrimEnd, startTrim - deltaSec));
+                        const pixPerSec2 = 50 * dawState.zoom;
+                        clipEl.style.width = `${(clip.duration - clip.trimStart - clip.trimEnd) * pixPerSec2}px`;
+                    }
+                    updateTrimShading();
+                });
+
+                document.addEventListener('mouseup', function() {
+                    if (trimDragging) {
+                        trimDragging = false;
+                        console.log(`✂️ Trim: start=${clip.trimStart.toFixed(2)}s end=${clip.trimEnd.toFixed(2)}s`);
+                    }
+                });
+            }
+
+            makeTrimDrag(trimLeft,  'left');
+            makeTrimDrag(trimRight, 'right');
+
+            clipEl.appendChild(trimShadeLeft);
+            clipEl.appendChild(trimShadeRight);
+            clipEl.appendChild(trimLeft);
+            clipEl.appendChild(trimRight);
+            // ── End trim handles ──────────────────────────────────────
+
             clipEl.appendChild(canvas);
             clipEl.appendChild(label);
             trackCanvas.appendChild(clipEl);
@@ -3271,6 +3718,13 @@
                     setTool('fadeOut');
                 }
             }
+
+            // T = Trim tool
+            if (e.key === 't' || e.key === 'T') {
+                if (!e.ctrlKey && !e.metaKey) {
+                    setTool('trim');
+                }
+            }
             
             // Ctrl/Cmd + C = Copy
             if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
@@ -3345,11 +3799,6 @@
                         loadAudioFile(file, 'narration');
                         
                         console.log('✅ Narration audio loaded into DAW successfully');
-                        
-                        // Notify parent that DAW is ready
-                        if (window.parent && window.parent !== window) {
-                            window.parent.postMessage({ type: 'DAW_READY' }, '*');
-                        }
                     })
                     .catch(error => {
                         console.error('❌ Error loading narration audio:', error);
@@ -3542,6 +3991,134 @@
             } catch (e) {
                 resultsEl.innerHTML = `<div style="padding:4px;color:#f87171;">Error: ${e.message}</div>`;
             }
+        }
+
+        // ========================================
+        // VIEW TOGGLE
+        // ========================================
+
+        function setView(mode) {
+            const container = document.getElementById('dawContainer');
+            container.classList.remove('view-edit', 'view-mix');
+            document.getElementById('viewEditBtn').classList.remove('active');
+            document.getElementById('viewMixBtn').classList.remove('active');
+            document.getElementById('viewBothBtn').classList.remove('active');
+
+            if (mode === 'edit') {
+                container.classList.add('view-edit');
+                document.getElementById('viewEditBtn').classList.add('active');
+            } else if (mode === 'mix') {
+                container.classList.add('view-mix');
+                document.getElementById('viewMixBtn').classList.add('active');
+            } else {
+                document.getElementById('viewBothBtn').classList.add('active');
+            }
+        }
+
+        // ========================================
+        // HEADER JAMENDO QUICK-SEARCH
+        // ========================================
+
+        function getNextAvailableTrack(type) {
+            // Find first track of given type with no clips
+            const trackType = type === 'music' ? 'music' : 'sfx';
+            let track = dawState.tracks.find(t => t.type === trackType && t.clips.length === 0);
+            if (!track) {
+                // All tracks of that type are occupied — add a new one
+                const count = dawState.tracks.filter(t => t.type === trackType).length + 1;
+                track = {
+                    id: `${trackType}_${Date.now()}`,
+                    name: `${type === 'music' ? 'Music' : 'SFX'} ${count}`,
+                    type: trackType,
+                    icon: type === 'music' ? '🎵' : '🔊',
+                    color: trackType,
+                    clips: [],
+                    muted: false,
+                    solo: false,
+                    volume: 0.5,
+                    effects: {}
+                };
+                dawState.tracks.push(track);
+                renderTracks();
+                renderMixerChannels();
+                setupEventListeners();
+            }
+            return track;
+        }
+
+        async function headerSearchJamendo(type) {
+            const clientId = localStorage.getItem('jamendoClientId');
+            if (!clientId) {
+                alert('Add your Jamendo Client ID in the main app Config page first.');
+                return;
+            }
+            const genre = type === 'music'
+                ? document.getElementById('headerMusicGenre').value
+                : document.getElementById('headerSfxCategory').value;
+            if (!genre) {
+                alert(`Select a ${type === 'music' ? 'genre' : 'category'} first.`);
+                return;
+            }
+
+            const panel = document.getElementById('headerJamResults');
+            panel.style.display = 'block';
+            panel.innerHTML = `<div style="padding:8px 16px;color:#9ca3af;font-size:12px;">Searching Jamendo for <b style="color:#fff;">${genre}</b>…</div>`;
+
+            try {
+                const tracks = await dawFetchTracks(genre);
+                if (!tracks || tracks.length === 0) {
+                    panel.innerHTML = `<div class="hjr-close-bar"><button class="hjr-btn" style="background:#374151;color:#fff;" onclick="document.getElementById('headerJamResults').style.display='none'">✕ Close</button></div>
+                        <div style="padding:8px 16px;color:#9ca3af;font-size:12px;">No tracks found. Try a different ${type === 'music' ? 'genre' : 'category'}.</div>`;
+                    return;
+                }
+
+                const rows = tracks.map(t => {
+                    const dur = t.duration ? `${Math.floor(t.duration/60)}:${String(t.duration%60).padStart(2,'0')}` : '';
+                    const artist = t.artist_name ? `${t.artist_name} · ` : '';
+                    const safeUrl  = (t.audio || '').replace(/'/g, '%27');
+                    const safeName = (t.name || 'Track').replace(/'/g, '').replace(/"/g, '');
+                    return `<div class="hjr-row">
+                        <div class="hjr-name" title="${safeName}">${t.name || 'Track'}</div>
+                        <div class="hjr-meta">${artist}${dur}</div>
+                        <button class="hjr-btn" style="background:#4b5563;color:#fff;" onclick="dawPreview('${safeUrl}',this)">▶</button>
+                        <button class="hjr-btn" style="background:#0e7490;color:#fff;" onclick="headerLoadTrack('${safeUrl}','${safeName}','${type}')">Load</button>
+                    </div>`;
+                }).join('');
+
+                panel.innerHTML = `<div class="hjr-close-bar">
+                    <span style="flex:1;color:#9ca3af;font-size:11px;">Results for <b style="color:#fff;">${genre}</b> — click Load to send to next available track</span>
+                    <button class="hjr-btn" style="background:#374151;color:#fff;" onclick="document.getElementById('headerJamResults').style.display='none'">✕ Close</button>
+                </div>${rows}`;
+            } catch (e) {
+                panel.innerHTML = `<div class="hjr-close-bar"><button class="hjr-btn" style="background:#374151;color:#fff;" onclick="document.getElementById('headerJamResults').style.display='none'">✕ Close</button></div>
+                    <div style="padding:8px 16px;color:#f87171;font-size:12px;">Error: ${e.message}</div>`;
+            }
+        }
+
+        async function headerLoadTrack(audioUrl, trackName, type) {
+            const track = getNextAvailableTrack(type);
+            if (dawPreviewAudio) { dawPreviewAudio.pause(); dawPreviewAudio = null; }
+            document.getElementById('headerJamResults').style.display = 'none';
+
+            // Show brief loading notice
+            const notice = document.createElement('div');
+            notice.style.cssText = 'position:fixed;top:80px;right:24px;background:#0e7490;color:#fff;padding:8px 16px;border-radius:8px;font-size:12px;z-index:9999;';
+            notice.textContent = `Loading "${trackName}" → ${track.name}…`;
+            document.body.appendChild(notice);
+
+            try {
+                const res = await fetch(audioUrl);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const blob = await res.blob();
+                const file = new File([blob], `${trackName}.mp3`, { type: 'audio/mpeg' });
+                loadAudioFile(file, track.id);
+                notice.textContent = `✓ Loaded "${trackName}" into ${track.name}`;
+                notice.style.background = '#16a34a';
+            } catch (e) {
+                notice.textContent = `✗ Load failed: ${e.message}`;
+                notice.style.background = '#dc2626';
+            }
+            setTimeout(() => notice.remove(), 3000);
         }
 
     </script>
