@@ -5933,9 +5933,18 @@ Return the COMPLETE text with DRAMATICALLY humanized writing that's obviously di
                 const author = document.getElementById('coverAuthor')?.value?.trim() || 'Unknown Author';
                 const subtitle = document.getElementById('coverSubtitle')?.value?.trim();
                 
+                // Resolve AudioBuffer — it may not be stored if audio came via postMessage
+                let audioBuffer = window.dawMixedAudio.buffer;
+                if (!audioBuffer) {
+                    const arrayBuf = await window.dawMixedAudio.blob.arrayBuffer();
+                    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    audioBuffer = await audioCtx.decodeAudioData(arrayBuf);
+                    audioCtx.close();
+                }
+
                 // Convert to MP3 with embedded cover art using lamejs
                 const mp3Blob = await embedCoverIntoMP3(
-                    window.dawMixedAudio.buffer,
+                    audioBuffer,
                     coverImageArray,
                     {
                         title: title,
@@ -6348,13 +6357,14 @@ Return the COMPLETE text with DRAMATICALLY humanized writing that's obviously di
                 let imageUrl;
 
                 if (imageProvider === 'cloudflare') {
-                    progressMessage.textContent = 'Generating cover with Flux AI — please wait (up to 45 seconds)...';
+                    progressMessage.textContent = 'Generating cover with AI — please wait (up to 60 seconds)...';
 
                     // Use Pollinations.ai — completely free, no API key, no signup
+                    // gptimage model (GPT-image-1) handles book title/author text far better than flux
                     // Fetch as blob so we get a local object URL that always displays correctly
                     const encodedPrompt = encodeURIComponent(prompt);
                     const seed = Math.floor(Math.random() * 999999);
-                    const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=768&height=1024&seed=${seed}&nologo=true&model=flux`;
+                    const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=768&height=1024&seed=${seed}&nologo=true&model=gptimage`;
 
                     // Pollinations can be slow — retry up to 3 times with increasing timeout
                     let imgBlob = null;
@@ -8942,81 +8952,37 @@ Format as clean, readable text ready for narration.`;
                 
                 console.log('🎙️ NARRATOR-ONLY GENERATION - Using FULL content:', content.length, 'characters');
 
-                // Chatterbox TTS works best with short chunks to avoid CUDA assertion errors
-                const MAX_TTS_CHARS = 1200; // Keep well under Chatterbox GPU limits
+                // Server-side chunking: send full text in one call — handler.py splits, generates,
+                // and concatenates all chunks into a single combined WAV before returning.
                 let audioBlobs = [];
-                
-                // Ensure content ends with punctuation so Chatterbox doesn't clip the last word
+
+                // Ensure content ends with punctuation
                 if (!/[.!?,;:]$/.test(content.trim())) content = content.trim() + '.';
 
-                if (content.length <= MAX_TTS_CHARS) {
-                    // Single chunk - process normally
-                    console.log('📝 Content fits in single chunk, processing normally');
+                console.log('📝 Sending full content to server (server handles chunking)');
+                try {
+                    const audioBlob = await generateSegmentAudio({
+                        type: 'all_content',
+                        text: content,
+                        voice: narratorVoice,
+                        character: 'Narrator'
+                    });
 
-                    try {
-                        const audioBlob = await generateSegmentAudio({
-                            type: 'all_content',
-                            text: content,
-                            voice: narratorVoice,
-                            character: 'Narrator'
-                        });
-                        
-                        if (audioBlob) {
-                            audioBlobs.push({
-                                blob: audioBlob,
-                                segment: {
-                                    type: 'all_content',
-                                    text: content,
-                                    voice: narratorVoice,
-                                    character: 'Narrator'
-                                }
-                            });
-                        }
-                    } catch (audioError) {
-                        throw new Error(`Single chunk generation failed: ${audioError.message}`);
-                    }
-                } else {
-                    // Multiple chunks needed
-                    console.log('📚 Content too long, splitting into chunks...');
-                    const textChunks = splitTextIntoChunks(content, MAX_TTS_CHARS);
-                    console.log(`📝 Split into ${textChunks.length} chunks`);
-                    
-                    // Process each chunk
-                    for (let i = 0; i < textChunks.length; i++) {
-                        const chunk = textChunks[i];
-                        console.log(`🎙️ Processing chunk ${i + 1}/${textChunks.length} (${chunk.length} characters)`);
-                        
-                        try {
-                            const audioBlob = await generateSegmentAudio({
-                                type: 'chunk',
-                                text: chunk,
+                    if (audioBlob) {
+                        audioBlobs.push({
+                            blob: audioBlob,
+                            segment: {
+                                type: 'all_content',
+                                text: content,
                                 voice: narratorVoice,
-                                character: 'Narrator',
-                                chunkIndex: i + 1,
-                                totalChunks: textChunks.length
-                            });
-                            
-                            if (audioBlob) {
-                                audioBlobs.push({
-                                    blob: audioBlob,
-                                    segment: {
-                                        type: 'chunk',
-                                        text: chunk,
-                                        voice: narratorVoice,
-                                        character: 'Narrator',
-                                        chunkIndex: i + 1,
-                                        totalChunks: textChunks.length
-                                    }
-                                });
-                                console.log(`✅ Chunk ${i + 1} generated successfully`);
-                            } else {
-                                throw new Error(`Failed to generate chunk ${i + 1}`);
+                                character: 'Narrator'
                             }
-                        } catch (chunkError) {
-                            console.error(`❌ Chunk ${i + 1} generation failed:`, chunkError);
-                            throw new Error(`Chunk ${i + 1} generation failed: ${chunkError.message}`);
-                        }
+                        });
+                    } else {
+                        throw new Error('Server returned no audio');
                     }
+                } catch (audioError) {
+                    throw new Error(`Narration generation failed: ${audioError.message}`);
                 }
                 
                 // Display results
@@ -9030,11 +8996,7 @@ Format as clean, readable text ready for narration.`;
                     displayNarratorOnlyResults(audioBlobs);
                     hideLoading();
                     
-                    if (audioBlobs.length === 1) {
-                        showNotification('✅ Narrator-only narration generated successfully!', 'success');
-                    } else {
-                        showNotification(`✅ Narrator-only narration generated successfully! (${audioBlobs.length} segments)`, 'success');
-                    }
+                    showNotification('✅ Narration generated successfully!', 'success');
                 } else {
                     throw new Error('No audio segments were generated');
                 }
@@ -9046,85 +9008,83 @@ Format as clean, readable text ready for narration.`;
             }
         }
 
-        // Function to split text into chunks while preserving sentence boundaries
+        // Split text into chunks small enough for Chatterbox to fully render without clipping.
+        // Boundary priority: sentence end > clause boundary > word boundary (last resort).
+        // Every chunk is guaranteed to end with punctuation so the model treats it as a
+        // complete utterance and renders the final word fully before stopping.
         function splitTextIntoChunks(text, maxChunkSize) {
+            // Flatten paragraphs into a single stream of sentences
+            const normalized = text.replace(/\n+/g, ' ').trim();
+            const rawSentences = normalized.split(/(?<=[.!?])\s+/);
+            const sentences = rawSentences.map(s => s.trim()).filter(s => s.length > 0);
+
             const chunks = [];
-            let currentChunk = '';
-            
-            // Split by paragraphs first to maintain natural breaks
-            const paragraphs = text.split(/\n\s*\n/);
-            
-            for (let paragraph of paragraphs) {
-                paragraph = paragraph.trim();
-                if (!paragraph) continue;
-                
-                // If paragraph fits in current chunk, add it
-                if (currentChunk.length + paragraph.length + 2 <= maxChunkSize) {
-                    if (currentChunk) currentChunk += '\n\n';
-                    currentChunk += paragraph;
-                } else {
-                    // Save current chunk if it has content
-                    if (currentChunk) {
-                        chunks.push(currentChunk.trim());
-                        currentChunk = '';
+            let current = '';
+
+            for (const sentence of sentences) {
+                const sep = current ? ' ' : '';
+
+                // Happy path: sentence fits in current chunk
+                if (current.length + sep.length + sentence.length <= maxChunkSize) {
+                    current += sep + sentence;
+                    continue;
+                }
+
+                // Sentence doesn't fit — flush current chunk
+                if (current) {
+                    chunks.push(current.trim());
+                    current = '';
+                }
+
+                // Sentence fits on its own
+                if (sentence.length <= maxChunkSize) {
+                    current = sentence;
+                    continue;
+                }
+
+                // Sentence is too long — try clause boundaries (comma, semicolon, colon, dash)
+                const clauses = sentence.split(/(?<=[,;:\-—])\s+/);
+                for (const clause of clauses) {
+                    const s = current ? ' ' : '';
+                    if (current.length + s.length + clause.length <= maxChunkSize) {
+                        current += s + clause;
+                        continue;
                     }
-                    
-                    // If paragraph is too long, split by sentences
-                    if (paragraph.length > maxChunkSize) {
-                        const sentences = paragraph.split(/(?<=[.!?])\s+/);
-                        
-                        for (let sentence of sentences) {
-                            if (currentChunk.length + sentence.length + 1 <= maxChunkSize) {
-                                if (currentChunk) currentChunk += ' ';
-                                currentChunk += sentence;
-                            } else {
-                                // Save current chunk
-                                if (currentChunk) {
-                                    chunks.push(currentChunk.trim());
-                                    currentChunk = '';
-                                }
-                                
-                                // If sentence is still too long, split by words
-                                if (sentence.length > maxChunkSize) {
-                                    const words = sentence.split(' ');
-                                    for (let word of words) {
-                                        if (currentChunk.length + word.length + 1 <= maxChunkSize) {
-                                            if (currentChunk) currentChunk += ' ';
-                                            currentChunk += word;
-                                        } else {
-                                            if (currentChunk) {
-                                                chunks.push(currentChunk.trim());
-                                            }
-                                            currentChunk = word;
-                                        }
-                                    }
-                                } else {
-                                    currentChunk = sentence;
-                                }
-                            }
+
+                    if (current) {
+                        chunks.push(current.trim());
+                        current = '';
+                    }
+
+                    if (clause.length <= maxChunkSize) {
+                        current = clause;
+                        continue;
+                    }
+
+                    // Clause still too long — word boundary as absolute last resort
+                    for (const word of clause.split(' ')) {
+                        const ws = current ? ' ' : '';
+                        if (current.length + ws.length + word.length <= maxChunkSize) {
+                            current += ws + word;
+                        } else {
+                            if (current) chunks.push(current.trim());
+                            current = word;
                         }
-                    } else {
-                        currentChunk = paragraph;
                     }
                 }
             }
-            
-            // Add final chunk if it has content
-            if (currentChunk.trim()) {
-                chunks.push(currentChunk.trim());
-            }
 
-            // Ensure every chunk ends with punctuation so Chatterbox doesn't clip the last word
-            const punctuationRe = /[.!?,;:]$/;
-            const finalChunks = chunks.map(chunk => {
-                const trimmed = chunk.trim();
-                return punctuationRe.test(trimmed) ? trimmed : trimmed + '.';
+            if (current.trim()) chunks.push(current.trim());
+
+            // Ensure every chunk closes with punctuation so Chatterbox fully renders the last word
+            const punctRe = /[.!?,;:]$/;
+            const finalChunks = chunks.map(c => {
+                const t = c.trim();
+                return punctRe.test(t) ? t : t + '.';
             });
 
-            console.log(`📚 Text split into ${finalChunks.length} chunks:`);
-            finalChunks.forEach((chunk, i) => {
-                console.log(`  Chunk ${i + 1}: ${chunk.length} characters`);
-            });
+            console.log(`📚 Split into ${finalChunks.length} chunks (max ${maxChunkSize} chars):`);
+            finalChunks.forEach((c, i) => console.log(`  [${i+1}] ${c.length} chars — "${c.substring(0, 55)}..."`));
 
             return finalChunks;
         }
@@ -9432,10 +9392,8 @@ Format as clean, readable text ready for narration.`;
         // Append trailing runway so Chatterbox fully renders the last word before its natural clip point.
         // The model clips the final ~0.3s of audio; these silent-sounding dots land in that window instead.
         function padChatterboxText(text) {
-            const t = (text || '').trim();
-            // Already ends with sentence-ending punctuation — add a short trailing phrase
-            // that gives the TTS engine ~0.5s of extra "runway" before clipping.
-            return t + '  .  .  .';
+            // At 200 chars per chunk, Chatterbox finishes cleanly — no padding needed.
+            return (text || '').trim();
         }
 
         // Append 500ms of silence to a WAV blob so abrupt hardware fade-outs don't eat real audio.
