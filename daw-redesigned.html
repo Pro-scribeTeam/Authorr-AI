@@ -1403,7 +1403,14 @@
             renderTracks();
             renderMixerChannels();
             renderTimelineRuler();
-            
+
+            // Re-render audio clips onto track canvases (renderTracks only creates empty rows)
+            dawState.tracks.forEach(track => {
+                track.clips.forEach(clip => {
+                    renderAudioClip(clip, track.id);
+                });
+            });
+
             // Update zoom display
             document.getElementById('zoomLevel').textContent = Math.round(state.zoom * 100) + '%';
             
@@ -3736,6 +3743,7 @@
                 document.addEventListener('mouseup', function() {
                     if (trimDragging) {
                         trimDragging = false;
+                        saveState('Trim clip');
                         console.log(`✂️ Trim: start=${clip.trimStart.toFixed(2)}s end=${clip.trimEnd.toFixed(2)}s`);
                     }
                 });
