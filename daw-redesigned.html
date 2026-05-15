@@ -1741,8 +1741,25 @@
             document.getElementById('playBtn').addEventListener('click', togglePlay);
             document.getElementById('stopBtn').addEventListener('click', stop);
             document.getElementById('seekStartBtn').addEventListener('click', seekToStart);
-            document.getElementById('nudgeBackBtn').addEventListener('click', () => nudgePlayhead(-1));
-            document.getElementById('nudgeFwdBtn').addEventListener('click',  () => nudgePlayhead(1));
+            // Nudge buttons: single press = small step; hold = fast repeat
+            (function() {
+                let _nudgeTimer = null, _nudgeInterval = null;
+                function startNudge(dir) {
+                    nudgePlayhead(dir * 0.5);
+                    _nudgeTimer = setTimeout(() => {
+                        _nudgeInterval = setInterval(() => nudgePlayhead(dir * 2), 80);
+                    }, 400);
+                }
+                function stopNudge() {
+                    clearTimeout(_nudgeTimer); clearInterval(_nudgeInterval);
+                    _nudgeTimer = _nudgeInterval = null;
+                }
+                const bk = document.getElementById('nudgeBackBtn');
+                const fw = document.getElementById('nudgeFwdBtn');
+                bk.addEventListener('mousedown', e => { if (e.button===0) startNudge(-1); });
+                fw.addEventListener('mousedown', e => { if (e.button===0) startNudge(1); });
+                document.addEventListener('mouseup', stopNudge);
+            })();
             document.getElementById('loopBtn').addEventListener('click', toggleLoop);
             
             // Header actions
@@ -2300,33 +2317,21 @@
         }
         
         function stop() {
-            // Prevent double-stopping
-            if (!dawState.isPlaying && dawState.currentTime === 0 && pauseTime === 0) {
-                return;
-            }
+            // Stop playback but keep playhead at current position
+            // (use seekToStart / ⏮ button to go back to 0)
+            if (!dawState.isPlaying && pauseTime === dawState.currentTime) return;
             
             dawState.isPlaying = false;
-            dawState.currentTime = 0;
-            pauseTime = 0;
+            pauseTime = dawState.currentTime; // preserve position for resume
             stopAllSources();
             
             const playBtn = document.querySelector('#playBtn i');
-            if (playBtn) {
-                playBtn.className = 'fas fa-play';
-            }
-            
-            const timeDisplay = document.getElementById('currentTime');
-            if (timeDisplay) {
-                timeDisplay.textContent = '0:00';
-            }
-            
-            // Reset playhead position to start (with offset)
-            updatePlayheadPosition(0);
+            if (playBtn) playBtn.className = 'fas fa-play';
             
             // Reset LED meters
             document.querySelectorAll('.led-segment').forEach(seg => seg.classList.remove('active'));
             
-            console.log('⏹️ Stopped');
+            console.log('⏹️ Stopped at ' + formatTime(dawState.currentTime));
         }
         
         function nudgePlayhead(seconds) {
@@ -2863,9 +2868,15 @@
                 const fadeEndTime   = endRatio   * clipData.duration;
                 const fadeDuration  = fadeEndTime - fadeStartTime;
 
-                if (!clipData.fadeIn) clipData.fadeIn = {};
-                clipData.fadeIn.start    = fadeStartTime;
-                clipData.fadeIn.duration = fadeDuration;
+                if (!clipData.fadeIn || !clipData.fadeIn.duration) {
+                    // First fade: use selection as-is
+                    clipData.fadeIn = { start: fadeStartTime, duration: fadeDuration };
+                } else {
+                    // Accumulate: extend fade region by the new selection amount
+                    const newDur = Math.min(clipData.duration - 0.01, clipData.fadeIn.duration + fadeDuration);
+                    clipData.fadeIn.start    = 0; // fade in always starts at clip start
+                    clipData.fadeIn.duration = newDur;
+                }
 
                 // Remove selection overlay
                 const fiOverlay = clipEl.querySelector('div[style*="rgba(0,200,100"]');
@@ -2874,11 +2885,12 @@
                 delete clipEl.dataset.fadeInSelectionStart;
                 delete clipEl.dataset.fadeInSelectionEnd;
 
-                // Visual indicator — green gradient
+                // Visual indicator — green gradient (reflects accumulated fade)
+                const accEndRatio = clipData.fadeIn.duration / clipData.duration;
                 const indicator = document.createElement('div');
                 indicator.className = 'fade-in-indicator';
                 indicator.style.cssText = `position:absolute;top:0;height:100%;pointer-events:none;z-index:5;
-                    left:${startRatio*100}%;width:${(endRatio-startRatio)*100}%;
+                    left:0%;width:${accEndRatio*100}%;
                     background:linear-gradient(to right,rgba(0,200,100,0.5),rgba(0,200,100,0.1));
                     border-left:2px solid rgba(0,200,100,0.9);border-right:2px solid rgba(0,200,100,0.4);`;
                 clipEl.appendChild(indicator);
@@ -2933,13 +2945,16 @@
                 
                 console.log(`🔊 Applying fade out: ${fadeStartTime.toFixed(2)}s to ${fadeEndTime.toFixed(2)}s (${fadeDuration.toFixed(2)}s fade duration)`);
                 
-                // Store fade information on the clip for playback
-                if (!clipData.fadeOut) {
-                    clipData.fadeOut = {};
+                // Store fade information — accumulate each press
+                if (!clipData.fadeOut || !clipData.fadeOut.duration) {
+                    // First fade: use selection as-is
+                    clipData.fadeOut = { start: fadeStartTime, duration: fadeDuration };
+                } else {
+                    // Accumulate: extend fade region by new selection amount
+                    const newDur = Math.min(clipData.duration - 0.01, clipData.fadeOut.duration + fadeDuration);
+                    clipData.fadeOut.start    = clipData.duration - newDur; // fade out starts earlier
+                    clipData.fadeOut.duration = newDur;
                 }
-                
-                clipData.fadeOut.start = fadeStartTime;
-                clipData.fadeOut.duration = fadeDuration;
                 
                 console.log(`✅ Fade out applied to "${clipData.name}"`);
                 console.log(`   Start: ${fadeStartTime.toFixed(2)}s, Duration: ${fadeDuration.toFixed(2)}s`);
@@ -2955,14 +2970,16 @@
                 delete clipEl.dataset.fadeSelectionStart;
                 delete clipEl.dataset.fadeSelectionEnd;
                 
-                // Add visual indicator for fade (orange gradient overlay on waveform)
+                // Add visual indicator for fade (reflects accumulated region)
+                const accStartRatio = clipData.fadeOut.start / clipData.duration;
+                const accWidthRatio  = clipData.fadeOut.duration / clipData.duration;
                 const fadeIndicator = document.createElement('div');
                 fadeIndicator.className = 'fade-out-indicator';
                 fadeIndicator.style.position = 'absolute';
                 fadeIndicator.style.top = '0';
                 fadeIndicator.style.height = '100%';
-                fadeIndicator.style.left = `${fadeStartRatio * 100}%`;
-                fadeIndicator.style.width = `${(fadeEndRatio - fadeStartRatio) * 100}%`;
+                fadeIndicator.style.left = `${accStartRatio * 100}%`;
+                fadeIndicator.style.width = `${accWidthRatio * 100}%`;
                 fadeIndicator.style.background = 'linear-gradient(to right, rgba(255, 165, 0, 0.2), rgba(255, 69, 0, 0.5))';
                 fadeIndicator.style.pointerEvents = 'none';
                 fadeIndicator.style.zIndex = '5';
@@ -3841,10 +3858,10 @@
                 togglePlay();
             }
 
-            // Arrow keys nudge playhead (skip if typing in input)
+            // Arrow keys: first press = small step; held (e.repeat) = bigger step
             if (e.target.tagName !== 'INPUT') {
-                if (e.code === 'ArrowRight') { e.preventDefault(); nudgePlayhead(e.shiftKey ? 5 : 1); }
-                if (e.code === 'ArrowLeft')  { e.preventDefault(); nudgePlayhead(e.shiftKey ? -5 : -1); }
+                if (e.code === 'ArrowRight') { e.preventDefault(); nudgePlayhead(e.repeat ? 2 : 0.5); }
+                if (e.code === 'ArrowLeft')  { e.preventDefault(); nudgePlayhead(e.repeat ? -2 : -0.5); }
             }
             
             // Enter = Execute cut selection
