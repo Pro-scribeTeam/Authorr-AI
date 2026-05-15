@@ -2717,9 +2717,6 @@
                 return;
             }
             
-            // Save state before pasting
-            saveState('Paste clips');
-            
             // Paste clips at current playhead position
             clipboardClips.forEach(clipData => {
                 const track = dawState.tracks[0]; // Paste to first track for now
@@ -2735,6 +2732,7 @@
                 renderAudioClip(newClip, track.id);
             });
             
+            saveState('Paste clips');
             console.log(`📋 Pasted ${clipboardClips.length} clip(s) at ${dawState.currentTime.toFixed(2)}s`);
         }
         
@@ -2746,9 +2744,6 @@
                 console.log('⚠️ No cut selection active. Drag to select a section first.');
                 return;
             }
-            
-            // Save state before cutting
-            saveState('Cut clip section');
             
             clipsWithSelection.forEach(clipEl => {
                 const clipId = clipEl.dataset.clipId;
@@ -2840,6 +2835,7 @@
                     }
                 }
             });
+            saveState('Cut clip section');
         }
         
         function executeFadeInSelection() {
@@ -2848,7 +2844,6 @@
                 console.log('⚠️ No fade-in selection active. Drag to select a section first.');
                 return;
             }
-            saveState('Apply fade in');
             clipsWithSelection.forEach(clipEl => {
                 const clipId = clipEl.dataset.clipId;
                 const fadeStart = parseFloat(clipEl.dataset.fadeInSelectionStart);
@@ -2890,6 +2885,7 @@
 
                 console.log(`✅ Fade in applied: ${fadeStartTime.toFixed(2)}s → ${fadeEndTime.toFixed(2)}s`);
             });
+            saveState('Apply fade in');
         }
 
         function executeFadeOutSelection() {
@@ -2900,9 +2896,6 @@
                 console.log('⚠️ No fade selection active. Drag to select a section first.');
                 return;
             }
-            
-            // Save state before applying fade
-            saveState('Apply fade out');
             
             clipsWithSelection.forEach(clipEl => {
                 const clipId = clipEl.dataset.clipId;
@@ -2977,6 +2970,7 @@
                 fadeIndicator.style.borderRight = '2px solid rgba(255, 69, 0, 0.8)';
                 clipEl.appendChild(fadeIndicator);
             });
+            saveState('Apply fade out');
         }
         
         function deleteSelected() {
@@ -2985,9 +2979,6 @@
                 console.log('⚠️ No clips selected');
                 return;
             }
-            
-            // Save state before deletion
-            saveState('Delete clips');
             
             let deletedCount = 0;
             selectedClips.forEach(clipEl => {
@@ -3006,6 +2997,7 @@
                 clipEl.remove();
             });
             
+            saveState('Delete clips');
             console.log(`🗑️ Deleted ${deletedCount} clip(s)`);
         }
         
@@ -3629,13 +3621,13 @@
                 const deltaTime = deltaX / pixelsPerSecond;
                 const newStartTime = Math.max(0, clipStartTime + deltaTime);
                 
-                // Save state before moving clip
+                // Update clip data
+                clip.startTime = newStartTime;
+                
+                // Save state after moving clip
                 if (Math.abs(deltaX) > 2) { // Only save if actually moved
                     saveState('Move clip');
                 }
-                
-                // Update clip data
-                clip.startTime = newStartTime;
                 
                 // Recalculate total duration based on all clips
                 let maxEndTime = 0;
