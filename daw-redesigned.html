@@ -987,24 +987,29 @@
         .view-btn:hover { background: var(--daw-bg-primary); color: var(--daw-text-primary); }
         .view-btn.active { background: var(--daw-accent); color: #000; border-color: var(--daw-accent); }
 
-        /* ── Jamendo header bar ──────────────────────────────────── */
-        .jamendo-header-bar {
+        /* ── Jamendo sub-bar (below main header) ────────────────── */
+        .jamendo-subbar {
             display: flex;
             align-items: center;
-            gap: 5px;
-            min-width: 0;
+            gap: 6px;
+            padding: 5px 16px;
+            background: var(--daw-bg-secondary);
+            border-bottom: 1px solid var(--daw-border);
+            flex-shrink: 0;
         }
-        .jamendo-header-bar select {
+        .jamendo-subbar select {
             background: var(--daw-bg-tertiary);
             color: var(--daw-text-primary);
             border: 1px solid var(--daw-border);
             border-radius: 5px;
-            padding: 4px 5px;
+            padding: 3px 5px;
             font-size: 11px;
             cursor: pointer;
-            width: 140px;
-            height: 30px;
+            width: 160px;
+            height: 26px;
         }
+        /* Keep old class name in case anything references it */
+        .jamendo-header-bar { display: none; }
         .jam-sep { width: 1px; height: 22px; background: var(--daw-border); margin: 0 3px; }
         .jam-type-label {
             color: var(--daw-text-dim);
@@ -1030,7 +1035,7 @@
         /* ── Floating results panel ──────────────────────────────── */
         #headerJamResults {
             position: fixed;
-            top: 70px;
+            top: 108px;
             left: 0;
             width: 100%;
             max-height: 240px;
@@ -1091,48 +1096,11 @@
              ======================================== -->
         <div id="headerJamResults"></div>
         <div class="daw-header">
-            <!-- Logo -->
+            <!-- Logo — top-left, replaces old title -->
             <div class="daw-logo-wrap">
                 <img src="https://page.gensparksite.com/v1/base64_upload/5ec0a971230da95148e537dd473d0fb1"
                      alt="AUTHORR AI Logo" class="daw-logo-img">
                 <span class="daw-logo-text">AUTHORR AI</span>
-            </div>
-
-            <!-- Jamendo Quick-Search -->
-            <div class="jamendo-header-bar">
-                <span class="jam-type-label">MUSIC</span>
-                <select id="headerMusicGenre">
-                    <option value="">— Genre —</option>
-                    <option value="ambient">Ambient / Atmospheric</option>
-                    <option value="cinematic">Cinematic / Soundtrack</option>
-                    <option value="classical">Classical</option>
-                    <option value="downtempo">Electronic / Downtempo</option>
-                    <option value="jazz">Jazz</option>
-                    <option value="folk">Folk / Acoustic</option>
-                    <option value="lounge">Lounge / Chill</option>
-                    <option value="orchestral">Orchestral</option>
-                    <option value="meditation">Meditation / Relaxing</option>
-                    <option value="piano">Piano</option>
-                    <option value="newage">New Age</option>
-                    <option value="world">World / Ethnic</option>
-                </select>
-                <button class="jam-find-btn music" onclick="headerSearchJamendo('music')">🔍 Find</button>
-                <div class="jam-sep"></div>
-                <span class="jam-type-label">SFX</span>
-                <select id="headerSfxCategory">
-                    <option value="">— Category —</option>
-                    <option value="nature">Nature Sounds</option>
-                    <option value="rain">Rain / Storm</option>
-                    <option value="forest">Forest / Woodland</option>
-                    <option value="ocean">Ocean / Water</option>
-                    <option value="fire">Fire / Crackling</option>
-                    <option value="urban">Urban / City</option>
-                    <option value="horror">Horror / Suspense</option>
-                    <option value="fantasy">Fantasy / Magical</option>
-                    <option value="scifi">Sci-Fi / Futuristic</option>
-                    <option value="medieval">Medieval / Historical</option>
-                </select>
-                <button class="jam-find-btn sfx" onclick="headerSearchJamendo('sfx')">🔍 Find</button>
             </div>
             
             <div class="transport-controls">
@@ -1181,7 +1149,44 @@
                 </button>
             </div>
         </div>
-        
+
+        <!-- Jamendo Quick-Search bar — full-width strip below the main header -->
+        <div class="jamendo-subbar">
+            <span class="jam-type-label">MUSIC</span>
+            <select id="headerMusicGenre">
+                <option value="">— Genre —</option>
+                <option value="ambient">Ambient / Atmospheric</option>
+                <option value="cinematic">Cinematic / Soundtrack</option>
+                <option value="classical">Classical</option>
+                <option value="downtempo">Electronic / Downtempo</option>
+                <option value="jazz">Jazz</option>
+                <option value="folk">Folk / Acoustic</option>
+                <option value="lounge">Lounge / Chill</option>
+                <option value="orchestral">Orchestral</option>
+                <option value="meditation">Meditation / Relaxing</option>
+                <option value="piano">Piano</option>
+                <option value="newage">New Age</option>
+                <option value="world">World / Ethnic</option>
+            </select>
+            <button class="jam-find-btn music" onclick="headerSearchJamendo('music')">🔍 Find Music</button>
+            <div class="jam-sep"></div>
+            <span class="jam-type-label">SFX</span>
+            <select id="headerSfxCategory">
+                <option value="">— Category —</option>
+                <option value="nature">Nature Sounds</option>
+                <option value="rain">Rain / Storm</option>
+                <option value="forest">Forest / Woodland</option>
+                <option value="ocean">Ocean / Water</option>
+                <option value="fire">Fire / Crackling</option>
+                <option value="urban">Urban / City</option>
+                <option value="horror">Horror / Suspense</option>
+                <option value="fantasy">Fantasy / Magical</option>
+                <option value="scifi">Sci-Fi / Futuristic</option>
+                <option value="medieval">Medieval / Historical</option>
+            </select>
+            <button class="jam-find-btn sfx" onclick="headerSearchJamendo('sfx')">🔍 Find SFX</button>
+        </div>
+
         <!-- ========================================
              TIMELINE SECTION (TOP)
              ======================================== -->
