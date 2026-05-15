@@ -2885,6 +2885,8 @@
                 delete clipEl.dataset.fadeInSelectionStart;
                 delete clipEl.dataset.fadeInSelectionEnd;
 
+                // Remove old indicator before adding updated one
+                clipEl.querySelectorAll('.fade-in-indicator').forEach(el => el.remove());
                 // Visual indicator — green gradient (reflects accumulated fade)
                 const accEndRatio = clipData.fadeIn.duration / clipData.duration;
                 const indicator = document.createElement('div');
@@ -2970,6 +2972,8 @@
                 delete clipEl.dataset.fadeSelectionStart;
                 delete clipEl.dataset.fadeSelectionEnd;
                 
+                // Remove old indicator before adding updated one
+                clipEl.querySelectorAll('.fade-out-indicator').forEach(el => el.remove());
                 // Add visual indicator for fade (reflects accumulated region)
                 const accStartRatio = clipData.fadeOut.start / clipData.duration;
                 const accWidthRatio  = clipData.fadeOut.duration / clipData.duration;
