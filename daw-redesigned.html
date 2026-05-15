@@ -1771,8 +1771,14 @@
             document.getElementById('selectTool').addEventListener('click', () => setTool('select'));
             document.getElementById('handTool').addEventListener('click', () => setTool('hand'));
             document.getElementById('cutTool').addEventListener('click', () => setTool('cut'));
-            document.getElementById('fadeInTool').addEventListener('click', () => setTool('fadeIn'));
-            document.getElementById('fadeOutTool').addEventListener('click', () => setTool('fadeOut'));
+            document.getElementById('fadeInTool').addEventListener('click', () => {
+                if (dawState.selectedTool === 'fadeIn') executeFadeInSelection();
+                else setTool('fadeIn');
+            });
+            document.getElementById('fadeOutTool').addEventListener('click', () => {
+                if (dawState.selectedTool === 'fadeOut') executeFadeOutSelection();
+                else setTool('fadeOut');
+            });
             document.getElementById('trimTool').addEventListener('click', () => setTool('trim'));
 
             // Edit actions
@@ -2844,9 +2850,31 @@
         }
         
         function executeFadeInSelection() {
-            const clipsWithSelection = document.querySelectorAll('.audio-clip[data-fade-in-selection-active="true"]');
+            let clipsWithSelection = document.querySelectorAll('.audio-clip[data-fade-in-selection-active="true"]');
+            // No drag selection — increment existing fade by 1s on selected/all clips
             if (clipsWithSelection.length === 0) {
-                console.log('⚠️ No fade-in selection active. Drag to select a section first.');
+                let targets = document.querySelectorAll('.audio-clip.selected');
+                if (!targets.length) targets = document.querySelectorAll('.audio-clip');
+                targets.forEach(clipEl => {
+                    const clipId = clipEl.dataset.clipId;
+                    for (const track of dawState.tracks) {
+                        const clipData = track.clips.find(c => c.id === clipId);
+                        if (!clipData) continue;
+                        if (!clipData.fadeIn) clipData.fadeIn = { start: 0, duration: 0 };
+                        const step = Math.min(1, clipData.duration * 0.1);
+                        clipData.fadeIn.start = 0;
+                        clipData.fadeIn.duration = Math.min(clipData.duration - 0.01, clipData.fadeIn.duration + step);
+                        clipEl.querySelectorAll('.fade-in-indicator').forEach(el => el.remove());
+                        const r = clipData.fadeIn.duration / clipData.duration;
+                        const ind = document.createElement('div');
+                        ind.className = 'fade-in-indicator';
+                        ind.style.cssText = `position:absolute;top:0;height:100%;pointer-events:none;z-index:5;left:0%;width:${r*100}%;background:linear-gradient(to right,rgba(0,200,100,0.5),rgba(0,200,100,0.1));border-left:2px solid rgba(0,200,100,0.9);border-right:2px solid rgba(0,200,100,0.4);`;
+                        clipEl.appendChild(ind);
+                        console.log(`✅ Fade in +${step.toFixed(2)}s → total ${clipData.fadeIn.duration.toFixed(2)}s`);
+                        break;
+                    }
+                });
+                saveState('Apply fade in');
                 return;
             }
             clipsWithSelection.forEach(clipEl => {
@@ -2904,10 +2932,33 @@
 
         function executeFadeOutSelection() {
             // Find all clips with active fade selections
-            const clipsWithSelection = document.querySelectorAll('.audio-clip[data-fade-selection-active="true"]');
+            let clipsWithSelection = document.querySelectorAll('.audio-clip[data-fade-selection-active="true"]');
             
+            // No drag selection — increment existing fade by 1s on selected/all clips
             if (clipsWithSelection.length === 0) {
-                console.log('⚠️ No fade selection active. Drag to select a section first.');
+                let targets = document.querySelectorAll('.audio-clip.selected');
+                if (!targets.length) targets = document.querySelectorAll('.audio-clip');
+                targets.forEach(clipEl => {
+                    const clipId = clipEl.dataset.clipId;
+                    for (const track of dawState.tracks) {
+                        const clipData = track.clips.find(c => c.id === clipId);
+                        if (!clipData) continue;
+                        if (!clipData.fadeOut) clipData.fadeOut = { start: clipData.duration - 0.01, duration: 0 };
+                        const step = Math.min(1, clipData.duration * 0.1);
+                        clipData.fadeOut.duration = Math.min(clipData.duration - 0.01, clipData.fadeOut.duration + step);
+                        clipData.fadeOut.start = clipData.duration - clipData.fadeOut.duration;
+                        clipEl.querySelectorAll('.fade-out-indicator').forEach(el => el.remove());
+                        const sr = clipData.fadeOut.start / clipData.duration;
+                        const wr = clipData.fadeOut.duration / clipData.duration;
+                        const ind = document.createElement('div');
+                        ind.className = 'fade-out-indicator';
+                        ind.style.cssText = `position:absolute;top:0;height:100%;pointer-events:none;z-index:5;left:${sr*100}%;width:${wr*100}%;background:linear-gradient(to right,rgba(255,165,0,0.2),rgba(255,69,0,0.5));border-left:2px solid rgba(255,140,0,0.8);border-right:2px solid rgba(255,69,0,0.8);`;
+                        clipEl.appendChild(ind);
+                        console.log(`✅ Fade out +${step.toFixed(2)}s → total ${clipData.fadeOut.duration.toFixed(2)}s`);
+                        break;
+                    }
+                });
+                saveState('Apply fade out');
                 return;
             }
             
