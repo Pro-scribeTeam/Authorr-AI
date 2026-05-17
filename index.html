@@ -6441,19 +6441,86 @@ Return the COMPLETE text with DRAMATICALLY humanized writing that's obviously di
         }
 
         function buildCoverPrompt(title, author, subtitle, description, style, artStyle, platformInfo) {
-            let prompt = `A professional ${artStyle} book cover with ${style} aesthetic. `;
+            let prompt = `A professional ${artStyle} book cover background with ${style} aesthetic. `;
             prompt += `Visual scene: ${description}. `;
-            prompt += `The cover must display the following text exactly as written — do not change spelling or wording: `;
-            prompt += `Large bold title text at the top reading exactly "${title}". `;
-            if (subtitle) {
-                prompt += `Smaller subtitle text below the title reading exactly "${subtitle}". `;
-            }
-            prompt += `Author name at the bottom reading exactly "${author}". `;
-            prompt += `Typography must be sharp, high-contrast, and fully legible. `;
             prompt += `Portrait orientation, eye-catching composition, genre-appropriate mood. `;
-            prompt += `No misspellings, no extra words, no placeholder text.`;
-
+            prompt += `No text, no words, no letters, no numbers, no typography anywhere on the image.`;
             return prompt;
+        }
+
+        function wrapText(ctx, text, maxWidth) {
+            const words = text.split(' ');
+            const lines = [];
+            let current = '';
+            for (const word of words) {
+                const test = current ? current + ' ' + word : word;
+                if (ctx.measureText(test).width > maxWidth && current) {
+                    lines.push(current);
+                    current = word;
+                } else {
+                    current = test;
+                }
+            }
+            if (current) lines.push(current);
+            return lines;
+        }
+
+        function compositeTextOnCover(imgEl, title, author) {
+            const canvas = document.createElement('canvas');
+            const w = imgEl.naturalWidth || imgEl.width;
+            const h = imgEl.naturalHeight || imgEl.height;
+            canvas.width = w;
+            canvas.height = h;
+            const ctx = canvas.getContext('2d');
+
+            ctx.drawImage(imgEl, 0, 0, w, h);
+
+            const pad = w * 0.06;
+
+            // --- Title at top ---
+            if (title) {
+                const titleSize = Math.max(36, Math.floor(w * 0.085));
+                ctx.font = `bold ${titleSize}px Georgia, serif`;
+                const titleLines = wrapText(ctx, title.toUpperCase(), w - pad * 2);
+                const titleBlockH = titleLines.length * titleSize * 1.25 + pad * 2;
+
+                const topGrad = ctx.createLinearGradient(0, 0, 0, titleBlockH);
+                topGrad.addColorStop(0, 'rgba(0,0,0,0.75)');
+                topGrad.addColorStop(1, 'rgba(0,0,0,0)');
+                ctx.fillStyle = topGrad;
+                ctx.fillRect(0, 0, w, titleBlockH);
+
+                ctx.fillStyle = '#ffffff';
+                ctx.textAlign = 'center';
+                ctx.shadowColor = 'rgba(0,0,0,0.9)';
+                ctx.shadowBlur = titleSize * 0.15;
+                ctx.font = `bold ${titleSize}px Georgia, serif`;
+                titleLines.forEach((line, i) => {
+                    ctx.fillText(line, w / 2, pad + titleSize + i * titleSize * 1.25);
+                });
+            }
+
+            // --- Author at bottom ---
+            if (author) {
+                const authorSize = Math.max(24, Math.floor(w * 0.055));
+                const authorBlockH = authorSize * 3.5;
+
+                const botGrad = ctx.createLinearGradient(0, h - authorBlockH, 0, h);
+                botGrad.addColorStop(0, 'rgba(0,0,0,0)');
+                botGrad.addColorStop(1, 'rgba(0,0,0,0.75)');
+                ctx.fillStyle = botGrad;
+                ctx.fillRect(0, h - authorBlockH, w, authorBlockH);
+
+                ctx.fillStyle = '#ffffff';
+                ctx.font = `${authorSize}px Georgia, serif`;
+                ctx.shadowColor = 'rgba(0,0,0,0.9)';
+                ctx.shadowBlur = authorSize * 0.15;
+                ctx.textAlign = 'center';
+                ctx.fillText(author, w / 2, h - authorSize * 0.9);
+            }
+
+            ctx.shadowBlur = 0;
+            return canvas.toDataURL('image/png');
         }
 
         function displayGeneratedCover(imageUrl, platform) {
@@ -6462,15 +6529,27 @@ Return the COMPLETE text with DRAMATICALLY humanized writing that's obviously di
             const placeholderPreview = document.getElementById('placeholderPreview');
             const dimensionDisplay = document.getElementById('dimensionDisplay');
 
-            generatedCover.src = imageUrl;
+            const title = document.getElementById('coverTitle')?.value?.trim() || '';
+            const author = document.getElementById('coverAuthor')?.value?.trim() || '';
+
             generatedCover.alt = 'Generated book cover';
-            generatedCover.onload = () => {
-                showNotification('AI book cover generated successfully!', 'success');
-                updateEmbedButtonVisibility();
-            };
             generatedCover.onerror = () => {
                 showNotification('Cover display error. Please click Regenerate.', 'error');
             };
+            generatedCover.onload = () => {
+                if (title || author) {
+                    const composited = compositeTextOnCover(generatedCover, title, author);
+                    generatedCover.onload = () => {
+                        showNotification('AI book cover generated successfully!', 'success');
+                        updateEmbedButtonVisibility();
+                    };
+                    generatedCover.src = composited;
+                } else {
+                    showNotification('AI book cover generated successfully!', 'success');
+                    updateEmbedButtonVisibility();
+                }
+            };
+            generatedCover.src = imageUrl;
 
             const dimensions = platformDimensions[platform];
             if (dimensionDisplay && dimensions) {
