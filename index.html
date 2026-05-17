@@ -6368,7 +6368,7 @@ Return the COMPLETE text with DRAMATICALLY humanized writing that's obviously di
                     // Fetch as blob so we get a local object URL that always displays correctly
                     const encodedPrompt = encodeURIComponent(prompt);
                     const seed = Math.floor(Math.random() * 999999);
-                    const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=768&height=1024&seed=${seed}&nologo=true&model=gptimage`;
+                    const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=768&height=1024&seed=${seed}&nologo=true&model=gptimage&_cb=${Date.now()}`;
 
                     // Pollinations can be slow — retry up to 3 times with increasing timeout
                     let imgBlob = null;
