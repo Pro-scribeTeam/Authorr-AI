@@ -2196,12 +2196,29 @@
                                     <button onclick="regenerateAICover()" class="btn-secondary px-4 py-2 rounded text-sm">
                                         <i class="fas fa-sync mr-1"></i>Regenerate
                                     </button>
+                                    <button onclick="toggleFontPicker()" id="fontPickerBtn" class="btn-secondary px-4 py-2 rounded text-sm">
+                                        <i class="fas fa-font mr-1"></i>Font
+                                    </button>
                                     <button onclick="createVariations()" class="btn-secondary px-4 py-2 rounded text-sm">
                                         <i class="fas fa-clone mr-1"></i>Variations
                                     </button>
                                     <button onclick="downloadCover()" class="btn-primary px-4 py-2 rounded text-sm">
                                         <i class="fas fa-download mr-1"></i>Download
                                     </button>
+                                </div>
+                                <!-- Font Picker -->
+                                <div id="fontPickerPanel" class="hidden mt-3 p-3 rounded-lg bg-theme-primary border border-theme">
+                                    <p class="text-xs text-theme-secondary mb-2 text-center">Select title font</p>
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <button onclick="applyFont('Georgia, serif')" class="font-option px-3 py-2 rounded bg-theme-secondary hover:border-cyan-400 border border-theme text-sm text-left" style="font-family: Georgia, serif;">Georgia</button>
+                                        <button onclick="applyFont('Impact, sans-serif')" class="font-option px-3 py-2 rounded bg-theme-secondary hover:border-cyan-400 border border-theme text-sm text-left" style="font-family: Impact, sans-serif;">Impact</button>
+                                        <button onclick="applyFont('Palatino, serif')" class="font-option px-3 py-2 rounded bg-theme-secondary hover:border-cyan-400 border border-theme text-sm text-left" style="font-family: Palatino, serif;">Palatino</button>
+                                        <button onclick="applyFont('Arial, sans-serif')" class="font-option px-3 py-2 rounded bg-theme-secondary hover:border-cyan-400 border border-theme text-sm text-left" style="font-family: Arial, sans-serif;">Arial</button>
+                                        <button onclick="applyFont('Trebuchet MS, sans-serif')" class="font-option px-3 py-2 rounded bg-theme-secondary hover:border-cyan-400 border border-theme text-sm text-left" style="font-family: Trebuchet MS, sans-serif;">Trebuchet</button>
+                                        <button onclick="applyFont('Verdana, sans-serif')" class="font-option px-3 py-2 rounded bg-theme-secondary hover:border-cyan-400 border border-theme text-sm text-left" style="font-family: Verdana, sans-serif;">Verdana</button>
+                                        <button onclick="applyFont('Times New Roman, serif')" class="font-option px-3 py-2 rounded bg-theme-secondary hover:border-cyan-400 border border-theme text-sm text-left" style="font-family: Times New Roman, serif;">Times New Roman</button>
+                                        <button onclick="applyFont('Courier New, monospace')" class="font-option px-3 py-2 rounded bg-theme-secondary hover:border-cyan-400 border border-theme text-sm text-left" style="font-family: Courier New, monospace;">Courier New</button>
+                                    </div>
                                 </div>
                                 
                                 <!-- Embed Cover Button (Only shows when DAW audio is available) -->
@@ -6444,6 +6461,37 @@ Return the COMPLETE text with DRAMATICALLY humanized writing that's obviously di
             }
         }
 
+        function toggleFontPicker() {
+            const panel = document.getElementById('fontPickerPanel');
+            panel.classList.toggle('hidden');
+        }
+
+        function applyFont(font) {
+            if (!window._rawCoverUrl) {
+                showNotification('Generate a cover first', 'error');
+                return;
+            }
+            window._coverFont = font;
+
+            // Highlight selected font button
+            document.querySelectorAll('.font-option').forEach(btn => {
+                btn.classList.remove('border-cyan-400');
+                btn.classList.add('border-theme');
+            });
+            event.target.classList.remove('border-theme');
+            event.target.classList.add('border-cyan-400');
+
+            const title = document.getElementById('coverTitle')?.value?.trim() || '';
+            const author = document.getElementById('coverAuthor')?.value?.trim() || '';
+            const generatedCover = document.getElementById('generatedCover');
+
+            const tempImg = new Image();
+            tempImg.onload = () => {
+                generatedCover.src = compositeTextOnCover(tempImg, title, author, font);
+            };
+            tempImg.src = window._rawCoverUrl;
+        }
+
         async function enhanceCoverDescription() {
             const descEl = document.getElementById('coverDescription');
             const btn = document.getElementById('enhanceDescBtn');
@@ -6510,7 +6558,7 @@ Return the COMPLETE text with DRAMATICALLY humanized writing that's obviously di
             return lines;
         }
 
-        function compositeTextOnCover(imgEl, title, author) {
+        function compositeTextOnCover(imgEl, title, author, font) {
             const canvas = document.createElement('canvas');
             const w = imgEl.naturalWidth || imgEl.width;
             const h = imgEl.naturalHeight || imgEl.height;
@@ -6521,11 +6569,12 @@ Return the COMPLETE text with DRAMATICALLY humanized writing that's obviously di
             ctx.drawImage(imgEl, 0, 0, w, h);
 
             const pad = w * 0.06;
+            const selectedFont = font || window._coverFont || 'Georgia, serif';
 
             // --- Title at top ---
             if (title) {
                 const titleSize = Math.max(36, Math.floor(w * 0.085));
-                ctx.font = `bold ${titleSize}px Georgia, serif`;
+                ctx.font = `bold ${titleSize}px ${selectedFont}`;
                 const titleLines = wrapText(ctx, title.toUpperCase(), w - pad * 2);
                 const titleBlockH = titleLines.length * titleSize * 1.25 + pad * 2;
 
@@ -6539,7 +6588,7 @@ Return the COMPLETE text with DRAMATICALLY humanized writing that's obviously di
                 ctx.textAlign = 'center';
                 ctx.shadowColor = 'rgba(0,0,0,0.9)';
                 ctx.shadowBlur = titleSize * 0.15;
-                ctx.font = `bold ${titleSize}px Georgia, serif`;
+                ctx.font = `bold ${titleSize}px ${selectedFont}`;
                 titleLines.forEach((line, i) => {
                     ctx.fillText(line, w / 2, pad + titleSize + i * titleSize * 1.25);
                 });
@@ -6557,7 +6606,7 @@ Return the COMPLETE text with DRAMATICALLY humanized writing that's obviously di
                 ctx.fillRect(0, h - authorBlockH, w, authorBlockH);
 
                 ctx.fillStyle = '#ffffff';
-                ctx.font = `${authorSize}px Georgia, serif`;
+                ctx.font = `${authorSize}px ${selectedFont}`;
                 ctx.shadowColor = 'rgba(0,0,0,0.9)';
                 ctx.shadowBlur = authorSize * 0.15;
                 ctx.textAlign = 'center';
@@ -6585,11 +6634,15 @@ Return the COMPLETE text with DRAMATICALLY humanized writing that's obviously di
             placeholderPreview.classList.add('hidden');
             coverPreview.classList.remove('hidden');
 
+            // Store raw URL for font re-compositing
+            window._rawCoverUrl = imageUrl;
+            window._coverFont = window._coverFont || 'Georgia, serif';
+
             // Load into a temp image so regenerate never hits onload caching issues
             const tempImg = new Image();
             tempImg.onload = () => {
                 if (title || author) {
-                    generatedCover.src = compositeTextOnCover(tempImg, title, author);
+                    generatedCover.src = compositeTextOnCover(tempImg, title, author, window._coverFont);
                 } else {
                     generatedCover.src = imageUrl;
                 }
