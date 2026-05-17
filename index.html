@@ -2114,8 +2114,12 @@
                         
                         <div>
                             <label class="block text-sm font-semibold mb-2">Visual Description</label>
-                            <textarea id="coverDescription" placeholder="Describe the visual elements, mood, colors, and style for your book cover. Be specific about imagery, atmosphere, and design elements..." 
+                            <textarea id="coverDescription" placeholder="Describe the visual elements, mood, colors, and style for your book cover. Be specific about imagery, atmosphere, and design elements..."
                                       class="w-full px-4 py-2 rounded-lg form-field bg-theme-primary text-theme-primary h-32 resize-none"></textarea>
+                            <button onclick="enhanceCoverDescription()" id="enhanceDescBtn"
+                                    class="mt-2 px-4 py-1.5 rounded-lg text-sm font-semibold bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-500 hover:to-cyan-500 text-white transition-all">
+                                ✨ Enhance Description
+                            </button>
                         </div>
                         
                         <div class="grid grid-cols-3 gap-4">
@@ -6437,6 +6441,47 @@ Return the COMPLETE text with DRAMATICALLY humanized writing that's obviously di
                 progressDiv.classList.add('hidden');
                 console.error('Cover generation error:', error);
                 showNotification(`Failed to generate cover: ${error.message}`, 'error');
+            }
+        }
+
+        async function enhanceCoverDescription() {
+            const descEl = document.getElementById('coverDescription');
+            const btn = document.getElementById('enhanceDescBtn');
+            const current = descEl.value.trim();
+            const title = document.getElementById('coverTitle')?.value?.trim() || '';
+            const style = document.getElementById('coverStyle')?.value || '';
+            const artStyle = document.getElementById('artStyle')?.value || '';
+
+            if (!current) {
+                showNotification('Enter a basic description first, then enhance it', 'error');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = '✨ Enhancing...';
+
+            try {
+                const context = [
+                    title ? `Book title: "${title}"` : '',
+                    style ? `Cover style: ${style}` : '',
+                    artStyle ? `Art style: ${artStyle}` : ''
+                ].filter(Boolean).join('. ');
+
+                const enhanced = await callOpenAI([{
+                    role: 'system',
+                    content: 'You are a professional book cover art director. Enhance image generation prompts with vivid, specific details about lighting, atmosphere, composition, colors, and mood. Keep it under 80 words. Return only the enhanced description, no preamble.'
+                }, {
+                    role: 'user',
+                    content: `${context ? context + '\n\n' : ''}Enhance this cover description:\n"${current}"`
+                }]);
+
+                descEl.value = enhanced.trim();
+                showNotification('Description enhanced!', 'success');
+            } catch (err) {
+                showNotification('Enhancement failed: ' + err.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '✨ Enhance Description';
             }
         }
 
