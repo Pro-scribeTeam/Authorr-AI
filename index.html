@@ -2236,6 +2236,10 @@
                                         <button onclick="applyTextColor('#86efac')" class="color-swatch w-8 h-8 rounded-full border-2 border-green-600 hover:ring-2 ring-cyan-400" style="background:#86efac;" title="Mint"></button>
                                         <button onclick="applyTextColor('#c084fc')" class="color-swatch w-8 h-8 rounded-full border-2 border-purple-600 hover:ring-2 ring-cyan-400" style="background:#c084fc;" title="Purple"></button>
                                     </div>
+                                    <p class="text-xs text-theme-secondary mt-3 mb-1 text-center">Text size — <span id="textSizeLabel">100%</span></p>
+                                    <input type="range" id="textSizeSlider" min="50" max="200" value="100"
+                                           oninput="applyTextSize(this.value)"
+                                           class="w-full accent-cyan-400 cursor-pointer">
                                 </div>
 
                                 <!-- Embed Cover Button (Only shows when DAW audio is available) -->
@@ -6510,6 +6514,20 @@ Return the COMPLETE text with DRAMATICALLY humanized writing that's obviously di
             tempImg.src = window._rawCoverUrl;
         }
 
+        function applyTextSize(value) {
+            window._coverTextSize = parseInt(value);
+            document.getElementById('textSizeLabel').textContent = value + '%';
+            if (!window._rawCoverUrl) return;
+            const title = document.getElementById('coverTitle')?.value?.trim() || '';
+            const author = document.getElementById('coverAuthor')?.value?.trim() || '';
+            const generatedCover = document.getElementById('generatedCover');
+            const tempImg = new Image();
+            tempImg.onload = () => {
+                generatedCover.src = compositeTextOnCover(tempImg, title, author, window._coverFont);
+            };
+            tempImg.src = window._rawCoverUrl;
+        }
+
         function applyTextColor(color) {
             if (!window._rawCoverUrl) {
                 showNotification('Generate a cover first', 'error');
@@ -6613,10 +6631,11 @@ Return the COMPLETE text with DRAMATICALLY humanized writing that's obviously di
             const pad = w * 0.06;
             const selectedFont = font || window._coverFont || 'Georgia, serif';
             const textColor = window._coverTextColor || '#ffffff';
+            const sizeScale = (window._coverTextSize || 100) / 100;
 
             // --- Title at top ---
             if (title) {
-                const titleSize = Math.max(36, Math.floor(w * 0.085));
+                const titleSize = Math.max(24, Math.floor(w * 0.085 * sizeScale));
                 ctx.font = `bold ${titleSize}px ${selectedFont}`;
                 const titleLines = wrapText(ctx, title.toUpperCase(), w - pad * 2);
                 const titleBlockH = titleLines.length * titleSize * 1.25 + pad * 2;
@@ -6639,7 +6658,7 @@ Return the COMPLETE text with DRAMATICALLY humanized writing that's obviously di
 
             // --- Author at bottom ---
             if (author) {
-                const authorSize = Math.max(24, Math.floor(w * 0.055));
+                const authorSize = Math.max(16, Math.floor(w * 0.055 * sizeScale));
                 const authorBlockH = authorSize * 3.5;
 
                 const botGrad = ctx.createLinearGradient(0, h - authorBlockH, 0, h);
