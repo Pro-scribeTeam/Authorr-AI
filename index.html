@@ -2121,6 +2121,12 @@
                                 ✨ Enhance Description
                             </button>
                         </div>
+
+                        <div>
+                            <label class="block text-sm font-semibold mb-2">Avoid <span class="text-theme-secondary font-normal">(optional)</span></label>
+                            <input type="text" id="coverAvoid" placeholder="e.g. floating lanterns, extra figures, text, logos..."
+                                   class="w-full px-4 py-2 rounded-lg form-field bg-theme-primary text-theme-primary">
+                        </div>
                         
                         <div class="grid grid-cols-3 gap-4">
                             <div>
@@ -6339,6 +6345,7 @@ Return the COMPLETE text with DRAMATICALLY humanized writing that's obviously di
             const author = document.getElementById('coverAuthor')?.value?.trim();
             const subtitle = document.getElementById('coverSubtitle')?.value?.trim();
             const description = document.getElementById('coverDescription')?.value?.trim();
+            const avoid = document.getElementById('coverAvoid')?.value?.trim();
             const style = document.getElementById('coverStyle')?.value || 'modern';
             const artStyle = document.getElementById('artStyle')?.value || 'digital-art';
             const platform = document.getElementById('selectedPlatform')?.value || 'universal';
@@ -6381,7 +6388,7 @@ Return the COMPLETE text with DRAMATICALLY humanized writing that's obviously di
 
             // Build comprehensive prompt
             const platformInfo = platformDimensions[platform];
-            const prompt = buildCoverPrompt(title, author, subtitle, description, style, artStyle, platformInfo);
+            const prompt = buildCoverPrompt(title, author, subtitle, description, style, artStyle, platformInfo, avoid);
 
             try {
                 const imageProvider = localStorage.getItem('imageProvider') || 'cloudflare';
@@ -6565,11 +6572,14 @@ Return the COMPLETE text with DRAMATICALLY humanized writing that's obviously di
             }
         }
 
-        function buildCoverPrompt(title, author, subtitle, description, style, artStyle, platformInfo) {
+        function buildCoverPrompt(title, author, subtitle, description, style, artStyle, platformInfo, avoid) {
             let prompt = `A professional ${artStyle} book cover background with ${style} aesthetic. `;
             prompt += `Visual scene: ${description}. `;
             prompt += `Portrait orientation, eye-catching composition, genre-appropriate mood. `;
             prompt += `No text, no words, no letters, no numbers, no typography anywhere on the image.`;
+            if (avoid) {
+                prompt += ` Do not include: ${avoid}.`;
+            }
             return prompt;
         }
 
