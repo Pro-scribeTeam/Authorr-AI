@@ -2219,8 +2219,19 @@
                                         <button onclick="applyFont('Times New Roman, serif')" class="font-option px-3 py-2 rounded bg-theme-secondary hover:border-cyan-400 border border-theme text-sm text-left" style="font-family: Times New Roman, serif;">Times New Roman</button>
                                         <button onclick="applyFont('Courier New, monospace')" class="font-option px-3 py-2 rounded bg-theme-secondary hover:border-cyan-400 border border-theme text-sm text-left" style="font-family: Courier New, monospace;">Courier New</button>
                                     </div>
+                                    <p class="text-xs text-theme-secondary mt-3 mb-2 text-center">Text color</p>
+                                    <div class="flex justify-center gap-2 flex-wrap">
+                                        <button onclick="applyTextColor('#ffffff')" class="color-swatch w-8 h-8 rounded-full border-2 border-white ring-0 hover:ring-2 ring-cyan-400" style="background:#ffffff;" title="White"></button>
+                                        <button onclick="applyTextColor('#000000')" class="color-swatch w-8 h-8 rounded-full border-2 border-gray-600 hover:ring-2 ring-cyan-400" style="background:#000000;" title="Black"></button>
+                                        <button onclick="applyTextColor('#FFD700')" class="color-swatch w-8 h-8 rounded-full border-2 border-yellow-600 hover:ring-2 ring-cyan-400" style="background:#FFD700;" title="Gold"></button>
+                                        <button onclick="applyTextColor('#C0C0C0')" class="color-swatch w-8 h-8 rounded-full border-2 border-gray-400 hover:ring-2 ring-cyan-400" style="background:#C0C0C0;" title="Silver"></button>
+                                        <button onclick="applyTextColor('#06b6d4')" class="color-swatch w-8 h-8 rounded-full border-2 border-cyan-600 hover:ring-2 ring-cyan-400" style="background:#06b6d4;" title="Cyan"></button>
+                                        <button onclick="applyTextColor('#f87171')" class="color-swatch w-8 h-8 rounded-full border-2 border-red-600 hover:ring-2 ring-cyan-400" style="background:#f87171;" title="Red"></button>
+                                        <button onclick="applyTextColor('#86efac')" class="color-swatch w-8 h-8 rounded-full border-2 border-green-600 hover:ring-2 ring-cyan-400" style="background:#86efac;" title="Mint"></button>
+                                        <button onclick="applyTextColor('#c084fc')" class="color-swatch w-8 h-8 rounded-full border-2 border-purple-600 hover:ring-2 ring-cyan-400" style="background:#c084fc;" title="Purple"></button>
+                                    </div>
                                 </div>
-                                
+
                                 <!-- Embed Cover Button (Only shows when DAW audio is available) -->
                                 <div id="embedCoverSection" class="hidden">
                                     <button onclick="embedCoverIntoAudio()" class="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white px-6 py-3 rounded-lg font-semibold w-full">
@@ -6492,6 +6503,27 @@ Return the COMPLETE text with DRAMATICALLY humanized writing that's obviously di
             tempImg.src = window._rawCoverUrl;
         }
 
+        function applyTextColor(color) {
+            if (!window._rawCoverUrl) {
+                showNotification('Generate a cover first', 'error');
+                return;
+            }
+            window._coverTextColor = color;
+
+            document.querySelectorAll('.color-swatch').forEach(btn => btn.style.outline = 'none');
+            event.target.style.outline = '3px solid #06b6d4';
+
+            const title = document.getElementById('coverTitle')?.value?.trim() || '';
+            const author = document.getElementById('coverAuthor')?.value?.trim() || '';
+            const generatedCover = document.getElementById('generatedCover');
+
+            const tempImg = new Image();
+            tempImg.onload = () => {
+                generatedCover.src = compositeTextOnCover(tempImg, title, author, window._coverFont);
+            };
+            tempImg.src = window._rawCoverUrl;
+        }
+
         async function enhanceCoverDescription() {
             const descEl = document.getElementById('coverDescription');
             const btn = document.getElementById('enhanceDescBtn');
@@ -6570,6 +6602,7 @@ Return the COMPLETE text with DRAMATICALLY humanized writing that's obviously di
 
             const pad = w * 0.06;
             const selectedFont = font || window._coverFont || 'Georgia, serif';
+            const textColor = window._coverTextColor || '#ffffff';
 
             // --- Title at top ---
             if (title) {
@@ -6584,7 +6617,7 @@ Return the COMPLETE text with DRAMATICALLY humanized writing that's obviously di
                 ctx.fillStyle = topGrad;
                 ctx.fillRect(0, 0, w, titleBlockH);
 
-                ctx.fillStyle = '#ffffff';
+                ctx.fillStyle = textColor;
                 ctx.textAlign = 'center';
                 ctx.shadowColor = 'rgba(0,0,0,0.9)';
                 ctx.shadowBlur = titleSize * 0.15;
@@ -6605,7 +6638,7 @@ Return the COMPLETE text with DRAMATICALLY humanized writing that's obviously di
                 ctx.fillStyle = botGrad;
                 ctx.fillRect(0, h - authorBlockH, w, authorBlockH);
 
-                ctx.fillStyle = '#ffffff';
+                ctx.fillStyle = textColor;
                 ctx.font = `${authorSize}px ${selectedFont}`;
                 ctx.shadowColor = 'rgba(0,0,0,0.9)';
                 ctx.shadowBlur = authorSize * 0.15;
