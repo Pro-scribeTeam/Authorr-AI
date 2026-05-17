@@ -6577,25 +6577,6 @@ Return the COMPLETE text with DRAMATICALLY humanized writing that's obviously di
             const title = document.getElementById('coverTitle')?.value?.trim() || '';
             const author = document.getElementById('coverAuthor')?.value?.trim() || '';
 
-            generatedCover.alt = 'Generated book cover';
-            generatedCover.onerror = () => {
-                showNotification('Cover display error. Please click Regenerate.', 'error');
-            };
-            generatedCover.onload = () => {
-                if (title || author) {
-                    const composited = compositeTextOnCover(generatedCover, title, author);
-                    generatedCover.onload = () => {
-                        showNotification('AI book cover generated successfully!', 'success');
-                        updateEmbedButtonVisibility();
-                    };
-                    generatedCover.src = composited;
-                } else {
-                    showNotification('AI book cover generated successfully!', 'success');
-                    updateEmbedButtonVisibility();
-                }
-            };
-            generatedCover.src = imageUrl;
-
             const dimensions = platformDimensions[platform];
             if (dimensionDisplay && dimensions) {
                 dimensionDisplay.textContent = `${dimensions.width}×${dimensions.height}px`;
@@ -6603,6 +6584,23 @@ Return the COMPLETE text with DRAMATICALLY humanized writing that's obviously di
 
             placeholderPreview.classList.add('hidden');
             coverPreview.classList.remove('hidden');
+
+            // Load into a temp image so regenerate never hits onload caching issues
+            const tempImg = new Image();
+            tempImg.onload = () => {
+                if (title || author) {
+                    generatedCover.src = compositeTextOnCover(tempImg, title, author);
+                } else {
+                    generatedCover.src = imageUrl;
+                }
+                generatedCover.alt = 'Generated book cover';
+                showNotification('AI book cover generated successfully!', 'success');
+                updateEmbedButtonVisibility();
+            };
+            tempImg.onerror = () => {
+                showNotification('Cover display error. Please click Regenerate.', 'error');
+            };
+            tempImg.src = imageUrl;
         }
 
         async function regenerateAICover() {
