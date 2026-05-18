@@ -13974,27 +13974,29 @@ Format as clean, readable text ready for narration.`;
             console.log(`📋 Pasting ${audioTools.clipboard.length} clip(s) at ${formatTime(pasteTime)}`);
             
             audioTools.clipboard.forEach((clipData, index) => {
-                // Find available track for pasting
-                const availableTrack = findAvailableTrackForPaste(clipData.type);
-                
-                if (availableTrack) {
-                    // Create new track entry
-                    audioDAW.tracks[availableTrack] = {
+                // Paste back to the same track the clip was copied from
+                const targetTrack = clipData.trackName;
+
+                if (audioDAW.tracks[targetTrack]) {
+                    // Preserve existing gainNode if present, otherwise create one
+                    const gainNode = audioDAW.tracks[targetTrack].gainNode || audioDAW.context.createGain();
+                    gainNode.connect(audioDAW.masterGain);
+
+                    audioDAW.tracks[targetTrack] = {
+                        ...audioDAW.tracks[targetTrack],
                         buffer: clipData.buffer,
                         source: null,
-                        gainNode: audioDAW.context.createGain(),
+                        gainNode,
                         volume: clipData.volume,
-                        muted: false,
-                        startTime: pasteTime + (index * 0.1), // Slight offset for multiple clips
+                        muted: audioDAW.tracks[targetTrack].muted || false,
+                        startTime: pasteTime + (index * 0.1),
                         type: clipData.type,
-                        color: getTrackColor(availableTrack)
+                        color: getTrackColor(targetTrack)
                     };
-                    
-                    audioDAW.tracks[availableTrack].gainNode.connect(audioDAW.masterGain);
-                    
-                    console.log(`📋 Pasted clip to ${availableTrack} at ${formatTime(pasteTime)}`);
+
+                    console.log(`📋 Pasted clip to ${targetTrack} at ${formatTime(pasteTime)}`);
                 } else {
-                    console.warn('⚠️ No available track for pasting clip type:', clipData.type);
+                    console.warn('⚠️ Track not found for paste:', targetTrack);
                 }
             });
             
