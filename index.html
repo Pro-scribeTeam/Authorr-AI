@@ -12115,7 +12115,12 @@ Format as clean, readable text ready for narration.`;
                 
                 audioDAW.isPlaying = true;
                 audioDAW.playbackStartTime = audioDAW.context.currentTime - audioDAW.currentTime;
-                
+
+                // Clear stale sources so every clip gets a fresh start
+                if (audioDAW.audioClips) {
+                    audioDAW.audioClips.forEach(clip => { clip.source = null; });
+                }
+
                 const playBtn = document.getElementById('dawPlayBtn');
                 if (playBtn) {
                     playBtn.innerHTML = '<i class="fas fa-pause"></i> Pause';
@@ -12206,20 +12211,24 @@ Format as clean, readable text ready for narration.`;
                         console.warn(`⚠️ Track ${clip.trackName} not found or missing gain node`);
                         return;
                     }
-                    
+
+                    const trimStart = track.trimStart || 0;
+                    const trimEnd = track.trimEnd || clip.buffer.duration;
+                    const trimDuration = Math.max(0.01, trimEnd - trimStart);
+
                     const offset = startTime - clipStartTime;
                     console.log(`🎵 Starting clip ${clip.id} (${clip.trackName}) from ${formatTime(offset)}`);
-                    
+
                     try {
-                        // Create and start source
+                        clip.source = null; // ensure clean state
                         clip.source = audioDAW.context.createBufferSource();
                         clip.source.buffer = clip.buffer;
                         clip.source.connect(track.gainNode);
-                        
-                        const clampedOffset = Math.max(0, Math.min(offset, clip.buffer.duration));
-                        const remainingDuration = clip.buffer.duration - clampedOffset;
-                        
-                        clip.source.start(audioDAW.context.currentTime, clampedOffset, remainingDuration);
+
+                        const bufferOffset = Math.max(trimStart, Math.min(trimStart + offset, trimEnd - 0.01));
+                        const remainingDuration = trimEnd - bufferOffset;
+
+                        clip.source.start(audioDAW.context.currentTime, bufferOffset, remainingDuration);
                         
                         console.log(`✅ Clip ${clip.id} started successfully`);
                         
@@ -12353,29 +12362,27 @@ Format as clean, readable text ready for narration.`;
                 // Check if clip should be playing at current time
                 if (currentTime >= clipStartTime && currentTime < clipEndTime) {
                     // Only start if not already playing
-                    if (!clip.source || clip.source.playbackState === 'finished') {
+                    if (!clip.source) {
                         const track = audioDAW.tracks[clip.trackName];
                         if (!track || !track.gainNode) {
                             console.warn(`⚠️ Track ${clip.trackName} not found or missing gain node`);
                             return;
                         }
-                        
+
+                        const trimStart = track.trimStart || 0;
+                        const trimEnd = track.trimEnd || clip.buffer.duration;
+
                         const offset = currentTime - clipStartTime;
-                        const delay = 0; // Start immediately
-                        
                         console.log(`🎵 Playing clip ${clip.id} (${clip.trackName}) from ${formatTime(offset)}`);
-                        
+
                         try {
-                            // Create source for this clip
                             clip.source = audioDAW.context.createBufferSource();
                             clip.source.buffer = clip.buffer;
                             clip.source.connect(track.gainNode);
-                            
-                            const clampedOffset = Math.max(0, Math.min(offset, clip.buffer.duration));
-                            
-                            // Schedule the source to stop at the clip's end time
-                            const remainingDuration = clip.buffer.duration - clampedOffset;
-                            clip.source.start(audioDAW.context.currentTime + delay, clampedOffset, remainingDuration);
+
+                            const bufferOffset = Math.max(trimStart, Math.min(trimStart + offset, trimEnd - 0.01));
+                            const remainingDuration = trimEnd - bufferOffset;
+                            clip.source.start(audioDAW.context.currentTime, bufferOffset, remainingDuration);
                             
                             console.log(`✅ Clip ${clip.id} started at offset ${formatTime(clampedOffset)}`);
                             
