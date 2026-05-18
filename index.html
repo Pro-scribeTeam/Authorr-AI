@@ -11455,7 +11455,8 @@ Format as clean, readable text ready for narration.`;
             cutPosition: null,
             selectionBox: null,
             mouseDown: false,
-            startPos: { x: 0, y: 0 }
+            startPos: { x: 0, y: 0 },
+            trimState: null   // { clip, edge: 'start'|'end', origTrimStart, origTrimEnd, startX }
         };
 
         // Select audio editing tool
@@ -12464,7 +12465,8 @@ Format as clean, readable text ready for narration.`;
                 audioDAW.isPlaying = false;
                 audioDAW.currentTime = 0;
                 audioDAW.playbackStartTime = 0;
-                
+                audioDAW.viewStart = 0; // Reset scroll to beginning
+
                 // Stop all audio sources
                 stopAllAudioSources();
                 
@@ -12655,10 +12657,25 @@ Format as clean, readable text ready for narration.`;
             }
         }
 
-        // Animate timeline during playback (legacy compatibility)
+        // Animate timeline during playback — auto-scroll to follow playhead
         function animateTimeline() {
             if (!audioDAW.isPlaying) return;
-            
+
+            const canvas = audioDAW.canvas;
+            if (canvas) {
+                const width = canvas.offsetWidth;
+                const totalDuration = Math.max(getMaxTrackDuration(), 1);
+                const pixelsPerSecond = (width * (audioDAW.zoomLevel || 1)) / totalDuration;
+                const viewOffsetPx = (audioDAW.viewStart || 0) * pixelsPerSecond;
+                const visiblePlayheadX = (audioDAW.currentTime * pixelsPerSecond) - viewOffsetPx;
+
+                // Advance view when playhead reaches 75% of visible area
+                if (visiblePlayheadX > width * 0.75) {
+                    audioDAW.viewStart = audioDAW.currentTime - (width * 0.25) / pixelsPerSecond;
+                    audioDAW.viewStart = Math.max(0, audioDAW.viewStart);
+                }
+            }
+
             drawEnhancedTimeline();
             requestAnimationFrame(animateTimeline);
         }
@@ -12683,46 +12700,56 @@ Format as clean, readable text ready for narration.`;
         // Enhanced timeline drawing with multi-part support
         function drawEnhancedTimeline() {
             if (!audioDAW.ctx || !audioDAW.canvas) return;
-            
+
             const canvas = audioDAW.canvas;
             const ctx = audioDAW.ctx;
             const width = audioDAW.timelineWidth || canvas.offsetWidth;
             const height = canvas.offsetHeight;
-            
+
             // Clear canvas with dark background
             ctx.fillStyle = '#111827';
             ctx.fillRect(0, 0, width, height);
-            
+
             const totalDuration = audioDAW.totalDuration || getMaxTrackDuration();
             if (totalDuration === 0) return;
-            
-            // Calculate zoom and offset
-            const pixelsPerSecond = (width * audioDAW.zoomLevel) / totalDuration;
-            
-            // Draw time grid
-            drawTimeGrid(ctx, width, height, totalDuration, pixelsPerSecond);
-            
-            // Draw track lanes (5 tracks total)
+
+            // Calculate zoom and scroll offset
+            const pixelsPerSecond = (width * (audioDAW.zoomLevel || 1)) / totalDuration;
+            const viewOffsetPx = (audioDAW.viewStart || 0) * pixelsPerSecond;
+
+            // Translate canvas so all content scrolls with viewStart
+            ctx.save();
+            ctx.rect(0, 0, width, height);
+            ctx.clip();
+            ctx.translate(-viewOffsetPx, 0);
+
+            // Draw time grid (extends beyond canvas for scrolling)
+            drawTimeGrid(ctx, width + viewOffsetPx, height, totalDuration, pixelsPerSecond);
+
+            // Draw track lanes
             const trackNames = ['narration', 'music1', 'music2', 'sfx1', 'sfx2'];
-            const trackHeight = (height - 40) / trackNames.length; // Leave space for time ruler
-            
+            const trackHeight = (height - 40) / trackNames.length;
+
             trackNames.forEach((trackName, index) => {
                 const yPos = 30 + (index * trackHeight);
-                drawTrackLane(ctx, trackName, 0, yPos, width, trackHeight, pixelsPerSecond);
+                drawTrackLane(ctx, trackName, 0, yPos, width + viewOffsetPx, trackHeight, pixelsPerSecond, viewOffsetPx);
             });
-            
-            // Draw playback position
+
+            // Draw playhead at absolute time position
             if (totalDuration > 0) {
-                const playheadX = (audioDAW.currentTime / totalDuration) * width;
-                drawPlayhead(ctx, playheadX, 0, height);
-                updatePlayheadPosition(playheadX);
+                const playheadAbsX = audioDAW.currentTime * pixelsPerSecond;
+                drawPlayhead(ctx, playheadAbsX, 0, height);
+                // DOM playhead shows at visible (translated) position
+                updatePlayheadPosition(playheadAbsX - viewOffsetPx);
             }
-            
-            // Draw selection box if active
+
+            ctx.restore();
+
+            // Draw selection box if active (in screen coords — no translation)
             if (audioTools.selectionBox) {
                 drawSelectionBox(ctx);
             }
-            
+
             // Draw dragged clip at new position
             if (audioTools.draggedClip && audioTools.draggedClip.newTrackName !== audioTools.draggedClip.trackName) {
                 drawDraggedClipAtNewPosition(ctx);
@@ -12787,7 +12814,7 @@ Format as clean, readable text ready for narration.`;
         }
         
         // Draw individual track lane
-        function drawTrackLane(ctx, trackName, x, y, width, height, pixelsPerSecond) {
+        function drawTrackLane(ctx, trackName, x, y, width, height, pixelsPerSecond, viewOffsetPx = 0) {
             const track = audioDAW.tracks[trackName];
             
             // Check if this track has selected clips
@@ -12815,24 +12842,27 @@ Format as clean, readable text ready for narration.`;
             }
             ctx.strokeRect(x, y, width, height);
             
-            // Draw track label with highlighting for selected tracks
+            // Draw track label pinned to visible left edge
             if (hasSelectedClips) {
-                ctx.fillStyle = '#d1fae5'; // Light green text for selected track
+                ctx.fillStyle = '#d1fae5';
                 ctx.font = 'bold 12px Arial';
             } else {
                 ctx.fillStyle = '#d1d5db';
                 ctx.font = '12px Arial';
             }
-            ctx.fillText(trackName.toUpperCase(), x + 5, y + 15);
+            ctx.fillText(trackName.toUpperCase(), x + viewOffsetPx + 5, y + 15);
             
             // Draw audio content
             if (trackName === 'narration' && audioDAW.tracks.narration.buffers) {
                 // Multi-part narration
                 drawMultiPartNarration(ctx, x, y, width, height, pixelsPerSecond);
             } else if (track.buffer) {
-                // Single audio file
+                // Single audio file — use trimmed duration for width
+                const trimStart = track.trimStart || 0;
+                const trimEnd = track.trimEnd || track.buffer.duration;
+                const effectiveDuration = Math.max(0.01, trimEnd - trimStart);
                 const startX = x + (track.startTime || 0) * pixelsPerSecond;
-                const audioWidth = (track.buffer.duration * pixelsPerSecond);
+                const audioWidth = effectiveDuration * pixelsPerSecond;
                 drawAudioBlock(ctx, track, startX, y + 20, audioWidth, height - 40, trackName);
             }
         }
@@ -12952,6 +12982,13 @@ Format as clean, readable text ready for narration.`;
                 const label = trackName.toUpperCase();
                 ctx.fillText(label, x + width/2, y + height/2 + 2);
                 ctx.textAlign = 'start';
+            }
+
+            // Draw trim handles when trim tool is active
+            if (audioTools.currentTool === 'trim') {
+                ctx.fillStyle = '#fbbf24';
+                ctx.fillRect(x, y, 6, height);           // left handle
+                ctx.fillRect(x + width - 6, y, 6, height); // right handle
             }
         }
 
@@ -13143,8 +13180,10 @@ Format as clean, readable text ready for narration.`;
                     startClipDrag(event, x, y, clip);
                     break;
                 case 'cut':
-                    // Cut tool still works on clips
                     handleCutMouseDown(event, x, y);
+                    break;
+                case 'trim':
+                    startTrimDrag(x, clip);
                     break;
             }
         }
@@ -13187,7 +13226,13 @@ Format as clean, readable text ready for narration.`;
                 console.log(`🖱️ Mouse move with dragged clip: ${audioTools.draggedClip.id}`);
             }
             
-            // Handle clip dragging first (highest priority)
+            // Handle trim dragging (highest priority)
+            if (audioTools.trimState) {
+                handleTrimDrag(x);
+                return;
+            }
+
+            // Handle clip dragging
             if (audioTools.draggedClip) {
                 handleClipDrag(event, x, y);
                 return;
@@ -13210,6 +13255,17 @@ Format as clean, readable text ready for narration.`;
                 case 'cut':
                     handleCutMouseMove(event, x, y);
                     break;
+                case 'trim': {
+                    // Update cursor when hovering near clip edges
+                    const hoverClip = getAudioClipAt(x, y);
+                    if (hoverClip) {
+                        const nearEdge = x <= hoverClip.x + TRIM_HANDLE_PX || x >= hoverClip.x + hoverClip.width - TRIM_HANDLE_PX;
+                        audioDAW.canvas.style.cursor = nearEdge ? 'ew-resize' : 'default';
+                    } else {
+                        audioDAW.canvas.style.cursor = 'default';
+                    }
+                    break;
+                }
             }
         }
 
@@ -13262,7 +13318,13 @@ Format as clean, readable text ready for narration.`;
             
             console.log(`🖱️ Mouse up at (${x}, ${y}) with tool: ${audioTools.currentTool}`);
             
-            // Handle clip drag completion (highest priority)
+            // Handle trim completion (highest priority)
+            if (audioTools.trimState) {
+                finishTrimDrag();
+                return;
+            }
+
+            // Handle clip drag completion
             if (audioTools.draggedClip) {
                 finishClipDrag();
                 return;
@@ -13283,6 +13345,61 @@ Format as clean, readable text ready for narration.`;
             audioTools.mouseDown = false;
             audioDAW.isDragging = false;
         }
+
+        // ── Trim tool functions ──────────────────────────────────────────────────
+        const TRIM_HANDLE_PX = 10; // pixels from edge that activates trim
+
+        function startTrimDrag(x, clip) {
+            const track = audioDAW.tracks[clip.trackName];
+            if (!track || !track.buffer) return;
+
+            // Determine which edge was grabbed
+            const edge = x <= clip.x + TRIM_HANDLE_PX ? 'start' : 'end';
+
+            audioTools.trimState = {
+                clip,
+                edge,
+                startX: x,
+                origTrimStart: track.trimStart || 0,
+                origTrimEnd: track.trimEnd || track.buffer.duration
+            };
+            audioDAW.canvas.style.cursor = 'ew-resize';
+        }
+
+        function handleTrimDrag(x) {
+            const ts = audioTools.trimState;
+            if (!ts) return;
+            const track = audioDAW.tracks[ts.clip.trackName];
+            if (!track || !track.buffer) return;
+
+            const totalDuration = Math.max(getMaxTrackDuration(), 1);
+            const canvasWidth = audioDAW.canvas.offsetWidth;
+            const pixelsPerSecond = (canvasWidth * (audioDAW.zoomLevel || 1)) / totalDuration;
+            const deltaTime = (x - ts.startX) / pixelsPerSecond;
+
+            if (ts.edge === 'start') {
+                const newTrimStart = Math.max(0, Math.min(ts.origTrimStart + deltaTime, ts.origTrimEnd - 0.1));
+                track.trimStart = newTrimStart;
+            } else {
+                const newTrimEnd = Math.max(ts.origTrimStart + 0.1, Math.min(ts.origTrimEnd + deltaTime, track.buffer.duration));
+                track.trimEnd = newTrimEnd;
+            }
+            drawEnhancedTimeline();
+        }
+
+        function finishTrimDrag() {
+            if (!audioTools.trimState) return;
+            const ts = audioTools.trimState;
+            const track = audioDAW.tracks[ts.clip.trackName];
+            if (track) {
+                track.effectiveDuration = (track.trimEnd || track.buffer.duration) - (track.trimStart || 0);
+            }
+            audioTools.trimState = null;
+            audioDAW.canvas.style.cursor = audioTools.currentTool === 'hand' ? 'grab' : 'default';
+            drawEnhancedTimeline();
+            showNotification('Trim applied', 'success');
+        }
+        // ─────────────────────────────────────────────────────────────────────────
 
         function finishClipDrag() {
             if (!audioTools.draggedClip) return;
@@ -13477,7 +13594,8 @@ Format as clean, readable text ready for narration.`;
             
             const totalDuration = audioDAW.totalDuration || getMaxTrackDuration();
             if (totalDuration > 0) {
-                const seekTime = (x / width) * totalDuration;
+                const pixelsPerSecond = (width * (audioDAW.zoomLevel || 1)) / totalDuration;
+                const seekTime = (audioDAW.viewStart || 0) + (x / pixelsPerSecond);
                 audioDAW.currentTime = Math.max(0, Math.min(seekTime, totalDuration));
                 
                 console.log(`🎯 Scrubbing to: ${formatTime(audioDAW.currentTime)}`);
@@ -13576,9 +13694,10 @@ Format as clean, readable text ready for narration.`;
             
             console.log(`🔍 Found ${trackClips.length} clips in ${trackName}`);
             
-            // Calculate time position 
+            // Calculate time position accounting for scroll offset
             const totalDuration = Math.max(getMaxTrackDuration(), 60);
-            const timePosition = (x / canvasWidth) * totalDuration;
+            const pixelsPerSecond = (canvasWidth * (audioDAW.zoomLevel || 1)) / totalDuration;
+            const timePosition = (audioDAW.viewStart || 0) + (x / pixelsPerSecond);
             
             // Check each clip in the track
             for (const clip of trackClips) {
@@ -13589,8 +13708,8 @@ Format as clean, readable text ready for narration.`;
                 
                 // Check if click is within this clip
                 if (timePosition >= clipStartTime && timePosition <= clipEndTime) {
-                    const clipX = (clipStartTime / totalDuration) * canvasWidth;
-                    const clipWidth = (clip.duration / totalDuration) * canvasWidth;
+                    const clipX = (clipStartTime * pixelsPerSecond) - ((audioDAW.viewStart || 0) * pixelsPerSecond);
+                    const clipWidth = clip.duration * pixelsPerSecond;
                     const clipY = headerHeight + (trackIndex * trackHeight) + 2;
                     const clipHeight = trackHeight - 4;
                     
