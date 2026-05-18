@@ -13709,14 +13709,19 @@ Format as clean, readable text ready for narration.`;
             // Check each clip in the track
             for (const clip of trackClips) {
                 const clipStartTime = clip.startTime || 0;
-                const clipEndTime = clipStartTime + clip.duration;
-                
+                // Use trimmed duration so hit-test and handle positions match the visual clip
+                const track = audioDAW.tracks[clip.trackName];
+                const trimStart = track ? (track.trimStart || 0) : 0;
+                const trimEnd = track ? (track.trimEnd || clip.duration) : clip.duration;
+                const effectiveDuration = Math.max(0.01, trimEnd - trimStart);
+                const clipEndTime = clipStartTime + effectiveDuration;
+
                 console.log(`🔍 Checking clip ${clip.id}: Time: ${formatTime(timePosition)}, Clip: ${formatTime(clipStartTime)} - ${formatTime(clipEndTime)}`);
-                
+
                 // Check if click is within this clip
                 if (timePosition >= clipStartTime && timePosition <= clipEndTime) {
                     const clipX = (clipStartTime * pixelsPerSecond) - ((audioDAW.viewStart || 0) * pixelsPerSecond);
-                    const clipWidth = clip.duration * pixelsPerSecond;
+                    const clipWidth = effectiveDuration * pixelsPerSecond;
                     const clipY = headerHeight + (trackIndex * trackHeight) + 2;
                     const clipHeight = trackHeight - 4;
                     
