@@ -12676,14 +12676,9 @@ Format as clean, readable text ready for narration.`;
                 const width = canvas.offsetWidth;
                 const totalDuration = Math.max(getMaxTrackDuration(), 1);
                 const pixelsPerSecond = (width * (audioDAW.zoomLevel || 1)) / totalDuration;
-                const viewOffsetPx = (audioDAW.viewStart || 0) * pixelsPerSecond;
-                const visiblePlayheadX = (audioDAW.currentTime * pixelsPerSecond) - viewOffsetPx;
 
-                // Advance view when playhead reaches 75% of visible area
-                if (visiblePlayheadX > width * 0.75) {
-                    audioDAW.viewStart = audioDAW.currentTime - (width * 0.25) / pixelsPerSecond;
-                    audioDAW.viewStart = Math.max(0, audioDAW.viewStart);
-                }
+                // Always keep playhead at 25% from left edge
+                audioDAW.viewStart = Math.max(0, audioDAW.currentTime - (width * 0.25) / pixelsPerSecond);
             }
 
             drawEnhancedTimeline();
@@ -14889,6 +14884,7 @@ Format as clean, readable text ready for narration.`;
         // Timeline control functions
         function seekToStart() {
             audioDAW.currentTime = 0;
+            audioDAW.viewStart = 0;
             updateTimelinePosition();
             drawEnhancedTimeline();
             if (audioDAW.isPlaying) {
