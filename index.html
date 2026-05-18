@@ -11048,6 +11048,9 @@ Format as clean, readable text ready for narration.`;
                                             <button id="cutTool" onclick="selectTool('cut')" class="tool-btn p-2 rounded" title="Cut Tool - Split audio (C)">
                                                 <i class="fas fa-cut"></i>
                                             </button>
+                                            <button id="trimTool" onclick="selectTool('trim')" class="tool-btn p-2 rounded" title="Trim Tool - Drag clip edges (T)">
+                                                <i class="fas fa-arrows-alt-h"></i>
+                                            </button>
                                         </div>
                                         
                                         <!-- Edit Operations -->
@@ -13850,10 +13853,7 @@ Format as clean, readable text ready for narration.`;
                 });
             }
             
-            // Force timeline redraw to show selection highlighting
-            drawEnhancedTimeline();
-            
-            // Redraw timeline to show selection
+            // Redraw timeline to show selection highlighting
             drawEnhancedTimeline();
         }
 
@@ -14098,39 +14098,57 @@ Format as clean, readable text ready for narration.`;
                 showNotification('No audio clips in clipboard to paste', 'warning');
                 return;
             }
-            
-            // Calculate paste position (current playhead position)
-            const pasteTime = audioDAW.currentTime || 0;
-            
-            console.log(`📋 Pasting ${audioTools.clipboard.length} clip(s) at ${formatTime(pasteTime)}`);
-            
+
             audioTools.clipboard.forEach((clipData, index) => {
-                // Paste back to the same track the clip was copied from
                 const targetTrack = clipData.trackName;
-
-                if (audioDAW.tracks[targetTrack]) {
-                    // Preserve existing gainNode if present, otherwise create one
-                    const gainNode = audioDAW.tracks[targetTrack].gainNode || audioDAW.context.createGain();
-                    gainNode.connect(audioDAW.masterGain);
-
-                    audioDAW.tracks[targetTrack] = {
-                        ...audioDAW.tracks[targetTrack],
-                        buffer: clipData.buffer,
-                        source: null,
-                        gainNode,
-                        volume: clipData.volume,
-                        muted: audioDAW.tracks[targetTrack].muted || false,
-                        startTime: pasteTime + (index * 0.1),
-                        type: clipData.type,
-                        color: getTrackColor(targetTrack)
-                    };
-
-                    console.log(`📋 Pasted clip to ${targetTrack} at ${formatTime(pasteTime)}`);
-                } else {
+                if (!audioDAW.tracks[targetTrack]) {
                     console.warn('⚠️ Track not found for paste:', targetTrack);
+                    return;
                 }
+
+                // Paste at the end of the source clip
+                const pasteTime = (clipData.startTime || 0) + (clipData.duration || 0) + (index * 0.1);
+
+                const gainNode = audioDAW.tracks[targetTrack].gainNode || audioDAW.context.createGain();
+                gainNode.connect(audioDAW.masterGain);
+
+                audioDAW.tracks[targetTrack] = {
+                    ...audioDAW.tracks[targetTrack],
+                    buffer: clipData.buffer,
+                    source: null,
+                    gainNode,
+                    volume: clipData.volume,
+                    muted: audioDAW.tracks[targetTrack].muted || false,
+                    startTime: pasteTime,
+                    trimStart: 0,
+                    trimEnd: null,
+                    type: clipData.type,
+                    color: getTrackColor(targetTrack)
+                };
+
+                // Keep audioDAW.audioClips in sync
+                if (audioDAW.audioClips) {
+                    const existingIdx = audioDAW.audioClips.findIndex(c => c.trackName === targetTrack);
+                    const updatedClip = {
+                        id: `${targetTrack}_paste_${Date.now()}`,
+                        trackName: targetTrack,
+                        startTime: pasteTime,
+                        duration: clipData.duration,
+                        buffer: clipData.buffer,
+                        selected: false,
+                        color: getTrackColor(targetTrack),
+                        name: clipData.name || targetTrack
+                    };
+                    if (existingIdx >= 0) {
+                        audioDAW.audioClips[existingIdx] = updatedClip;
+                    } else {
+                        audioDAW.audioClips.push(updatedClip);
+                    }
+                }
+
+                console.log(`📋 Pasted clip to ${targetTrack} at ${formatTime(pasteTime)}`);
             });
-            
+
             drawEnhancedTimeline();
             showNotification(`Pasted ${audioTools.clipboard.length} audio clip(s)`, 'success');
         }
@@ -14206,10 +14224,12 @@ Format as clean, readable text ready for narration.`;
                 
                 switch(event.key.toLowerCase()) {
                     case 'v':
-                        if (!event.ctrlKey && !event.metaKey) {
+                        if (event.ctrlKey || event.metaKey) {
+                            pasteAudio();
+                        } else {
                             selectTool('select');
-                            event.preventDefault();
                         }
+                        event.preventDefault();
                         break;
                     case 'h':
                         selectTool('hand');
@@ -14224,9 +14244,9 @@ Format as clean, readable text ready for narration.`;
                             event.preventDefault();
                         }
                         break;
-                    case 'v':
-                        if (event.ctrlKey || event.metaKey) {
-                            pasteAudio();
+                    case 't':
+                        if (!event.ctrlKey && !event.metaKey) {
+                            selectTool('trim');
                             event.preventDefault();
                         }
                         break;
