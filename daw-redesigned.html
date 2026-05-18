@@ -2185,26 +2185,14 @@
             playhead.style.left = `${position}px`;
             playhead.style.display = 'block';
             
-            // Auto-scroll timeline to follow playhead during playback
+            // Auto-scroll: always keep playhead at 25% from left during playback
             if (dawState.isPlaying) {
                 const timelineWrapper = document.querySelector('.timeline-canvas-wrapper');
                 if (timelineWrapper) {
                     const wrapperWidth = timelineWrapper.clientWidth;
-                    const playheadPosition = currentTime * pixelsPerSecond; // Position relative to content
-                    const currentScroll = timelineWrapper.scrollLeft;
-                    
-                    // Define scroll margins (keep playhead in center 60% of viewport)
-                    const leftMargin = wrapperWidth * 0.2;
-                    const rightMargin = wrapperWidth * 0.8;
-                    
-                    const playheadViewportPos = playheadPosition - currentScroll;
-                    
-                    // Scroll if playhead goes beyond margins
-                    if (playheadViewportPos > rightMargin) {
-                        timelineWrapper.scrollLeft = playheadPosition - (wrapperWidth / 2);
-                    } else if (playheadViewportPos < leftMargin && currentScroll > 0) {
-                        timelineWrapper.scrollLeft = playheadPosition - (wrapperWidth / 2);
-                    }
+                    // Playhead DOM position includes 200px header offset
+                    const playheadAbsPos = 200 + (currentTime * pixelsPerSecond);
+                    timelineWrapper.scrollLeft = Math.max(0, playheadAbsPos - wrapperWidth * 0.25);
                 }
             }
         }
@@ -2373,7 +2361,11 @@
             }
             
             updatePlayheadPosition(0);
-            
+
+            // Reset scroll to beginning
+            const tw = document.querySelector('.timeline-canvas-wrapper');
+            if (tw) tw.scrollLeft = 0;
+
             // If was playing, restart playback from beginning
             if (wasPlaying) {
                 dawState.isPlaying = true;
