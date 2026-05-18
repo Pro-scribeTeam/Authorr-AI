@@ -1816,16 +1816,20 @@
                                 <select id="voiceSelection" class="hidden" aria-hidden="true"></select>
 
                                 <!-- Narrator Voice Selection -->
-                                <div class="mb-4 p-3 bg-theme-secondary rounded-lg border border-theme">
+                                <div class="mb-2 p-3 bg-theme-secondary rounded-lg border border-theme">
                                     <h5 class="font-medium mb-2 text-cyan-400">Select Narrator Voice</h5>
                                     <div class="flex items-center space-x-2">
                                         <select id="narratorVoiceSelect" class="flex-1 px-3 py-2 rounded bg-theme-primary border border-theme text-sm">
                                             <option value="">Select narrator voice...</option>
                                         </select>
                                         <button onclick="previewNarratorVoice()" id="narratorPreviewBtn" class="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 rounded text-white text-sm font-medium" disabled>
-                                            <i class="fas fa-play mr-1"></i>Preview Voice
+                                            Preview Voice
                                         </button>
                                     </div>
+                                </div>
+                                <!-- Full-width audio player for narrator voice preview -->
+                                <div id="narratorVoicePreviewContainer" class="hidden mb-4">
+                                    <audio id="narratorVoicePreview" controls class="w-full"></audio>
                                 </div>
                                 
                                 <!-- Story Content Preview -->
@@ -9163,26 +9167,12 @@ Format as clean, readable text ready for narration.`;
         }
         
         function playPreviewAudio(audioBlob) {
-            // Remove any existing preview audio
-            const existingPreview = document.getElementById('narratorVoicePreview');
-            if (existingPreview) {
-                existingPreview.remove();
-            }
-            
-            // Create new audio element
             const audioUrl = URL.createObjectURL(audioBlob);
-            const audioElement = document.createElement('audio');
-            audioElement.id = 'narratorVoicePreview';
-            audioElement.controls = true;
-            audioElement.autoplay = true;
-            audioElement.className = 'w-full mt-2';
+            const audioElement = document.getElementById('narratorVoicePreview');
+            const container = document.getElementById('narratorVoicePreviewContainer');
             audioElement.src = audioUrl;
-            
-            // Add to narrator preview section
-            const narratorPreviewBtn = document.getElementById('narratorPreviewBtn');
-            if (narratorPreviewBtn && narratorPreviewBtn.parentNode) {
-                narratorPreviewBtn.parentNode.appendChild(audioElement);
-            }
+            audioElement.autoplay = true;
+            if (container) container.classList.remove('hidden');
             
             // Clean up URL after playing
             audioElement.addEventListener('ended', () => {
