@@ -9223,37 +9223,34 @@ Format as clean, readable text ready for narration.`;
                 
                 console.log('🎙️ NARRATOR-ONLY GENERATION - Using FULL content:', content.length, 'characters');
 
-                // Server-side chunking: send full text in one call — handler.py splits, generates,
-                // and concatenates all chunks into a single combined WAV before returning.
+                // Client-side chunking: split into ~800-char chunks and send each as its own
+                // RunPod job so no single job exceeds the 3-minute timeout.
                 let audioBlobs = [];
 
                 // Ensure content ends with punctuation
                 if (!/[.!?,;:]$/.test(content.trim())) content = content.trim() + '.';
 
-                console.log('📝 Sending full content to server (server handles chunking)');
-                try {
-                    const audioBlob = await generateSegmentAudio({
-                        type: 'all_content',
-                        text: content,
-                        voice: narratorVoice,
-                        character: 'Narrator'
-                    });
+                const chunks = splitTextIntoChunks(content, 800);
+                console.log(`📝 Split into ${chunks.length} chunks — sending each as a separate RunPod job`);
 
-                    if (audioBlob) {
-                        audioBlobs.push({
-                            blob: audioBlob,
-                            segment: {
-                                type: 'all_content',
-                                text: content,
-                                voice: narratorVoice,
-                                character: 'Narrator'
-                            }
+                for (let i = 0; i < chunks.length; i++) {
+                    showLoading(`Generating narration… chunk ${i + 1} of ${chunks.length}`);
+                    try {
+                        const audioBlob = await generateSegmentAudio({
+                            type: 'all_content',
+                            text: chunks[i],
+                            voice: narratorVoice,
+                            character: 'Narrator'
                         });
-                    } else {
-                        throw new Error('Server returned no audio');
+                        if (audioBlob) {
+                            audioBlobs.push({
+                                blob: audioBlob,
+                                segment: { type: 'all_content', text: chunks[i], voice: narratorVoice, character: 'Narrator' }
+                            });
+                        }
+                    } catch (chunkError) {
+                        throw new Error(`Narration generation failed on chunk ${i + 1}: ${chunkError.message}`);
                     }
-                } catch (audioError) {
-                    throw new Error(`Narration generation failed: ${audioError.message}`);
                 }
                 
                 // Display results
