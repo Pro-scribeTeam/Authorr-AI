@@ -572,10 +572,11 @@
 
         .recording-bar {
           width: 4px;
-          height: 10px;
+          height: 25px;
           background: linear-gradient(to top, #06b6d4, #22d3ee);
           border-radius: 2px;
           animation: recordingWave 0.8s ease-in-out infinite;
+          transform-origin: center;
         }
 
         .recording-bar:nth-child(1) { animation-delay: 0s; }
@@ -586,11 +587,11 @@
 
         @keyframes recordingWave {
           0%, 100% {
-            height: 10px;
+            transform: scaleY(0.4);
             background: linear-gradient(to top, #06b6d4, #22d3ee);
           }
           50% {
-            height: 25px;
+            transform: scaleY(1);
             background: linear-gradient(to top, #0891b2, #06b6d4, #22d3ee);
             box-shadow: 0 0 10px rgba(34, 211, 238, 0.5);
           }
