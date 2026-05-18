@@ -1458,12 +1458,27 @@
                         
                         <p class="text-sm text-theme-secondary mb-3">Enhance text to sound more natural and human-written while preserving meaning and quality.</p>
                         
-                        <div class="flex gap-3 flex-wrap">
+                        <div class="flex flex-col gap-3">
+                            <div class="flex gap-3 items-center flex-wrap">
+                                <span class="text-xs text-theme-secondary font-semibold uppercase tracking-wide w-16">Intensity</span>
+                                <div class="flex rounded overflow-hidden border border-gray-600">
+                                    <button onclick="setHumanizeIntensity('subtle')" id="intensitySubtle" class="humanize-intensity px-3 py-1 text-xs font-medium bg-gray-700 text-gray-300 hover:bg-gray-600 transition-colors">Subtle</button>
+                                    <button onclick="setHumanizeIntensity('moderate')" id="intensityModerate" class="humanize-intensity px-3 py-1 text-xs font-medium bg-cyan-700 text-white transition-colors">Moderate</button>
+                                    <button onclick="setHumanizeIntensity('aggressive')" id="intensityAggressive" class="humanize-intensity px-3 py-1 text-xs font-medium bg-gray-700 text-gray-300 hover:bg-gray-600 transition-colors">Aggressive</button>
+                                </div>
+                            </div>
+                            <div class="flex gap-3 items-center flex-wrap">
+                                <span class="text-xs text-theme-secondary font-semibold uppercase tracking-wide w-16">Scope</span>
+                                <div class="flex rounded overflow-hidden border border-gray-600">
+                                    <button onclick="setHumanizeScope('current')" id="scopeCurrent" class="humanize-scope px-3 py-1 text-xs font-medium bg-cyan-700 text-white transition-colors">Current Chapter</button>
+                                    <button onclick="setHumanizeScope('all')" id="scopeAll" class="humanize-scope px-3 py-1 text-xs font-medium bg-gray-700 text-gray-300 hover:bg-gray-600 transition-colors">All Chapters</button>
+                                </div>
+                            </div>
                             <div class="relative">
                                 <button onclick="humanizeText()" class="btn-primary px-4 py-2 rounded font-medium" id="humanizeBtn">
                                     <i class="fas fa-user-edit mr-2"></i>Humanize Text
                                 </button>
-                                <i class="fas fa-info-circle tool-info" title="Applies advanced techniques to make text sound more natural and human-written while preserving meaning and quality."></i>
+                                <i class="fas fa-info-circle tool-info" title="Subtle: light polish. Moderate: natural flow + varied rhythm. Aggressive: deep rewrite with personality."></i>
                             </div>
                         </div>
 
@@ -4410,96 +4425,155 @@ Return the COMPLETE text with DEVASTATINGLY layered subtext and hidden meanings.
         }
         
         // ============ TEXT HUMANIZATION ============
-        
-        // Removed forensicAIDetection function - focusing on humanization only
-        
-        
+
+        window._humanizeIntensity = 'moderate';
+        window._humanizeScope = 'current';
+
+        function setHumanizeIntensity(level) {
+            window._humanizeIntensity = level;
+            document.querySelectorAll('.humanize-intensity').forEach(btn => {
+                btn.classList.remove('bg-cyan-700', 'text-white');
+                btn.classList.add('bg-gray-700', 'text-gray-300');
+            });
+            const active = document.getElementById('intensity' + level.charAt(0).toUpperCase() + level.slice(1));
+            if (active) { active.classList.remove('bg-gray-700', 'text-gray-300'); active.classList.add('bg-cyan-700', 'text-white'); }
+        }
+
+        function setHumanizeScope(scope) {
+            window._humanizeScope = scope;
+            document.querySelectorAll('.humanize-scope').forEach(btn => {
+                btn.classList.remove('bg-cyan-700', 'text-white');
+                btn.classList.add('bg-gray-700', 'text-gray-300');
+            });
+            const active = document.getElementById('scope' + scope.charAt(0).toUpperCase() + scope.slice(1));
+            if (active) { active.classList.remove('bg-gray-700', 'text-gray-300'); active.classList.add('bg-cyan-700', 'text-white'); }
+        }
+
+        function getHumanizeSystemPrompt(intensity, genre) {
+            const isChildren = genre && genre.startsWith('children');
+            const isNonfiction = genre && genre.startsWith('nonfiction');
+            const isFiction = !isChildren && !isNonfiction;
+
+            const genreNote = isChildren
+                ? 'This is a children\'s book. Keep language age-appropriate, warm, and playful. No adult expressions or dark asides.'
+                : isNonfiction
+                ? 'This is non-fiction. Maintain authority and accuracy while making it feel like a real person writing, not a template.'
+                : 'This is fiction prose. Speech disfluencies (um, uh, like) belong ONLY inside dialogue — never in narration.';
+
+            if (intensity === 'subtle') {
+                return `You are a prose editor specialising in making AI-generated text feel naturally human-written. Apply light but effective changes.
+
+${genreNote}
+
+**SUBTLE HUMANIZATION — apply selectively:**
+- Vary sentence length: break some long sentences into short punchy ones; occasionally merge choppy ones
+- Replace AI-typical connectors ("Furthermore," "Moreover," "Additionally") with simpler ones ("And," "But," "So") or remove them
+- Add one or two specific concrete sensory details per paragraph to replace vague language
+- Use contractions naturally in narration where they fit the voice
+- Break the rhythm occasionally with a one-sentence paragraph for emphasis
+- Remove any overly formal or stiff phrasing
+
+**DO NOT:**
+- Change character names, plot events, or core meaning
+- Add filler words (um, uh, like) to narration
+- Rewrite whole paragraphs unless they are clearly robotic
+
+Return the COMPLETE text with the same structure, lightly polished to sound naturally written.`;
+            }
+
+            if (intensity === 'moderate') {
+                return `You are a skilled editor who transforms AI-generated writing into convincingly human prose. Make clear, noticeable improvements while preserving the story.
+
+${genreNote}
+
+**MODERATE HUMANIZATION — apply throughout:**
+1. **Sentence rhythm:** Mix short punchy sentences with longer flowing ones. Fragment occasionally for emphasis. Never let three consecutive sentences share the same structure.
+2. **Specificity:** Swap generic descriptions for vivid, concrete ones. "He was tired" → "His eyelids felt like wet sand." One strong image per paragraph.
+3. **Voice:** Add occasional interiority — character thoughts, hesitations, small observations that feel unplanned. "Not that it mattered. Or maybe it did."
+4. **Connectors:** Replace "Furthermore/Moreover/Additionally/Consequently" entirely. Use "And," "But," simple punctuation, or just start a new sentence.
+5. **Contractions:** Use throughout narration naturally.
+6. **Paragraph variety:** Vary length. Drop in a single-sentence paragraph every few paragraphs for impact.
+7. **Remove AI patterns:** Eliminate "It is worth noting that," "It is important to," "In conclusion," "In summary" and similar filler framing.
+
+**DO NOT add speech disfluencies (um, uh, like, y'know) to narration prose.**
+
+Return the COMPLETE text — same chapters, characters, and events — rewritten to sound like a skilled human author.`;
+            }
+
+            // aggressive
+            return `You are an aggressive prose humanizer. Transform this text so it reads unmistakably like a real person wrote it — with personality, imperfection, and life.
+
+${genreNote}
+
+**AGGRESSIVE HUMANIZATION — apply ruthlessly:**
+
+1. **Destroy sentence uniformity:** Smash predictable rhythms. Use fragments. Run-ons. Abrupt stops. A long winding sentence that trails into something unexpected — then a short one.
+
+2. **Inject real voice:** Add personality to narration: dry observations, small tangents, a wry aside. Make the narrator feel like a person with opinions.
+
+3. **Hyper-specific details:** Replace every vague description with something oddly precise. Not "a cold morning" — "the kind of cold where your nose runs before you're even fully awake."
+
+4. **Varied paragraph length:** Single-sentence paragraphs for gut-punch moments. Dense paragraphs for immersion. Never three paragraphs the same length in a row.
+
+5. **Natural imperfection in narration:** Slight redundancies, a thought that circles back, a small contradiction the narrator notices. Real writers do this.
+
+6. **Dialogue only — casualise speech:** Inside dialogue tags, use contractions, colloquialisms, interruptions, and realistic speech patterns. NOT in narration prose.
+
+7. **Kill all AI filler:** Eliminate "Furthermore," "Moreover," "Additionally," "It is worth noting," "In conclusion," "Notably," "Importantly." Replace with direct statements or nothing.
+
+8. **Emotional texture:** Give narration emotional weight that feels earned, not announced. Show don't tell — but with personality.
+
+Return the COMPLETE text, dramatically rewritten with visible personality and human imperfection throughout.`;
+        }
+
         async function humanizeText() {
-            const allChaptersText = getAllChaptersText();
-            
-            if (!allChaptersText.trim()) {
+            const intensity = window._humanizeIntensity || 'moderate';
+            const scope = window._humanizeScope || 'current';
+            const genre = storyData.settings && storyData.settings.genre ? storyData.settings.genre : '';
+
+            let processableText = '';
+            let scopeLabel = '';
+
+            if (scope === 'current') {
+                const editor = document.getElementById('storyEditor');
+                processableText = editor ? editor.value : '';
+                scopeLabel = 'current chapter';
+            } else {
+                processableText = getAllChaptersText();
+                scopeLabel = storyData.chapters && storyData.chapters.length > 1
+                    ? `all ${storyData.chapters.length} chapters`
+                    : 'story';
+            }
+
+            if (!processableText.trim()) {
                 showNotification('Please have story content to humanize. Generate chapters or write content first.', 'warning');
                 return;
             }
-            
-            // Use text within safe limits
-            const processableText = getTextWithinLimits(allChaptersText, 10000); // Smaller limit for rewriting
-            const isTextTruncated = processableText !== allChaptersText;
-            
-            const chapterInfo = hasMultipleChapters() ? 
-                `Rewriting text to reduce AI detection across ${storyData.chapters.length} chapters${isTextTruncated ? ' (processing first portion)' : ''}...` :
-                'Rewriting text to reduce AI detection...';
-            
-            showLoading(chapterInfo, 'book');
-            
+
+            const charLimit = intensity === 'aggressive' ? 8000 : 12000;
+            const isTruncated = processableText.length > charLimit;
+            if (isTruncated) processableText = processableText.substring(0, charLimit);
+
+            const intensityLabel = intensity.charAt(0).toUpperCase() + intensity.slice(1);
+            showLoading(`${intensityLabel} humanization of ${scopeLabel}${isTruncated ? ' (first portion)' : ''}...`, 'book');
+
             try {
                 const humanizedText = await callOpenAI([
                     {
                         role: "system",
-                        content: `You are an AGGRESSIVE text humanization specialist. You must make MASSIVE, VISIBLE changes to transform AI-generated text into naturally human-written text. Don't make subtle changes - make DRAMATIC transformations that readers will immediately notice.
-
-**MANDATORY HUMANIZATION OVERHAULS - Apply ALL ruthlessly:**
-
-**1. DESTROY ALL UNIFORMITY:**
-- Transform every sentence structure completely
-- Mix 2-word fragments with 40+ word run-on sentences
-- Vary paragraph lengths from single sentences to massive blocks
-- Break all predictable patterns and rhythms
-
-**2. INJECT HEAVY HUMAN IMPERFECTIONS:**
-- Add natural grammar "mistakes": "Me and Sarah went" "Who'd you see?" "Between you and I"
-- Include redundancies and awkward phrasings: "The thing is, is that..." "What I'm trying to say is..."
-- Use extensive filler words: "like," "you know," "I mean," "well," "um," "basically," "actually"
-- Add false starts and corrections: "I was going to— well, actually, never mind"
-
-**3. EXTREME CASUALIZATION:**
-- Convert ALL formal language: "cannot" → "can't", "would not" → "wouldn't", "going to" → "gonna"
-- Use colloquialisms: "wanna," "kinda," "sorta," "coulda," "shoulda," "y'know"
-- Add regional speech patterns and slang appropriately
-
-**4. ADD CONVERSATIONAL CHAOS:**
-- Include interruptions and overlapping thoughts
-- Add speech disfluencies: "I, uh, well... I don't really know if we should, like, do that, you know?"
-- Use contractions in narration: "It wasn't just that he was tired—he was completely done"
-
-**5. REPLACE ALL AI-TYPICAL LANGUAGE:**
-- Eliminate: "Furthermore," "Moreover," "Additionally," "Nevertheless," "Consequently"
-- Replace with: "And," "But," "So," "Plus," "Also," or just start new sentences
-- Use abrupt transitions and tangential thoughts
-
-**6. ADD HYPER-SPECIFIC DETAILS:**
-- Replace "nice weather" → "that weird 73-degree October morning with the humidity that made my shirt stick"
-- Replace "good food" → "the kind of greasy pizza that probably took years off my life but was worth every bite"
-- Add sensory details that feel personally experienced
-
-**7. INJECT PERSONALITY AND EMOTION:**
-- Add personal reactions: "God, that was painful" "Christ, what a mess" "Ugh, seriously?"
-- Include self-doubt: "I'm probably totally wrong here, but..." "Maybe I'm just being paranoid..."
-- Add stream-of-consciousness asides and tangents
-
-**CRITICAL:** The rewritten text should sound like it was written by a real person having real thoughts, not an AI trying to sound human. Every paragraph should have obvious human characteristics.
-
-Return the COMPLETE text with DRAMATICALLY humanized writing that's obviously different from the original.`
+                        content: getHumanizeSystemPrompt(intensity, genre)
                     },
                     {
                         role: "user",
-                        content: `This text currently scores 90-100% on GPTZero/Copyleaks. Transform it to score 15-30% by applying ALL anti-detection techniques. Be RUTHLESS - destroy uniformity, inject imperfections, use heavy contractions. Preserve plot/characters but make it sound like casual human writing:\n\n${processableText}`
+                        content: `Apply ${intensity} humanization to this text. Preserve all plot events, character names, and chapter structure. Return the complete rewritten text only — no preamble or commentary:\n\n${processableText}`
                     }
                 ]);
                 
                 hideLoading();
                 
                 if (humanizedText && humanizedText.trim()) {
-                    // Debug logging
-                    console.log('=== HUMANIZATION DEBUG ===');
-                    console.log('Original text length:', processableText.length);
-                    console.log('Humanized text length:', humanizedText.length);
-                    console.log('Original first 200 chars:', processableText.substring(0, 200));
-                    console.log('Humanized first 200 chars:', humanizedText.substring(0, 200));
-                    console.log('Texts are identical:', processableText.trim() === humanizedText.trim());
-                    
-                    showNotification('Text successfully humanized! Review the changes below.', 'success');
-                    displayToolChanges('Text Humanization', processableText, humanizedText.trim());
+                    showNotification(`${intensityLabel} humanization complete! Review the changes below.`, 'success');
+                    displayToolChanges(`Text Humanization — ${intensityLabel}`, processableText, humanizedText.trim());
                     
                     // Track human touch interaction
                     trackHumanTouch('lines_edited', 1);
