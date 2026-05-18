@@ -559,40 +559,40 @@
           justify-content: center;
           align-items: center;
           padding: 10px;
-          background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(245, 158, 11, 0.1));
+          background: linear-gradient(135deg, rgba(34, 211, 238, 0.1), rgba(6, 182, 212, 0.1));
           border-radius: 8px;
-          border: 1px solid rgba(239, 68, 68, 0.3);
+          border: 1px solid rgba(34, 211, 238, 0.3);
         }
-        
+
         .recording-wave {
           display: flex;
           align-items: center;
           gap: 2px;
         }
-        
+
         .recording-bar {
           width: 4px;
           height: 10px;
-          background: linear-gradient(to top, #ef4444, #f59e0b);
+          background: linear-gradient(to top, #06b6d4, #22d3ee);
           border-radius: 2px;
           animation: recordingWave 0.8s ease-in-out infinite;
         }
-        
+
         .recording-bar:nth-child(1) { animation-delay: 0s; }
         .recording-bar:nth-child(2) { animation-delay: 0.1s; }
         .recording-bar:nth-child(3) { animation-delay: 0.2s; }
         .recording-bar:nth-child(4) { animation-delay: 0.1s; }
         .recording-bar:nth-child(5) { animation-delay: 0s; }
-        
+
         @keyframes recordingWave {
-          0%, 100% { 
+          0%, 100% {
             height: 10px;
-            background: linear-gradient(to top, #ef4444, #f59e0b);
+            background: linear-gradient(to top, #06b6d4, #22d3ee);
           }
-          50% { 
+          50% {
             height: 25px;
-            background: linear-gradient(to top, #dc2626, #d97706, #f59e0b);
-            box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+            background: linear-gradient(to top, #0891b2, #06b6d4, #22d3ee);
+            box-shadow: 0 0 10px rgba(34, 211, 238, 0.5);
           }
         }
 
@@ -1578,6 +1578,17 @@
                             </div>
                         </div>
 
+                        <!-- Recording Animation (shown while recording) -->
+                        <div id="recordingWave" class="hidden recording-wave-container">
+                            <div class="recording-wave">
+                                <div class="recording-bar"></div>
+                                <div class="recording-bar"></div>
+                                <div class="recording-bar"></div>
+                                <div class="recording-bar"></div>
+                                <div class="recording-bar"></div>
+                            </div>
+                        </div>
+
                         <!-- Recording Section -->
                         <div class="border-2 border-red-500 p-4 rounded-lg">
                             <div class="flex items-center justify-between mb-3">
@@ -1588,15 +1599,6 @@
                                 <div id="recordingIndicator" class="hidden flex items-center">
                                     <div class="w-2 h-2 bg-red-500 rounded-full animate-pulse mr-1"></div>
                                     <span class="text-xs text-red-400">Recording...</span>
-                                </div>
-                            </div>
-                            <div id="recordingWave" class="hidden recording-wave-container mb-3">
-                                <div class="recording-wave">
-                                    <div class="recording-bar"></div>
-                                    <div class="recording-bar"></div>
-                                    <div class="recording-bar"></div>
-                                    <div class="recording-bar"></div>
-                                    <div class="recording-bar"></div>
                                 </div>
                             </div>
                             <div class="flex space-x-2">
@@ -7685,9 +7687,11 @@ Format as clean, readable text ready for narration.`;
                     const recordedAudio = document.getElementById('recordedAudio');
                     const audioSource = document.getElementById('recordedAudioSource');
                     
-                    audioSource.src = audioUrl;
+                    const audioEl = recordedAudio.querySelector('audio');
+                    audioEl.src = audioUrl;
+                    audioEl.load();
                     recordedAudio.classList.remove('hidden');
-                    
+
                     // Stop all tracks to release the microphone
                     stream.getTracks().forEach(track => track.stop());
                     
