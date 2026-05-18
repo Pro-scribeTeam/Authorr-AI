@@ -6594,7 +6594,8 @@ Return the COMPLETE text with DRAMATICALLY humanized writing that's obviously di
             let prompt = `A professional ${artStyle} book cover background with ${style} aesthetic. `;
             prompt += `Visual scene: ${description}. `;
             prompt += `Portrait orientation, eye-catching composition, genre-appropriate mood. `;
-            prompt += `No text, no words, no letters, no numbers, no typography anywhere on the image.`;
+            prompt += `No text, no words, no letters, no numbers, no typography anywhere on the image. `;
+            prompt += `No watermarks, no signatures, no artist marks, no handwriting, no cursive marks, no stamps, no inscriptions.`;
             if (avoid) {
                 prompt += ` Do not include: ${avoid}.`;
             }
