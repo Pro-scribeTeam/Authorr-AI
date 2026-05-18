@@ -1537,180 +1537,121 @@
             </div>
 
             <div class="grid lg:grid-cols-2 gap-8">
-                <!-- Voice Selection & Controls -->
-                <div class="bg-theme-secondary p-6 rounded-xl border-2 border-theme">
+                <!-- High-Tech Voice Cloning Station -->
+                <div class="bg-theme-secondary p-6 rounded-xl border-2 border-theme cloning-station">
                     <h2 class="text-xl font-bold mb-4">
-                        <i class="fas fa-volume-up text-cyan-400 mr-2"></i>
-                        Voice & Audio Settings
+                        <i class="fas fa-dna text-cyan-400 mr-2 animate-pulse"></i>
+                        Voice Cloning Station
                     </h2>
-                    
-                    <div class="space-y-4">
-                        <div>
-                            <label class="block text-sm font-semibold mb-2">Voice Actors</label>
-                            <select id="voiceSelection" onchange="toggleChatterboxVoicePanel()" class="w-full px-4 py-2 rounded-lg form-field bg-theme-primary text-theme-primary">
-                                <option value="alloy">Alloy - Balanced, Clear</option>
-                                <option value="echo">Echo - Male, Authoritative</option>
-                                <option value="fable">Fable - Warm, Storytelling</option>
-                                <option value="onyx">Onyx - Deep, Professional</option>
-                                <option value="nova">Nova - Female, Engaging</option>
-                                <option value="shimmer">Shimmer - Soft, Gentle</option>
-                            </select>
 
-                            <!-- Chatterbox Voice Clone Panel — shown when a Chatterbox voice is selected -->
-                            <div id="chatterboxVoicePanel" class="hidden mt-3 p-4 rounded-xl border-2 border-cyan-400" style="background: rgba(120,227,254,0.06);">
-                                <h4 class="text-sm font-bold text-cyan-400 mb-2"><i class="fas fa-microphone-alt mr-1"></i> Chatterbox Voice Clone</h4>
-                                <p class="text-xs text-theme-secondary mb-3">Upload a 5–30 second WAV or MP3 clip of any speaker and Chatterbox will clone that voice. No clip = default AI voice.</p>
+                    <div class="space-y-6">
+                        <div class="bg-theme-primary p-4 rounded-lg border border-cyan-500">
+                            <div class="flex items-center mb-2">
+                                <div class="w-3 h-3 rounded-full bg-green-400 mr-2 animate-pulse"></div>
+                                <span class="text-sm font-semibold text-cyan-400">Neural Voice Matrix</span>
+                            </div>
+                            <p class="text-xs text-theme-secondary mb-3">Upload voice samples to create custom AI narrator profiles</p>
+                        </div>
 
-                                <!-- Saved voices list -->
-                                <div id="savedVoicesList" class="space-y-2 mb-3"></div>
+                        <!-- Audio Upload Section -->
+                        <div class="border-2 border-gray-400 p-4 rounded-lg text-center hover:border-gray-300 transition-colors cursor-pointer cloning-section-silver"
+                             ondrop="handleVoiceDrop(event)" ondragover="allowDrop(event)" onclick="document.getElementById('voiceUpload').click()">
+                            <i class="fas fa-microphone text-gray-300 text-2xl mb-2"></i>
+                            <p class="text-sm text-gray-300">Drag & drop audio files or click to browse</p>
+                            <input type="file" id="voiceUpload" accept=".mp3,.wav,.m4a" multiple class="hidden">
+                        </div>
 
-                                <!-- Upload new voice -->
-                                <div class="border border-dashed border-cyan-400 rounded-lg p-3 text-center cursor-pointer hover:bg-cyan-400/10 transition-all" onclick="document.getElementById('voiceClipUpload').click()">
-                                    <i class="fas fa-cloud-upload-alt text-cyan-400 text-xl mb-1"></i>
-                                    <p class="text-xs text-theme-secondary">Click to upload a voice sample</p>
-                                    <p class="text-xs text-cyan-400 mt-1" id="voiceClipFileName">WAV or MP3 · 5–30 seconds</p>
+                        <!-- Text Input Section -->
+                        <div class="border-2 border-gray-400 p-4 rounded-lg hover:border-gray-300 transition-colors cloning-section-silver"
+                             ondrop="handleTextDrop(event)" ondragover="allowDrop(event)">
+                            <div class="flex items-center mb-2">
+                                <i class="fas fa-file-text text-gray-300 mr-2"></i>
+                                <span class="text-sm font-semibold text-gray-300">Text Input & Preview</span>
+                            </div>
+                            <textarea id="cloneTextInput" placeholder="Drag & drop text files here or type/paste your text for voice cloning preview..."
+                                      class="w-full px-3 py-2 rounded-lg form-field bg-theme-primary text-theme-primary h-20 resize-none text-sm"></textarea>
+                            <div class="flex justify-between items-center mt-2 text-xs text-theme-secondary">
+                                <span id="textCharCount">0 characters</span>
+                                <button onclick="previewCloneText()" class="btn-secondary px-3 py-1 rounded text-xs">
+                                    <i class="fas fa-play mr-1"></i>Preview
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Recording Section -->
+                        <div class="border-2 border-red-500 p-4 rounded-lg">
+                            <div class="flex items-center justify-between mb-3">
+                                <div class="flex items-center">
+                                    <i class="fas fa-record-vinyl text-red-400 mr-2"></i>
+                                    <span class="text-sm font-semibold text-red-400">Live Recording</span>
                                 </div>
-                                <input type="file" id="voiceClipUpload" accept="audio/wav,audio/mp3,audio/mpeg" class="hidden" onchange="handleVoiceClipUpload(event)">
-
-                                <div id="voiceClipPreviewRow" class="hidden mt-2 flex items-center gap-2">
-                                    <input type="text" id="voiceClipName" placeholder="Name this voice (e.g. David, Female narrator)" class="flex-1 px-3 py-1.5 rounded-lg text-sm form-field bg-theme-primary text-theme-primary">
-                                    <button onclick="saveVoiceClip()" class="btn-primary px-3 py-1.5 rounded-lg text-sm font-semibold whitespace-nowrap">
-                                        <i class="fas fa-save mr-1"></i>Save Voice
-                                    </button>
-                                    <button onclick="clearVoiceClip()" class="text-gray-400 hover:text-red-400 px-2 py-1.5 text-sm">
-                                        <i class="fas fa-times"></i>
-                                    </button>
+                                <div id="recordingIndicator" class="hidden flex items-center">
+                                    <div class="w-2 h-2 bg-red-500 rounded-full animate-pulse mr-1"></div>
+                                    <span class="text-xs text-red-400">Recording...</span>
                                 </div>
                             </div>
 
-                            <!-- ── Chatterbox Controls Panel ── shown for Classic & Turbo voices -->
-                            <div id="chatterboxControlsPanel" class="hidden mt-3 p-4 rounded-xl border-2 border-cyan-400/50" style="background: rgba(120,227,254,0.04);">
-                                <h4 class="text-sm font-bold text-cyan-400 mb-3"><i class="fas fa-sliders-h mr-1"></i> Chatterbox Controls</h4>
-
-                                <!-- Classic-only controls -->
-                                <div id="chatterboxClassicControls">
-                                    <div class="grid grid-cols-2 gap-3 mb-3">
-                                        <div>
-                                            <label class="block text-xs font-semibold text-theme-secondary mb-1">
-                                                Exaggeration
-                                                <span class="text-cyan-400 ml-1" id="exaggerationVal">0.5</span>
-                                            </label>
-                                            <input type="range" id="cbExaggeration" min="0" max="1" step="0.05" value="0.5"
-                                                   class="w-full accent-cyan-400"
-                                                   oninput="document.getElementById('exaggerationVal').textContent = parseFloat(this.value).toFixed(2)">
-                                            <div class="flex justify-between text-xs text-theme-secondary mt-0.5">
-                                                <span>Neutral</span><span>Intense</span>
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <label class="block text-xs font-semibold text-theme-secondary mb-1">
-                                                CFG Weight
-                                                <span class="text-cyan-400 ml-1" id="cfgWeightVal">0.5</span>
-                                            </label>
-                                            <input type="range" id="cbCfgWeight" min="0" max="1" step="0.05" value="0.5"
-                                                   class="w-full accent-cyan-400"
-                                                   oninput="document.getElementById('cfgWeightVal').textContent = parseFloat(this.value).toFixed(2)">
-                                            <div class="flex justify-between text-xs text-theme-secondary mt-0.5">
-                                                <span>Free</span><span>Guided</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <p class="text-xs text-theme-secondary mb-3" style="opacity:0.7">💡 High exaggeration speeds up speech — lower CFG weight to compensate. Default 0.5 / 0.5 works for most content.</p>
+                            <!-- Mini Recording Sound Wave -->
+                            <div id="recordingWave" class="hidden recording-wave-container mb-3">
+                                <div class="recording-wave">
+                                    <div class="recording-bar"></div>
+                                    <div class="recording-bar"></div>
+                                    <div class="recording-bar"></div>
+                                    <div class="recording-bar"></div>
+                                    <div class="recording-bar"></div>
                                 </div>
+                            </div>
 
-                                <!-- Shared controls (Classic + Turbo) -->
-                                <div class="grid grid-cols-2 gap-3 mb-3">
-                                    <div>
-                                        <label class="block text-xs font-semibold text-theme-secondary mb-1">
-                                            Temperature
-                                            <span class="text-cyan-400 ml-1" id="cbTempVal">0.8</span>
-                                        </label>
-                                        <input type="range" id="cbTemperature" min="0.05" max="2.0" step="0.05" value="0.8"
-                                               class="w-full accent-cyan-400"
-                                               oninput="document.getElementById('cbTempVal').textContent = parseFloat(this.value).toFixed(2)">
-                                        <div class="flex justify-between text-xs text-theme-secondary mt-0.5">
-                                            <span>Steady</span><span>Varied</span>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <label class="block text-xs font-semibold text-theme-secondary mb-1">Speed Factor
-                                            <span class="text-cyan-400 ml-1" id="cbSpeedVal">1.0</span>
-                                        </label>
-                                        <input type="range" id="cbSpeedFactor" min="0.5" max="2.0" step="0.05" value="1.0"
-                                               class="w-full accent-cyan-400"
-                                               oninput="document.getElementById('cbSpeedVal').textContent = parseFloat(this.value).toFixed(2)">
-                                        <div class="flex justify-between text-xs text-theme-secondary mt-0.5">
-                                            <span>Slow</span><span>Fast</span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="grid grid-cols-2 gap-3">
-                                    <div>
-                                        <label class="block text-xs font-semibold text-theme-secondary mb-1">Output Format</label>
-                                        <select id="cbFormat" class="w-full px-3 py-1.5 rounded-lg text-sm form-field bg-theme-primary text-theme-primary">
-                                            <option value="wav" selected>WAV (Best Quality)</option>
-                                            <option value="flac">FLAC (Lossless)</option>
-                                            <option value="ogg">OGG (Compressed)</option>
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label class="block text-xs font-semibold text-theme-secondary mb-1">Seed <span class="text-theme-secondary font-normal">(blank = random)</span></label>
-                                        <input type="number" id="cbSeed" placeholder="e.g. 42"
-                                               class="w-full px-3 py-1.5 rounded-lg text-sm form-field bg-theme-primary text-theme-primary">
-                                    </div>
-                                </div>
-
-                                <button onclick="resetChatterboxControls()" class="mt-3 text-xs text-cyan-400 hover:text-cyan-300 underline">
-                                    <i class="fas fa-undo mr-1"></i>Reset to defaults
+                            <div class="flex space-x-2">
+                                <button id="recordBtn" onclick="startRecording()" class="bg-red-500 hover:bg-red-600 text-black flex-1 py-2 rounded-lg text-sm font-semibold transition-colors">
+                                    <i class="fas fa-microphone mr-1 text-black"></i>Record
+                                </button>
+                                <button id="stopBtn" onclick="stopRecording()" disabled class="btn-secondary flex-1 py-2 rounded-lg text-sm opacity-50">
+                                    <i class="fas fa-stop mr-1"></i>Stop
                                 </button>
                             </div>
 
-                            <button onclick="previewSelectedVoice()" class="btn-secondary w-full mt-2 py-2 rounded-lg text-sm">
-                                <i class="fas fa-play mr-2"></i>Preview Voice
-                            </button>
-                            <div id="voicePreviewPlayer" class="hidden mt-2">
+                            <div id="recordedAudio" class="hidden mt-3">
                                 <audio controls class="w-full">
-                                    <source id="voicePreviewSource" src="" type="audio/mpeg">
+                                    <source id="recordedAudioSource" src="" type="audio/wav">
                                 </audio>
                             </div>
                         </div>
-                        
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm font-semibold mb-2">Speech Rate</label>
-                                <select id="speechRate" class="w-full px-4 py-2 rounded-lg form-field bg-theme-primary text-theme-primary">
-                                    <option value="0.75">Slow (0.75x)</option>
-                                    <option value="1.0" selected>Normal (1.0x)</option>
-                                    <option value="1.25">Fast (1.25x)</option>
-                                </select>
+                    </div>
+
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center">
+                                <span class="text-sm font-semibold">Clone Quality</span>
+                                <div class="flex space-x-1">
+                                    <div class="w-2 h-4 bg-green-400 rounded animate-pulse"></div>
+                                    <div class="w-2 h-4 bg-green-400 rounded animate-pulse" style="animation-delay: 0.1s"></div>
+                                    <div class="w-2 h-4 bg-yellow-400 rounded animate-pulse" style="animation-delay: 0.2s"></div>
+                                    <div class="w-2 h-4 bg-gray-600 rounded"></div>
+                                    <div class="w-2 h-4 bg-gray-600 rounded"></div>
+                                </div>
                             </div>
-                            
-                            <div>
-                                <label class="block text-sm font-semibold mb-2">Audio Format</label>
-                                <select id="audioFormat" class="w-full px-4 py-2 rounded-lg form-field bg-theme-primary text-theme-primary">
-                                    <option value="mp3" selected>MP3 (Recommended)</option>
-                                    <option value="opus">OPUS (High Quality)</option>
-                                    <option value="aac">AAC (Apple Compatible)</option>
-                                    <option value="flac">FLAC (Lossless)</option>
-                                </select>
-                            </div>
+
+                            <select id="cloneModel" class="w-full px-4 py-2 rounded-lg form-field bg-theme-primary text-theme-primary">
+                                <option value="enhanced">Enhanced Neural Model</option>
+                                <option value="standard">Standard Clone</option>
+                                <option value="premium">Premium Voice Synthesis</option>
+                            </select>
                         </div>
-                        
-                        <div>
-                            <label class="block text-sm font-semibold mb-2">Preview Text</label>
-                            <textarea id="previewText" placeholder="Enter text to preview the selected voice..." 
-                                      class="w-full px-4 py-2 rounded-lg form-field bg-theme-primary text-theme-primary h-20 resize-none"></textarea>
-                        </div>
-                        
-                        <button onclick="previewVoice()" class="btn-secondary w-full py-2 rounded-lg font-semibold">
-                            <i class="fas fa-play mr-2"></i>Preview Voice
+
+                        <button onclick="initiateVoiceClone()" class="btn-primary w-full py-3 rounded-lg font-semibold bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500">
+                            <i class="fas fa-flask mr-2"></i>Initialize Voice Clone
                         </button>
-                        
-                        <div class="border-t border-theme pt-4">
-                            <button onclick="generateNarration()" class="btn-primary w-full py-3 rounded-lg font-semibold">
-                                <i class="fas fa-microphone mr-2"></i>Generate Full Narration
-                            </button>
+
+                        <div id="cloningProgress" class="hidden mt-4">
+                            <div class="bg-theme-primary p-3 rounded-lg">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-sm font-semibold text-cyan-400">Neural Processing...</span>
+                                    <span class="text-xs text-theme-secondary" id="cloningPercent">0%</span>
+                                </div>
+                                <div class="w-full bg-gray-700 rounded-full h-2">
+                                    <div id="cloningBar" class="bg-gradient-to-r from-cyan-500 to-blue-500 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1818,124 +1759,6 @@
                     <div id="narrationResults" class="mt-4"></div>
                 </div>
                 
-                <!-- High-Tech Voice Cloning Station -->
-                <div class="bg-theme-secondary p-6 rounded-xl border-2 border-theme cloning-station">
-                    <h2 class="text-xl font-bold mb-4">
-                        <i class="fas fa-dna text-cyan-400 mr-2 animate-pulse"></i>
-                        Voice Cloning Station
-                    </h2>
-                    
-                    <div class="space-y-6">
-                        <div class="bg-theme-primary p-4 rounded-lg border border-cyan-500">
-                            <div class="flex items-center mb-2">
-                                <div class="w-3 h-3 rounded-full bg-green-400 mr-2 animate-pulse"></div>
-                                <span class="text-sm font-semibold text-cyan-400">Neural Voice Matrix</span>
-                            </div>
-                            <p class="text-xs text-theme-secondary mb-3">Upload voice samples to create custom AI narrator profiles</p>
-                        </div>
-                        
-                        <!-- Audio Upload Section -->
-                        <div class="border-2 border-gray-400 p-4 rounded-lg text-center hover:border-gray-300 transition-colors cursor-pointer cloning-section-silver" 
-                             ondrop="handleVoiceDrop(event)" ondragover="allowDrop(event)" onclick="document.getElementById('voiceUpload').click()">
-                            <i class="fas fa-microphone text-gray-300 text-2xl mb-2"></i>
-                            <p class="text-sm text-gray-300">Drag & drop audio files or click to browse</p>
-                            <input type="file" id="voiceUpload" accept=".mp3,.wav,.m4a" multiple class="hidden">
-                        </div>
-                        
-                        <!-- Text Input Section -->
-                        <div class="border-2 border-gray-400 p-4 rounded-lg hover:border-gray-300 transition-colors cloning-section-silver" 
-                             ondrop="handleTextDrop(event)" ondragover="allowDrop(event)">
-                            <div class="flex items-center mb-2">
-                                <i class="fas fa-file-text text-gray-300 mr-2"></i>
-                                <span class="text-sm font-semibold text-gray-300">Text Input & Preview</span>
-                            </div>
-                            <textarea id="cloneTextInput" placeholder="Drag & drop text files here or type/paste your text for voice cloning preview..." 
-                                      class="w-full px-3 py-2 rounded-lg form-field bg-theme-primary text-theme-primary h-20 resize-none text-sm"></textarea>
-                            <div class="flex justify-between items-center mt-2 text-xs text-theme-secondary">
-                                <span id="textCharCount">0 characters</span>
-                                <button onclick="previewCloneText()" class="btn-secondary px-3 py-1 rounded text-xs">
-                                    <i class="fas fa-play mr-1"></i>Preview
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <!-- Recording Section -->
-                        <div class="border-2 border-red-500 p-4 rounded-lg">
-                            <div class="flex items-center justify-between mb-3">
-                                <div class="flex items-center">
-                                    <i class="fas fa-record-vinyl text-red-400 mr-2"></i>
-                                    <span class="text-sm font-semibold text-red-400">Live Recording</span>
-                                </div>
-                                <div id="recordingIndicator" class="hidden flex items-center">
-                                    <div class="w-2 h-2 bg-red-500 rounded-full animate-pulse mr-1"></div>
-                                    <span class="text-xs text-red-400">Recording...</span>
-                                </div>
-                            </div>
-                            
-                            <!-- Mini Recording Sound Wave -->
-                            <div id="recordingWave" class="hidden recording-wave-container mb-3">
-                                <div class="recording-wave">
-                                    <div class="recording-bar"></div>
-                                    <div class="recording-bar"></div>
-                                    <div class="recording-bar"></div>
-                                    <div class="recording-bar"></div>
-                                    <div class="recording-bar"></div>
-                                </div>
-                            </div>
-                            
-                            <div class="flex space-x-2">
-                                <button id="recordBtn" onclick="startRecording()" class="bg-red-500 hover:bg-red-600 text-black flex-1 py-2 rounded-lg text-sm font-semibold transition-colors">
-                                    <i class="fas fa-microphone mr-1 text-black"></i>Record
-                                </button>
-                                <button id="stopBtn" onclick="stopRecording()" disabled class="btn-secondary flex-1 py-2 rounded-lg text-sm opacity-50">
-                                    <i class="fas fa-stop mr-1"></i>Stop
-                                </button>
-                            </div>
-                            
-                            <div id="recordedAudio" class="hidden mt-3">
-                                <audio controls class="w-full">
-                                    <source id="recordedAudioSource" src="" type="audio/wav">
-                                </audio>
-                            </div>
-                        </div>
-                    </div>
-                        
-                        <div class="space-y-3">
-                            <div class="flex justify-between items-center">
-                                <span class="text-sm font-semibold">Clone Quality</span>
-                                <div class="flex space-x-1">
-                                    <div class="w-2 h-4 bg-green-400 rounded animate-pulse"></div>
-                                    <div class="w-2 h-4 bg-green-400 rounded animate-pulse" style="animation-delay: 0.1s"></div>
-                                    <div class="w-2 h-4 bg-yellow-400 rounded animate-pulse" style="animation-delay: 0.2s"></div>
-                                    <div class="w-2 h-4 bg-gray-600 rounded"></div>
-                                    <div class="w-2 h-4 bg-gray-600 rounded"></div>
-                                </div>
-                            </div>
-                            
-                            <select id="cloneModel" class="w-full px-4 py-2 rounded-lg form-field bg-theme-primary text-theme-primary">
-                                <option value="enhanced">Enhanced Neural Model</option>
-                                <option value="standard">Standard Clone</option>
-                                <option value="premium">Premium Voice Synthesis</option>
-                            </select>
-                        </div>
-                        
-                        <button onclick="initiateVoiceClone()" class="btn-primary w-full py-3 rounded-lg font-semibold bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500">
-                            <i class="fas fa-flask mr-2"></i>Initialize Voice Clone
-                        </button>
-                        
-                        <div id="cloningProgress" class="hidden mt-4">
-                            <div class="bg-theme-primary p-3 rounded-lg">
-                                <div class="flex items-center justify-between mb-2">
-                                    <span class="text-sm font-semibold text-cyan-400">Neural Processing...</span>
-                                    <span class="text-xs text-theme-secondary" id="cloningPercent">0%</span>
-                                </div>
-                                <div class="w-full bg-gray-700 rounded-full h-2">
-                                    <div id="cloningBar" class="bg-gradient-to-r from-cyan-500 to-blue-500 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             </div>
             
             <!-- Audio Progress & Results -->
