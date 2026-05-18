@@ -1578,17 +1578,6 @@
                             </div>
                         </div>
 
-                        <!-- Recording Animation (shown while recording) -->
-                        <div id="recordingWave" class="hidden recording-wave-container">
-                            <div class="recording-wave">
-                                <div class="recording-bar"></div>
-                                <div class="recording-bar"></div>
-                                <div class="recording-bar"></div>
-                                <div class="recording-bar"></div>
-                                <div class="recording-bar"></div>
-                            </div>
-                        </div>
-
                         <!-- Recording Section -->
                         <div class="border-2 border-red-500 p-4 rounded-lg">
                             <div class="flex items-center justify-between mb-3">
@@ -1599,6 +1588,16 @@
                                 <div id="recordingIndicator" class="hidden flex items-center">
                                     <div class="w-2 h-2 bg-red-500 rounded-full animate-pulse mr-1"></div>
                                     <span class="text-xs text-red-400">Recording...</span>
+                                </div>
+                            </div>
+                            <!-- Wave animation — always reserves space, invisible when not recording -->
+                            <div id="recordingWave" class="invisible recording-wave-container mb-3">
+                                <div class="recording-wave">
+                                    <div class="recording-bar"></div>
+                                    <div class="recording-bar"></div>
+                                    <div class="recording-bar"></div>
+                                    <div class="recording-bar"></div>
+                                    <div class="recording-bar"></div>
                                 </div>
                             </div>
                             <div class="flex space-x-2">
@@ -7572,8 +7571,8 @@ Format as clean, readable text ready for narration.`;
             }
 
             const apiKey = getOpenAIApiKey();
-            if (!apiKey && getAIProvider() !== 'ollama' && getAIProvider() !== 'openrouter') {
-                showNotification('Please configure your API key first', 'error');
+            if (!apiKey) {
+                showNotification('Voice preview requires an OpenAI API key. Add one in Config → OpenAI Key.', 'error');
                 return;
             }
 
@@ -7582,7 +7581,7 @@ Format as clean, readable text ready for narration.`;
             try {
                 const voice = document.getElementById('voiceSelection')?.value || 'alloy';
                 const speed = parseFloat(document.getElementById('speechRate')?.value || 1.0);
-                
+
                 const audioBlob = await generateChapterAudio(text, voice, speed, apiKey);
                 const audioUrl = URL.createObjectURL(audioBlob);
                 
@@ -7708,7 +7707,7 @@ Format as clean, readable text ready for narration.`;
                 stpBtn.disabled = false;
                 stpBtn.classList.remove('opacity-50', 'cursor-not-allowed');
                 document.getElementById('recordingIndicator').classList.remove('hidden');
-                document.getElementById('recordingWave').classList.remove('hidden');
+                document.getElementById('recordingWave').classList.remove('invisible');
 
                 showNotification('Recording started...', 'info');
                 
@@ -7729,7 +7728,7 @@ Format as clean, readable text ready for narration.`;
                 stpBtn.disabled = true;
                 stpBtn.classList.add('opacity-50', 'cursor-not-allowed');
                 document.getElementById('recordingIndicator').classList.add('hidden');
-                document.getElementById('recordingWave').classList.add('hidden');
+                document.getElementById('recordingWave').classList.add('invisible');
             }
         }
 
