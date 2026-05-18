@@ -9166,20 +9166,20 @@ Format as clean, readable text ready for narration.`;
             }
         }
         
+        let _narratorPreviewUrl = null;
+
         function playPreviewAudio(audioBlob) {
-            const audioUrl = URL.createObjectURL(audioBlob);
+            // Revoke previous URL before creating a new one
+            if (_narratorPreviewUrl) {
+                URL.revokeObjectURL(_narratorPreviewUrl);
+            }
+            _narratorPreviewUrl = URL.createObjectURL(audioBlob);
             const audioElement = document.getElementById('narratorVoicePreview');
             const container = document.getElementById('narratorVoicePreviewContainer');
-            audioElement.src = audioUrl;
+            audioElement.src = _narratorPreviewUrl;
+            audioElement.load();
             audioElement.autoplay = true;
             if (container) container.classList.remove('hidden');
-            
-            // Clean up URL after playing
-            audioElement.addEventListener('ended', () => {
-                setTimeout(() => {
-                    URL.revokeObjectURL(audioUrl);
-                }, 1000);
-            });
         }
 
         /* REMOVED: Character voice assignment UI code - now using narrator-only mode */
