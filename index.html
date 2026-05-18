@@ -7696,11 +7696,21 @@ Format as clean, readable text ready for narration.`;
         // Recording Functions
         let mediaRecorder;
         let recordedChunks = [];
+        let currentRecordingUrl = null;
 
         async function startRecording() {
             try {
+                // Revoke previous recording blob to free memory
+                if (currentRecordingUrl) {
+                    URL.revokeObjectURL(currentRecordingUrl);
+                    currentRecordingUrl = null;
+                    const audioEl = document.getElementById('recordedAudioEl');
+                    audioEl.src = '';
+                    document.getElementById('recordedAudio').classList.add('hidden');
+                }
+
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                
+
                 // Pick a MIME type the browser actually supports
                 const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
                     ? 'audio/webm;codecs=opus'
@@ -7718,11 +7728,11 @@ Format as clean, readable text ready for narration.`;
 
                 mediaRecorder.onstop = () => {
                     const blob = new Blob(recordedChunks, { type: mediaRecorder.mimeType || 'audio/webm' });
-                    const audioUrl = URL.createObjectURL(blob);
-                    
+                    currentRecordingUrl = URL.createObjectURL(blob);
+
                     const recordedAudio = document.getElementById('recordedAudio');
                     const audioEl = document.getElementById('recordedAudioEl');
-                    audioEl.src = audioUrl;
+                    audioEl.src = currentRecordingUrl;
                     audioEl.load();
                     recordedAudio.classList.remove('hidden');
 
