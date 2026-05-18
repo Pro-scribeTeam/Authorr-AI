@@ -1578,6 +1578,17 @@
                             </div>
                         </div>
 
+                        <!-- Wave animation — always reserves space above the recording box, invisible when not recording -->
+                        <div id="recordingWave" class="invisible recording-wave-container mb-2">
+                            <div class="recording-wave">
+                                <div class="recording-bar"></div>
+                                <div class="recording-bar"></div>
+                                <div class="recording-bar"></div>
+                                <div class="recording-bar"></div>
+                                <div class="recording-bar"></div>
+                            </div>
+                        </div>
+
                         <!-- Recording Section -->
                         <div class="border-2 border-red-500 p-4 rounded-lg">
                             <div class="flex items-center justify-between mb-3">
@@ -1590,16 +1601,6 @@
                                     <span class="text-xs text-red-400">Recording...</span>
                                 </div>
                             </div>
-                            <!-- Wave animation — always reserves space, invisible when not recording -->
-                            <div id="recordingWave" class="invisible recording-wave-container mb-3">
-                                <div class="recording-wave">
-                                    <div class="recording-bar"></div>
-                                    <div class="recording-bar"></div>
-                                    <div class="recording-bar"></div>
-                                    <div class="recording-bar"></div>
-                                    <div class="recording-bar"></div>
-                                </div>
-                            </div>
                             <div class="flex space-x-2">
                                 <button id="recordBtn" onclick="startRecording()" class="bg-red-500 hover:bg-red-600 text-black flex-1 py-2 rounded-lg text-sm font-semibold transition-colors">
                                     <i class="fas fa-microphone mr-1 text-black"></i>Record
@@ -1609,9 +1610,7 @@
                                 </button>
                             </div>
                             <div id="recordedAudio" class="hidden mt-3">
-                                <audio controls class="w-full">
-                                    <source id="recordedAudioSource" src="" type="audio/wav">
-                                </audio>
+                                <audio id="recordedAudioEl" controls class="w-full"></audio>
                             </div>
                         </div>
 
@@ -7670,7 +7669,13 @@ Format as clean, readable text ready for narration.`;
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                 
-                mediaRecorder = new MediaRecorder(stream);
+                // Pick a MIME type the browser actually supports
+                const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+                    ? 'audio/webm;codecs=opus'
+                    : MediaRecorder.isTypeSupported('audio/webm')
+                        ? 'audio/webm'
+                        : '';
+                mediaRecorder = new MediaRecorder(stream, mimeType ? { mimeType } : {});
                 recordedChunks = [];
 
                 mediaRecorder.ondataavailable = (event) => {
@@ -7680,13 +7685,11 @@ Format as clean, readable text ready for narration.`;
                 };
 
                 mediaRecorder.onstop = () => {
-                    const blob = new Blob(recordedChunks, { type: 'audio/wav' });
+                    const blob = new Blob(recordedChunks, { type: mediaRecorder.mimeType || 'audio/webm' });
                     const audioUrl = URL.createObjectURL(blob);
                     
                     const recordedAudio = document.getElementById('recordedAudio');
-                    const audioSource = document.getElementById('recordedAudioSource');
-                    
-                    const audioEl = recordedAudio.querySelector('audio');
+                    const audioEl = document.getElementById('recordedAudioEl');
                     audioEl.src = audioUrl;
                     audioEl.load();
                     recordedAudio.classList.remove('hidden');
