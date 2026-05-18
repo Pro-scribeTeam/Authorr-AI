@@ -1399,10 +1399,8 @@
                 });
             });
             
-            // Re-render everything
-            renderTracks();
-            renderMixerChannels();
-            renderTimelineRuler();
+            // Re-render tracks and clips (skip mixer — not affected by undo)
+            renderTracks(); // also calls renderTimelineRuler internally
 
             // Re-render audio clips onto track canvases (renderTracks only creates empty rows)
             dawState.tracks.forEach(track => {
@@ -2719,24 +2717,36 @@
                 console.log('⚠️ Clipboard is empty');
                 return;
             }
-            
-            // Paste clips at current playhead position
-            clipboardClips.forEach(clipData => {
-                const track = dawState.tracks[0]; // Paste to first track for now
+
+            clipboardClips.forEach((clipData, index) => {
+                // Paste to the same track the clip was copied from
+                const track = dawState.tracks.find(t => t.id === clipData.trackId) || dawState.tracks[0];
                 if (!track) return;
-                
+
+                // Paste at end of the source clip (not at playhead)
+                const pasteTime = (clipData.startTime || 0) + (clipData.duration || 0) + (index * 0.1);
+
                 const newClip = {
                     ...clipData,
                     id: `clip_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-                    startTime: dawState.currentTime
+                    startTime: pasteTime,
+                    trackId: track.id
                 };
-                
+
                 track.clips.push(newClip);
                 renderAudioClip(newClip, track.id);
+
+                // Extend total duration if needed
+                const endTime = newClip.startTime + newClip.duration;
+                if (endTime > dawState.totalDuration) {
+                    dawState.totalDuration = endTime;
+                    const totalEl = document.getElementById('totalTime');
+                    if (totalEl) totalEl.textContent = formatTime(Math.ceil(endTime));
+                }
             });
-            
+
             saveState('Paste clips');
-            console.log(`📋 Pasted ${clipboardClips.length} clip(s) at ${dawState.currentTime.toFixed(2)}s`);
+            console.log(`📋 Pasted ${clipboardClips.length} clip(s) at end of source`);
         }
         
         function executeCutSelection() {
