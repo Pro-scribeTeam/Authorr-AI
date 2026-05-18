@@ -2235,7 +2235,11 @@
                                         <button onclick="applyTextColor('#f87171')" class="color-swatch w-8 h-8 rounded-full border-2 border-red-600 hover:ring-2 ring-cyan-400" style="background:#f87171;" title="Red"></button>
                                         <button onclick="applyTextColor('#86efac')" class="color-swatch w-8 h-8 rounded-full border-2 border-green-600 hover:ring-2 ring-cyan-400" style="background:#86efac;" title="Mint"></button>
                                         <button onclick="applyTextColor('#c084fc')" class="color-swatch w-8 h-8 rounded-full border-2 border-purple-600 hover:ring-2 ring-cyan-400" style="background:#c084fc;" title="Purple"></button>
+                                        <input type="color" id="customTextColor" value="#ffffff" title="Custom color"
+                                               oninput="applyTextColor(this.value)"
+                                               class="w-8 h-8 rounded-full cursor-pointer border-2 border-theme" style="padding:1px;">
                                     </div>
+                                    <p class="text-xs text-theme-secondary mt-1 text-center">🎨 Custom — click the circle on the right</p>
                                     <p class="text-xs text-theme-secondary mt-3 mb-1 text-center">Text size — <span id="textSizeLabel">100%</span></p>
                                     <input type="range" id="textSizeSlider" min="50" max="200" value="100"
                                            oninput="applyTextSize(this.value)"
@@ -6536,7 +6540,9 @@ Return the COMPLETE text with DRAMATICALLY humanized writing that's obviously di
             window._coverTextColor = color;
 
             document.querySelectorAll('.color-swatch').forEach(btn => btn.style.outline = 'none');
-            event.target.style.outline = '3px solid #06b6d4';
+            if (event && event.target) event.target.style.outline = '3px solid #06b6d4';
+            const customPicker = document.getElementById('customTextColor');
+            if (customPicker) customPicker.value = color;
 
             const title = document.getElementById('coverTitle')?.value?.trim() || '';
             const author = document.getElementById('coverAuthor')?.value?.trim() || '';
