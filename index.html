@@ -3608,7 +3608,7 @@
                 
                 hideLoading();
                 showNotification('Plot analysis complete - review suggestions below!', 'success');
-                displayToolChanges('Plot Hole Analysis', allChaptersText, `=== PLOT ANALYSIS RESULTS ===\n\n${analysis}\n\n=== ORIGINAL TEXT ===\n\n${allChaptersText}`);
+                displayToolChanges('Plot Hole Analysis', allChaptersText, `=== PLOT ANALYSIS RESULTS ===\n\n${analysis}\n\n=== ORIGINAL TEXT ===\n\n${allChaptersText}`, true);
                 
             } catch (error) {
                 console.error('Plot hole detection error:', error);
@@ -4242,7 +4242,7 @@ Return the COMPLETE text with DEVASTATINGLY powerful emotional resonance.`;
                 
                 hideLoading();
                 showNotification('Red herring suggestions ready!', 'success');
-                displayToolChanges('Red Herring & Misdirection Ideas', allChaptersText, `=== MISDIRECTION SUGGESTIONS ===\n\n${suggestions}\n\n=== ORIGINAL TEXT ===\n\n${allChaptersText}`);
+                displayToolChanges('Red Herring & Misdirection Ideas', allChaptersText, `=== MISDIRECTION SUGGESTIONS ===\n\n${suggestions}\n\n=== ORIGINAL TEXT ===\n\n${allChaptersText}`, true);
                 
             } catch (error) {
                 console.error('Red herring generator error:', error);
@@ -4647,7 +4647,7 @@ Return the COMPLETE text with DRAMATICALLY humanized writing that's obviously di
         }
         
         
-        function displayToolChanges(title, originalText, newText) {
+        function displayToolChanges(title, originalText, newText, analysisOnly = false) {
             // Generate highlighted diff
             const highlightedText = generateDiffHighlight(originalText, newText);
             
@@ -4681,14 +4681,15 @@ Return the COMPLETE text with DRAMATICALLY humanized writing that's obviously di
                     </div>
                     <div class="flex space-x-3">
                         <button class="close-modal btn-gray px-4 py-2 rounded">
-                            <i class="fas fa-times mr-1"></i>Keep Original
+                            <i class="fas fa-times mr-1"></i>${analysisOnly ? 'Close' : 'Keep Original'}
                         </button>
+                        ${!analysisOnly ? `
                         <button class="copy-changes btn-secondary px-4 py-2 rounded">
                             <i class="fas fa-copy mr-1"></i>Copy Enhanced
                         </button>
                         <button class="apply-enhanced btn-primary px-4 py-2 rounded">
                             <i class="fas fa-magic mr-1"></i>Apply Changes
-                        </button>
+                        </button>` : ''}
                     </div>
                 </div>
             `;
@@ -4700,17 +4701,23 @@ Return the COMPLETE text with DRAMATICALLY humanized writing that's obviously di
                 });
             });
             
-            modalContent.querySelector('.copy-changes').addEventListener('click', () => {
-                navigator.clipboard.writeText(newText).then(() => {
-                    showNotification('Enhanced text copied to clipboard!', 'success');
-                }).catch(() => {
-                    showNotification('Failed to copy to clipboard', 'error');
+            const copyBtn = modalContent.querySelector('.copy-changes');
+            if (copyBtn) {
+                copyBtn.addEventListener('click', () => {
+                    navigator.clipboard.writeText(newText).then(() => {
+                        showNotification('Enhanced text copied to clipboard!', 'success');
+                    }).catch(() => {
+                        showNotification('Failed to copy to clipboard', 'error');
+                    });
                 });
-            });
-            
-            modalContent.querySelector('.apply-enhanced').addEventListener('click', () => {
-                applyTextChanges(newText, resultModal);
-            });
+            }
+
+            const applyBtn = modalContent.querySelector('.apply-enhanced');
+            if (applyBtn) {
+                applyBtn.addEventListener('click', () => {
+                    applyTextChanges(newText, resultModal);
+                });
+            }
             
             resultModal.appendChild(modalContent);
             document.body.appendChild(resultModal);
@@ -4783,38 +4790,52 @@ Return the COMPLETE text with DRAMATICALLY humanized writing that's obviously di
 
         function applyTextChanges(newText, modal) {
             console.log('✏️ Applying text changes - clearing dialogue data due to content modification...');
-            
-            // Clear dialogue data when text content is manually changed
             clearAllDialogueData(true);
-            
+
             const editor = document.getElementById('storyEditor');
             if (!editor) {
                 showNotification('No text editor found to apply changes', 'error');
                 return;
             }
 
-            // Save current state for undo
             saveEditState();
 
-            // Apply the enhanced text
-            editor.value = newText;
-            
-            // Update story data if we're in chapter editing mode
-            const activeChapter = document.querySelector('.chapter-tab.active');
-            if (activeChapter && storyData.chapters) {
-                const chapterIndex = parseInt(activeChapter.dataset.chapter);
-                if (!isNaN(chapterIndex) && storyData.chapters[chapterIndex]) {
-                    storyData.chapters[chapterIndex].content = newText;
+            // Detect multi-chapter format: "=== Title ===\n\ncontent"
+            const chapterPattern = /===\s+(.+?)\s+===\n\n([\s\S]*?)(?=\n\n===\s+.+?\s+===|$)/g;
+            const parsedChapters = [];
+            let match;
+            while ((match = chapterPattern.exec(newText)) !== null) {
+                parsedChapters.push({ title: match[1].trim(), content: match[2].trim() });
+            }
+
+            if (parsedChapters.length > 1 && storyData.chapters && storyData.chapters.length > 0) {
+                // Multi-chapter: update each chapter's data individually
+                parsedChapters.forEach((parsed, i) => {
+                    if (storyData.chapters[i]) {
+                        storyData.chapters[i].content = parsed.content;
+                    }
+                });
+                // Refresh the active chapter in the editor
+                const activeChapter = document.querySelector('.chapter-tab.active');
+                const activeIndex = activeChapter ? parseInt(activeChapter.dataset.chapter) : 0;
+                if (!isNaN(activeIndex) && storyData.chapters[activeIndex]) {
+                    editor.value = storyData.chapters[activeIndex].content;
+                }
+            } else {
+                // Single chapter or plain text: apply directly
+                editor.value = newText;
+                const activeChapter = document.querySelector('.chapter-tab.active');
+                if (activeChapter && storyData.chapters) {
+                    const chapterIndex = parseInt(activeChapter.dataset.chapter);
+                    if (!isNaN(chapterIndex) && storyData.chapters[chapterIndex]) {
+                        storyData.chapters[chapterIndex].content = newText;
+                    }
                 }
             }
 
-            // Track human touch for making edits
             trackHumanTouch('lines_edited', Math.max(1, newText.split('\n').length * 0.1));
-            
-            // Update UI
             updateUndoRedoButtons();
             showNotification('Changes applied successfully! ✨', 'success');
-            
             modal.remove();
         }
 
