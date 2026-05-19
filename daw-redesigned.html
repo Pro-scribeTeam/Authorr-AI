@@ -1943,6 +1943,10 @@
         }
         
         async function decodeAudioClip(clip) {
+            // Clear invalid cached buffer (e.g. JSON-deserialized {} from undo/paste)
+            if (clip.audioBuffer && !(clip.audioBuffer instanceof AudioBuffer)) {
+                clip.audioBuffer = null;
+            }
             if (clip.audioBuffer) return clip.audioBuffer;
             
             // Check if clip has audio data
@@ -2706,7 +2710,9 @@
                 const clipId = clipEl.dataset.clipId;
                 const clip = findClipById(clipId);
                 if (clip) {
-                    clipboardClips.push(JSON.parse(JSON.stringify(clip))); // Deep copy
+                    // Exclude audioBuffer — not JSON-serializable; clip will re-decode on paste
+                    const { audioBuffer, ...clipData } = clip;
+                    clipboardClips.push(JSON.parse(JSON.stringify(clipData)));
                 }
             });
             
