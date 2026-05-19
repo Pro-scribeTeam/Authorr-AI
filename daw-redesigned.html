@@ -1399,15 +1399,8 @@
                 });
             });
             
-            // Re-render tracks and clips (skip mixer — not affected by undo)
-            renderTracks(); // also calls renderTimelineRuler internally
-
-            // Re-render audio clips onto track canvases (renderTracks only creates empty rows)
-            dawState.tracks.forEach(track => {
-                track.clips.forEach(clip => {
-                    renderAudioClip(clip, track.id);
-                });
-            });
+            // Re-render tracks and clips (renderTracks now re-renders clips internally)
+            renderTracks();
 
             // Update zoom display
             document.getElementById('zoomLevel').textContent = Math.round(state.zoom * 100) + '%';
@@ -1515,8 +1508,15 @@
             
             // Also render timeline ruler
             renderTimelineRuler();
+
+            // Re-render all existing clips (track rows are empty after innerHTML = '')
+            dawState.tracks.forEach(track => {
+                track.clips.forEach(clip => {
+                    renderAudioClip(clip, track.id);
+                });
+            });
         }
-        
+
         function renderTimelineRuler() {
             const ruler = document.getElementById('timelineRuler');
             ruler.innerHTML = '';
