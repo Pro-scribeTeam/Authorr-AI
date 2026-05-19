@@ -1812,7 +1812,6 @@
             const playhead = document.getElementById('playhead');
             const playheadMarker = document.getElementById('playhead-marker');
             let isDraggingPlayhead = false;
-            let preventNextTimelineClick = false;
 
             function startPlayheadDrag(e) {
                 isDraggingPlayhead = true;
@@ -1926,6 +1925,7 @@
         let audioSources = [];
         let startTime = 0;
         let pauseTime = 0;
+        let preventNextTimelineClick = false;
         let analyserNodes = {};
         let gainNodes = {};
         let masterGainNode = null;
