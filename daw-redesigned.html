@@ -3477,9 +3477,9 @@
             clipEl.className = 'audio-clip';
             clipEl.dataset.clipId = clip.id;
             clipEl.style.position = 'absolute';
-            clipEl.style.left = `${clip.startTime * pixelsPerSecond}px`;
+            clipEl.style.left = `${(clip.startTime + (clip.trimStart || 0)) * pixelsPerSecond}px`;
             clipEl.style.top = '10px';
-            clipEl.style.width = `${clip.duration * pixelsPerSecond}px`;
+            clipEl.style.width = `${(clip.duration - (clip.trimStart || 0) - (clip.trimEnd || 0)) * pixelsPerSecond}px`;
             clipEl.style.height = 'calc(100% - 20px)';
             clipEl.style.backgroundColor = 'rgba(30, 30, 30, 0.8)';
             clipEl.style.border = '2px solid var(--daw-accent)';
@@ -3799,21 +3799,7 @@
             trimRight.className = 'trim-handle trim-handle-right';
             trimRight.title = 'Drag to trim end';
 
-            // Visual trim shading (dimmed region that's been trimmed away)
-            const trimShadeLeft  = document.createElement('div');
-            trimShadeLeft.style.cssText = 'position:absolute;top:0;left:0;height:100%;background:rgba(0,0,0,0.55);pointer-events:none;z-index:25;';
-            const trimShadeRight = document.createElement('div');
-            trimShadeRight.style.cssText = 'position:absolute;top:0;right:0;height:100%;background:rgba(0,0,0,0.55);pointer-events:none;z-index:25;';
 
-            function updateTrimShading() {
-                const pixPerSec = 50 * dawState.zoom;
-                const totalW = clip.duration * pixPerSec;
-                const leftPx  = (clip.trimStart / clip.duration) * totalW;
-                const rightPx = (clip.trimEnd   / clip.duration) * totalW;
-                trimShadeLeft.style.width  = `${leftPx}px`;
-                trimShadeRight.style.width = `${rightPx}px`;
-            }
-            updateTrimShading();
 
             // Trim handle drag logic
             function makeTrimDrag(handle, side) {
@@ -3849,7 +3835,6 @@
                         const pixPerSec2 = 50 * dawState.zoom;
                         clipEl.style.width = `${(clip.duration - clip.trimStart - clip.trimEnd) * pixPerSec2}px`;
                     }
-                    updateTrimShading();
                 });
 
                 document.addEventListener('mouseup', function() {
@@ -3864,8 +3849,6 @@
             makeTrimDrag(trimLeft,  'left');
             makeTrimDrag(trimRight, 'right');
 
-            clipEl.appendChild(trimShadeLeft);
-            clipEl.appendChild(trimShadeRight);
             clipEl.appendChild(trimLeft);
             clipEl.appendChild(trimRight);
             // ── End trim handles ──────────────────────────────────────
