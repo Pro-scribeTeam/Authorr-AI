@@ -2688,6 +2688,8 @@
             
             currentPage = pageId;
             window.scrollTo(0, 0);
+            document.body.scrollTop = 0;
+            document.documentElement.scrollTop = 0;
 
             // Transfer story data when navigating to narration
             if (pageId === 'narration') {
