@@ -9238,21 +9238,30 @@ Format as clean, readable text ready for narration.`;
 
                 for (let i = 0; i < chunks.length; i++) {
                     showLoading(`Relax while I generate your best seller's narration (${i + 1} of ${chunks.length})`);
-                    try {
-                        const audioBlob = await generateSegmentAudio({
-                            type: 'all_content',
-                            text: chunks[i],
-                            voice: narratorVoice,
-                            character: 'Narrator'
-                        });
-                        if (audioBlob) {
-                            audioBlobs.push({
-                                blob: audioBlob,
-                                segment: { type: 'all_content', text: chunks[i], voice: narratorVoice, character: 'Narrator' }
+                    let audioBlob = null;
+                    let lastError = null;
+                    for (let attempt = 1; attempt <= 3; attempt++) {
+                        try {
+                            if (attempt > 1) showLoading(`Retrying chunk ${i + 1} of ${chunks.length} (attempt ${attempt})…`);
+                            audioBlob = await generateSegmentAudio({
+                                type: 'all_content',
+                                text: chunks[i],
+                                voice: narratorVoice,
+                                character: 'Narrator'
                             });
+                            lastError = null;
+                            break; // success
+                        } catch (err) {
+                            lastError = err;
+                            console.warn(`⚠️ Chunk ${i + 1} attempt ${attempt} failed: ${err.message}`);
                         }
-                    } catch (chunkError) {
-                        throw new Error(`Narration generation failed on chunk ${i + 1}: ${chunkError.message}`);
+                    }
+                    if (lastError) throw new Error(`Narration generation failed on chunk ${i + 1} after 3 attempts: ${lastError.message}`);
+                    if (audioBlob) {
+                        audioBlobs.push({
+                            blob: audioBlob,
+                            segment: { type: 'all_content', text: chunks[i], voice: narratorVoice, character: 'Narrator' }
+                        });
                     }
                 }
                 
