@@ -1333,11 +1333,24 @@
         const MAX_HISTORY = 50; // Keep last 50 states
         
         function saveState(action) {
-            // Create a deep copy of the current state
+            // Stash heavy clip data outside the snapshot so JSON stays small/fast
+            dawState.tracks.forEach(track => {
+                track.clips.forEach(clip => {
+                    if (clip.data)        clipDataStore[clip.id]   = clip.data;
+                    if (clip.audioBuffer) clipBufferStore[clip.id] = clip.audioBuffer;
+                });
+            });
+
+            // Snapshot only lightweight metadata (no data URLs or AudioBuffers)
+            const lightTracks = dawState.tracks.map(track => ({
+                ...track,
+                clips: track.clips.map(({ data, audioBuffer, ...meta }) => meta)
+            }));
+
             const state = {
                 action: action,
                 timestamp: Date.now(),
-                tracks: JSON.parse(JSON.stringify(dawState.tracks)),
+                tracks: JSON.parse(JSON.stringify(lightTracks)),
                 masterVolume: dawState.masterVolume,
                 zoom: dawState.zoom
             };
@@ -1386,15 +1399,16 @@
         }
         
         function restoreState(state) {
-            // Restore tracks (deep copy to avoid reference issues)
+            // Restore lightweight metadata (deep copy)
             dawState.tracks = JSON.parse(JSON.stringify(state.tracks));
             dawState.masterVolume = state.masterVolume;
             dawState.zoom = state.zoom;
-            
-            // Clear audioBuffer references so they get re-decoded on playback
+
+            // Re-attach heavy data from stores (no re-decode needed)
             dawState.tracks.forEach(track => {
                 track.clips.forEach(clip => {
-                    delete clip.audioBuffer;
+                    if (clipDataStore[clip.id])   clip.data        = clipDataStore[clip.id];
+                    if (clipBufferStore[clip.id]) clip.audioBuffer = clipBufferStore[clip.id];
                 });
             });
             
@@ -1933,6 +1947,12 @@
         let analyserNodes = {};
         let gainNodes = {};
         let masterGainNode = null;
+
+        // Clip data/buffer/waveform caches — keyed by clip.id
+        // Stored outside undo history so JSON snapshots stay small and fast
+        const clipDataStore   = {};  // clip.id → data URL (audio file)
+        const clipBufferStore = {};  // clip.id → decoded AudioBuffer
+        const waveformCache   = {};  // clip.id → waveform canvas dataURL
         let animationFrameId = null;
         
         function initAudioContext() {
@@ -2744,6 +2764,14 @@
                     trackId: track.id
                 };
 
+                // Inherit data/buffer from source clip's store entry
+                if (clipData.data || clipDataStore[clipData.id]) {
+                    clipDataStore[newClip.id] = clipData.data || clipDataStore[clipData.id];
+                }
+                if (clipBufferStore[clipData.id]) {
+                    clipBufferStore[newClip.id] = clipBufferStore[clipData.id];
+                }
+
                 track.clips.push(newClip);
                 renderAudioClip(newClip, track.id);
 
@@ -3391,6 +3419,9 @@
                         trackId: trackId
                     };
                     
+                    // Stash audio data in the persistent store (survives undo/redo JSON snapshots)
+                    clipDataStore[clip.id] = audioData;
+
                     // Add clip to track
                     const track = dawState.tracks.find(t => t.id === trackId);
                     if (track) {
@@ -3851,69 +3882,71 @@
             const ctx = canvas.getContext('2d');
             const width = canvas.width;
             const height = canvas.height;
-            
-            // Create audio context and decode audio
-            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            
-            // Convert data URL to ArrayBuffer
+
+            // Use cached waveform image if available (avoids re-decoding on undo/redo)
+            if (waveformCache[clip.id]) {
+                const img = new Image();
+                img.onload = () => ctx.drawImage(img, 0, 0, width, height);
+                img.src = waveformCache[clip.id];
+                return;
+            }
+
+            if (!clip.data) return;
+
+            // Reuse existing decoded AudioBuffer if available
+            const existingBuffer = clipBufferStore[clip.id];
+
+            function renderFromBuffer(audioBuffer) {
+                const rawData = audioBuffer.getChannelData(0);
+                const samples = width;
+                const blockSize = Math.max(1, Math.floor(rawData.length / samples));
+                const filteredData = [];
+                for (let i = 0; i < samples; i++) {
+                    let blockStart = blockSize * i;
+                    let sum = 0;
+                    for (let j = 0; j < blockSize; j++) {
+                        sum += Math.abs(rawData[blockStart + j] || 0);
+                    }
+                    filteredData.push(sum / blockSize);
+                }
+                const maxVal = Math.max(...filteredData) || 1;
+                const normalizedData = filteredData.map(n => n / maxVal);
+
+                ctx.clearRect(0, 0, width, height);
+                ctx.fillStyle = 'rgba(120, 227, 254, 0.6)';
+                const middle = height / 2;
+                for (let i = 0; i < normalizedData.length; i++) {
+                    const barHeight = normalizedData[i] * (height * 0.8);
+                    ctx.fillRect(i, middle - barHeight / 2, 1, barHeight);
+                }
+                const gradient = ctx.createLinearGradient(0, 0, 0, height);
+                gradient.addColorStop(0, 'rgba(120, 227, 254, 0.4)');
+                gradient.addColorStop(0.5, 'rgba(120, 227, 254, 0.2)');
+                gradient.addColorStop(1, 'rgba(120, 227, 254, 0.4)');
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, width, height);
+
+                // Cache the rendered waveform so undo/redo re-renders instantly
+                waveformCache[clip.id] = canvas.toDataURL();
+                console.log('✅ Waveform rendered for:', clip.name);
+            }
+
+            if (existingBuffer) {
+                renderFromBuffer(existingBuffer);
+                return;
+            }
+
+            // First time: decode from data URL
+            const decodeCtx = new (window.AudioContext || window.webkitAudioContext)();
             fetch(clip.data)
-                .then(response => response.arrayBuffer())
-                .then(arrayBuffer => audioContext.decodeAudioData(arrayBuffer))
+                .then(r => r.arrayBuffer())
+                .then(ab => decodeCtx.decodeAudioData(ab))
                 .then(audioBuffer => {
-                    // Get audio data
-                    const rawData = audioBuffer.getChannelData(0); // Use first channel
-                    const samples = width; // One sample per pixel
-                    const blockSize = Math.floor(rawData.length / samples);
-                    const filteredData = [];
-                    
-                    // Downsample the audio data
-                    for (let i = 0; i < samples; i++) {
-                        let blockStart = blockSize * i;
-                        let sum = 0;
-                        for (let j = 0; j < blockSize; j++) {
-                            sum += Math.abs(rawData[blockStart + j]);
-                        }
-                        filteredData.push(sum / blockSize);
-                    }
-                    
-                    // Normalize the data
-                    const maxVal = Math.max(...filteredData);
-                    const normalizedData = filteredData.map(n => n / maxVal);
-                    
-                    // Clear canvas
-                    ctx.clearRect(0, 0, width, height);
-                    
-                    // Draw waveform
-                    ctx.fillStyle = 'rgba(120, 227, 254, 0.6)'; // Cyan with transparency
-                    ctx.strokeStyle = 'rgba(120, 227, 254, 1)'; // Solid cyan for outline
-                    ctx.lineWidth = 1;
-                    
-                    const middle = height / 2;
-                    
-                    // Draw as bars (Mozart-style)
-                    ctx.beginPath();
-                    for (let i = 0; i < normalizedData.length; i++) {
-                        const x = i;
-                        const barHeight = normalizedData[i] * (height * 0.8); // 80% of height
-                        const y = middle - (barHeight / 2);
-                        
-                        // Draw vertical bar
-                        ctx.fillRect(x, y, 1, barHeight);
-                    }
-                    
-                    // Add subtle gradient overlay
-                    const gradient = ctx.createLinearGradient(0, 0, 0, height);
-                    gradient.addColorStop(0, 'rgba(120, 227, 254, 0.4)');
-                    gradient.addColorStop(0.5, 'rgba(120, 227, 254, 0.2)');
-                    gradient.addColorStop(1, 'rgba(120, 227, 254, 0.4)');
-                    ctx.fillStyle = gradient;
-                    ctx.fillRect(0, 0, width, height);
-                    
-                    console.log('✅ Waveform rendered for:', clip.name);
+                    clipBufferStore[clip.id] = audioBuffer;
+                    renderFromBuffer(audioBuffer);
                 })
                 .catch(error => {
                     console.error('❌ Error rendering waveform:', error);
-                    // Fallback: draw simple placeholder
                     ctx.fillStyle = 'rgba(120, 227, 254, 0.3)';
                     ctx.fillRect(0, height / 3, width, height / 3);
                 });
