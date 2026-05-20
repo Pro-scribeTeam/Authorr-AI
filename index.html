@@ -9597,9 +9597,9 @@ Format as clean, readable text ready for narration.`;
             if (!jobId) throw new Error(`${labelForErrors}: No job ID returned`);
             console.log(`${labelForErrors} job submitted: ${jobId}`);
 
-            // 2. Poll for completion (up to 6 minutes — accommodates cold RunPod starts)
-            const maxWaitMs = 360000;
-            const pollInterval = 2000;
+            // 2. Poll for completion (up to 12 minutes — GPU cold starts can take 8-10 min)
+            const maxWaitMs = 720000;
+            const pollInterval = 3000;
             const start = Date.now();
 
             while (Date.now() - start < maxWaitMs) {
@@ -9607,7 +9607,8 @@ Format as clean, readable text ready for narration.`;
                 const statusResp = await fetch(BASE + '/status/' + jobId, { headers });
                 if (!statusResp.ok) continue;
                 const statusData = await statusResp.json();
-                console.log(`${labelForErrors} status: ${statusData.status}`);
+                const elapsedMin = Math.floor((Date.now() - start) / 60000);
+                console.log(`${labelForErrors} status: ${statusData.status} (${elapsedMin}m elapsed)`);
 
                 if (statusData.status === 'COMPLETED') {
                     return statusData.output;
@@ -9621,9 +9622,13 @@ Format as clean, readable text ready for narration.`;
                     const errDetail = statusData.error ? JSON.stringify(statusData.error) : 'Unknown error';
                     throw new Error(`${labelForErrors} failed after 3 attempts: ${errDetail}`);
                 }
-                // IN_QUEUE or IN_PROGRESS — keep polling
+                // IN_QUEUE or IN_PROGRESS — update loading message if cold starting
+                if (statusData.status === 'IN_QUEUE' && Date.now() - start > 60000) {
+                    const waitMin = Math.ceil((Date.now() - start) / 60000);
+                    showLoading(`GPU is warming up (${waitMin}m)… this can take up to 10 min on a cold start`);
+                }
             }
-            throw new Error(`${labelForErrors} timed out after 6 minutes`);
+            throw new Error(`${labelForErrors} timed out after 12 minutes`);
         }
 
         async function generateChatterboxAudio(text, exaggeration = 0.5, cfg_weight = 0.5) {
