@@ -9600,7 +9600,10 @@ Format as clean, readable text ready for narration.`;
             // 2. Poll for completion (up to 12 minutes — GPU cold starts can take 8-10 min)
             const maxWaitMs = 720000;
             const pollInterval = 3000;
+            const queueStuckMs = 180000; // cancel & resubmit if stuck IN_QUEUE > 3 min (unhealthy worker routing)
             const start = Date.now();
+            let lastStatus = null;
+            let queueSince = null;
 
             while (Date.now() - start < maxWaitMs) {
                 await new Promise(r => setTimeout(r, pollInterval));
@@ -9615,7 +9618,7 @@ Format as clean, readable text ready for narration.`;
                 } else if (statusData.status === 'FAILED') {
                     // Check if failure is due to a RunPod rollout/infrastructure event
                     const errDetail = statusData.error ? JSON.stringify(statusData.error) : '';
-                    const isRollout = errDetail.toLowerCase().includes('rollout') || errDetail.toLowerCase().includes('in progress') || errDetail.toLowerCase().includes('worker') && errDetail.toLowerCase().includes('restart');
+                    const isRollout = errDetail.toLowerCase().includes('rollout') || errDetail.toLowerCase().includes('in progress') || (errDetail.toLowerCase().includes('worker') && errDetail.toLowerCase().includes('restart'));
                     if (isRollout) {
                         showLoading('RunPod rollout in progress — waiting for worker to come back online…');
                         console.warn(`${labelForErrors}: RunPod rollout detected, waiting 30s before retry...`);
@@ -9625,16 +9628,33 @@ Format as clean, readable text ready for narration.`;
                     // Auto-retry up to 2 times for transient GPU failures
                     if (retryCount < 2) {
                         console.warn(`${labelForErrors} job failed — retrying (attempt ${retryCount + 1}/2)...`);
-                        await new Promise(r => setTimeout(r, 3000)); // wait 3s before retry
+                        await new Promise(r => setTimeout(r, 3000));
                         return runpodSubmitAndPoll(endpointId, apiKey, inputPayload, labelForErrors, retryCount + 1);
                     }
                     throw new Error(`${labelForErrors} failed after 3 attempts: ${errDetail || 'Unknown error'}`);
                 }
-                // IN_QUEUE or IN_PROGRESS — update loading message
+
+                // Track how long we've been stuck IN_QUEUE
+                if (statusData.status === 'IN_QUEUE') {
+                    if (!queueSince) queueSince = Date.now();
+                    const queueMs = Date.now() - queueSince;
+                    if (queueMs > queueStuckMs) {
+                        // Job is stuck on an unhealthy worker — cancel and resubmit
+                        console.warn(`${labelForErrors}: stuck IN_QUEUE for ${Math.round(queueMs/1000)}s — cancelling and resubmitting`);
+                        showLoading('Job stuck in queue (unhealthy worker) — resubmitting…');
+                        try { await fetch(BASE + '/cancel/' + jobId, { method: 'POST', headers }); } catch(e) {}
+                        await new Promise(r => setTimeout(r, 3000));
+                        return runpodSubmitAndPoll(endpointId, apiKey, inputPayload, labelForErrors, retryCount);
+                    }
+                } else {
+                    queueSince = null; // reset if we moved to IN_PROGRESS
+                }
+
+                // Update loading message
                 if (Date.now() - start > 60000) {
                     const waitMin = Math.ceil((Date.now() - start) / 60000);
                     const msg = statusData.status === 'IN_QUEUE'
-                        ? `RunPod worker warming up (${waitMin}m)… can take up to 10 min on cold start`
+                        ? `RunPod worker warming up (${waitMin}m)… resubmitting if stuck`
                         : `Generating narration… (${waitMin}m elapsed)`;
                     showLoading(msg);
                 }
