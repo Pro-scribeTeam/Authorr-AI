@@ -9613,19 +9613,30 @@ Format as clean, readable text ready for narration.`;
                 if (statusData.status === 'COMPLETED') {
                     return statusData.output;
                 } else if (statusData.status === 'FAILED') {
+                    // Check if failure is due to a RunPod rollout/infrastructure event
+                    const errDetail = statusData.error ? JSON.stringify(statusData.error) : '';
+                    const isRollout = errDetail.toLowerCase().includes('rollout') || errDetail.toLowerCase().includes('in progress') || errDetail.toLowerCase().includes('worker') && errDetail.toLowerCase().includes('restart');
+                    if (isRollout) {
+                        showLoading('RunPod rollout in progress — waiting for worker to come back online…');
+                        console.warn(`${labelForErrors}: RunPod rollout detected, waiting 30s before retry...`);
+                        await new Promise(r => setTimeout(r, 30000));
+                        return runpodSubmitAndPoll(endpointId, apiKey, inputPayload, labelForErrors, retryCount);
+                    }
                     // Auto-retry up to 2 times for transient GPU failures
                     if (retryCount < 2) {
                         console.warn(`${labelForErrors} job failed — retrying (attempt ${retryCount + 1}/2)...`);
                         await new Promise(r => setTimeout(r, 3000)); // wait 3s before retry
                         return runpodSubmitAndPoll(endpointId, apiKey, inputPayload, labelForErrors, retryCount + 1);
                     }
-                    const errDetail = statusData.error ? JSON.stringify(statusData.error) : 'Unknown error';
-                    throw new Error(`${labelForErrors} failed after 3 attempts: ${errDetail}`);
+                    throw new Error(`${labelForErrors} failed after 3 attempts: ${errDetail || 'Unknown error'}`);
                 }
-                // IN_QUEUE or IN_PROGRESS — update loading message if cold starting
-                if (statusData.status === 'IN_QUEUE' && Date.now() - start > 60000) {
+                // IN_QUEUE or IN_PROGRESS — update loading message
+                if (Date.now() - start > 60000) {
                     const waitMin = Math.ceil((Date.now() - start) / 60000);
-                    showLoading(`GPU is warming up (${waitMin}m)… this can take up to 10 min on a cold start`);
+                    const msg = statusData.status === 'IN_QUEUE'
+                        ? `RunPod worker warming up (${waitMin}m)… can take up to 10 min on cold start`
+                        : `Generating narration… (${waitMin}m elapsed)`;
+                    showLoading(msg);
                 }
             }
             throw new Error(`${labelForErrors} timed out after 12 minutes`);
