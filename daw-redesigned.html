@@ -1876,14 +1876,19 @@
             if (e.target.closest('.audio-clip')) return;
             if (e.target.closest('#playhead') || preventNextTimelineClick) return;
             if (e.target.closest('.trim-handle')) return;
-            
+            if (e.target.closest('.track-header')) return; // clicking track labels shouldn't seek
+
             const timelineWrapper = document.querySelector('.timeline-canvas-wrapper');
             const rect = timelineWrapper.getBoundingClientRect();
-            const clickX = e.clientX - rect.left - 200; // Subtract track header width
-            
+            // Account for scroll position so clicks map to the correct timeline position
+            const clickX = e.clientX - rect.left + timelineWrapper.scrollLeft - 200;
+
+            // Ignore clicks in the track header zone (negative clickX)
+            if (clickX < 0) return;
+
             // Calculate time based on click position and zoom
             const pixelsPerSecond = 50 * dawState.zoom;
-            const clickTime = Math.max(0, clickX / pixelsPerSecond);
+            const clickTime = clickX / pixelsPerSecond;
             
             // Update playhead position (no max constraint - can go anywhere on timeline)
             dawState.currentTime = clickTime;
