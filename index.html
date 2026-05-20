@@ -5313,8 +5313,9 @@ Return the COMPLETE text, dramatically rewritten with visible personality and hu
                 // Update preview text with first paragraph
                 const sentences = content.split(/[.!?]+/).filter(s => s.trim().length > 0);
                 const previewText = sentences.slice(0, 2).join('. ') + '.';
-                document.getElementById('previewText').value = previewText;
-                
+                const previewEl = document.getElementById('previewText');
+                if (previewEl) previewEl.value = previewText;
+
                 showStatusMessage('Story transferred to narration page');
             }
         }
@@ -9587,8 +9588,8 @@ Format as clean, readable text ready for narration.`;
             if (!jobId) throw new Error(`${labelForErrors}: No job ID returned`);
             console.log(`${labelForErrors} job submitted: ${jobId}`);
 
-            // 2. Poll for completion (up to 3 minutes)
-            const maxWaitMs = 180000;
+            // 2. Poll for completion (up to 6 minutes — accommodates cold RunPod starts)
+            const maxWaitMs = 360000;
             const pollInterval = 2000;
             const start = Date.now();
 
@@ -9613,7 +9614,7 @@ Format as clean, readable text ready for narration.`;
                 }
                 // IN_QUEUE or IN_PROGRESS — keep polling
             }
-            throw new Error(`${labelForErrors} timed out after 3 minutes`);
+            throw new Error(`${labelForErrors} timed out after 6 minutes`);
         }
 
         async function generateChatterboxAudio(text, exaggeration = 0.5, cfg_weight = 0.5) {
