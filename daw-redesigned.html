@@ -537,7 +537,10 @@
         }
         .trim-handle-left  { left: 0;  cursor: w-resize; border-radius: 4px 0 0 4px; }
         .trim-handle-right { right: 0; cursor: e-resize; border-radius: 0 4px 4px 0; }
-        body[data-tool="trim"] .audio-clip .trim-handle { display: block; }
+        body[data-tool="trim"] .audio-clip:hover .trim-handle,
+        body[data-tool="trim"] .audio-clip.trim-dragging .trim-handle { display: block; }
+        .trim-handle-left::after  { content: '▶'; position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); font-size: 7px; color: rgba(0,0,0,0.85); line-height: 1; }
+        .trim-handle-right::after { content: '◀'; position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); font-size: 7px; color: rgba(0,0,0,0.85); line-height: 1; }
         
         .audio-clip {
             transition: all 0.15s ease;
@@ -3770,11 +3773,14 @@
                 console.log(`📍 Clip moved to: ${newStartTime.toFixed(2)}s`);
             });
             
-            // Create canvas for waveform
+            // Create canvas for waveform — full audio duration width so trim reveals correct portion
             const canvas = document.createElement('canvas');
-            canvas.width = clip.duration * pixelsPerSecond; // Match clip width with zoom
-            canvas.height = 60; // Fixed height for waveform
-            canvas.style.width = '100%';
+            canvas.width = clip.duration * pixelsPerSecond;
+            canvas.height = 60;
+            canvas.style.position = 'absolute';
+            canvas.style.top = '0';
+            canvas.style.left = `-${clip.trimStart * pixelsPerSecond}px`;
+            canvas.style.width = (clip.duration * pixelsPerSecond) + 'px';
             canvas.style.height = '100%';
             canvas.style.pointerEvents = 'none';
             
@@ -3814,6 +3820,7 @@
                 handle.addEventListener('mousedown', function(e) {
                     if (dawState.selectedTool !== 'trim') return;
                     trimDragging = true;
+                    clipEl.classList.add('trim-dragging');
                     startX = e.clientX;
                     startTrim = (side === 'left') ? clip.trimStart : clip.trimEnd;
                     e.stopPropagation();
@@ -3829,21 +3836,22 @@
                     if (side === 'left') {
                         const maxTrimStart = clip.duration - clip.trimEnd - 0.1;
                         clip.trimStart = Math.max(0, Math.min(maxTrimStart, startTrim + deltaSec));
-                        // Shift clip visual start edge
-                        const pixPerSec2 = 50 * dawState.zoom;
-                        clipEl.style.left  = `${(clip.startTime + clip.trimStart) * pixPerSec2}px`;
-                        clipEl.style.width = `${(clip.duration - clip.trimStart - clip.trimEnd) * pixPerSec2}px`;
+                        clipEl.style.left  = `${(clip.startTime + clip.trimStart) * pixPerSec}px`;
+                        clipEl.style.width = `${(clip.duration - clip.trimStart - clip.trimEnd) * pixPerSec}px`;
+                        // Scroll canvas so correct waveform portion is visible
+                        canvas.style.left = `-${clip.trimStart * pixPerSec}px`;
                     } else {
                         const maxTrimEnd = clip.duration - clip.trimStart - 0.1;
                         clip.trimEnd = Math.max(0, Math.min(maxTrimEnd, startTrim - deltaSec));
-                        const pixPerSec2 = 50 * dawState.zoom;
-                        clipEl.style.width = `${(clip.duration - clip.trimStart - clip.trimEnd) * pixPerSec2}px`;
+                        clipEl.style.width = `${(clip.duration - clip.trimStart - clip.trimEnd) * pixPerSec}px`;
+                        // Canvas left stays the same for right-trim — overflow:hidden clips the right end
                     }
                 });
 
                 document.addEventListener('mouseup', function() {
                     if (trimDragging) {
                         trimDragging = false;
+                        clipEl.classList.remove('trim-dragging');
                         saveState('Trim clip');
                         console.log(`✂️ Trim: start=${clip.trimStart.toFixed(2)}s end=${clip.trimEnd.toFixed(2)}s`);
                     }
