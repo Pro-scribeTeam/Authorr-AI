@@ -2411,10 +2411,17 @@
                         </div>
 
                         <div>
-                            <label class="block text-sm font-semibold mb-2">🎵 Jamendo Client ID — Background Music & SFX</label>
+                            <label class="block text-sm font-semibold mb-2">🎵 Jamendo Client ID — Background Music</label>
                             <input type="text" id="jamendoClientId" placeholder="Enter your Jamendo Client ID..."
                                    class="w-full px-4 py-2 rounded-lg form-field bg-theme-primary text-theme-primary">
                             <p class="text-xs text-theme-secondary mt-1">Free API key for royalty-free background music in the DAW. Register at <a href="https://developer.jamendo.com" target="_blank" class="text-cyan-400 underline">developer.jamendo.com</a></p>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-semibold mb-2">🔊 Freesound API Key — Sound Effects</label>
+                            <input type="text" id="freesoundApiKey" placeholder="Enter your Freesound API key..."
+                                   class="w-full px-4 py-2 rounded-lg form-field bg-theme-primary text-theme-primary">
+                            <p class="text-xs text-theme-secondary mt-1">Free API key for real sound effects (rain, fire, nature, etc.) in the DAW. Get a free key at <a href="https://freesound.org/apiv2/apply" target="_blank" class="text-cyan-400 underline">freesound.org/apiv2/apply</a></p>
                         </div>
 
                         <div>
@@ -7397,6 +7404,8 @@ Format as clean, readable text ready for narration.`;
             if (cfApiToken && !cfApiToken.startsWith('••')) localStorage.setItem('cfApiToken', cfApiToken);
             const jamendoId = document.getElementById('jamendoClientId')?.value?.trim();
             if (jamendoId) localStorage.setItem('jamendoClientId', jamendoId);
+            const freesoundKey = document.getElementById('freesoundApiKey')?.value?.trim();
+            if (freesoundKey) localStorage.setItem('freesoundApiKey', freesoundKey);
             if (model) {
                 localStorage.setItem('selectedModel', model);
             }
@@ -7484,6 +7493,8 @@ Format as clean, readable text ready for narration.`;
             if (cfApiToken) { const el = document.getElementById('cfApiToken'); if (el) el.value = '••••••••••••••••' + cfApiToken.slice(-4); }
             const jamendoClientId = localStorage.getItem('jamendoClientId');
             if (jamendoClientId) { const el = document.getElementById('jamendoClientId'); if (el) el.value = jamendoClientId; }
+            const freesoundApiKey = localStorage.getItem('freesoundApiKey');
+            if (freesoundApiKey) { const el = document.getElementById('freesoundApiKey'); if (el) el.value = freesoundApiKey; }
             toggleAIProviderFields();
             toggleImageProviderFields();
 
