@@ -528,6 +528,7 @@
             position: absolute;
             top: 0;
             width: 10px;
+            z-index: 20;
             height: 100%;
             background: rgba(255, 200, 0, 0.85);
             z-index: 30;
@@ -2685,21 +2686,21 @@
                 // Clear cut selections when switching away from cut tool
                 if (tool !== 'cut') {
                     clipEl.dataset.cutSelectionActive = 'false';
-                    const overlay = clipEl.querySelector('div[style*="rgba(0, 212, 255"]');
+                    const overlay = clipEl.querySelector('.cut-selection-overlay');
                     if (overlay) overlay.remove();
                 }
 
                 // Clear fade in selections when switching away
                 if (tool !== 'fadeIn') {
                     clipEl.dataset.fadeInSelectionActive = 'false';
-                    const fiOverlay = clipEl.querySelector('div[style*="rgba(0,200,100"]');
+                    const fiOverlay = clipEl.querySelector('.fade-in-selection-overlay');
                     if (fiOverlay) fiOverlay.remove();
                 }
 
                 // Clear fade out selections when switching away from fadeOut tool
                 if (tool !== 'fadeOut') {
                     clipEl.dataset.fadeSelectionActive = 'false';
-                    const fadeOverlay = clipEl.querySelector('div[style*="rgba(255, 165, 0"]');
+                    const fadeOverlay = clipEl.querySelector('.fade-out-selection-overlay');
                     if (fadeOverlay) fadeOverlay.remove();
                 }
             });
@@ -2948,7 +2949,7 @@
                 }
 
                 // Remove selection overlay
-                const fiOverlay = clipEl.querySelector('div[style*="rgba(0,200,100"]');
+                const fiOverlay = clipEl.querySelector('.fade-in-selection-overlay');
                 if (fiOverlay) fiOverlay.remove();
                 clipEl.dataset.fadeInSelectionActive = 'false';
                 delete clipEl.dataset.fadeInSelectionStart;
@@ -3054,7 +3055,7 @@
                 console.log(`   Start: ${fadeStartTime.toFixed(2)}s, Duration: ${fadeDuration.toFixed(2)}s`);
                 
                 // Remove the fade selection overlay
-                const fadeOverlay = clipEl.querySelector('div[style*="rgba(255, 165, 0"]');
+                const fadeOverlay = clipEl.querySelector('.fade-out-selection-overlay');
                 if (fadeOverlay) {
                     fadeOverlay.remove();
                 }
@@ -3545,8 +3546,9 @@
                     cutSelectionEnd = clickX;
                     
                     // Create selection overlay
-                    if (!cutSelectionOverlay) {
+                    if (!cutSelectionOverlay || !cutSelectionOverlay.parentElement) {
                         cutSelectionOverlay = document.createElement('div');
+                        cutSelectionOverlay.className = 'cut-selection-overlay';
                         cutSelectionOverlay.style.position = 'absolute';
                         cutSelectionOverlay.style.top = '0';
                         cutSelectionOverlay.style.height = '100%';
@@ -3568,8 +3570,9 @@
                     const clickX = e.clientX - rect.left;
                     fadeInSelectionStart = clickX;
                     fadeInSelectionEnd = clickX;
-                    if (!fadeInSelectionOverlay) {
+                    if (!fadeInSelectionOverlay || !fadeInSelectionOverlay.parentElement) {
                         fadeInSelectionOverlay = document.createElement('div');
+                        fadeInSelectionOverlay.className = 'fade-in-selection-overlay';
                         fadeInSelectionOverlay.style.cssText = 'position:absolute;top:0;height:100%;background:linear-gradient(to right,rgba(0,200,100,0.6),rgba(0,200,100,0.1));border:2px solid #00c864;pointer-events:none;z-index:50;';
                         clipEl.appendChild(fadeInSelectionOverlay);
                     }
@@ -3588,8 +3591,9 @@
                     fadeSelectionEnd = clickX;
 
                     // Create fade selection overlay (orange color)
-                    if (!fadeSelectionOverlay) {
+                    if (!fadeSelectionOverlay || !fadeSelectionOverlay.parentElement) {
                         fadeSelectionOverlay = document.createElement('div');
+                        fadeSelectionOverlay.className = 'fade-out-selection-overlay';
                         fadeSelectionOverlay.style.position = 'absolute';
                         fadeSelectionOverlay.style.top = '0';
                         fadeSelectionOverlay.style.height = '100%';
