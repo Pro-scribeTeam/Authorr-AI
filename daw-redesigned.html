@@ -356,7 +356,8 @@
             min-height: 80px;
             max-height: 80px;
             position: relative;
-            border-bottom: 1px solid var(--daw-border);
+            border-top: 2px solid #000;
+            border-bottom: 2px solid #000;
             display: flex;
             align-items: stretch;
             overflow: visible;
@@ -2896,10 +2897,13 @@
         
         function executeFadeInSelection() {
             let clipsWithSelection = document.querySelectorAll('.audio-clip[data-fade-in-selection-active="true"]');
-            // No drag selection — increment existing fade by 1s on selected/all clips
+            // No drag selection — increment existing fade on selected clips only
             if (clipsWithSelection.length === 0) {
                 let targets = document.querySelectorAll('.audio-clip.selected');
-                if (!targets.length) targets = document.querySelectorAll('.audio-clip');
+                if (!targets.length) {
+                    console.log('⚠️ No fade-in selection active. Drag a region on a clip first, or select a clip.');
+                    return;
+                }
                 targets.forEach(clipEl => {
                     const clipId = clipEl.dataset.clipId;
                     for (const track of dawState.tracks) {
@@ -2979,10 +2983,13 @@
             // Find all clips with active fade selections
             let clipsWithSelection = document.querySelectorAll('.audio-clip[data-fade-selection-active="true"]');
             
-            // No drag selection — increment existing fade by 1s on selected/all clips
+            // No drag selection — increment existing fade on selected clips only
             if (clipsWithSelection.length === 0) {
                 let targets = document.querySelectorAll('.audio-clip.selected');
-                if (!targets.length) targets = document.querySelectorAll('.audio-clip');
+                if (!targets.length) {
+                    console.log('⚠️ No fade-out selection active. Drag a region on a clip first, or select a clip.');
+                    return;
+                }
                 targets.forEach(clipEl => {
                     const clipId = clipEl.dataset.clipId;
                     for (const track of dawState.tracks) {
