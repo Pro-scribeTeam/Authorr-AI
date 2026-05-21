@@ -337,10 +337,11 @@
             min-height: 30px;
             background-color: var(--daw-bg-secondary);
             border-bottom: 1px solid var(--daw-border);
-            position: relative;
+            position: sticky;
+            top: 0;
             margin-left: 200px; /* Align with track content area */
             overflow: visible;
-            z-index: 5;
+            z-index: 50;
         }
         
         .timeline-tracks {
@@ -484,7 +485,7 @@
             top: 30px; /* Start below ruler */
             left: 200px; /* Start after track headers */
             width: 10px; /* Wider hit area for easier grabbing */
-            height: calc(100% - 30px);
+            height: calc(100% - 30px); /* updated dynamically in JS to cover all tracks */
             z-index: 1000;
             pointer-events: auto; /* Allow dragging */
             display: none;
@@ -2208,14 +2209,20 @@
         function updatePlayheadPosition(currentTime) {
             const playhead = document.getElementById('playhead');
             if (!playhead) return;
-            
+
             // Calculate playhead position based on time and zoom
             // Using 50px per second as base (same as clip rendering)
             const pixelsPerSecond = 50 * dawState.zoom;
             const position = 200 + (currentTime * pixelsPerSecond); // 200px offset for track headers
-            
+
             playhead.style.left = `${position}px`;
             playhead.style.display = 'block';
+
+            // Stretch playhead to cover all tracks (tracks may exceed visible wrapper height)
+            const tracksEl = document.getElementById('timelineTracks');
+            if (tracksEl) {
+                playhead.style.height = tracksEl.offsetHeight + 'px';
+            }
             
             // Auto-scroll: always keep playhead at 25% from left during playback
             if (dawState.isPlaying) {
