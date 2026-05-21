@@ -4298,9 +4298,8 @@
             if (!category) { alert('Select a category first.'); return; }
 
             const freesoundKey = localStorage.getItem('freesoundApiKey');
-            const freesoundClientId = localStorage.getItem('freesoundClientId');
-            if (!freesoundKey || !freesoundClientId) {
-                alert('Add your Freesound Client ID and API key in Config > Settings.\nGet them free at freesound.org/apiv2/apply');
+            if (!freesoundKey) {
+                alert('Add your Freesound API key in Config > Settings.\nGet it free at freesound.org/apiv2/apply');
                 return;
             }
 
@@ -4310,11 +4309,11 @@
             try {
                 const query = SFX_QUERIES[category] || category;
                 const params = new URLSearchParams({
-                    query, client_id: freesoundClientId, client_secret: freesoundKey, format: 'json',
+                    query, token: freesoundKey, format: 'json',
                     fields: 'id,name,previews,duration,username',
                     page_size: 15, filter: 'duration:[1 TO 300]'
                 });
-                const res = await fetch(`https://freesound.org/apiv2/search/text/?${params}`);
+                const res = await fetch(`/api/sfx?${params}`);
                 if (!res.ok) throw new Error(`Freesound API ${res.status}`);
                 const data = await res.json();
                 if (!data.results?.length) {
@@ -4335,9 +4334,8 @@
 
         async function headerSearchFreesound() {
             const freesoundKey = localStorage.getItem('freesoundApiKey');
-            const freesoundClientId = localStorage.getItem('freesoundClientId');
-            if (!freesoundKey || !freesoundClientId) {
-                alert('Add your Freesound Client ID and API key in Config > Settings.\nGet them free at freesound.org/apiv2/apply');
+            if (!freesoundKey) {
+                alert('Add your Freesound API key in Config > Settings.\nGet it free at freesound.org/apiv2/apply');
                 return;
             }
             const category = document.getElementById('headerSfxCategory').value;
@@ -4350,11 +4348,11 @@
             try {
                 const query = SFX_QUERIES[category] || category;
                 const params = new URLSearchParams({
-                    query, client_id: freesoundClientId, client_secret: freesoundKey, format: 'json',
+                    query, token: freesoundKey, format: 'json',
                     fields: 'id,name,previews,duration,username',
                     page_size: 15, filter: 'duration:[1 TO 300]'
                 });
-                const res = await fetch(`https://freesound.org/apiv2/search/text/?${params}`);
+                const res = await fetch(`/api/sfx?${params}`);
                 if (!res.ok) throw new Error(`Freesound API ${res.status}`);
                 const data = await res.json();
                 if (!data.results?.length) {
