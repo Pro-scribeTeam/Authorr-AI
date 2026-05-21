@@ -1848,9 +1848,12 @@
                             </div>
                         </div>
 
-                        <div class="border-t border-theme pt-4">
+                        <div class="border-t border-theme pt-4 space-y-2">
                             <button onclick="generateNarration()" id="generateNarrationBtn" class="btn-primary w-full py-3 rounded-lg font-semibold" disabled>
                                 <i class="fas fa-microphone mr-2"></i>Generate Narration
+                            </button>
+                            <button onclick="openAudioDAW()" class="w-full py-3 rounded-lg font-semibold transition-all" style="background:#0e7490;color:#fff;border:none;cursor:pointer;" onmouseover="this.style.background='#155e75'" onmouseout="this.style.background='#0e7490'">
+                                <i class="fas fa-sliders-h mr-2"></i>Go to DAW
                             </button>
                         </div>
                     </div>
