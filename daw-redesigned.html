@@ -1159,9 +1159,9 @@
                 <button class="theme-toggle" id="themeToggle" title="Toggle Dark/Light Mode">
                     <i class="fas fa-sun"></i>
                 </button>
-                <button class="action-btn primary" id="closeBtn">
-                    <i class="fas fa-times"></i>
-                    Close
+                <button class="action-btn" id="saveBtn" style="background:#16a34a;border-color:#16a34a;color:#fff;">
+                    <i class="fas fa-save"></i>
+                    Save
                 </button>
             </div>
         </div>
@@ -1446,9 +1446,18 @@
         // INITIALIZATION
         // ========================================
         
-        function initializeDAW() {
+        async function initializeDAW() {
             console.log('🎚️ Initializing Mozart-style DAW...');
-            
+
+            // Restore saved project if one exists
+            if (localStorage.getItem(DAW_META_KEY)) {
+                const restored = await restoreDawProject();
+                if (restored) {
+                    document.getElementById('bpmValue').textContent = dawState.bpm;
+                    document.getElementById('zoomLevel').textContent = Math.round(dawState.zoom * 100) + '%';
+                }
+            }
+
             // Render tracks
             renderTracks();
             
@@ -1782,7 +1791,7 @@
             // Header actions
             document.getElementById('exportBtn').addEventListener('click', exportAudio);
             document.getElementById('sendToCoverBtn').addEventListener('click', sendToCover);
-            document.getElementById('closeBtn').addEventListener('click', closeDaw);
+            document.getElementById('saveBtn').addEventListener('click', saveDawProject);
             
             // Toolbar tools
             document.getElementById('selectTool').addEventListener('click', () => setTool('select'));
@@ -3351,6 +3360,139 @@
             }
         }
         
+        // ========================================
+        // SAVE / RESTORE PROJECT (IndexedDB)
+        // ========================================
+
+        const DAW_DB_NAME = 'AuthorrDAW';
+        const DAW_STORE   = 'clipAudio';
+        const DAW_META_KEY = 'dawProjectMeta';
+
+        function openDawDB() {
+            return new Promise((resolve, reject) => {
+                const req = indexedDB.open(DAW_DB_NAME, 1);
+                req.onupgradeneeded = e => e.target.result.createObjectStore(DAW_STORE);
+                req.onsuccess = e => resolve(e.target.result);
+                req.onerror  = e => reject(e.target.error);
+            });
+        }
+
+        async function saveClipAudio(db, clipId, arrayBuffer) {
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(DAW_STORE, 'readwrite');
+                tx.objectStore(DAW_STORE).put(arrayBuffer, clipId);
+                tx.oncomplete = resolve;
+                tx.onerror = e => reject(e.target.error);
+            });
+        }
+
+        async function loadClipAudio(db, clipId) {
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(DAW_STORE, 'readonly');
+                const req = tx.objectStore(DAW_STORE).get(clipId);
+                req.onsuccess = e => resolve(e.target.result || null);
+                req.onerror   = e => reject(e.target.error);
+            });
+        }
+
+        async function saveDawProject() {
+            const btn = document.getElementById('saveBtn');
+            const origText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving…';
+            btn.disabled = true;
+
+            try {
+                const db = await openDawDB();
+
+                // Build serializable metadata (no ArrayBuffers)
+                const meta = {
+                    savedAt: Date.now(),
+                    bpm: dawState.bpm,
+                    zoom: dawState.zoom,
+                    currentTime: dawState.currentTime,
+                    tracks: dawState.tracks.map(t => ({
+                        id: t.id, name: t.name, type: t.type,
+                        icon: t.icon, color: t.color,
+                        muted: t.muted, solo: t.solo, volume: t.volume,
+                        clips: t.clips.map(c => ({
+                            id: c.id, name: c.name,
+                            duration: c.duration, startTime: c.startTime,
+                            trackId: c.trackId,
+                            trimStart: c.trimStart || 0,
+                            trimEnd: c.trimEnd || 0,
+                            fadeIn: c.fadeIn || 0,
+                            fadeOut: c.fadeOut || 0,
+                            hasAudio: !!(c.data)
+                        }))
+                    }))
+                };
+
+                // Save each clip's audio ArrayBuffer to IndexedDB
+                for (const track of dawState.tracks) {
+                    for (const clip of track.clips) {
+                        if (clip.data) {
+                            await saveClipAudio(db, clip.id, clip.data);
+                        }
+                    }
+                }
+
+                localStorage.setItem(DAW_META_KEY, JSON.stringify(meta));
+                dawToast('✓ Project saved — you can close and return anytime', '#22c55e');
+            } catch(e) {
+                dawToast('✗ Save failed: ' + e.message, '#dc2626');
+                console.error('Save error:', e);
+            } finally {
+                btn.innerHTML = origText;
+                btn.disabled = false;
+            }
+        }
+
+        async function restoreDawProject() {
+            const raw = localStorage.getItem(DAW_META_KEY);
+            if (!raw) return false;
+
+            try {
+                const meta = JSON.parse(raw);
+                const date = new Date(meta.savedAt).toLocaleString();
+
+                const confirmed = confirm(
+                    `Restore your last saved project?\nSaved: ${date}\n\nClick OK to restore, Cancel to start fresh.`
+                );
+                if (!confirmed) { localStorage.removeItem(DAW_META_KEY); return false; }
+
+                const db = await openDawDB();
+
+                // Restore tracks
+                dawState.bpm  = meta.bpm  || 120;
+                dawState.zoom = meta.zoom || 1.0;
+                dawState.currentTime = 0; // always start from beginning
+
+                dawState.tracks = await Promise.all(meta.tracks.map(async t => {
+                    const clips = await Promise.all(t.clips.map(async c => {
+                        const audioData = c.hasAudio ? await loadClipAudio(db, c.id) : null;
+                        return {
+                            id: c.id, name: c.name,
+                            duration: c.duration, startTime: c.startTime,
+                            trackId: c.trackId,
+                            trimStart: c.trimStart || 0,
+                            trimEnd:   c.trimEnd   || 0,
+                            fadeIn:    c.fadeIn    || 0,
+                            fadeOut:   c.fadeOut   || 0,
+                            data: audioData,
+                            audioBuffer: null
+                        };
+                    }));
+                    return { ...t, clips };
+                }));
+
+                return true;
+            } catch(e) {
+                console.error('Restore error:', e);
+                dawToast('Could not restore saved project', '#f59e0b');
+                return false;
+            }
+        }
+
         function closeDaw() {
             // Check if running in iframe (embedded in main website)
             if (window.parent && window.parent !== window) {
