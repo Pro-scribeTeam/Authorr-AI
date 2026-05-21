@@ -2418,10 +2418,17 @@
                         </div>
 
                         <div>
-                            <label class="block text-sm font-semibold mb-2">🔊 Freesound API Key — Sound Effects</label>
-                            <input type="text" id="freesoundApiKey" placeholder="Enter your Freesound API key..."
+                            <label class="block text-sm font-semibold mb-2">🔊 Freesound Client ID — Sound Effects</label>
+                            <input type="text" id="freesoundClientId" placeholder="e.g. gICZjd0BWIGRAJUmp3pD"
                                    class="w-full px-4 py-2 rounded-lg form-field bg-theme-primary text-theme-primary">
-                            <p class="text-xs text-theme-secondary mt-1">Free API key for real sound effects (rain, fire, nature, etc.) in the DAW. Get a free key at <a href="https://freesound.org/apiv2/apply" target="_blank" class="text-cyan-400 underline">freesound.org/apiv2/apply</a></p>
+                            <p class="text-xs text-theme-secondary mt-1">Client ID from <a href="https://freesound.org/apiv2/apply" target="_blank" class="text-cyan-400 underline">freesound.org/apiv2/apply</a></p>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-semibold mb-2">🔊 Freesound API Key — Sound Effects</label>
+                            <input type="text" id="freesoundApiKey" placeholder="Client secret / API key..."
+                                   class="w-full px-4 py-2 rounded-lg form-field bg-theme-primary text-theme-primary">
+                            <p class="text-xs text-theme-secondary mt-1">Client secret from the same Freesound credentials page (used for real SFX search in DAW)</p>
                         </div>
 
                         <div>
@@ -7404,6 +7411,8 @@ Format as clean, readable text ready for narration.`;
             if (cfApiToken && !cfApiToken.startsWith('••')) localStorage.setItem('cfApiToken', cfApiToken);
             const jamendoId = document.getElementById('jamendoClientId')?.value?.trim();
             if (jamendoId) localStorage.setItem('jamendoClientId', jamendoId);
+            const freesoundClientId = document.getElementById('freesoundClientId')?.value?.trim();
+            if (freesoundClientId) localStorage.setItem('freesoundClientId', freesoundClientId);
             const freesoundKey = document.getElementById('freesoundApiKey')?.value?.trim();
             if (freesoundKey) localStorage.setItem('freesoundApiKey', freesoundKey);
             if (model) {
@@ -7493,6 +7502,8 @@ Format as clean, readable text ready for narration.`;
             if (cfApiToken) { const el = document.getElementById('cfApiToken'); if (el) el.value = '••••••••••••••••' + cfApiToken.slice(-4); }
             const jamendoClientId = localStorage.getItem('jamendoClientId');
             if (jamendoClientId) { const el = document.getElementById('jamendoClientId'); if (el) el.value = jamendoClientId; }
+            const freesoundClientId2 = localStorage.getItem('freesoundClientId');
+            if (freesoundClientId2) { const el = document.getElementById('freesoundClientId'); if (el) el.value = freesoundClientId2; }
             const freesoundApiKey = localStorage.getItem('freesoundApiKey');
             if (freesoundApiKey) { const el = document.getElementById('freesoundApiKey'); if (el) el.value = freesoundApiKey; }
             toggleAIProviderFields();

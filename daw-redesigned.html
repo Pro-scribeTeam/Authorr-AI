@@ -4298,8 +4298,9 @@
             if (!category) { alert('Select a category first.'); return; }
 
             const freesoundKey = localStorage.getItem('freesoundApiKey');
-            if (!freesoundKey) {
-                alert('Add your free Freesound API key in Config > Settings to search real sound effects.\nGet a free key at freesound.org/apiv2/apply');
+            const freesoundClientId = localStorage.getItem('freesoundClientId');
+            if (!freesoundKey || !freesoundClientId) {
+                alert('Add your Freesound Client ID and API key in Config > Settings.\nGet them free at freesound.org/apiv2/apply');
                 return;
             }
 
@@ -4309,7 +4310,7 @@
             try {
                 const query = SFX_QUERIES[category] || category;
                 const params = new URLSearchParams({
-                    query, token: freesoundKey, format: 'json',
+                    query, client_id: freesoundClientId, client_secret: freesoundKey, format: 'json',
                     fields: 'id,name,previews,duration,username',
                     page_size: 15, filter: 'duration:[1 TO 300]'
                 });
@@ -4334,8 +4335,9 @@
 
         async function headerSearchFreesound() {
             const freesoundKey = localStorage.getItem('freesoundApiKey');
-            if (!freesoundKey) {
-                alert('Add your free Freesound API key in Config > Settings.\nGet a free key at freesound.org/apiv2/apply');
+            const freesoundClientId = localStorage.getItem('freesoundClientId');
+            if (!freesoundKey || !freesoundClientId) {
+                alert('Add your Freesound Client ID and API key in Config > Settings.\nGet them free at freesound.org/apiv2/apply');
                 return;
             }
             const category = document.getElementById('headerSfxCategory').value;
@@ -4348,7 +4350,7 @@
             try {
                 const query = SFX_QUERIES[category] || category;
                 const params = new URLSearchParams({
-                    query, token: freesoundKey, format: 'json',
+                    query, client_id: freesoundClientId, client_secret: freesoundKey, format: 'json',
                     fields: 'id,name,previews,duration,username',
                     page_size: 15, filter: 'duration:[1 TO 300]'
                 });
