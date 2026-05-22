@@ -2048,18 +2048,27 @@
                 gainNodes[track.id].gain.value = shouldPlay ? boostedVolume : 0;
             });
             
+            // Pre-decode ALL clips in parallel before scheduling.
+            // This ensures startTime is captured after decoding so every
+            // source.start() fires from the same reference point regardless
+            // of how long fetch+decodeAudioData takes for uncached clips.
+            await Promise.all(
+                dawState.tracks.flatMap(track =>
+                    track.clips.map(clip => decodeAudioClip(clip).catch(() => {}))
+                )
+            );
+
             // Schedule all clips
             const currentTime = pauseTime || 0;
             startTime = ctx.currentTime - currentTime;
 
-            // Start playhead animation immediately — don't wait for decode loop
+            // Start playhead animation
             updatePlaybackTime();
             updateLEDMetersWithRealAudio();
 
             for (const track of dawState.tracks) {
                 for (const clip of track.clips) {
-                    // Decode audio if not already decoded
-                    const audioBuffer = await decodeAudioClip(clip);
+                    const audioBuffer = clip.audioBuffer || null;
                     if (!audioBuffer) {
                         console.warn(`⚠️ Skipping clip ${clip.name} - no audio buffer`);
                         continue;
