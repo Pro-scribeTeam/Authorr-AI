@@ -2370,17 +2370,10 @@
                     
                     <div class="space-y-4">
                         <div>
-                            <label class="block text-sm font-semibold mb-2">RunPod API Key</label>
-                            <input type="password" id="runpodKey" placeholder="rpa_..."
+                            <label class="block text-sm font-semibold mb-2">🎙️ Fal.ai API Key — Chatterbox TTS</label>
+                            <input type="password" id="falApiKey" placeholder="fal-..."
                                    class="w-full px-4 py-2 rounded-lg form-field bg-theme-primary text-theme-primary">
-                            <p class="text-xs text-theme-secondary mt-1">Required for Chatterbox TTS narration</p>
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-semibold mb-2">⚡ RunPod Endpoint ID — Chatterbox (Classic + Turbo)</label>
-                            <input type="text" id="runpodEndpointId" placeholder="e.g. 7p5r8y4d9ky4u6"
-                                   class="w-full px-4 py-2 rounded-lg form-field bg-theme-primary text-theme-primary">
-                            <p class="text-xs text-theme-secondary mt-1">One endpoint runs both Classic and Turbo — deploy your updated handler from GitHub.</p>
+                            <p class="text-xs text-theme-secondary mt-1">Required for Chatterbox Classic, Turbo &amp; Multilingual (23 languages). Get your key at <a href="https://fal.ai/dashboard/keys" target="_blank" class="text-cyan-400 underline">fal.ai/dashboard/keys</a>.</p>
                         </div>
 
                         <div>
@@ -7339,9 +7332,7 @@ Format as clean, readable text ready for narration.`;
         function saveSettings() {
             const apiKey = document.getElementById('openaiKey')?.value?.trim();
             const elevenlabsKey = document.getElementById('elevenlabsKey')?.value?.trim();
-            const runpodKey = document.getElementById('runpodKey')?.value?.trim();
-            const runpodEndpointId = document.getElementById('runpodEndpointId')?.value?.trim();
-            const runpodTurboEndpointId = document.getElementById('runpodTurboEndpointId')?.value?.trim();
+            const falApiKey = document.getElementById('falApiKey')?.value?.trim();
             const model = document.getElementById('modelSelection')?.value;
             const autoSave = document.getElementById('autoSave')?.checked;
 
@@ -7351,15 +7342,8 @@ Format as clean, readable text ready for narration.`;
             if (elevenlabsKey) {
                 localStorage.setItem('elevenlabsApiKey', elevenlabsKey);
             }
-            if (runpodKey && !runpodKey.startsWith('••')) {
-                // Strip any invisible / non-ASCII characters before saving
-                localStorage.setItem('runpodApiKey', runpodKey.replace(/[^\x20-\x7E]/g, '').trim());
-            }
-            if (runpodEndpointId) {
-                localStorage.setItem('runpodEndpointId', runpodEndpointId.replace(/[^\x20-\x7E]/g, '').trim());
-            }
-            if (runpodTurboEndpointId) {
-                localStorage.setItem('runpodTurboEndpointId', runpodTurboEndpointId.replace(/[^\x20-\x7E]/g, '').trim());
+            if (falApiKey && !falApiKey.startsWith('••')) {
+                localStorage.setItem('falApiKey', falApiKey.replace(/[^\x20-\x7E]/g, '').trim());
             }
             const aiProvider = document.getElementById('aiProvider')?.value;
             const ollamaModel = document.getElementById('ollamaModel')?.value;
@@ -7399,9 +7383,9 @@ Format as clean, readable text ready for narration.`;
                 elevenlabsInput.value = '••••••••••••••••••••••••••••••••••••••••••••••••••••' + elevenlabsKey.slice(-4);
             }
 
-            const runpodInput = document.getElementById('runpodKey');
-            if (runpodInput && runpodKey) {
-                runpodInput.value = '••••••••••••••••••••••••••••••••••••••••••••••••••••' + runpodKey.slice(-4);
+            const falInput = document.getElementById('falApiKey');
+            if (falInput && falApiKey && !falApiKey.startsWith('••')) {
+                falInput.value = '••••••••••••••••••••••••••••••••••••••••••••••••••••' + falApiKey.slice(-4);
             }
 
             const orKeyInput = document.getElementById('openrouterKey');
@@ -7413,7 +7397,7 @@ Format as clean, readable text ready for narration.`;
         function loadSettings() {
             const apiKey = localStorage.getItem('openaiApiKey');
             const elevenlabsKey = localStorage.getItem('elevenlabsApiKey');
-            const runpodKey = localStorage.getItem('runpodApiKey');
+            const falApiKey = localStorage.getItem('falApiKey');
             const model = localStorage.getItem('selectedModel');
             const autoSave = localStorage.getItem('autoSave');
 
@@ -7431,22 +7415,11 @@ Format as clean, readable text ready for narration.`;
                 }
             }
 
-            if (runpodKey) {
-                const runpodInput = document.getElementById('runpodKey');
-                if (runpodInput) {
-                    runpodInput.value = '••••••••••••••••••••••••••••••••••••••••••••••••••••' + runpodKey.slice(-4);
+            if (falApiKey) {
+                const falInput = document.getElementById('falApiKey');
+                if (falInput) {
+                    falInput.value = '••••••••••••••••••••••••••••••••••••••••••••••••••••' + falApiKey.slice(-4);
                 }
-            }
-
-            const runpodEndpointId = localStorage.getItem('runpodEndpointId');
-            if (runpodEndpointId) {
-                const endpointInput = document.getElementById('runpodEndpointId');
-                if (endpointInput) endpointInput.value = runpodEndpointId;
-            }
-            const runpodTurboEndpointId = localStorage.getItem('runpodTurboEndpointId');
-            if (runpodTurboEndpointId) {
-                const turboInput = document.getElementById('runpodTurboEndpointId');
-                if (turboInput) turboInput.value = runpodTurboEndpointId;
             }
             const aiProvider = localStorage.getItem('aiProvider') || 'ollama';
             const aiProviderSelect = document.getElementById('aiProvider');
@@ -8196,9 +8169,9 @@ Format as clean, readable text ready for narration.`;
 
             voiceSelect.innerHTML = '';
 
-            // ── Chatterbox Voices — MP3 reference clones ──
+            // ── Chatterbox Voices — MP3 reference clones via Fal.ai ──
             const turboOptgroup = document.createElement('optgroup');
-            turboOptgroup.label = '🎙️ Chatterbox Voices (RunPod)';
+            turboOptgroup.label = '🎙️ Chatterbox Voices (Fal.ai)';
             voiceSelect.appendChild(turboOptgroup);
 
             const turboVoices = [
@@ -8246,32 +8219,48 @@ Format as clean, readable text ready for narration.`;
                 turboOptgroup.appendChild(opt);
             });
 
-            // ── Chatterbox Classic — voice clone + style control ──
-            const chatterboxOptgroup = document.createElement('optgroup');
-            chatterboxOptgroup.label = '🔊 Chatterbox Classic (RunPod) — Voice Clone';
-            voiceSelect.appendChild(chatterboxOptgroup);
+            // ── Chatterbox Multilingual — 23 languages via Fal.ai ──
+            const multiOptgroup = document.createElement('optgroup');
+            multiOptgroup.label = '🌍 Chatterbox Multilingual (Fal.ai)';
+            voiceSelect.appendChild(multiOptgroup);
 
-            const chatterboxVoices = [
-                { value: 'chatterbox_neutral',    label: 'Classic — Neutral (balanced)',         exaggeration: 0.5, cfg: 0.5 },
-                { value: 'chatterbox_expressive', label: 'Classic — Expressive (lively)',         exaggeration: 0.75, cfg: 0.5 },
-                { value: 'chatterbox_calm',        label: 'Classic — Calm (relaxed)',              exaggeration: 0.3, cfg: 0.3 },
-                { value: 'chatterbox_dramatic',    label: 'Classic — Dramatic (intense)',          exaggeration: 0.9, cfg: 0.7 },
-                { value: 'chatterbox_audiobook',   label: 'Classic — Audiobook (clear narration)', exaggeration: 0.45, cfg: 0.6 },
+            const multilingualVoices = [
+                { id: 'english',    label: '🇺🇸 English' },
+                { id: 'spanish',    label: '🇪🇸 Spanish' },
+                { id: 'french',     label: '🇫🇷 French' },
+                { id: 'german',     label: '🇩🇪 German' },
+                { id: 'portuguese', label: '🇧🇷 Portuguese' },
+                { id: 'italian',    label: '🇮🇹 Italian' },
+                { id: 'hindi',      label: '🇮🇳 Hindi' },
+                { id: 'arabic',     label: '🇸🇦 Arabic' },
+                { id: 'chinese',    label: '🇨🇳 Chinese' },
+                { id: 'japanese',   label: '🇯🇵 Japanese' },
+                { id: 'korean',     label: '🇰🇷 Korean' },
+                { id: 'russian',    label: '🇷🇺 Russian' },
+                { id: 'dutch',      label: '🇳🇱 Dutch' },
+                { id: 'polish',     label: '🇵🇱 Polish' },
+                { id: 'swedish',    label: '🇸🇪 Swedish' },
+                { id: 'norwegian',  label: '🇳🇴 Norwegian' },
+                { id: 'danish',     label: '🇩🇰 Danish' },
+                { id: 'finnish',    label: '🇫🇮 Finnish' },
+                { id: 'greek',      label: '🇬🇷 Greek' },
+                { id: 'hebrew',     label: '🇮🇱 Hebrew' },
+                { id: 'malay',      label: '🇲🇾 Malay' },
+                { id: 'swahili',    label: '🇰🇪 Swahili' },
+                { id: 'turkish',    label: '🇹🇷 Turkish' },
             ];
 
-            chatterboxVoices.forEach(v => {
+            multilingualVoices.forEach(v => {
                 const opt = document.createElement('option');
-                opt.value = v.value;
+                opt.value = 'cbmulti_' + v.id;
                 opt.textContent = v.label;
-                opt.dataset.provider = 'chatterbox';
-                opt.dataset.voice = v.value.replace('chatterbox_', '');
-                opt.dataset.exaggeration = v.exaggeration;
-                opt.dataset.cfg = v.cfg;
-                chatterboxOptgroup.appendChild(opt);
+                opt.dataset.provider = 'cbmulti';
+                opt.dataset.voice = v.id;
+                multiOptgroup.appendChild(opt);
             });
 
-            // Default to Diana (first Chatterbox Turbo voice)
-            const defaultOpt = voiceSelect.querySelector('option[value="cbturbo_diana"]');
+            // Default to Adam
+            const defaultOpt = voiceSelect.querySelector('option[value="cbturbo_adam"]');
             if (defaultOpt) defaultOpt.selected = true;
             else if (voiceSelect.options.length > 0) voiceSelect.selectedIndex = 0;
         }
@@ -9562,146 +9551,168 @@ Format as clean, readable text ready for narration.`;
             };
         }
 
-        // ── Shared RunPod async runner — submits job then polls until done ──
-        async function runpodSubmitAndPoll(endpointId, apiKey, inputPayload, labelForErrors, retryCount = 0) {
-            const BASE = 'https://api.runpod.ai/v2/' + endpointId;
+        // ── Shared Fal.ai async runner — submits job then polls until done ──
+        async function falSubmitAndPoll(modelPath, inputPayload, labelForErrors) {
+            const FAL_KEY = (localStorage.getItem('falApiKey') || '').replace(/[^\x20-\x7E]/g, '').trim();
+            if (!FAL_KEY) throw new Error('Fal.ai API key not configured. Please add it in Config > Settings.');
+
+            const BASE = 'https://queue.fal.run/' + modelPath;
             const headers = {
-                'Authorization': 'Bearer ' + apiKey,
+                'Authorization': 'Key ' + FAL_KEY,
                 'Content-Type': 'application/json'
             };
 
             // 1. Submit the job
-            const submitResp = await fetch(BASE + '/run', {
+            const submitResp = await fetch(BASE, {
                 method: 'POST',
                 headers,
-                body: JSON.stringify({ input: inputPayload })
+                body: JSON.stringify(inputPayload)
             });
             if (!submitResp.ok) {
                 const errText = await submitResp.text();
                 throw new Error(`${labelForErrors} Error: ${submitResp.status} - ${errText}`);
             }
             const submitData = await submitResp.json();
-            const jobId = submitData.id;
-            if (!jobId) throw new Error(`${labelForErrors}: No job ID returned`);
-            console.log(`${labelForErrors} job submitted: ${jobId}`);
+            const requestId = submitData.request_id;
+            if (!requestId) throw new Error(`${labelForErrors}: No request ID returned`);
+            console.log(`${labelForErrors} job submitted: ${requestId}`);
 
-            // 2. Poll for completion (up to 12 minutes — GPU cold starts can take 8-10 min)
-            const maxWaitMs = 720000;
-            const pollInterval = 3000;
-            const queueStuckMs = 180000; // cancel & resubmit if stuck IN_QUEUE > 3 min (unhealthy worker routing)
+            // 2. Poll for completion (up to 3 minutes — no cold starts on Fal)
+            const maxWaitMs = 180000;
+            const pollInterval = 2000;
             const start = Date.now();
-            let lastStatus = null;
-            let queueSince = null;
 
             while (Date.now() - start < maxWaitMs) {
                 await new Promise(r => setTimeout(r, pollInterval));
-                const statusResp = await fetch(BASE + '/status/' + jobId, { headers });
+                const statusResp = await fetch(`${BASE}/requests/${requestId}/status`, { headers });
                 if (!statusResp.ok) continue;
                 const statusData = await statusResp.json();
-                const elapsedMin = Math.floor((Date.now() - start) / 60000);
-                console.log(`${labelForErrors} status: ${statusData.status} (${elapsedMin}m elapsed)`);
+                const elapsedSec = Math.floor((Date.now() - start) / 1000);
+                console.log(`${labelForErrors} status: ${statusData.status} (${elapsedSec}s)`);
 
                 if (statusData.status === 'COMPLETED') {
-                    return statusData.output;
+                    const resultResp = await fetch(`${BASE}/requests/${requestId}`, { headers });
+                    if (!resultResp.ok) throw new Error(`${labelForErrors}: Failed to fetch result`);
+                    return await resultResp.json();
                 } else if (statusData.status === 'FAILED') {
-                    // Check if failure is due to a RunPod rollout/infrastructure event
-                    const errDetail = statusData.error ? JSON.stringify(statusData.error) : '';
-                    const isRollout = errDetail.toLowerCase().includes('rollout') || errDetail.toLowerCase().includes('in progress') || (errDetail.toLowerCase().includes('worker') && errDetail.toLowerCase().includes('restart'));
-                    if (isRollout) {
-                        showLoading('RunPod rollout in progress — waiting for worker to come back online…');
-                        console.warn(`${labelForErrors}: RunPod rollout detected, waiting 30s before retry...`);
-                        await new Promise(r => setTimeout(r, 30000));
-                        return runpodSubmitAndPoll(endpointId, apiKey, inputPayload, labelForErrors, retryCount);
-                    }
-                    // Auto-retry up to 2 times for transient GPU failures
-                    if (retryCount < 2) {
-                        console.warn(`${labelForErrors} job failed — retrying (attempt ${retryCount + 1}/2)...`);
-                        await new Promise(r => setTimeout(r, 3000));
-                        return runpodSubmitAndPoll(endpointId, apiKey, inputPayload, labelForErrors, retryCount + 1);
-                    }
-                    throw new Error(`${labelForErrors} failed after 3 attempts: ${errDetail || 'Unknown error'}`);
+                    const errDetail = statusData.error ? JSON.stringify(statusData.error) : 'Unknown error';
+                    throw new Error(`${labelForErrors} failed: ${errDetail}`);
                 }
 
-                // Track how long we've been stuck IN_QUEUE
-                if (statusData.status === 'IN_QUEUE') {
-                    if (!queueSince) queueSince = Date.now();
-                    const queueMs = Date.now() - queueSince;
-                    if (queueMs > queueStuckMs) {
-                        // Job is stuck on an unhealthy worker — cancel and resubmit
-                        console.warn(`${labelForErrors}: stuck IN_QUEUE for ${Math.round(queueMs/1000)}s — cancelling and resubmitting`);
-                        showLoading('Job stuck in queue (unhealthy worker) — resubmitting…');
-                        try { await fetch(BASE + '/cancel/' + jobId, { method: 'POST', headers }); } catch(e) {}
-                        await new Promise(r => setTimeout(r, 3000));
-                        return runpodSubmitAndPoll(endpointId, apiKey, inputPayload, labelForErrors, retryCount);
-                    }
-                } else {
-                    queueSince = null; // reset if we moved to IN_PROGRESS
-                }
-
-                // Update loading message
-                if (Date.now() - start > 60000) {
-                    const waitMin = Math.ceil((Date.now() - start) / 60000);
-                    const msg = statusData.status === 'IN_QUEUE'
-                        ? `RunPod worker warming up (${waitMin}m)… resubmitting if stuck`
-                        : `Generating narration… (${waitMin}m elapsed)`;
-                    showLoading(msg);
+                if (Date.now() - start > 30000) {
+                    const waitSec = Math.ceil((Date.now() - start) / 1000);
+                    showLoading(`Generating audio… (${waitSec}s)`);
                 }
             }
-            throw new Error(`${labelForErrors} timed out after 12 minutes`);
+            throw new Error(`${labelForErrors} timed out after 3 minutes`);
         }
 
-        async function generateChatterboxAudio(text, exaggeration = 0.5, cfg_weight = 0.5) {
-            console.log('Generating Chatterbox Classic audio...');
-            const RUNPOD_API_KEY = (localStorage.getItem('runpodApiKey') || '').replace(/[^\x20-\x7E]/g, '').trim();
-            const ENDPOINT_ID = (localStorage.getItem('runpodEndpointId') || '').replace(/[^\x20-\x7E]/g, '').trim();
-            if (!RUNPOD_API_KEY) throw new Error('RunPod API key not configured. Please add it in Config > Settings.');
-            if (!ENDPOINT_ID)    throw new Error('RunPod Endpoint ID not configured. Please add it in Config > Settings.');
+        // ── Fal.ai Chatterbox Classic — 32 custom MP3 voice references ──
+        async function generateChatterboxAudio(text, voiceFileName = null) {
+            console.log('Generating Chatterbox Classic audio via Fal.ai...');
+            const ctrl = getChatterboxControlValues();
+            const BASE_VOICE_URL = 'https://authorr-ai.pages.dev/';
 
-            const ctrl = getChatterboxControlValues(exaggeration, cfg_weight);
-            const output = await runpodSubmitAndPoll(ENDPOINT_ID, RUNPOD_API_KEY, {
-                mode: 'classic',
+            const inputPayload = {
                 text,
                 exaggeration: ctrl.exaggeration,
-                cfg_weight:   ctrl.cfg_weight,
+                cfg:          ctrl.cfg_weight,
                 temperature:  ctrl.temperature,
-                speed_factor: ctrl.speed_factor,
                 ...(ctrl.seed !== undefined ? { seed: ctrl.seed } : {}),
-                ...(getActiveChatterboxVoiceB64() ? { audio_prompt: getActiveChatterboxVoiceB64() } : {})
-            }, 'Chatterbox Classic');
+                ...(voiceFileName ? { audio_url: BASE_VOICE_URL + encodeURIComponent(voiceFileName) } : {})
+            };
 
-            const audioB64 = output?.audio || output;
-            if (!audioB64) throw new Error('No audio data returned from Chatterbox Classic');
-            const binary = atob(audioB64);
-            const bytes = new Uint8Array(binary.length);
-            for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-            return new Blob([bytes], { type: 'audio/wav' });
+            const result = await falSubmitAndPoll('fal-ai/chatterbox/text-to-speech', inputPayload, 'Chatterbox Classic');
+            if (!result?.audio?.url) throw new Error('No audio URL returned from Chatterbox Classic');
+
+            const audioResp = await fetch(result.audio.url);
+            return await audioResp.blob();
         }
 
-        // ── Chatterbox Turbo — 20 named voices, ~4x faster ──
-        async function generateChatterboxTurboAudio(text, voiceName = 'laura') {
-            console.log('Generating Chatterbox Turbo audio, voice:', voiceName);
-            const RUNPOD_API_KEY = (localStorage.getItem('runpodApiKey') || '').replace(/[^\x20-\x7E]/g, '').trim();
-            const ENDPOINT_ID = (localStorage.getItem('runpodEndpointId') || '').replace(/[^\x20-\x7E]/g, '').trim();
-            if (!RUNPOD_API_KEY) throw new Error('RunPod API key not configured. Please add it in Config > Settings.');
-            if (!ENDPOINT_ID)    throw new Error('RunPod Endpoint ID not configured. Please add it in Config > Settings.');
+        // ── Fal.ai Chatterbox Multilingual — 23 languages, 300 char limit (chunked) ──
+        function splitTextMultilingual(text, maxChars = 280) {
+            const normalized = text.replace(/\s+/g, ' ').trim();
+            const sentences = normalized.split(/(?<=[.!?])\s+/).filter(s => s.trim());
+            const chunks = [];
+            let current = '';
+            for (const sentence of sentences) {
+                const sep = current ? ' ' : '';
+                if ((current + sep + sentence).length <= maxChars) {
+                    current += sep + sentence;
+                } else {
+                    if (current) chunks.push(current.trim());
+                    current = sentence.length <= maxChars ? sentence : sentence.slice(0, maxChars);
+                }
+            }
+            if (current.trim()) chunks.push(current.trim());
+            return chunks.length ? chunks : [text.slice(0, maxChars)];
+        }
 
+        async function generateChatterboxMultilingualAudio(text, languageCode = 'english') {
+            console.log('Generating Chatterbox Multilingual audio via Fal.ai, language:', languageCode);
             const ctrl = getChatterboxControlValues();
-            const output = await runpodSubmitAndPoll(ENDPOINT_ID, RUNPOD_API_KEY, {
-                mode: 'turbo',
-                text,
-                voice: voiceName,
-                format: ctrl.format || 'wav',
-                temperature:  ctrl.temperature,
-                speed_factor: ctrl.speed_factor,
-                ...(ctrl.seed !== undefined ? { seed: ctrl.seed } : {})
-            }, 'Chatterbox Turbo');
+            const chunks = splitTextMultilingual(text);
+            console.log(`Multilingual: ${chunks.length} chunk(s) for ${text.length} chars`);
 
-            const audioB64 = output?.audio || output;
-            if (!audioB64) throw new Error('No audio data returned from Chatterbox Turbo');
-            const binary = atob(audioB64);
-            const bytes = new Uint8Array(binary.length);
-            for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-            return new Blob([bytes], { type: 'audio/wav' });
+            const audioBlobs = [];
+            for (let i = 0; i < chunks.length; i++) {
+                showLoading(`Generating multilingual audio… chunk ${i + 1}/${chunks.length}`);
+                const inputPayload = {
+                    text:         chunks[i],
+                    voice:        languageCode,
+                    exaggeration: ctrl.exaggeration,
+                    temperature:  ctrl.temperature,
+                    cfg_scale:    ctrl.cfg_weight,
+                    ...(ctrl.seed !== undefined ? { seed: ctrl.seed } : {})
+                };
+                const result = await falSubmitAndPoll('fal-ai/chatterbox/text-to-speech/multilingual', inputPayload, 'Chatterbox Multilingual');
+                if (!result?.audio?.url) throw new Error(`No audio URL returned for chunk ${i + 1}`);
+                const audioResp = await fetch(result.audio.url);
+                audioBlobs.push(await audioResp.blob());
+            }
+
+            if (audioBlobs.length === 1) return audioBlobs[0];
+            // Concatenate multiple WAV blobs
+            return await concatenateWavBlobs(audioBlobs);
+        }
+
+        // ── WAV blob concatenation for multi-chunk audio ──
+        async function concatenateWavBlobs(blobs) {
+            if (blobs.length === 1) return blobs[0];
+            const arrays = await Promise.all(blobs.map(b => b.arrayBuffer()));
+            // Read header from first blob
+            const firstView = new DataView(arrays[0]);
+            const numChannels   = firstView.getUint16(22, true);
+            const sampleRate    = firstView.getUint32(24, true);
+            const bitsPerSample = firstView.getUint16(34, true);
+            const silenceSamples = Math.floor(sampleRate * 0.25); // 250ms silence between chunks
+            const bytesPerSample = bitsPerSample / 8;
+            const silenceBytes   = silenceSamples * numChannels * bytesPerSample;
+            const silence        = new Uint8Array(silenceBytes);
+
+            // Collect all PCM data chunks (skip 44-byte WAV header for all but first)
+            const parts = [];
+            let totalDataBytes = 0;
+            for (let i = 0; i < arrays.length; i++) {
+                const pcm = new Uint8Array(arrays[i].slice(44));
+                parts.push(pcm);
+                totalDataBytes += pcm.byteLength;
+                if (i < arrays.length - 1) {
+                    parts.push(silence);
+                    totalDataBytes += silenceBytes;
+                }
+            }
+
+            // Build new WAV
+            const header = new Uint8Array(arrays[0].slice(0, 44));
+            const out = new Uint8Array(44 + totalDataBytes);
+            out.set(header, 0);
+            const outView = new DataView(out.buffer);
+            outView.setUint32(4,  36 + totalDataBytes, true);
+            outView.setUint32(40, totalDataBytes,       true);
+            let offset = 44;
+            for (const part of parts) { out.set(part, offset); offset += part.byteLength; }
+            return new Blob([out], { type: 'audio/wav' });
         }
 
         // Append trailing runway so Chatterbox fully renders the last word before its natural clip point.
@@ -9753,23 +9764,25 @@ Format as clean, readable text ready for narration.`;
 
             let blob;
             if (voice.startsWith('cbturbo_')) {
-                const turboVoice = voice.replace('cbturbo_', '').replace(/_/g, ' ');
-                blob = await generateChatterboxTurboAudio(paddedText, turboVoice);
-            } else if (voice.startsWith('chatterbox_')) {
-                blob = await generateChatterboxAudio(paddedText);
+                // Custom MP3 voice reference → Fal Classic
+                const voiceName = voice.replace('cbturbo_', '').replace(/_/g, ' ');
+                const mp3Name = voiceName.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') + '.mp3';
+                blob = await generateChatterboxAudio(paddedText, mp3Name);
+            } else if (voice.startsWith('cbmulti_')) {
+                // Multilingual → Fal Multilingual
+                const langCode = voice.replace('cbmulti_', '');
+                blob = await generateChatterboxMultilingualAudio(paddedText, langCode);
             } else {
-                // Fallback: treat bare voice name as Chatterbox Turbo
-                blob = await generateChatterboxTurboAudio(paddedText, voice);
+                // Fallback — Fal Classic without voice reference
+                blob = await generateChatterboxAudio(paddedText, null);
             }
 
             // Append 400ms silence so the model's natural tail-clip doesn't eat real audio
             return appendSilenceToWav(blob, 400);
         }
 
-        // [OpenAI TTS removed — using Chatterbox via RunPod]
         async function generateOpenAIAudio(text, voice) {
             throw new Error('OpenAI TTS removed. Please select a Chatterbox voice.');
-
         }
 
         // DEBUG: Test complete multi-voice pipeline with simple content
