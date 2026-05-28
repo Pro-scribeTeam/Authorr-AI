@@ -7633,13 +7633,14 @@ Format as clean, readable text ready for narration.`;
                     }
                     audioBlob = await generateElevenLabsAudio(previewText, voiceId, apiKey);
                 } else if (provider === 'chatterbox') {
-                    // Use slider values if available, fall back to preset defaults
-                    const exaggeration = parseFloat(document.getElementById('cbExaggeration')?.value ?? selectedOption.dataset.exaggeration ?? 0.5);
-                    const cfg = parseFloat(document.getElementById('cbCfgWeight')?.value ?? selectedOption.dataset.cfg ?? 0.5);
-                    audioBlob = await generateChatterboxAudio(previewText, exaggeration, cfg);
+                    audioBlob = await generateChatterboxAudio(previewText, null);
                 } else if (provider === 'cbturbo') {
                     const voiceName = selectedOption.dataset.voice;
-                    audioBlob = await generateChatterboxTurboAudio(previewText, voiceName);
+                    const mp3Name = voiceName.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') + '.mp3';
+                    audioBlob = await generateChatterboxAudio(previewText, mp3Name);
+                } else if (provider === 'cbmulti') {
+                    const langCode = selectedOption.dataset.voice;
+                    audioBlob = await generateChatterboxMultilingualAudio(previewText, langCode);
                 } else {
                     showNotification('Unknown voice provider', 'error');
                     return;
@@ -9127,16 +9128,15 @@ Format as clean, readable text ready for narration.`;
                     if (!apiKey) throw new Error('ElevenLabs API key not configured');
                     return await generateElevenLabsAudio(text, voiceId, apiKey);
                 } else if (provider === 'chatterbox') {
-                    // Look up exaggeration/cfg from the voice option dataset
-                    const voiceSelect = document.getElementById('narratorVoiceSelect') || document.getElementById('voiceSelection');
-                    const selectedOption = voiceSelect ? voiceSelect.options[voiceSelect.selectedIndex] : null;
-                    const exaggeration = parseFloat(selectedOption?.dataset?.exaggeration || 0.5);
-                    const cfg = parseFloat(selectedOption?.dataset?.cfg || 0.5);
-                    return await generateChatterboxAudio(text, exaggeration, cfg);
+                    return await generateChatterboxAudio(text, null);
                 } else if (provider === 'cbturbo') {
-                    // cbturbo_voicename — restore spaces for handler (e.g. brandy_ny → brandy ny)
-                    const turboVoice = voice.replace('cbturbo_', '').replace(/_/g, ' ');
-                    return await generateChatterboxTurboAudio(text, turboVoice);
+                    // Custom MP3 voice reference via Fal Classic
+                    const voiceName = voice.replace('cbturbo_', '').replace(/_/g, ' ');
+                    const mp3Name = voiceName.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') + '.mp3';
+                    return await generateChatterboxAudio(text, mp3Name);
+                } else if (provider === 'cbmulti') {
+                    const langCode = voice.replace('cbmulti_', '');
+                    return await generateChatterboxMultilingualAudio(text, langCode);
                 } else {
                     throw new Error(`Unknown voice provider: ${provider}`);
                 }
