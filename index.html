@@ -1278,27 +1278,8 @@
                             <i class="fas fa-list-ol text-cyan-400 mr-2"></i>
                             Chapter Plan
                         </h2>
-                        <div class="flex space-x-2 flex-wrap gap-2">
-                            <button onclick="generateAllChapters('auto')" id="generateAllBtn" class="btn-secondary px-4 py-2 rounded-lg text-sm font-semibold" disabled>
-                                <i class="fas fa-bolt mr-1"></i>Auto — All Chapters
-                            </button>
-                            <button onclick="generateAllChapters('step')" id="generateStepBtn" class="btn-secondary px-4 py-2 rounded-lg text-sm font-semibold" disabled>
-                                <i class="fas fa-step-forward mr-1"></i>Step — One at a Time
-                            </button>
-                            <button onclick="combineAllChapters()" id="combineAllBtn" class="btn-primary px-4 py-2 rounded-lg text-sm font-semibold" disabled>
-                                <i class="fas fa-book mr-1"></i>Combine All
-                            </button>
-                        </div>
-                        <!-- Step mode controls — shown during step-by-step generation -->
-                        <div id="stepControls" class="hidden mt-2 flex items-center space-x-3 bg-theme-primary p-3 rounded-lg border border-cyan-400">
-                            <span id="stepStatus" class="text-sm text-cyan-400 flex-1"></span>
-                            <button onclick="nextChapterStep()" id="nextStepBtn" class="btn-primary px-4 py-2 rounded-lg text-sm font-semibold">
-                                <i class="fas fa-arrow-right mr-1"></i>Generate Next Chapter
-                            </button>
-                            <button onclick="cancelChapterStep()" class="btn-gray px-3 py-2 rounded-lg text-sm">
-                                <i class="fas fa-times mr-1"></i>Stop
-                            </button>
-                        </div>
+                        <!-- step controls kept hidden for internal use -->
+                        <div id="stepControls" class="hidden"></div>
                     </div>
                     
                     <div id="chapterPlan" class="space-y-3 h-80 overflow-y-auto">
@@ -1311,21 +1292,10 @@
                     <!-- Write All Chapters CTA — appears after chapter plan is generated -->
                     <div id="writeAllCTA" class="hidden mt-4">
                         <div class="border-t-2 border-cyan-400 pt-4">
-                            <p class="text-sm text-theme-secondary mb-3 text-center">Chapter plan ready! Choose how to write your book:</p>
-                            <div class="grid grid-cols-1 gap-3">
-                                <button onclick="combineAllChapters()" class="w-full py-3 rounded-xl font-bold text-base flex items-center justify-center gap-2" style="background: linear-gradient(135deg, #78e3fe, #5dd8fc); color: #000; box-shadow: 0 0 18px rgba(120,227,254,0.5);">
-                                    <i class="fas fa-book-open text-lg"></i>
-                                    Write All Chapters &amp; Send to Story Editor
-                                </button>
-                                <div class="grid grid-cols-2 gap-2">
-                                    <button onclick="generateAllChapters('auto')" class="py-2 rounded-lg font-semibold text-sm btn-secondary flex items-center justify-center gap-1">
-                                        <i class="fas fa-bolt"></i> Auto — Write All
-                                    </button>
-                                    <button onclick="generateAllChapters('step')" class="py-2 rounded-lg font-semibold text-sm btn-secondary flex items-center justify-center gap-1">
-                                        <i class="fas fa-step-forward"></i> Step — One at a Time
-                                    </button>
-                                </div>
-                            </div>
+                            <button onclick="combineAllChapters()" class="w-full py-3 rounded-xl font-bold text-base flex items-center justify-center gap-2" style="background: linear-gradient(135deg, #78e3fe, #5dd8fc); color: #000; box-shadow: 0 0 18px rgba(120,227,254,0.5);">
+                                <i class="fas fa-book-open text-lg"></i>
+                                Write All Chapters &amp; Send to Story Editor
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -8226,9 +8196,9 @@ Format as clean, readable text ready for narration.`;
 
             voiceSelect.innerHTML = '';
 
-            // ── Chatterbox Turbo — 20 built-in named voices, ~4x faster ──
+            // ── Chatterbox Voices — MP3 reference clones ──
             const turboOptgroup = document.createElement('optgroup');
-            turboOptgroup.label = '⚡ Chatterbox Turbo (RunPod) — Fast';
+            turboOptgroup.label = '🎙️ Chatterbox Voices (RunPod)';
             voiceSelect.appendChild(turboOptgroup);
 
             const turboVoices = [
@@ -8269,10 +8239,10 @@ Format as clean, readable text ready for narration.`;
 
             turboVoices.forEach(v => {
                 const opt = document.createElement('option');
-                opt.value = 'cbturbo_' + v.id;
+                opt.value = 'cbturbo_' + v.id.replace(/ /g, '_');
                 opt.textContent = v.label;
                 opt.dataset.provider = 'cbturbo';
-                opt.dataset.voice = v.id;
+                opt.dataset.voice = v.id; // original name sent to handler
                 turboOptgroup.appendChild(opt);
             });
 
@@ -9175,8 +9145,8 @@ Format as clean, readable text ready for narration.`;
                     const cfg = parseFloat(selectedOption?.dataset?.cfg || 0.5);
                     return await generateChatterboxAudio(text, exaggeration, cfg);
                 } else if (provider === 'cbturbo') {
-                    // cbturbo_voicename — split on first underscore only
-                    const turboVoice = voice.replace('cbturbo_', '');
+                    // cbturbo_voicename — restore spaces for handler (e.g. brandy_ny → brandy ny)
+                    const turboVoice = voice.replace('cbturbo_', '').replace(/_/g, ' ');
                     return await generateChatterboxTurboAudio(text, turboVoice);
                 } else {
                     throw new Error(`Unknown voice provider: ${provider}`);
@@ -9783,7 +9753,7 @@ Format as clean, readable text ready for narration.`;
 
             let blob;
             if (voice.startsWith('cbturbo_')) {
-                const turboVoice = voice.replace('cbturbo_', '');
+                const turboVoice = voice.replace('cbturbo_', '').replace(/_/g, ' ');
                 blob = await generateChatterboxTurboAudio(paddedText, turboVoice);
             } else if (voice.startsWith('chatterbox_')) {
                 blob = await generateChatterboxAudio(paddedText);
