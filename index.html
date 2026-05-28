@@ -9551,60 +9551,34 @@ Format as clean, readable text ready for narration.`;
             };
         }
 
-        // ── Shared Fal.ai async runner — submits job then polls until done ──
+        // ── Shared Fal.ai runner — direct synchronous endpoint (no polling needed) ──
         async function falSubmitAndPoll(modelPath, inputPayload, labelForErrors) {
             const FAL_KEY = (localStorage.getItem('falApiKey') || '').replace(/[^\x20-\x7E]/g, '').trim();
             if (!FAL_KEY) throw new Error('Fal.ai API key not configured. Please add it in Config > Settings.');
 
-            const BASE = 'https://queue.fal.run/' + modelPath;
+            const url = 'https://fal.run/' + modelPath;
             const headers = {
                 'Authorization': 'Key ' + FAL_KEY,
                 'Content-Type': 'application/json'
             };
 
-            // 1. Submit the job
-            const submitResp = await fetch(BASE, {
+            console.log(`${labelForErrors} calling fal.run/${modelPath}...`);
+            showLoading('Generating audio via Fal.ai…');
+
+            const resp = await fetch(url, {
                 method: 'POST',
                 headers,
                 body: JSON.stringify(inputPayload)
             });
-            if (!submitResp.ok) {
-                const errText = await submitResp.text();
-                throw new Error(`${labelForErrors} Error: ${submitResp.status} - ${errText}`);
+
+            if (!resp.ok) {
+                const errText = await resp.text();
+                throw new Error(`${labelForErrors} Error: ${resp.status} - ${errText}`);
             }
-            const submitData = await submitResp.json();
-            const requestId = submitData.request_id;
-            if (!requestId) throw new Error(`${labelForErrors}: No request ID returned`);
-            console.log(`${labelForErrors} job submitted: ${requestId}`);
 
-            // 2. Poll for completion (up to 3 minutes — no cold starts on Fal)
-            const maxWaitMs = 180000;
-            const pollInterval = 2000;
-            const start = Date.now();
-
-            while (Date.now() - start < maxWaitMs) {
-                await new Promise(r => setTimeout(r, pollInterval));
-                const statusResp = await fetch(`${BASE}/requests/${requestId}/status`, { headers });
-                if (!statusResp.ok) continue;
-                const statusData = await statusResp.json();
-                const elapsedSec = Math.floor((Date.now() - start) / 1000);
-                console.log(`${labelForErrors} status: ${statusData.status} (${elapsedSec}s)`);
-
-                if (statusData.status === 'COMPLETED') {
-                    const resultResp = await fetch(`${BASE}/requests/${requestId}`, { headers });
-                    if (!resultResp.ok) throw new Error(`${labelForErrors}: Failed to fetch result`);
-                    return await resultResp.json();
-                } else if (statusData.status === 'FAILED') {
-                    const errDetail = statusData.error ? JSON.stringify(statusData.error) : 'Unknown error';
-                    throw new Error(`${labelForErrors} failed: ${errDetail}`);
-                }
-
-                if (Date.now() - start > 30000) {
-                    const waitSec = Math.ceil((Date.now() - start) / 1000);
-                    showLoading(`Generating audio… (${waitSec}s)`);
-                }
-            }
-            throw new Error(`${labelForErrors} timed out after 3 minutes`);
+            const result = await resp.json();
+            console.log(`${labelForErrors} done.`);
+            return result;
         }
 
         // ── Fal.ai Chatterbox Classic — 32 custom MP3 voice references ──
