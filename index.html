@@ -930,22 +930,22 @@
                 </div>
                 <div class="hidden md:flex items-center space-x-6">
                     <button onclick="showPage('dashboard')" class="nav-item px-4 py-2 rounded-lg font-semibold active">
-                        <i class="fas fa-home mr-2"></i>Dashboard
+                        <i class="fas fa-home mr-2"></i><span data-i18n="nav_dashboard">Dashboard</span>
                     </button>
                     <button onclick="showPage('workspace')" class="nav-item px-4 py-2 rounded-lg font-semibold">
-                        <i class="fas fa-edit mr-2"></i>Workspace
+                        <i class="fas fa-edit mr-2"></i><span data-i18n="nav_workspace">Workspace</span>
                     </button>
                     <button onclick="showPage('narration')" class="nav-item px-4 py-2 rounded-lg font-semibold">
-                        <i class="fas fa-microphone mr-2"></i>Narration
+                        <i class="fas fa-microphone mr-2"></i><span data-i18n="nav_narration">Narration</span>
                     </button>
                     <button onclick="showPage('covers')" class="nav-item px-4 py-2 rounded-lg font-semibold">
-                        <i class="fas fa-image mr-2"></i>Covers
+                        <i class="fas fa-image mr-2"></i><span data-i18n="nav_covers">Covers</span>
                     </button>
                     <button onclick="showPage('export')" class="nav-item px-4 py-2 rounded-lg font-semibold">
-                        <i class="fas fa-download mr-2"></i>Export
+                        <i class="fas fa-download mr-2"></i><span data-i18n="nav_export">Export</span>
                     </button>
                     <button onclick="showPage('config')" class="nav-item px-4 py-2 rounded-lg font-semibold">
-                        <i class="fas fa-cog mr-2"></i>Config
+                        <i class="fas fa-cog mr-2"></i><span data-i18n="nav_config">Config</span>
                     </button>
                 </div>
                 <!-- Auth Status -->
@@ -959,6 +959,32 @@
                     <button id="authLoginBtn" onclick="showAuthModal()" class="hidden text-xs border border-cyan-400 text-cyan-400 hover:bg-cyan-400 hover:text-black px-3 py-1 rounded-lg font-semibold transition-all">
                         <i class="fas fa-user mr-1"></i>Sign In / Sign Up
                     </button>
+                    <!-- UI Language Switcher -->
+                    <div class="relative ml-2" id="uiLangSwitcher">
+                        <button onclick="toggleUILangMenu()" class="text-cyan-400 hover:text-cyan-300 text-sm flex items-center gap-1 border border-cyan-800 hover:border-cyan-400 px-2 py-1 rounded-lg transition-all" title="Change interface language">
+                            <i class="fas fa-globe"></i>
+                            <span id="uiLangFlag">🇺🇸</span>
+                        </button>
+                        <div id="uiLangMenu" class="hidden absolute right-0 top-10 bg-gray-900 border border-cyan-500 rounded-xl shadow-2xl z-[9999] w-44 max-h-80 overflow-y-auto">
+                            <div class="p-2 text-xs text-gray-400 border-b border-gray-700 font-semibold uppercase tracking-wide px-3 py-2">Interface Language</div>
+                            <button onclick="setUILanguage('en')"  class="ui-lang-opt w-full text-left px-3 py-2 hover:bg-cyan-900 text-sm flex items-center gap-2">🇺🇸 English</button>
+                            <button onclick="setUILanguage('es')"  class="ui-lang-opt w-full text-left px-3 py-2 hover:bg-cyan-900 text-sm flex items-center gap-2">🇪🇸 Español</button>
+                            <button onclick="setUILanguage('fr')"  class="ui-lang-opt w-full text-left px-3 py-2 hover:bg-cyan-900 text-sm flex items-center gap-2">🇫🇷 Français</button>
+                            <button onclick="setUILanguage('de')"  class="ui-lang-opt w-full text-left px-3 py-2 hover:bg-cyan-900 text-sm flex items-center gap-2">🇩🇪 Deutsch</button>
+                            <button onclick="setUILanguage('pt')"  class="ui-lang-opt w-full text-left px-3 py-2 hover:bg-cyan-900 text-sm flex items-center gap-2">🇧🇷 Português</button>
+                            <button onclick="setUILanguage('it')"  class="ui-lang-opt w-full text-left px-3 py-2 hover:bg-cyan-900 text-sm flex items-center gap-2">🇮🇹 Italiano</button>
+                            <button onclick="setUILanguage('hi')"  class="ui-lang-opt w-full text-left px-3 py-2 hover:bg-cyan-900 text-sm flex items-center gap-2">🇮🇳 हिन्दी</button>
+                            <button onclick="setUILanguage('ar')"  class="ui-lang-opt w-full text-left px-3 py-2 hover:bg-cyan-900 text-sm flex items-center gap-2">🇸🇦 العربية</button>
+                            <button onclick="setUILanguage('zh')"  class="ui-lang-opt w-full text-left px-3 py-2 hover:bg-cyan-900 text-sm flex items-center gap-2">🇨🇳 中文</button>
+                            <button onclick="setUILanguage('ja')"  class="ui-lang-opt w-full text-left px-3 py-2 hover:bg-cyan-900 text-sm flex items-center gap-2">🇯🇵 日本語</button>
+                            <button onclick="setUILanguage('ko')"  class="ui-lang-opt w-full text-left px-3 py-2 hover:bg-cyan-900 text-sm flex items-center gap-2">🇰🇷 한국어</button>
+                            <button onclick="setUILanguage('ru')"  class="ui-lang-opt w-full text-left px-3 py-2 hover:bg-cyan-900 text-sm flex items-center gap-2">🇷🇺 Русский</button>
+                            <button onclick="setUILanguage('nl')"  class="ui-lang-opt w-full text-left px-3 py-2 hover:bg-cyan-900 text-sm flex items-center gap-2">🇳🇱 Nederlands</button>
+                            <button onclick="setUILanguage('pl')"  class="ui-lang-opt w-full text-left px-3 py-2 hover:bg-cyan-900 text-sm flex items-center gap-2">🇵🇱 Polski</button>
+                            <button onclick="setUILanguage('sv')"  class="ui-lang-opt w-full text-left px-3 py-2 hover:bg-cyan-900 text-sm flex items-center gap-2">🇸🇪 Svenska</button>
+                            <button onclick="setUILanguage('tr')"  class="ui-lang-opt w-full text-left px-3 py-2 hover:bg-cyan-900 text-sm flex items-center gap-2">🇹🇷 Türkçe</button>
+                        </div>
+                    </div>
                     <button onclick="toggleTheme()" class="text-cyan-400 hover:text-cyan-300 text-xl ml-2">
                         <i id="themeIcon" class="fas fa-moon"></i>
                     </button>
@@ -16361,5 +16387,739 @@ Format as clean, readable text ready for narration.`;
             </div>
         </div>
     </div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+//  AUTHORR AI — UI INTERNATIONALISATION (i18n)
+// ═══════════════════════════════════════════════════════════════
+
+const UI_FLAGS = {
+  en:'🇺🇸', es:'🇪🇸', fr:'🇫🇷', de:'🇩🇪', pt:'🇧🇷',
+  it:'🇮🇹', hi:'🇮🇳', ar:'🇸🇦', zh:'🇨🇳', ja:'🇯🇵',
+  ko:'🇰🇷', ru:'🇷🇺', nl:'🇳🇱', pl:'🇵🇱', sv:'🇸🇪', tr:'🇹🇷'
+};
+
+const UI_TRANSLATIONS = {
+  en: {
+    nav_dashboard:'Dashboard', nav_workspace:'Workspace', nav_narration:'Narration',
+    nav_covers:'Covers', nav_export:'Export', nav_config:'Config',
+  },
+  es: {
+    nav_dashboard:'Inicio', nav_workspace:'Espacio de trabajo', nav_narration:'Narración',
+    nav_covers:'Portadas', nav_export:'Exportar', nav_config:'Configuración',
+  },
+  fr: {
+    nav_dashboard:'Tableau de bord', nav_workspace:'Espace de travail', nav_narration:'Narration',
+    nav_covers:'Couvertures', nav_export:'Exporter', nav_config:'Configuration',
+  },
+  de: {
+    nav_dashboard:'Dashboard', nav_workspace:'Arbeitsbereich', nav_narration:'Erzählung',
+    nav_covers:'Titelbilder', nav_export:'Exportieren', nav_config:'Einstellungen',
+  },
+  pt: {
+    nav_dashboard:'Painel', nav_workspace:'Área de trabalho', nav_narration:'Narração',
+    nav_covers:'Capas', nav_export:'Exportar', nav_config:'Configurações',
+  },
+  it: {
+    nav_dashboard:'Pannello', nav_workspace:'Area di lavoro', nav_narration:'Narrazione',
+    nav_covers:'Copertine', nav_export:'Esporta', nav_config:'Impostazioni',
+  },
+  hi: {
+    nav_dashboard:'डैशबोर्ड', nav_workspace:'कार्यक्षेत्र', nav_narration:'कथन',
+    nav_covers:'कवर', nav_export:'निर्यात', nav_config:'सेटिंग्स',
+  },
+  ar: {
+    nav_dashboard:'لوحة التحكم', nav_workspace:'مساحة العمل', nav_narration:'السرد',
+    nav_covers:'الأغلفة', nav_export:'تصدير', nav_config:'الإعدادات',
+  },
+  zh: {
+    nav_dashboard:'仪表板', nav_workspace:'工作区', nav_narration:'朗读',
+    nav_covers:'封面', nav_export:'导出', nav_config:'设置',
+  },
+  ja: {
+    nav_dashboard:'ダッシュボード', nav_workspace:'ワークスペース', nav_narration:'ナレーション',
+    nav_covers:'表紙', nav_export:'エクスポート', nav_config:'設定',
+  },
+  ko: {
+    nav_dashboard:'대시보드', nav_workspace:'작업 공간', nav_narration:'나레이션',
+    nav_covers:'표지', nav_export:'내보내기', nav_config:'설정',
+  },
+  ru: {
+    nav_dashboard:'Главная', nav_workspace:'Рабочая область', nav_narration:'Озвучка',
+    nav_covers:'Обложки', nav_export:'Экспорт', nav_config:'Настройки',
+  },
+  nl: {
+    nav_dashboard:'Dashboard', nav_workspace:'Werkruimte', nav_narration:'Vertelling',
+    nav_covers:'Omslagen', nav_export:'Exporteren', nav_config:'Instellingen',
+  },
+  pl: {
+    nav_dashboard:'Panel', nav_workspace:'Obszar roboczy', nav_narration:'Narracja',
+    nav_covers:'Okładki', nav_export:'Eksportuj', nav_config:'Ustawienia',
+  },
+  sv: {
+    nav_dashboard:'Instrumentpanel', nav_workspace:'Arbetsyta', nav_narration:'Berättarröst',
+    nav_covers:'Omslag', nav_export:'Exportera', nav_config:'Inställningar',
+  },
+  tr: {
+    nav_dashboard:'Gösterge Paneli', nav_workspace:'Çalışma Alanı', nav_narration:'Anlatım',
+    nav_covers:'Kapaklar', nav_export:'Dışa Aktar', nav_config:'Ayarlar',
+  },
+};
+
+// ── Per-language full-page text substitution maps ──
+// These replace visible English text strings anywhere in the DOM.
+const UI_TEXT_MAP = {
+  es: {
+    // Dashboard
+    'Your AI-Powered Book Creation Studio': 'Tu estudio de creación de libros con IA',
+    'Create Your Story': 'Crea tu historia',
+    'Start a new book project': 'Comienza un nuevo proyecto de libro',
+    'Continue Writing': 'Continuar escribiendo',
+    'Resume your current project': 'Retoma tu proyecto actual',
+    'View Projects': 'Ver proyectos',
+    'Browse saved projects': 'Explorar proyectos guardados',
+    // Workspace
+    'Book Title': 'Título del libro',
+    'Story Genre': 'Género de la historia',
+    'Story Language': 'Idioma de la historia',
+    'Chapter Selection': 'Selección de capítulos',
+    'Words per Chapter': 'Palabras por capítulo',
+    'Generate Chapter Plan': 'Generar plan de capítulos',
+    'Write All Chapters & Send to Story Editor': 'Escribir todos los capítulos',
+    'Story Editor': 'Editor de historia',
+    'Chapter Plan': 'Plan de capítulos',
+    // Narration
+    'Voice Cloning Station': 'Estación de clonación de voz',
+    'Preview Voice': 'Vista previa de voz',
+    'Generate Full Narration': 'Generar narración completa',
+    'Go to DAW': 'Ir al DAW',
+    'Narrator Voice': 'Voz del narrador',
+    // Covers
+    'Book Cover Generator': 'Generador de portadas',
+    'Generate Cover': 'Generar portada',
+    'Regenerate': 'Regenerar',
+    'Download Cover': 'Descargar portada',
+    // Export
+    'Export Your Book': 'Exportar tu libro',
+    'Download as PDF': 'Descargar como PDF',
+    'Download as EPUB': 'Descargar como EPUB',
+    'Download as DOCX': 'Descargar como DOCX',
+    // Config
+    'Settings': 'Configuración',
+    'Save Settings': 'Guardar configuración',
+    'API Configuration': 'Configuración de API',
+    'Sign In': 'Iniciar sesión',
+    'Sign Out': 'Cerrar sesión',
+    'Sign In / Sign Up': 'Iniciar / Registrarse',
+  },
+  fr: {
+    'Your AI-Powered Book Creation Studio': 'Votre studio de création de livres par IA',
+    'Create Your Story': 'Créez votre histoire',
+    'Start a new book project': 'Commencez un nouveau projet de livre',
+    'Continue Writing': 'Continuer à écrire',
+    'Resume your current project': 'Reprendre votre projet actuel',
+    'View Projects': 'Voir les projets',
+    'Browse saved projects': 'Parcourir les projets sauvegardés',
+    'Book Title': 'Titre du livre',
+    'Story Genre': 'Genre de l\'histoire',
+    'Story Language': 'Langue de l\'histoire',
+    'Chapter Selection': 'Sélection de chapitres',
+    'Words per Chapter': 'Mots par chapitre',
+    'Generate Chapter Plan': 'Générer le plan de chapitres',
+    'Write All Chapters & Send to Story Editor': 'Écrire tous les chapitres',
+    'Story Editor': 'Éditeur d\'histoire',
+    'Chapter Plan': 'Plan des chapitres',
+    'Voice Cloning Station': 'Station de clonage vocal',
+    'Preview Voice': 'Aperçu de la voix',
+    'Generate Full Narration': 'Générer la narration complète',
+    'Go to DAW': 'Aller au DAW',
+    'Narrator Voice': 'Voix du narrateur',
+    'Book Cover Generator': 'Générateur de couverture',
+    'Generate Cover': 'Générer la couverture',
+    'Regenerate': 'Régénérer',
+    'Download Cover': 'Télécharger la couverture',
+    'Export Your Book': 'Exporter votre livre',
+    'Download as PDF': 'Télécharger en PDF',
+    'Download as EPUB': 'Télécharger en EPUB',
+    'Download as DOCX': 'Télécharger en DOCX',
+    'Settings': 'Paramètres',
+    'Save Settings': 'Enregistrer les paramètres',
+    'API Configuration': 'Configuration API',
+    'Sign In': 'Se connecter',
+    'Sign Out': 'Se déconnecter',
+    'Sign In / Sign Up': 'Connexion / Inscription',
+  },
+  de: {
+    'Your AI-Powered Book Creation Studio': 'Ihr KI-gestütztes Buchkreations-Studio',
+    'Create Your Story': 'Erstelle deine Geschichte',
+    'Start a new book project': 'Starte ein neues Buchprojekt',
+    'Continue Writing': 'Weiterschreiben',
+    'Resume your current project': 'Aktuelles Projekt fortsetzen',
+    'View Projects': 'Projekte ansehen',
+    'Browse saved projects': 'Gespeicherte Projekte durchsuchen',
+    'Book Title': 'Buchtitel',
+    'Story Genre': 'Geschichtengenre',
+    'Story Language': 'Geschichtensprache',
+    'Chapter Selection': 'Kapitelauswahl',
+    'Words per Chapter': 'Wörter pro Kapitel',
+    'Generate Chapter Plan': 'Kapitelplan erstellen',
+    'Write All Chapters & Send to Story Editor': 'Alle Kapitel schreiben',
+    'Story Editor': 'Geschichteneditor',
+    'Chapter Plan': 'Kapitelplan',
+    'Voice Cloning Station': 'Sprachklon-Station',
+    'Preview Voice': 'Stimme vorhören',
+    'Generate Full Narration': 'Vollständige Erzählung generieren',
+    'Go to DAW': 'Zum DAW',
+    'Narrator Voice': 'Erzählerstimme',
+    'Book Cover Generator': 'Buchcover-Generator',
+    'Generate Cover': 'Cover erstellen',
+    'Regenerate': 'Neu generieren',
+    'Download Cover': 'Cover herunterladen',
+    'Export Your Book': 'Buch exportieren',
+    'Download as PDF': 'Als PDF herunterladen',
+    'Download as EPUB': 'Als EPUB herunterladen',
+    'Download as DOCX': 'Als DOCX herunterladen',
+    'Settings': 'Einstellungen',
+    'Save Settings': 'Einstellungen speichern',
+    'API Configuration': 'API-Konfiguration',
+    'Sign In': 'Anmelden',
+    'Sign Out': 'Abmelden',
+    'Sign In / Sign Up': 'Anmelden / Registrieren',
+  },
+  pt: {
+    'Your AI-Powered Book Creation Studio': 'Seu estúdio de criação de livros com IA',
+    'Create Your Story': 'Crie sua história',
+    'Start a new book project': 'Inicie um novo projeto de livro',
+    'Continue Writing': 'Continuar escrevendo',
+    'Resume your current project': 'Retomar o projeto atual',
+    'View Projects': 'Ver projetos',
+    'Browse saved projects': 'Navegar pelos projetos salvos',
+    'Book Title': 'Título do livro',
+    'Story Genre': 'Gênero da história',
+    'Story Language': 'Idioma da história',
+    'Chapter Selection': 'Seleção de capítulos',
+    'Words per Chapter': 'Palavras por capítulo',
+    'Generate Chapter Plan': 'Gerar plano de capítulos',
+    'Write All Chapters & Send to Story Editor': 'Escrever todos os capítulos',
+    'Story Editor': 'Editor de história',
+    'Chapter Plan': 'Plano de capítulos',
+    'Voice Cloning Station': 'Estação de clonagem de voz',
+    'Preview Voice': 'Visualizar voz',
+    'Generate Full Narration': 'Gerar narração completa',
+    'Go to DAW': 'Ir para o DAW',
+    'Narrator Voice': 'Voz do narrador',
+    'Book Cover Generator': 'Gerador de capa de livro',
+    'Generate Cover': 'Gerar capa',
+    'Regenerate': 'Regenerar',
+    'Download Cover': 'Baixar capa',
+    'Export Your Book': 'Exportar seu livro',
+    'Download as PDF': 'Baixar como PDF',
+    'Download as EPUB': 'Baixar como EPUB',
+    'Download as DOCX': 'Baixar como DOCX',
+    'Settings': 'Configurações',
+    'Save Settings': 'Salvar configurações',
+    'API Configuration': 'Configuração de API',
+    'Sign In': 'Entrar',
+    'Sign Out': 'Sair',
+    'Sign In / Sign Up': 'Entrar / Cadastrar',
+  },
+  it: {
+    'Your AI-Powered Book Creation Studio': 'Il tuo studio di creazione libri con IA',
+    'Create Your Story': 'Crea la tua storia',
+    'Start a new book project': 'Inizia un nuovo progetto di libro',
+    'Continue Writing': 'Continua a scrivere',
+    'Resume your current project': 'Riprendi il tuo progetto attuale',
+    'View Projects': 'Vedi progetti',
+    'Browse saved projects': 'Sfoglia i progetti salvati',
+    'Book Title': 'Titolo del libro',
+    'Story Genre': 'Genere della storia',
+    'Story Language': 'Lingua della storia',
+    'Chapter Selection': 'Selezione capitoli',
+    'Words per Chapter': 'Parole per capitolo',
+    'Generate Chapter Plan': 'Genera piano capitoli',
+    'Write All Chapters & Send to Story Editor': 'Scrivi tutti i capitoli',
+    'Story Editor': 'Editor storia',
+    'Chapter Plan': 'Piano dei capitoli',
+    'Voice Cloning Station': 'Stazione di clonazione vocale',
+    'Preview Voice': 'Anteprima voce',
+    'Generate Full Narration': 'Genera narrazione completa',
+    'Go to DAW': 'Vai al DAW',
+    'Narrator Voice': 'Voce del narratore',
+    'Book Cover Generator': 'Generatore copertine',
+    'Generate Cover': 'Genera copertina',
+    'Regenerate': 'Rigenera',
+    'Download Cover': 'Scarica copertina',
+    'Export Your Book': 'Esporta il tuo libro',
+    'Download as PDF': 'Scarica come PDF',
+    'Download as EPUB': 'Scarica come EPUB',
+    'Download as DOCX': 'Scarica come DOCX',
+    'Settings': 'Impostazioni',
+    'Save Settings': 'Salva impostazioni',
+    'API Configuration': 'Configurazione API',
+    'Sign In': 'Accedi',
+    'Sign Out': 'Esci',
+    'Sign In / Sign Up': 'Accedi / Registrati',
+  },
+  zh: {
+    'Your AI-Powered Book Creation Studio': '您的AI驱动图书创作工作室',
+    'Create Your Story': '创作您的故事',
+    'Start a new book project': '开始新的图书项目',
+    'Continue Writing': '继续写作',
+    'Resume your current project': '恢复当前项目',
+    'View Projects': '查看项目',
+    'Browse saved projects': '浏览已保存的项目',
+    'Book Title': '书名',
+    'Story Genre': '故事类型',
+    'Story Language': '故事语言',
+    'Chapter Selection': '章节选择',
+    'Words per Chapter': '每章字数',
+    'Generate Chapter Plan': '生成章节计划',
+    'Write All Chapters & Send to Story Editor': '写所有章节',
+    'Story Editor': '故事编辑器',
+    'Chapter Plan': '章节计划',
+    'Voice Cloning Station': '声音克隆站',
+    'Preview Voice': '预览声音',
+    'Generate Full Narration': '生成完整旁白',
+    'Go to DAW': '前往DAW',
+    'Narrator Voice': '旁白声音',
+    'Book Cover Generator': '封面生成器',
+    'Generate Cover': '生成封面',
+    'Regenerate': '重新生成',
+    'Download Cover': '下载封面',
+    'Export Your Book': '导出您的书',
+    'Download as PDF': '下载为PDF',
+    'Download as EPUB': '下载为EPUB',
+    'Download as DOCX': '下载为DOCX',
+    'Settings': '设置',
+    'Save Settings': '保存设置',
+    'API Configuration': 'API配置',
+    'Sign In': '登录',
+    'Sign Out': '退出',
+    'Sign In / Sign Up': '登录 / 注册',
+  },
+  ja: {
+    'Your AI-Powered Book Creation Studio': 'AIを活用した本の制作スタジオ',
+    'Create Your Story': 'ストーリーを作成',
+    'Start a new book project': '新しい本のプロジェクトを開始',
+    'Continue Writing': '書き続ける',
+    'Resume your current project': '現在のプロジェクトを再開',
+    'View Projects': 'プロジェクトを見る',
+    'Browse saved projects': '保存済みプロジェクトを閲覧',
+    'Book Title': '本のタイトル',
+    'Story Genre': 'ストーリージャンル',
+    'Story Language': 'ストーリー言語',
+    'Chapter Selection': 'チャプター選択',
+    'Words per Chapter': '1章あたりの単語数',
+    'Generate Chapter Plan': 'チャプタープランを生成',
+    'Write All Chapters & Send to Story Editor': '全チャプターを書く',
+    'Story Editor': 'ストーリーエディター',
+    'Chapter Plan': 'チャプタープラン',
+    'Voice Cloning Station': '音声クローニングステーション',
+    'Preview Voice': '音声プレビュー',
+    'Generate Full Narration': 'ナレーション全体を生成',
+    'Go to DAW': 'DAWへ',
+    'Narrator Voice': 'ナレーターの声',
+    'Book Cover Generator': '本の表紙ジェネレーター',
+    'Generate Cover': '表紙を生成',
+    'Regenerate': '再生成',
+    'Download Cover': '表紙をダウンロード',
+    'Export Your Book': '本をエクスポート',
+    'Download as PDF': 'PDFでダウンロード',
+    'Download as EPUB': 'EPUBでダウンロード',
+    'Download as DOCX': 'DOCXでダウンロード',
+    'Settings': '設定',
+    'Save Settings': '設定を保存',
+    'API Configuration': 'API設定',
+    'Sign In': 'ログイン',
+    'Sign Out': 'ログアウト',
+    'Sign In / Sign Up': 'ログイン / 登録',
+  },
+  ko: {
+    'Your AI-Powered Book Creation Studio': 'AI 기반 책 창작 스튜디오',
+    'Create Your Story': '스토리 만들기',
+    'Start a new book project': '새 책 프로젝트 시작',
+    'Continue Writing': '계속 쓰기',
+    'Resume your current project': '현재 프로젝트 재개',
+    'View Projects': '프로젝트 보기',
+    'Browse saved projects': '저장된 프로젝트 탐색',
+    'Book Title': '책 제목',
+    'Story Genre': '스토리 장르',
+    'Story Language': '스토리 언어',
+    'Chapter Selection': '챕터 선택',
+    'Words per Chapter': '챕터당 단어 수',
+    'Generate Chapter Plan': '챕터 계획 생성',
+    'Write All Chapters & Send to Story Editor': '모든 챕터 작성',
+    'Story Editor': '스토리 편집기',
+    'Chapter Plan': '챕터 계획',
+    'Voice Cloning Station': '음성 복제 스테이션',
+    'Preview Voice': '음성 미리보기',
+    'Generate Full Narration': '전체 내레이션 생성',
+    'Go to DAW': 'DAW로 이동',
+    'Narrator Voice': '내레이터 음성',
+    'Book Cover Generator': '책 표지 생성기',
+    'Generate Cover': '표지 생성',
+    'Regenerate': '재생성',
+    'Download Cover': '표지 다운로드',
+    'Export Your Book': '책 내보내기',
+    'Download as PDF': 'PDF로 다운로드',
+    'Download as EPUB': 'EPUB로 다운로드',
+    'Download as DOCX': 'DOCX로 다운로드',
+    'Settings': '설정',
+    'Save Settings': '설정 저장',
+    'API Configuration': 'API 설정',
+    'Sign In': '로그인',
+    'Sign Out': '로그아웃',
+    'Sign In / Sign Up': '로그인 / 회원가입',
+  },
+  ru: {
+    'Your AI-Powered Book Creation Studio': 'Ваша студия создания книг с ИИ',
+    'Create Your Story': 'Создайте свою историю',
+    'Start a new book project': 'Начните новый книжный проект',
+    'Continue Writing': 'Продолжить написание',
+    'Resume your current project': 'Возобновить текущий проект',
+    'View Projects': 'Просмотр проектов',
+    'Browse saved projects': 'Просмотр сохранённых проектов',
+    'Book Title': 'Название книги',
+    'Story Genre': 'Жанр истории',
+    'Story Language': 'Язык истории',
+    'Chapter Selection': 'Выбор глав',
+    'Words per Chapter': 'Слов на главу',
+    'Generate Chapter Plan': 'Создать план глав',
+    'Write All Chapters & Send to Story Editor': 'Написать все главы',
+    'Story Editor': 'Редактор истории',
+    'Chapter Plan': 'План глав',
+    'Voice Cloning Station': 'Станция клонирования голоса',
+    'Preview Voice': 'Предпросмотр голоса',
+    'Generate Full Narration': 'Создать полное озвучивание',
+    'Go to DAW': 'Перейти в DAW',
+    'Narrator Voice': 'Голос рассказчика',
+    'Book Cover Generator': 'Генератор обложки',
+    'Generate Cover': 'Создать обложку',
+    'Regenerate': 'Создать заново',
+    'Download Cover': 'Скачать обложку',
+    'Export Your Book': 'Экспортировать книгу',
+    'Download as PDF': 'Скачать как PDF',
+    'Download as EPUB': 'Скачать как EPUB',
+    'Download as DOCX': 'Скачать как DOCX',
+    'Settings': 'Настройки',
+    'Save Settings': 'Сохранить настройки',
+    'API Configuration': 'Настройка API',
+    'Sign In': 'Войти',
+    'Sign Out': 'Выйти',
+    'Sign In / Sign Up': 'Войти / Зарегистрироваться',
+  },
+  hi: {
+    'Your AI-Powered Book Creation Studio': 'आपका AI-संचालित पुस्तक निर्माण स्टूडियो',
+    'Create Your Story': 'अपनी कहानी बनाएं',
+    'Start a new book project': 'नया पुस्तक प्रोजेक्ट शुरू करें',
+    'Continue Writing': 'लिखना जारी रखें',
+    'Resume your current project': 'वर्तमान प्रोजेक्ट जारी रखें',
+    'View Projects': 'प्रोजेक्ट देखें',
+    'Browse saved projects': 'सहेजे गए प्रोजेक्ट ब्राउज़ करें',
+    'Book Title': 'पुस्तक शीर्षक',
+    'Story Genre': 'कहानी की शैली',
+    'Story Language': 'कहानी की भाषा',
+    'Chapter Selection': 'अध्याय चयन',
+    'Words per Chapter': 'प्रति अध्याय शब्द',
+    'Generate Chapter Plan': 'अध्याय योजना बनाएं',
+    'Write All Chapters & Send to Story Editor': 'सभी अध्याय लिखें',
+    'Story Editor': 'कहानी संपादक',
+    'Chapter Plan': 'अध्याय योजना',
+    'Voice Cloning Station': 'आवाज़ क्लोनिंग स्टेशन',
+    'Preview Voice': 'आवाज़ का पूर्वावलोकन',
+    'Generate Full Narration': 'पूर्ण वर्णन उत्पन्न करें',
+    'Go to DAW': 'DAW पर जाएं',
+    'Narrator Voice': 'वर्णनकर्ता की आवाज़',
+    'Book Cover Generator': 'पुस्तक कवर जनरेटर',
+    'Generate Cover': 'कवर बनाएं',
+    'Regenerate': 'पुनः उत्पन्न करें',
+    'Download Cover': 'कवर डाउनलोड करें',
+    'Export Your Book': 'अपनी पुस्तक निर्यात करें',
+    'Download as PDF': 'PDF के रूप में डाउनलोड करें',
+    'Download as EPUB': 'EPUB के रूप में डाउनलोड करें',
+    'Download as DOCX': 'DOCX के रूप में डाउनलोड करें',
+    'Settings': 'सेटिंग्स',
+    'Save Settings': 'सेटिंग्स सहेजें',
+    'API Configuration': 'API कॉन्फ़िगरेशन',
+    'Sign In': 'साइन इन करें',
+    'Sign Out': 'साइन आउट करें',
+    'Sign In / Sign Up': 'साइन इन / साइन अप',
+  },
+  ar: {
+    'Your AI-Powered Book Creation Studio': 'استوديو إنشاء الكتب المدعوم بالذكاء الاصطناعي',
+    'Create Your Story': 'أنشئ قصتك',
+    'Start a new book project': 'ابدأ مشروع كتاب جديد',
+    'Continue Writing': 'متابعة الكتابة',
+    'Resume your current project': 'استئناف المشروع الحالي',
+    'View Projects': 'عرض المشاريع',
+    'Browse saved projects': 'تصفح المشاريع المحفوظة',
+    'Book Title': 'عنوان الكتاب',
+    'Story Genre': 'نوع القصة',
+    'Story Language': 'لغة القصة',
+    'Chapter Selection': 'اختيار الفصول',
+    'Words per Chapter': 'كلمات لكل فصل',
+    'Generate Chapter Plan': 'إنشاء خطة الفصول',
+    'Write All Chapters & Send to Story Editor': 'كتابة جميع الفصول',
+    'Story Editor': 'محرر القصة',
+    'Chapter Plan': 'خطة الفصول',
+    'Voice Cloning Station': 'محطة استنساخ الصوت',
+    'Preview Voice': 'معاينة الصوت',
+    'Generate Full Narration': 'إنشاء سرد كامل',
+    'Go to DAW': 'الذهاب إلى DAW',
+    'Narrator Voice': 'صوت الراوي',
+    'Book Cover Generator': 'مولد أغلفة الكتب',
+    'Generate Cover': 'إنشاء الغلاف',
+    'Regenerate': 'إعادة التوليد',
+    'Download Cover': 'تحميل الغلاف',
+    'Export Your Book': 'تصدير كتابك',
+    'Download as PDF': 'تحميل كـ PDF',
+    'Download as EPUB': 'تحميل كـ EPUB',
+    'Download as DOCX': 'تحميل كـ DOCX',
+    'Settings': 'الإعدادات',
+    'Save Settings': 'حفظ الإعدادات',
+    'API Configuration': 'تكوين API',
+    'Sign In': 'تسجيل الدخول',
+    'Sign Out': 'تسجيل الخروج',
+    'Sign In / Sign Up': 'دخول / تسجيل',
+  },
+  nl: {
+    'Your AI-Powered Book Creation Studio': 'Uw AI-aangedreven boekcreatiesstudio',
+    'Create Your Story': 'Maak uw verhaal',
+    'Start a new book project': 'Start een nieuw boekproject',
+    'Continue Writing': 'Doorgaan met schrijven',
+    'Resume your current project': 'Huidig project hervatten',
+    'View Projects': 'Projecten bekijken',
+    'Browse saved projects': 'Opgeslagen projecten bekijken',
+    'Book Title': 'Boektitel',
+    'Story Genre': 'Verhaalgenre',
+    'Story Language': 'Verhaaltaal',
+    'Chapter Selection': 'Hoofdstukkeuze',
+    'Words per Chapter': 'Woorden per hoofdstuk',
+    'Generate Chapter Plan': 'Hoofdstukplan genereren',
+    'Write All Chapters & Send to Story Editor': 'Alle hoofdstukken schrijven',
+    'Story Editor': 'Verhaaleditor',
+    'Chapter Plan': 'Hoofdstukplan',
+    'Voice Cloning Station': 'Stemklonstation',
+    'Preview Voice': 'Stem voorbeluisteren',
+    'Generate Full Narration': 'Volledige vertelling genereren',
+    'Go to DAW': 'Naar DAW',
+    'Narrator Voice': 'Vertellerstem',
+    'Book Cover Generator': 'Boekomslag generator',
+    'Generate Cover': 'Omslag genereren',
+    'Regenerate': 'Opnieuw genereren',
+    'Download Cover': 'Omslag downloaden',
+    'Export Your Book': 'Uw boek exporteren',
+    'Download as PDF': 'Downloaden als PDF',
+    'Download as EPUB': 'Downloaden als EPUB',
+    'Download as DOCX': 'Downloaden als DOCX',
+    'Settings': 'Instellingen',
+    'Save Settings': 'Instellingen opslaan',
+    'API Configuration': 'API-configuratie',
+    'Sign In': 'Aanmelden',
+    'Sign Out': 'Afmelden',
+    'Sign In / Sign Up': 'Aanmelden / Registreren',
+  },
+  pl: {
+    'Your AI-Powered Book Creation Studio': 'Twoje studio tworzenia książek z AI',
+    'Create Your Story': 'Utwórz swoją historię',
+    'Start a new book project': 'Rozpocznij nowy projekt książki',
+    'Continue Writing': 'Kontynuuj pisanie',
+    'Resume your current project': 'Wznów bieżący projekt',
+    'View Projects': 'Wyświetl projekty',
+    'Browse saved projects': 'Przeglądaj zapisane projekty',
+    'Book Title': 'Tytuł książki',
+    'Story Genre': 'Gatunek historii',
+    'Story Language': 'Język historii',
+    'Chapter Selection': 'Wybór rozdziałów',
+    'Words per Chapter': 'Słów na rozdział',
+    'Generate Chapter Plan': 'Generuj plan rozdziałów',
+    'Write All Chapters & Send to Story Editor': 'Napisz wszystkie rozdziały',
+    'Story Editor': 'Edytor historii',
+    'Chapter Plan': 'Plan rozdziałów',
+    'Voice Cloning Station': 'Stacja klonowania głosu',
+    'Preview Voice': 'Podgląd głosu',
+    'Generate Full Narration': 'Generuj pełną narrację',
+    'Go to DAW': 'Przejdź do DAW',
+    'Narrator Voice': 'Głos narratora',
+    'Book Cover Generator': 'Generator okładki',
+    'Generate Cover': 'Generuj okładkę',
+    'Regenerate': 'Regeneruj',
+    'Download Cover': 'Pobierz okładkę',
+    'Export Your Book': 'Eksportuj swoją książkę',
+    'Download as PDF': 'Pobierz jako PDF',
+    'Download as EPUB': 'Pobierz jako EPUB',
+    'Download as DOCX': 'Pobierz jako DOCX',
+    'Settings': 'Ustawienia',
+    'Save Settings': 'Zapisz ustawienia',
+    'API Configuration': 'Konfiguracja API',
+    'Sign In': 'Zaloguj się',
+    'Sign Out': 'Wyloguj się',
+    'Sign In / Sign Up': 'Zaloguj / Zarejestruj',
+  },
+  sv: {
+    'Your AI-Powered Book Creation Studio': 'Ditt AI-drivna bokstudio',
+    'Create Your Story': 'Skapa din berättelse',
+    'Start a new book project': 'Starta ett nytt bokprojekt',
+    'Continue Writing': 'Fortsätt skriva',
+    'Resume your current project': 'Återuppta aktuellt projekt',
+    'View Projects': 'Visa projekt',
+    'Browse saved projects': 'Bläddra i sparade projekt',
+    'Book Title': 'Boktitel',
+    'Story Genre': 'Berättelsegenre',
+    'Story Language': 'Berättelsespråk',
+    'Chapter Selection': 'Kapitelval',
+    'Words per Chapter': 'Ord per kapitel',
+    'Generate Chapter Plan': 'Generera kapitelplan',
+    'Write All Chapters & Send to Story Editor': 'Skriv alla kapitel',
+    'Story Editor': 'Berättelseeditor',
+    'Chapter Plan': 'Kapitelplan',
+    'Voice Cloning Station': 'Röstklonstation',
+    'Preview Voice': 'Förhandsgranska röst',
+    'Generate Full Narration': 'Generera fullständig berättarröst',
+    'Go to DAW': 'Gå till DAW',
+    'Narrator Voice': 'Berättarröst',
+    'Book Cover Generator': 'Omslags­generator',
+    'Generate Cover': 'Generera omslag',
+    'Regenerate': 'Regenerera',
+    'Download Cover': 'Ladda ner omslag',
+    'Export Your Book': 'Exportera din bok',
+    'Download as PDF': 'Ladda ner som PDF',
+    'Download as EPUB': 'Ladda ner som EPUB',
+    'Download as DOCX': 'Ladda ner som DOCX',
+    'Settings': 'Inställningar',
+    'Save Settings': 'Spara inställningar',
+    'API Configuration': 'API-konfiguration',
+    'Sign In': 'Logga in',
+    'Sign Out': 'Logga ut',
+    'Sign In / Sign Up': 'Logga in / Registrera',
+  },
+  tr: {
+    'Your AI-Powered Book Creation Studio': 'AI Destekli Kitap Oluşturma Stüdyonuz',
+    'Create Your Story': 'Hikayenizi Oluşturun',
+    'Start a new book project': 'Yeni bir kitap projesi başlatın',
+    'Continue Writing': 'Yazmaya devam et',
+    'Resume your current project': 'Mevcut projeyi sürdür',
+    'View Projects': 'Projeleri görüntüle',
+    'Browse saved projects': 'Kaydedilen projelere göz at',
+    'Book Title': 'Kitap Başlığı',
+    'Story Genre': 'Hikaye Türü',
+    'Story Language': 'Hikaye Dili',
+    'Chapter Selection': 'Bölüm Seçimi',
+    'Words per Chapter': 'Bölüm Başına Kelime',
+    'Generate Chapter Plan': 'Bölüm Planı Oluştur',
+    'Write All Chapters & Send to Story Editor': 'Tüm Bölümleri Yaz',
+    'Story Editor': 'Hikaye Editörü',
+    'Chapter Plan': 'Bölüm Planı',
+    'Voice Cloning Station': 'Ses Klonlama İstasyonu',
+    'Preview Voice': 'Sesi Önizle',
+    'Generate Full Narration': 'Tam Anlatım Oluştur',
+    'Go to DAW': "DAW'a Git",
+    'Narrator Voice': 'Anlatıcı Sesi',
+    'Book Cover Generator': 'Kapak Oluşturucu',
+    'Generate Cover': 'Kapak Oluştur',
+    'Regenerate': 'Yeniden Oluştur',
+    'Download Cover': 'Kapağı İndir',
+    'Export Your Book': 'Kitabınızı Dışa Aktarın',
+    'Download as PDF': "PDF olarak İndir",
+    'Download as EPUB': "EPUB olarak İndir",
+    'Download as DOCX': "DOCX olarak İndir",
+    'Settings': 'Ayarlar',
+    'Save Settings': 'Ayarları Kaydet',
+    'API Configuration': 'API Yapılandırması',
+    'Sign In': 'Giriş Yap',
+    'Sign Out': 'Çıkış Yap',
+    'Sign In / Sign Up': 'Giriş / Kayıt',
+  },
+};
+
+// ── Engine ──────────────────────────────────────────────────────
+let _uiLang = 'en';
+let _originalTextNodes = []; // store {node, original} for restore
+
+function toggleUILangMenu() {
+  const menu = document.getElementById('uiLangMenu');
+  if (menu) menu.classList.toggle('hidden');
+}
+// Close menu when clicking outside
+document.addEventListener('click', e => {
+  const switcher = document.getElementById('uiLangSwitcher');
+  if (switcher && !switcher.contains(e.target)) {
+    const menu = document.getElementById('uiLangMenu');
+    if (menu) menu.classList.add('hidden');
+  }
+});
+
+function setUILanguage(lang) {
+  _uiLang = lang;
+  localStorage.setItem('uiLanguage', lang);
+  // Update flag
+  const flagEl = document.getElementById('uiLangFlag');
+  if (flagEl) flagEl.textContent = UI_FLAGS[lang] || '🌐';
+  // Apply data-i18n keys
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.dataset.i18n;
+    const t = UI_TRANSLATIONS[lang];
+    if (t && t[key]) el.textContent = t[key];
+    else if (UI_TRANSLATIONS['en'] && UI_TRANSLATIONS['en'][key]) el.textContent = UI_TRANSLATIONS['en'][key];
+  });
+  // Apply full-page text substitution
+  if (lang === 'en') {
+    restoreUIText();
+  } else {
+    applyUITextMap(lang);
+  }
+  // Close menu
+  const menu = document.getElementById('uiLangMenu');
+  if (menu) menu.classList.add('hidden');
+}
+
+function applyUITextMap(lang) {
+  const map = UI_TEXT_MAP[lang];
+  if (!map) return;
+  // Restore English first so we're always substituting from English
+  restoreUIText();
+  _originalTextNodes = [];
+  walkTextNodes(document.body, node => {
+    const orig = node.textContent;
+    const trimmed = orig.trim();
+    if (map[trimmed]) {
+      _originalTextNodes.push({ node, original: orig });
+      node.textContent = orig.replace(trimmed, map[trimmed]);
+    }
+  });
+}
+
+function restoreUIText() {
+  _originalTextNodes.forEach(({ node, original }) => {
+    node.textContent = original;
+  });
+  _originalTextNodes = [];
+}
+
+function walkTextNodes(el, callback) {
+  if (!el) return;
+  // Skip script, style, textarea, input elements
+  if (['SCRIPT','STYLE','TEXTAREA','INPUT','CODE','PRE'].includes(el.nodeName)) return;
+  el.childNodes.forEach(child => {
+    if (child.nodeType === Node.TEXT_NODE && child.textContent.trim().length > 1) {
+      callback(child);
+    } else if (child.nodeType === Node.ELEMENT_NODE) {
+      walkTextNodes(child, callback);
+    }
+  });
+}
+
+// ── Init ────────────────────────────────────────────────────────
+(function initUILanguage() {
+  const saved = localStorage.getItem('uiLanguage') || 'en';
+  if (saved !== 'en') {
+    // Apply after DOM is fully ready
+    setTimeout(() => setUILanguage(saved), 500);
+  } else {
+    const flagEl = document.getElementById('uiLangFlag');
+    if (flagEl) flagEl.textContent = UI_FLAGS['en'];
+  }
+})();
+</script>
 </body>
 </html>
