@@ -7635,8 +7635,7 @@ Format as clean, readable text ready for narration.`;
                 } else if (provider === 'chatterbox') {
                     audioBlob = await generateChatterboxAudio(previewText, null);
                 } else if (provider === 'cbturbo') {
-                    const voiceName = selectedOption.dataset.voice;
-                    const mp3Name = voiceName.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') + '.mp3';
+                    const mp3Name = selectedOption.dataset.file || (selectedOption.dataset.voice + '.mp3');
                     audioBlob = await generateChatterboxAudio(previewText, mp3Name);
                 } else if (provider === 'cbmulti') {
                     const langCode = selectedOption.dataset.voice;
@@ -8176,47 +8175,47 @@ Format as clean, readable text ready for narration.`;
             voiceSelect.appendChild(turboOptgroup);
 
             const turboVoices = [
-                { id: 'adam',        label: 'Adam — Male' },
-                { id: 'alexandra',   label: 'Alexandra — Female' },
-                { id: 'annie',       label: 'Annie — Female' },
-                { id: 'benjamin',    label: 'Benjamin — Male' },
-                { id: 'betty',       label: 'Betty — Female' },
-                { id: 'bob',         label: 'Bob — Male' },
-                { id: 'brandy ny',   label: 'Brandy NY — Female' },
-                { id: 'clark',       label: 'Clark — Male' },
-                { id: 'damon',       label: 'Damon — Male' },
-                { id: 'darren',      label: 'Darren — Male' },
-                { id: 'diana',       label: 'Diana — Female' },
-                { id: 'dwight',      label: 'Dwight — Male' },
-                { id: 'edward',      label: 'Edward — Male' },
-                { id: 'erica',       label: 'Erica — Female' },
-                { id: 'explainer',   label: 'Explainer — Male' },
-                { id: 'glen',        label: 'Glen — Male' },
-                { id: 'helen',       label: 'Helen — Female' },
-                { id: 'helen-2',     label: 'Helen-2 — Female' },
-                { id: 'jeffrey',     label: 'Jeffrey — Male' },
-                { id: 'jenny',       label: 'Jenny — Female' },
-                { id: 'john forcast', label: 'John Forcast — Male' },
-                { id: 'kim',         label: 'Kim — Female' },
-                { id: 'lerry',       label: 'Lerry — Male' },
-                { id: 'lizz',        label: 'Lizz — Female' },
-                { id: 'marie',       label: 'Marie — Female' },
-                { id: 'maxwell',     label: 'Maxwell — Male' },
-                { id: 'melissa',     label: 'Melissa — Female' },
-                { id: 'mia',         label: 'Mia — Female' },
-                { id: 'mike',        label: 'Mike — Male' },
-                { id: 'paul',        label: 'Paul — Male' },
-                { id: 'sean',        label: 'Sean — Male' },
-                { id: 'shaundria',   label: 'Shaundria — Female' },
-                { id: 'tawnya',      label: 'Tawnya — Female' },
+                { id: 'adam',        file: 'Adam.mp3',         label: 'Adam — Male' },
+                { id: 'alexandra',   file: 'Alexandra.mp3',    label: 'Alexandra — Female' },
+                { id: 'annie',       file: 'Annie.mp3',        label: 'Annie — Female' },
+                { id: 'benjamin',    file: 'Benjamin.mp3',     label: 'Benjamin — Male' },
+                { id: 'betty',       file: 'Betty.mp3',        label: 'Betty — Female' },
+                { id: 'bob',         file: 'Bob.mp3',          label: 'Bob — Male' },
+                { id: 'brandy_ny',   file: 'Brandy NY.mp3',    label: 'Brandy NY — Female' },
+                { id: 'clark',       file: 'Clark.mp3',        label: 'Clark — Male' },
+                { id: 'damon',       file: 'Damon.mp3',        label: 'Damon — Male' },
+                { id: 'darren',      file: 'Darren.mp3',       label: 'Darren — Male' },
+                { id: 'diana',       file: 'Diana.mp3',        label: 'Diana — Female' },
+                { id: 'dwight',      file: 'Dwight.mp3',       label: 'Dwight — Male' },
+                { id: 'edward',      file: 'Edward.mp3',       label: 'Edward — Male' },
+                { id: 'erica',       file: 'Erica.mp3',        label: 'Erica — Female' },
+                { id: 'explainer',   file: 'Explainer.mp3',    label: 'Explainer — Male' },
+                { id: 'glen',        file: 'Glen.mp3',         label: 'Glen — Male' },
+                { id: 'helen',       file: 'Helen.mp3',        label: 'Helen — Female' },
+                { id: 'helen2',      file: 'Helen-2.mp3',      label: 'Helen-2 — Female' },
+                { id: 'jeffrey',     file: 'Jeffrey.mp3',      label: 'Jeffrey — Male' },
+                { id: 'jenny',       file: 'Jenny.mp3',        label: 'Jenny — Female' },
+                { id: 'john_forcast',file: 'John Forcast.mp3', label: 'John Forcast — Male' },
+                { id: 'kim',         file: 'Kim.mp3',          label: 'Kim — Female' },
+                { id: 'lerry',       file: 'Lerry.mp3',        label: 'Lerry — Male' },
+                { id: 'lizz',        file: 'Lizz.mp3',         label: 'Lizz — Female' },
+                { id: 'marie',       file: 'Marie.mp3',        label: 'Marie — Female' },
+                { id: 'maxwell',     file: 'Maxwell.mp3',      label: 'Maxwell — Male' },
+                { id: 'melissa',     file: 'Melissa.mp3',      label: 'Melissa — Female' },
+                { id: 'mia',         file: 'Mia.mp3',          label: 'Mia — Female' },
+                { id: 'mike',        file: 'Mike.mp3',         label: 'Mike — Male' },
+                { id: 'paul',        file: 'Paul.mp3',         label: 'Paul — Male' },
+                { id: 'sean',        file: 'Sean.mp3',         label: 'Sean — Male' },
+                { id: 'shaundria',   file: 'Shaundria.mp3',    label: 'Shaundria — Female' },
+                { id: 'tawnya',      file: 'Tawnya.mp3',       label: 'Tawnya — Female' },
             ];
 
             turboVoices.forEach(v => {
                 const opt = document.createElement('option');
-                opt.value = 'cbturbo_' + v.id.replace(/ /g, '_');
+                opt.value = 'cbturbo_' + v.id;
                 opt.textContent = v.label;
                 opt.dataset.provider = 'cbturbo';
-                opt.dataset.voice = v.id; // original name sent to handler
+                opt.dataset.file = v.file; // exact MP3 filename
                 turboOptgroup.appendChild(opt);
             });
 
@@ -9130,9 +9129,9 @@ Format as clean, readable text ready for narration.`;
                 } else if (provider === 'chatterbox') {
                     return await generateChatterboxAudio(text, null);
                 } else if (provider === 'cbturbo') {
-                    // Custom MP3 voice reference via Fal Classic
-                    const voiceName = voice.replace('cbturbo_', '').replace(/_/g, ' ');
-                    const mp3Name = voiceName.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') + '.mp3';
+                    const voiceSelect2 = document.getElementById('narratorVoiceSelect') || document.getElementById('voiceSelection');
+                    const selOpt = voiceSelect2 ? voiceSelect2.options[voiceSelect2.selectedIndex] : null;
+                    const mp3Name = selOpt?.dataset?.file || (voice.replace('cbturbo_', '') + '.mp3');
                     return await generateChatterboxAudio(text, mp3Name);
                 } else if (provider === 'cbmulti') {
                     const langCode = voice.replace('cbmulti_', '');
@@ -9740,9 +9739,10 @@ Format as clean, readable text ready for narration.`;
 
             let blob;
             if (voice.startsWith('cbturbo_')) {
-                // Custom MP3 voice reference → Fal Classic
-                const voiceName = voice.replace('cbturbo_', '').replace(/_/g, ' ');
-                const mp3Name = voiceName.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') + '.mp3';
+                // Look up exact MP3 filename from the voice dropdown
+                const voiceSelect = document.getElementById('voiceSelection');
+                const matchingOpt = voiceSelect ? Array.from(voiceSelect.options).find(o => o.value === voice) : null;
+                const mp3Name = matchingOpt?.dataset?.file || (voice.replace('cbturbo_', '') + '.mp3');
                 blob = await generateChatterboxAudio(paddedText, mp3Name);
             } else if (voice.startsWith('cbmulti_')) {
                 // Multilingual → Fal Multilingual
