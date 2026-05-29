@@ -9572,12 +9572,14 @@ Format as clean, readable text ready for narration.`;
             });
 
             if (!resp.ok) {
+                hideLoading();
                 const errText = await resp.text();
                 throw new Error(`${labelForErrors} Error: ${resp.status} - ${errText}`);
             }
 
             const result = await resp.json();
             console.log(`${labelForErrors} done.`);
+            hideLoading();
             return result;
         }
 
