@@ -11305,7 +11305,7 @@ Format as clean, readable text ready for narration.`;
                         showNotification('Failed to transfer audio to cover page: ' + err.message, 'error');
                     }
                 }
-            });
+            };
 
             // Re-send stored narration when DAW iframe signals it is ready
             const dawReadyHandler = function(event) {
