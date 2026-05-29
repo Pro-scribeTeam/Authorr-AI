@@ -929,22 +929,22 @@
                     <h1 class="text-3xl font-bold authorr-brand-text">AUTHORR AI</h1>
                 </div>
                 <div class="hidden md:flex items-center space-x-6">
-                    <button onclick="showPage('dashboard')" class="nav-item px-4 py-2 rounded-lg font-semibold active">
+                    <button data-page="dashboard" onclick="showPage('dashboard')" class="nav-item px-4 py-2 rounded-lg font-semibold active">
                         <i class="fas fa-home mr-2"></i><span data-i18n="nav_dashboard">Dashboard</span>
                     </button>
-                    <button onclick="showPage('workspace')" class="nav-item px-4 py-2 rounded-lg font-semibold">
+                    <button data-page="workspace" onclick="showPage('workspace')" class="nav-item px-4 py-2 rounded-lg font-semibold">
                         <i class="fas fa-edit mr-2"></i><span data-i18n="nav_workspace">Workspace</span>
                     </button>
-                    <button onclick="showPage('narration')" class="nav-item px-4 py-2 rounded-lg font-semibold">
+                    <button data-page="narration" onclick="showPage('narration')" class="nav-item px-4 py-2 rounded-lg font-semibold">
                         <i class="fas fa-microphone mr-2"></i><span data-i18n="nav_narration">Narration</span>
                     </button>
-                    <button onclick="showPage('covers')" class="nav-item px-4 py-2 rounded-lg font-semibold">
+                    <button data-page="covers" onclick="showPage('covers')" class="nav-item px-4 py-2 rounded-lg font-semibold">
                         <i class="fas fa-image mr-2"></i><span data-i18n="nav_covers">Covers</span>
                     </button>
-                    <button onclick="showPage('export')" class="nav-item px-4 py-2 rounded-lg font-semibold">
+                    <button data-page="export" onclick="showPage('export')" class="nav-item px-4 py-2 rounded-lg font-semibold">
                         <i class="fas fa-download mr-2"></i><span data-i18n="nav_export">Export</span>
                     </button>
-                    <button onclick="showPage('config')" class="nav-item px-4 py-2 rounded-lg font-semibold">
+                    <button data-page="config" onclick="showPage('config')" class="nav-item px-4 py-2 rounded-lg font-semibold">
                         <i class="fas fa-cog mr-2"></i><span data-i18n="nav_config">Config</span>
                     </button>
                 </div>
@@ -2705,12 +2705,14 @@
         // Page Navigation
         function showPage(pageId, clickEvent = null) {
             document.querySelectorAll('.page').forEach(page => page.classList.add('hidden'));
-            document.getElementById(pageId).classList.remove('hidden');
-            
+            const pageEl = document.getElementById(pageId);
+            if (pageEl) pageEl.classList.remove('hidden');
+
             document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
-            if (clickEvent && clickEvent.target) {
-                clickEvent.target.classList.add('active');
-            }
+            // Find matching nav button by data-page attribute (reliable) or fallback to clickEvent target
+            const activeBtn = document.querySelector(`.nav-item[data-page="${pageId}"]`) ||
+                              (clickEvent && clickEvent.target ? clickEvent.target.closest('.nav-item') : null);
+            if (activeBtn) activeBtn.classList.add('active');
             
             currentPage = pageId;
             window.scrollTo(0, 0);
@@ -17034,6 +17036,7 @@ const UI_TEXT_MAP = {
 
 // ── Engine ──────────────────────────────────────────────────────
 let _uiLang = 'en';
+let _originalTextNodes = [];
 let _originalTextNodes = []; // store {node, original} for restore
 
 function toggleUILangMenu() {
