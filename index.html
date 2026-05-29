@@ -1176,6 +1176,33 @@
                             </select>
                         </div>
                         
+                        <div>
+                            <label class="block text-sm font-semibold mb-2">
+                                <i class="fas fa-globe mr-1"></i>Story Language
+                            </label>
+                            <select id="storyLanguage" onchange="saveStoryLanguage()" class="w-full px-4 py-2 rounded-lg form-field bg-theme-primary text-theme-primary">
+                                <option value="english" selected>🇺🇸 English (Default)</option>
+                                <option value="spanish">🇪🇸 Spanish</option>
+                                <option value="french">🇫🇷 French</option>
+                                <option value="german">🇩🇪 German</option>
+                                <option value="portuguese">🇧🇷 Portuguese</option>
+                                <option value="italian">🇮🇹 Italian</option>
+                                <option value="hindi">🇮🇳 Hindi</option>
+                                <option value="arabic">🇸🇦 Arabic</option>
+                                <option value="chinese">🇨🇳 Chinese</option>
+                                <option value="japanese">🇯🇵 Japanese</option>
+                                <option value="korean">🇰🇷 Korean</option>
+                                <option value="russian">🇷🇺 Russian</option>
+                                <option value="dutch">🇳🇱 Dutch</option>
+                                <option value="polish">🇵🇱 Polish</option>
+                                <option value="swedish">🇸🇪 Swedish</option>
+                                <option value="norwegian">🇳🇴 Norwegian</option>
+                                <option value="danish">🇩🇰 Danish</option>
+                                <option value="turkish">🇹🇷 Turkish</option>
+                            </select>
+                            <p class="text-xs text-theme-secondary mt-1">AI will write the story in this language. Narration will automatically use the matching voice.</p>
+                        </div>
+
                         <!-- Human Touch Score -->
                         <div class="bg-theme-primary p-4 rounded-lg border border-theme">
                             <div class="flex items-center justify-between">
@@ -7274,6 +7301,9 @@ JSON Structure:
 
             showNotification(`Generating content for Chapter ${chapterNumber}...`, 'info');
 
+            const storyLang = getStoryLanguage();
+            const langInstruction = storyLang !== 'english' ? `\nLanguage: Write entirely in ${storyLang.charAt(0).toUpperCase() + storyLang.slice(1)}. Do not use English.` : '';
+
             const prompt = `Write the full content for this chapter of the book "${storyData.title}".
 
 Chapter ${chapter.number}: ${chapter.title}
@@ -7281,7 +7311,7 @@ Summary: ${chapter.summary}
 Key Points: ${chapter.keyPoints.join(', ')}
 Target Word Count: ${chapter.wordCount}
 Genre: ${document.getElementById('genre')?.value}
-Tone: ${document.getElementById('tone')?.value}
+Tone: ${document.getElementById('tone')?.value}${langInstruction}
 
 Write engaging, well-structured prose that:
 1. Follows the chapter summary and incorporates all key points
@@ -7326,6 +7356,36 @@ Format as clean, readable text ready for narration.`;
                 generateBtn.classList.add('btn-success');
                 generateBtn.disabled = true;
             }
+        }
+
+        // ── Story Language helpers ──
+        function getStoryLanguage() {
+            return localStorage.getItem('storyLanguage') || 'english';
+        }
+
+        function saveStoryLanguage() {
+            const lang = document.getElementById('storyLanguage')?.value || 'english';
+            localStorage.setItem('storyLanguage', lang);
+            if (storyData && storyData.settings) storyData.settings.language = lang;
+            // Auto-switch narration voice to matching multilingual voice
+            if (lang !== 'english') {
+                const voiceSelect = document.getElementById('voiceSelection');
+                if (voiceSelect) {
+                    const target = voiceSelect.querySelector(`option[value="cbmulti_${lang}"]`);
+                    if (target) {
+                        voiceSelect.value = target.value;
+                        showNotification(`Story language set to ${lang.charAt(0).toUpperCase() + lang.slice(1)} — narration voice updated automatically.`, 'info');
+                    }
+                }
+            } else {
+                showNotification('Story language set to English.', 'info');
+            }
+        }
+
+        function loadStoryLanguage() {
+            const lang = getStoryLanguage();
+            const el = document.getElementById('storyLanguage');
+            if (el) el.value = lang;
         }
 
         // Config Page Functions
@@ -15625,7 +15685,8 @@ Format as clean, readable text ready for narration.`;
         // Initialize on page load
         document.addEventListener('DOMContentLoaded', function() {
             loadSettings();
-            
+            loadStoryLanguage();
+
             // Populate voice options when page loads
             setTimeout(() => {
                 populateVoiceOptions();
