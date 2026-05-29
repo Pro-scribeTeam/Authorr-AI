@@ -10779,7 +10779,20 @@ Format as clean, readable text ready for narration.`;
         // Open the comprehensive Audio DAW
         function openAudioDAW() {
             console.log('🎚️ Opening Professional Audio DAW...');
-            
+
+            // If DAW is already open, just show it — don't create a duplicate
+            const existing = document.getElementById('audioDAWModal');
+            if (existing) {
+                existing.classList.remove('hidden');
+                return;
+            }
+
+            // Clean up any stale message listeners from previous sessions
+            if (window._dawMessageHandler) {
+                window.removeEventListener('message', window._dawMessageHandler);
+                window._dawMessageHandler = null;
+            }
+
             // Create full-screen DAW modal with iframe
             const dawModal = document.createElement('div');
             dawModal.id = 'audioDAWModal';
@@ -11176,7 +11189,7 @@ Format as clean, readable text ready for narration.`;
             console.log('✅ Professional Audio DAW loaded in iframe');
             
             // Handle messages from DAW iframe (Send to Cover, etc.)
-            window.addEventListener('message', function(event) {
+            window._dawMessageHandler = function(event) {
                 if (!event.data || !event.data.type) return;
 
                 if (event.data.type === 'SEND_TO_COVER') {
@@ -11228,6 +11241,7 @@ Format as clean, readable text ready for narration.`;
                 }
             };
             window.addEventListener('message', dawReadyHandler);
+            window.addEventListener('message', window._dawMessageHandler);
         }
 
         // Professional DAW Fader Functions
@@ -15567,13 +15581,10 @@ Format as clean, readable text ready for narration.`;
 
         function closeAudioDAW() {
             console.log('🔄 Closing Audio DAW...');
-            
-            // Remove modal (iframe will be automatically cleaned up)
             const modal = document.getElementById('audioDAWModal');
             if (modal) {
-                modal.remove();
+                modal.classList.add('hidden');
             }
-            
             console.log('✅ Audio DAW closed');
         }
 
