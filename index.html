@@ -966,7 +966,7 @@
                             <i class="fas fa-globe"></i>
                             <span id="uiLangFlag">🇺🇸</span>
                         </button>
-                        <div id="uiLangMenu" class="hidden absolute right-0 top-10 bg-gray-900 border border-cyan-500 rounded-xl shadow-2xl z-[9999] w-44 max-h-80 overflow-y-auto">
+                        <div id="uiLangMenu" class="hidden fixed bg-gray-900 border border-cyan-500 rounded-xl shadow-2xl z-[9999] w-44 max-h-80 overflow-y-auto">
                             <div class="p-2 text-xs text-gray-400 border-b border-gray-700 font-semibold uppercase tracking-wide px-3 py-2">Interface Language</div>
                             <button onclick="setUILanguage('en')"  class="ui-lang-opt w-full text-left px-3 py-2 hover:bg-cyan-900 text-sm flex items-center gap-2">🇺🇸 English</button>
                             <button onclick="setUILanguage('es')"  class="ui-lang-opt w-full text-left px-3 py-2 hover:bg-cyan-900 text-sm flex items-center gap-2">🇪🇸 Español</button>
@@ -1030,12 +1030,12 @@
                     <img src="https://page.gensparksite.com/v1/base64_upload/5ec0a971230da95148e537dd473d0fb1" alt="AUTHORR AI Logo" class="w-20 h-20 logo-image mr-4">
                     <h1 class="text-6xl font-bold authorr-brand-text">AUTHORR AI</h1>
                 </div>
-                <p class="text-xl text-theme-secondary mb-8 max-w-3xl mx-auto">
-                    Transform your stories into professional audiobooks with AI-powered writing, chapter generation, 
+                <p class="text-xl text-theme-secondary mb-8 max-w-3xl mx-auto" data-i18n="hero_subtitle">
+                    Transform your stories into professional audiobooks with AI-powered writing, chapter generation,
                     and high-quality text-to-speech narration. Create, edit, and publish audiobooks in minutes.
                 </p>
                 <button onclick="showPage('workspace')" class="btn-primary px-8 py-4 rounded-lg text-lg font-semibold">
-                    <i class="fas fa-rocket mr-2"></i>Start Creating Your Audiobook
+                    <i class="fas fa-rocket mr-2"></i><span data-i18n="btn_start_creating">Start Creating Your Audiobook</span>
                 </button>
             </div>
 
@@ -1071,7 +1071,7 @@
                     <div class="text-cyan-400 text-3xl mb-4">
                         <i class="fas fa-brain"></i>
                     </div>
-                    <h3 class="text-xl font-bold mb-3">AI-Powered Writing</h3>
+                    <h3 class="text-xl font-bold mb-3" data-i18n="feat_ai_writing">AI-Powered Writing</h3>
                     <p class="text-theme-secondary">
                         Generate engaging chapters, stories, and content with advanced AI technology. 
                         Choose from multiple genres, tones, and writing styles.
@@ -1082,7 +1082,7 @@
                     <div class="text-cyan-400 text-3xl mb-4">
                         <i class="fas fa-microphone"></i>
                     </div>
-                    <h3 class="text-xl font-bold mb-3">Professional Narration</h3>
+                    <h3 class="text-xl font-bold mb-3" data-i18n="feat_narration">Professional Narration</h3>
                     <p class="text-theme-secondary">
                         Convert your text to high-quality speech with cutting-edge text-to-speech technology. Choose from 6 professional 
                         voices including Alloy, Echo, Fable, Onyx, Nova, and Shimmer.
@@ -1093,7 +1093,7 @@
                     <div class="text-cyan-400 text-3xl mb-4">
                         <i class="fas fa-image"></i>
                     </div>
-                    <h3 class="text-xl font-bold mb-3">AI Book Covers</h3>
+                    <h3 class="text-xl font-bold mb-3" data-i18n="feat_covers">AI Book Covers</h3>
                     <p class="text-theme-secondary">
                         Generate stunning book covers with advanced AI image generation in HD quality (1024x1792). 
                         Create professional artwork that matches your story's theme.
@@ -1105,19 +1105,19 @@
             <div class="grid md:grid-cols-4 gap-6 mb-12">
                 <div class="text-center bg-theme-secondary p-6 rounded-xl">
                     <div class="text-3xl font-bold text-cyan-400 mb-2">25</div>
-                    <div class="text-theme-secondary">Max Chapters</div>
+                    <div class="text-theme-secondary" data-i18n="stat_chapters">Max Chapters</div>
                 </div>
                 <div class="text-center bg-theme-secondary p-6 rounded-xl">
                     <div class="text-3xl font-bold text-cyan-400 mb-2">3000</div>
-                    <div class="text-theme-secondary">Max Words/Chapter</div>
+                    <div class="text-theme-secondary" data-i18n="stat_words">Max Words/Chapter</div>
                 </div>
                 <div class="text-center bg-theme-secondary p-6 rounded-xl">
                     <div class="text-3xl font-bold text-cyan-400 mb-2">6</div>
-                    <div class="text-theme-secondary">AI Voices</div>
+                    <div class="text-theme-secondary" data-i18n="stat_voices">AI Voices</div>
                 </div>
                 <div class="text-center bg-theme-secondary p-6 rounded-xl">
                     <div class="text-3xl font-bold text-cyan-400 mb-2">∞</div>
-                    <div class="text-theme-secondary">Possibilities</div>
+                    <div class="text-theme-secondary" data-i18n="stat_possibilities">Possibilities</div>
                 </div>
             </div>
 
@@ -1125,27 +1125,27 @@
             <div class="bg-theme-secondary p-8 rounded-xl border-2 border-theme">
                 <h2 class="text-2xl font-bold mb-6 text-center">
                     <i class="fas fa-play-circle text-cyan-400 mr-2"></i>
-                    Quick Start Guide
+                    <span data-i18n="qs_title">Quick Start Guide</span>
                 </h2>
                 <div class="grid md:grid-cols-4 gap-6">
                     <div class="text-center">
                         <div class="bg-cyan-400 text-black rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-3 font-bold text-xl">1</div>
-                        <h3 class="font-semibold mb-2">Plan Your Story</h3>
+                        <h3 class="font-semibold mb-2" data-i18n="qs_step1">Plan Your Story</h3>
                         <p class="text-sm text-theme-secondary">Choose genre, set chapter count, and define your story parameters</p>
                     </div>
                     <div class="text-center">
                         <div class="bg-cyan-400 text-black rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-3 font-bold text-xl">2</div>
-                        <h3 class="font-semibold mb-2">Generate Content</h3>
+                        <h3 class="font-semibold mb-2" data-i18n="qs_step2">Generate Content</h3>
                         <p class="text-sm text-theme-secondary">Use AI writing tools to create engaging chapters and storylines</p>
                     </div>
                     <div class="text-center">
                         <div class="bg-cyan-400 text-black rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-3 font-bold text-xl">3</div>
-                        <h3 class="font-semibold mb-2">Create Narration</h3>
+                        <h3 class="font-semibold mb-2" data-i18n="qs_step3">Create Narration</h3>
                         <p class="text-sm text-theme-secondary">Convert to speech with professional AI voices and generate covers</p>
                     </div>
                     <div class="text-center">
                         <div class="bg-cyan-400 text-black rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-3 font-bold text-xl">4</div>
-                        <h3 class="font-semibold mb-2">Export & Publish</h3>
+                        <h3 class="font-semibold mb-2" data-i18n="qs_step4">Export & Publish</h3>
                         <p class="text-sm text-theme-secondary">Download your complete audiobook and share with the world</p>
                     </div>
                 </div>
@@ -16442,66 +16442,146 @@ const UI_TRANSLATIONS = {
   en: {
     nav_dashboard:'Dashboard', nav_workspace:'Workspace', nav_narration:'Narration',
     nav_covers:'Covers', nav_export:'Export', nav_config:'Config',
+    hero_subtitle:'Transform your stories into professional audiobooks with AI-powered writing, chapter generation, and high-quality text-to-speech narration. Create, edit, and publish audiobooks in minutes.',
+    btn_start_creating:'Start Creating Your Audiobook',
+    feat_ai_writing:'AI-Powered Writing', feat_narration:'Professional Narration', feat_covers:'AI Book Covers',
+    stat_chapters:'Max Chapters', stat_words:'Max Words/Chapter', stat_voices:'AI Voices', stat_possibilities:'Possibilities',
+    qs_title:'Quick Start Guide', qs_step1:'Plan Your Story', qs_step2:'Generate Content', qs_step3:'Create Narration', qs_step4:'Export & Publish',
   },
   es: {
     nav_dashboard:'Inicio', nav_workspace:'Espacio de trabajo', nav_narration:'Narración',
     nav_covers:'Portadas', nav_export:'Exportar', nav_config:'Configuración',
+    hero_subtitle:'Transforma tus historias en audiolibros profesionales con escritura impulsada por IA, generación de capítulos y narración de texto a voz de alta calidad. Crea, edita y publica audiolibros en minutos.',
+    btn_start_creating:'Empieza a Crear tu Audiolibro',
+    feat_ai_writing:'Escritura Potenciada por IA', feat_narration:'Narración Profesional', feat_covers:'Portadas con IA',
+    stat_chapters:'Máx. Capítulos', stat_words:'Máx. Palabras/Capítulo', stat_voices:'Voces de IA', stat_possibilities:'Posibilidades',
+    qs_title:'Guía de Inicio Rápido', qs_step1:'Planifica tu Historia', qs_step2:'Generar Contenido', qs_step3:'Crear Narración', qs_step4:'Exportar y Publicar',
   },
   fr: {
     nav_dashboard:'Tableau de bord', nav_workspace:'Espace de travail', nav_narration:'Narration',
     nav_covers:'Couvertures', nav_export:'Exporter', nav_config:'Configuration',
+    hero_subtitle:'Transformez vos histoires en livres audio professionnels grâce à l\'écriture assistée par IA, la génération de chapitres et la narration texte-parole de haute qualité. Créez, modifiez et publiez des livres audio en quelques minutes.',
+    btn_start_creating:'Commencer à Créer votre Livre Audio',
+    feat_ai_writing:'Écriture Assistée par IA', feat_narration:'Narration Professionnelle', feat_covers:'Couvertures IA',
+    stat_chapters:'Chapitres Max', stat_words:'Mots Max/Chapitre', stat_voices:'Voix IA', stat_possibilities:'Possibilités',
+    qs_title:'Guide de Démarrage Rapide', qs_step1:'Planifiez Votre Histoire', qs_step2:'Générer du Contenu', qs_step3:'Créer la Narration', qs_step4:'Exporter et Publier',
   },
   de: {
     nav_dashboard:'Dashboard', nav_workspace:'Arbeitsbereich', nav_narration:'Erzählung',
     nav_covers:'Titelbilder', nav_export:'Exportieren', nav_config:'Einstellungen',
+    hero_subtitle:'Verwandle deine Geschichten in professionelle Hörbücher mit KI-gesteuertem Schreiben, Kapitelgenerierung und hochwertiger Text-zu-Sprache-Narration. Erstelle, bearbeite und veröffentliche Hörbücher in Minuten.',
+    btn_start_creating:'Hörbuch Erstellen',
+    feat_ai_writing:'KI-gesteuertes Schreiben', feat_narration:'Professionelle Erzählung', feat_covers:'KI-Buchcover',
+    stat_chapters:'Max. Kapitel', stat_words:'Max. Wörter/Kapitel', stat_voices:'KI-Stimmen', stat_possibilities:'Möglichkeiten',
+    qs_title:'Schnellstartanleitung', qs_step1:'Plane Deine Geschichte', qs_step2:'Inhalt Generieren', qs_step3:'Erzählung Erstellen', qs_step4:'Exportieren & Veröffentlichen',
   },
   pt: {
     nav_dashboard:'Painel', nav_workspace:'Área de trabalho', nav_narration:'Narração',
     nav_covers:'Capas', nav_export:'Exportar', nav_config:'Configurações',
+    hero_subtitle:'Transforme suas histórias em audiobooks profissionais com escrita alimentada por IA, geração de capítulos e narração de texto para fala de alta qualidade. Crie, edite e publique audiobooks em minutos.',
+    btn_start_creating:'Comece a Criar seu Audiobook',
+    feat_ai_writing:'Escrita Potencializada por IA', feat_narration:'Narração Profissional', feat_covers:'Capas com IA',
+    stat_chapters:'Máx. Capítulos', stat_words:'Máx. Palavras/Capítulo', stat_voices:'Vozes de IA', stat_possibilities:'Possibilidades',
+    qs_title:'Guia de Início Rápido', qs_step1:'Planeje sua História', qs_step2:'Gerar Conteúdo', qs_step3:'Criar Narração', qs_step4:'Exportar e Publicar',
   },
   it: {
     nav_dashboard:'Pannello', nav_workspace:'Area di lavoro', nav_narration:'Narrazione',
     nav_covers:'Copertine', nav_export:'Esporta', nav_config:'Impostazioni',
+    hero_subtitle:'Trasforma le tue storie in audiolibri professionali con scrittura potenziata dall\'IA, generazione di capitoli e narrazione text-to-speech di alta qualità. Crea, modifica e pubblica audiolibri in pochi minuti.',
+    btn_start_creating:'Inizia a Creare il tuo Audiolibro',
+    feat_ai_writing:'Scrittura Potenziata dall\'IA', feat_narration:'Narrazione Professionale', feat_covers:'Copertine IA',
+    stat_chapters:'Cap. Massimi', stat_words:'Parole Max/Capitolo', stat_voices:'Voci IA', stat_possibilities:'Possibilità',
+    qs_title:'Guida Rapida', qs_step1:'Pianifica la Tua Storia', qs_step2:'Genera Contenuto', qs_step3:'Crea la Narrazione', qs_step4:'Esporta e Pubblica',
   },
   hi: {
     nav_dashboard:'डैशबोर्ड', nav_workspace:'कार्यक्षेत्र', nav_narration:'कथन',
     nav_covers:'कवर', nav_export:'निर्यात', nav_config:'सेटिंग्स',
+    hero_subtitle:'AI-संचालित लेखन, अध्याय निर्माण और उच्च-गुणवत्ता वाले टेक्स्ट-टू-स्पीच नैरेशन के साथ अपनी कहानियों को पेशेवर ऑडियोबुक में बदलें। मिनटों में ऑडियोबुक बनाएं, संपादित करें और प्रकाशित करें।',
+    btn_start_creating:'अपनी ऑडियोबुक बनाना शुरू करें',
+    feat_ai_writing:'AI-संचालित लेखन', feat_narration:'पेशेवर नैरेशन', feat_covers:'AI बुक कवर',
+    stat_chapters:'अधिकतम अध्याय', stat_words:'अधिकतम शब्द/अध्याय', stat_voices:'AI आवाजें', stat_possibilities:'संभावनाएं',
+    qs_title:'त्वरित शुरुआत गाइड', qs_step1:'अपनी कहानी की योजना बनाएं', qs_step2:'सामग्री उत्पन्न करें', qs_step3:'नैरेशन बनाएं', qs_step4:'निर्यात करें और प्रकाशित करें',
   },
   ar: {
     nav_dashboard:'لوحة التحكم', nav_workspace:'مساحة العمل', nav_narration:'السرد',
     nav_covers:'الأغلفة', nav_export:'تصدير', nav_config:'الإعدادات',
+    hero_subtitle:'حوّل قصصك إلى كتب صوتية احترافية باستخدام الكتابة المدعومة بالذكاء الاصطناعي، وتوليد الفصول، والسرد عالي الجودة. أنشئ وعدّل وانشر الكتب الصوتية في دقائق.',
+    btn_start_creating:'ابدأ في إنشاء كتابك الصوتي',
+    feat_ai_writing:'الكتابة بالذكاء الاصطناعي', feat_narration:'السرد الاحترافي', feat_covers:'أغلفة الكتب بالذكاء الاصطناعي',
+    stat_chapters:'أقصى عدد فصول', stat_words:'أقصى كلمات/فصل', stat_voices:'أصوات الذكاء الاصطناعي', stat_possibilities:'إمكانيات',
+    qs_title:'دليل البدء السريع', qs_step1:'خطط لقصتك', qs_step2:'توليد المحتوى', qs_step3:'إنشاء السرد', qs_step4:'تصدير ونشر',
   },
   zh: {
     nav_dashboard:'仪表板', nav_workspace:'工作区', nav_narration:'朗读',
     nav_covers:'封面', nav_export:'导出', nav_config:'设置',
+    hero_subtitle:'利用AI驱动的写作、章节生成和高质量文字转语音配音，将您的故事转变为专业有声书。在几分钟内创建、编辑和发布有声书。',
+    btn_start_creating:'开始创作您的有声书',
+    feat_ai_writing:'AI驱动写作', feat_narration:'专业配音', feat_covers:'AI书籍封面',
+    stat_chapters:'最多章节', stat_words:'最多字数/章', stat_voices:'AI语音', stat_possibilities:'无限可能',
+    qs_title:'快速入门指南', qs_step1:'规划您的故事', qs_step2:'生成内容', qs_step3:'创建配音', qs_step4:'导出并发布',
   },
   ja: {
     nav_dashboard:'ダッシュボード', nav_workspace:'ワークスペース', nav_narration:'ナレーション',
     nav_covers:'表紙', nav_export:'エクスポート', nav_config:'設定',
+    hero_subtitle:'AIを活用した執筆、チャプター生成、高品質なテキスト読み上げナレーションで、あなたの物語をプロのオーディオブックに変えましょう。数分でオーディオブックを作成、編集、公開できます。',
+    btn_start_creating:'オーディオブックの作成を開始',
+    feat_ai_writing:'AI執筆支援', feat_narration:'プロのナレーション', feat_covers:'AI本の表紙',
+    stat_chapters:'最大章数', stat_words:'最大単語数/章', stat_voices:'AI音声', stat_possibilities:'可能性',
+    qs_title:'クイックスタートガイド', qs_step1:'ストーリーを計画する', qs_step2:'コンテンツを生成する', qs_step3:'ナレーションを作成する', qs_step4:'エクスポートして公開',
   },
   ko: {
     nav_dashboard:'대시보드', nav_workspace:'작업 공간', nav_narration:'나레이션',
     nav_covers:'표지', nav_export:'내보내기', nav_config:'설정',
+    hero_subtitle:'AI 기반 작성, 챕터 생성 및 고품질 텍스트 음성 변환 나레이션으로 이야기를 전문 오디오북으로 변환하세요. 몇 분 안에 오디오북을 만들고, 편집하고, 출판하세요.',
+    btn_start_creating:'오디오북 만들기 시작',
+    feat_ai_writing:'AI 기반 작성', feat_narration:'전문 나레이션', feat_covers:'AI 책 표지',
+    stat_chapters:'최대 챕터', stat_words:'최대 단어/챕터', stat_voices:'AI 음성', stat_possibilities:'가능성',
+    qs_title:'빠른 시작 가이드', qs_step1:'스토리 계획하기', qs_step2:'콘텐츠 생성하기', qs_step3:'나레이션 만들기', qs_step4:'내보내기 및 게시',
   },
   ru: {
     nav_dashboard:'Главная', nav_workspace:'Рабочая область', nav_narration:'Озвучка',
     nav_covers:'Обложки', nav_export:'Экспорт', nav_config:'Настройки',
+    hero_subtitle:'Превратите свои истории в профессиональные аудиокниги с помощью письма на базе ИИ, генерации глав и высококачественного озвучивания. Создавайте, редактируйте и публикуйте аудиокниги за минуты.',
+    btn_start_creating:'Начать Создание Аудиокниги',
+    feat_ai_writing:'Написание с ИИ', feat_narration:'Профессиональная Озвучка', feat_covers:'Обложки с ИИ',
+    stat_chapters:'Максимум Глав', stat_words:'Максимум Слов/Глава', stat_voices:'ИИ-голоса', stat_possibilities:'Возможностей',
+    qs_title:'Руководство по Быстрому Старту', qs_step1:'Спланируйте Историю', qs_step2:'Создайте Контент', qs_step3:'Создайте Озвучку', qs_step4:'Экспортируйте и Опубликуйте',
   },
   nl: {
     nav_dashboard:'Dashboard', nav_workspace:'Werkruimte', nav_narration:'Vertelling',
     nav_covers:'Omslagen', nav_export:'Exporteren', nav_config:'Instellingen',
+    hero_subtitle:'Transformeer uw verhalen in professionele luisterboeken met AI-aangedreven schrijven, hoofdstukgeneratie en hoogwaardige tekst-naar-spraak-naratie. Maak, bewerk en publiceer luisterboeken in minuten.',
+    btn_start_creating:'Begin met het Maken van uw Luisterboek',
+    feat_ai_writing:'AI-aangedreven Schrijven', feat_narration:'Professionele Vertelling', feat_covers:'AI Boekcovers',
+    stat_chapters:'Max Hoofdstukken', stat_words:'Max Woorden/Hoofdstuk', stat_voices:'AI-stemmen', stat_possibilities:'Mogelijkheden',
+    qs_title:'Snelstartgids', qs_step1:'Plan Uw Verhaal', qs_step2:'Genereer Inhoud', qs_step3:'Maak Vertelling', qs_step4:'Exporteren en Publiceren',
   },
   pl: {
     nav_dashboard:'Panel', nav_workspace:'Obszar roboczy', nav_narration:'Narracja',
     nav_covers:'Okładki', nav_export:'Eksportuj', nav_config:'Ustawienia',
+    hero_subtitle:'Przekształć swoje historie w profesjonalne audiobooki dzięki pisaniu wspomaganemu AI, generowaniu rozdziałów i wysokiej jakości narracji text-to-speech. Twórz, edytuj i publikuj audiobooki w kilka minut.',
+    btn_start_creating:'Zacznij Tworzyć Audiobooka',
+    feat_ai_writing:'Pisanie Wspomagane AI', feat_narration:'Profesjonalna Narracja', feat_covers:'Okładki AI',
+    stat_chapters:'Maks. Rozdziały', stat_words:'Maks. Słowa/Rozdział', stat_voices:'Głosy AI', stat_possibilities:'Możliwości',
+    qs_title:'Przewodnik Szybkiego Startu', qs_step1:'Zaplanuj Swoją Historię', qs_step2:'Generuj Treść', qs_step3:'Utwórz Narrację', qs_step4:'Eksportuj i Publikuj',
   },
   sv: {
     nav_dashboard:'Instrumentpanel', nav_workspace:'Arbetsyta', nav_narration:'Berättarröst',
     nav_covers:'Omslag', nav_export:'Exportera', nav_config:'Inställningar',
+    hero_subtitle:'Omvandla dina berättelser till professionella ljudböcker med AI-driven skrivning, kapitelgenerering och högkvalitativ text-till-tal-berättarröst. Skapa, redigera och publicera ljudböcker på några minuter.',
+    btn_start_creating:'Börja Skapa din Ljudbok',
+    feat_ai_writing:'AI-driven Skrivning', feat_narration:'Professionell Berättarröst', feat_covers:'AI Bokomslag',
+    stat_chapters:'Max Kapitel', stat_words:'Max Ord/Kapitel', stat_voices:'AI-röster', stat_possibilities:'Möjligheter',
+    qs_title:'Snabbstartsguide', qs_step1:'Planera Din Berättelse', qs_step2:'Generera Innehåll', qs_step3:'Skapa Berättarröst', qs_step4:'Exportera och Publicera',
   },
   tr: {
     nav_dashboard:'Gösterge Paneli', nav_workspace:'Çalışma Alanı', nav_narration:'Anlatım',
     nav_covers:'Kapaklar', nav_export:'Dışa Aktar', nav_config:'Ayarlar',
+    hero_subtitle:'Yapay zeka destekli yazım, bölüm oluşturma ve yüksek kaliteli metin okuma anlatımıyla hikayelerinizi profesyonel sesli kitaplara dönüştürün. Dakikalar içinde sesli kitap oluşturun, düzenleyin ve yayınlayın.',
+    btn_start_creating:'Sesli Kitabınızı Oluşturmaya Başlayın',
+    feat_ai_writing:'Yapay Zeka Destekli Yazım', feat_narration:'Profesyonel Anlatım', feat_covers:'Yapay Zeka Kitap Kapakları',
+    stat_chapters:'Maks. Bölüm', stat_words:'Maks. Kelime/Bölüm', stat_voices:'Yapay Zeka Sesleri', stat_possibilities:'Olasılıklar',
+    qs_title:'Hızlı Başlangıç Kılavuzu', qs_step1:'Hikayenizi Planlayın', qs_step2:'İçerik Oluşturun', qs_step3:'Anlatım Oluşturun', qs_step4:'Dışa Aktar ve Yayınla',
   },
 };
 
@@ -16511,7 +16591,18 @@ let _uiLang = 'en';
 
 function toggleUILangMenu() {
   const menu = document.getElementById('uiLangMenu');
-  if (menu) menu.classList.toggle('hidden');
+  if (!menu) return;
+  if (menu.classList.contains('hidden')) {
+    const btn = document.querySelector('#uiLangSwitcher button');
+    if (btn) {
+      const rect = btn.getBoundingClientRect();
+      menu.style.top = (rect.bottom + 4) + 'px';
+      menu.style.right = (window.innerWidth - rect.right) + 'px';
+    }
+    menu.classList.remove('hidden');
+  } else {
+    menu.classList.add('hidden');
+  }
 }
 // Close menu when clicking outside
 document.addEventListener('click', function(e) {
