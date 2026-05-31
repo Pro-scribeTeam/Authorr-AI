@@ -988,10 +988,37 @@
                     <button onclick="toggleTheme()" class="text-cyan-400 hover:text-cyan-300 text-xl ml-2">
                         <i id="themeIcon" class="fas fa-moon"></i>
                     </button>
+                    <!-- Hamburger — mobile only -->
+                    <button id="mobileMenuBtn" onclick="toggleMobileNav()" class="md:hidden text-cyan-400 hover:text-cyan-300 text-2xl ml-3">
+                        <i id="mobileMenuIcon" class="fas fa-bars"></i>
+                    </button>
                 </div>
             </div>
         </div>
     </nav>
+    <!-- Mobile Navigation Drawer -->
+    <div id="mobileNav" class="hidden bg-black border-b-2 border-cyan-400 md:hidden">
+        <div class="container mx-auto px-4 py-3 flex flex-col space-y-1">
+            <button data-page="dashboard" onclick="showPage('dashboard')" class="nav-item px-4 py-3 rounded-lg font-semibold text-left active">
+                <i class="fas fa-home mr-2"></i><span data-i18n="nav_dashboard">Dashboard</span>
+            </button>
+            <button data-page="workspace" onclick="showPage('workspace')" class="nav-item px-4 py-3 rounded-lg font-semibold text-left">
+                <i class="fas fa-edit mr-2"></i><span data-i18n="nav_workspace">Workspace</span>
+            </button>
+            <button data-page="narration" onclick="showPage('narration')" class="nav-item px-4 py-3 rounded-lg font-semibold text-left">
+                <i class="fas fa-microphone mr-2"></i><span data-i18n="nav_narration">Narration</span>
+            </button>
+            <button data-page="covers" onclick="showPage('covers')" class="nav-item px-4 py-3 rounded-lg font-semibold text-left">
+                <i class="fas fa-image mr-2"></i><span data-i18n="nav_covers">Covers</span>
+            </button>
+            <button data-page="export" onclick="showPage('export')" class="nav-item px-4 py-3 rounded-lg font-semibold text-left">
+                <i class="fas fa-download mr-2"></i><span data-i18n="nav_export">Export</span>
+            </button>
+            <button data-page="config" onclick="showPage('config')" class="nav-item px-4 py-3 rounded-lg font-semibold text-left">
+                <i class="fas fa-cog mr-2"></i><span data-i18n="nav_config">Config</span>
+            </button>
+        </div>
+    </div>
 
     <!-- Dashboard Page -->
     <div id="dashboard" class="page">
@@ -2702,8 +2729,24 @@
             }
         }
         
+        // Mobile nav toggle
+        function toggleMobileNav() {
+            const menu = document.getElementById('mobileNav');
+            const icon = document.getElementById('mobileMenuIcon');
+            if (menu) menu.classList.toggle('hidden');
+            if (icon) {
+                icon.className = menu && !menu.classList.contains('hidden') ? 'fas fa-times' : 'fas fa-bars';
+            }
+        }
+
         // Page Navigation
         function showPage(pageId, clickEvent = null) {
+            // Close mobile nav when navigating
+            const mobileNav = document.getElementById('mobileNav');
+            const mobileIcon = document.getElementById('mobileMenuIcon');
+            if (mobileNav) mobileNav.classList.add('hidden');
+            if (mobileIcon) mobileIcon.className = 'fas fa-bars';
+
             document.querySelectorAll('.page').forEach(page => page.classList.add('hidden'));
             const pageEl = document.getElementById(pageId);
             if (pageEl) pageEl.classList.remove('hidden');
@@ -2755,17 +2798,6 @@
             body.className = `theme-${theme}`;
             themeIcon.className = theme === 'light' ? 'fas fa-moon' : 'fas fa-sun';
             localStorage.setItem('theme', theme);
-        }
-        
-        function loadSettings() {
-            const savedTheme = localStorage.getItem('theme') || 'light';
-            setTheme(savedTheme);
-            
-            // Load API key if saved
-            const apiKey = localStorage.getItem('openai_api_key');
-            if (apiKey) {
-                document.getElementById('openaiKey').value = apiKey;
-            }
         }
         
         // Story Generation Functions
@@ -7483,6 +7515,10 @@ Format as clean, readable text ready for narration.`;
         }
 
         function loadSettings() {
+            // Restore saved theme
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            setTheme(savedTheme);
+
             const apiKey = localStorage.getItem('openaiApiKey');
             const elevenlabsKey = localStorage.getItem('elevenlabsApiKey');
             const falApiKey = localStorage.getItem('falApiKey');
