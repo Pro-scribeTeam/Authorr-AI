@@ -1,9 +1,11 @@
 const { requireAuth, sendError } = require('./_auth');
 
-// Free models tried in order — reasoning models excluded (they leak chain-of-thought into output)
+// Free models tried in order — reasoning/thinking models excluded
 const FALLBACK_MODELS = [
   'meta-llama/llama-3.3-70b-instruct:free',
   'nousresearch/hermes-3-llama-3.1-405b:free',
+  'qwen/qwen3-next-80b-a3b-instruct:free',
+  'cognitivecomputations/dolphin-mistral-24b-venice-edition:free',
   'meta-llama/llama-3.2-3b-instruct:free',
 ];
 
@@ -51,14 +53,11 @@ module.exports = async function handler(req, res) {
     try {
       const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
         method: 'POST', headers,
-        body: JSON.stringify({
-          model: tryModel, messages, temperature, max_tokens,
-          include_reasoning: false  // suppress chain-of-thought from reasoning models
-        })
+        body: JSON.stringify({ model: tryModel, messages, temperature, max_tokens })
       });
       const data = await response.json();
-      // If provider error or timeout, try next model
-      if (!response.ok || data?.error?.message?.toLowerCase().includes('provider')) {
+      // If error, try next model
+      if (!response.ok || data?.error) {
         lastError = data?.error?.message || `HTTP ${response.status}`;
         continue;
       }
