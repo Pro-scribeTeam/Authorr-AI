@@ -3,9 +3,10 @@ const { requireAuth, sendError } = require('./_auth');
 // Free models tried in order — if one returns a provider error, next is attempted
 const FALLBACK_MODELS = [
   'meta-llama/llama-3.3-70b-instruct:free',
-  'meta-llama/llama-3.1-8b-instruct:free',
-  'mistralai/mistral-7b-instruct:free',
-  'google/gemma-2-9b-it:free',
+  'nvidia/nemotron-3-super-120b-a12b:free',
+  'openai/gpt-oss-120b:free',
+  'nousresearch/hermes-3-llama-3.1-405b:free',
+  'meta-llama/llama-3.2-3b-instruct:free',
 ];
 
 module.exports = async function handler(req, res) {
