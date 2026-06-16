@@ -922,122 +922,8 @@
 </head>
 <body class="theme-dark">
 
-    <!-- ═══ LOGIN MODAL ═══ -->
-    <div id="loginModal" class="fixed inset-0 z-[9999] flex items-center justify-center bg-black bg-opacity-80 hidden">
-        <div class="bg-gray-900 border-2 border-cyan-400 rounded-2xl p-8 w-full max-w-md shadow-2xl">
-            <div class="text-center mb-6">
-                <h2 class="text-3xl font-bold authorr-brand-text">AUTHORR AI</h2>
-                <p class="text-gray-400 mt-2">Sign in to create your audiobook</p>
-            </div>
-            <div id="loginError" class="hidden bg-red-900 border border-red-500 text-red-200 text-sm rounded-lg px-4 py-3 mb-4"></div>
-            <div class="space-y-4">
-                <input id="loginEmail" type="email" placeholder="Email address"
-                    class="w-full px-4 py-3 rounded-lg bg-gray-800 border border-gray-600 text-white placeholder-gray-400 focus:border-cyan-400 focus:outline-none">
-                <input id="loginPassword" type="password" placeholder="Password"
-                    class="w-full px-4 py-3 rounded-lg bg-gray-800 border border-gray-600 text-white placeholder-gray-400 focus:border-cyan-400 focus:outline-none">
-                <button onclick="handleLogin()" class="w-full py-3 bg-cyan-500 hover:bg-cyan-400 text-black font-bold rounded-lg transition-all">
-                    Sign In
-                </button>
-                <button onclick="handleSignup()" class="w-full py-3 border border-cyan-500 hover:bg-cyan-900 text-cyan-400 font-semibold rounded-lg transition-all">
-                    Create Account
-                </button>
-            </div>
-            <p class="text-center text-gray-500 text-xs mt-6">Your content is saved securely to your account</p>
-        </div>
-    </div>
 
-    <!-- ═══ AUTH INIT SCRIPT ═══ -->
-    <script>
-    // Auth state — runs after Supabase is ready
-    document.addEventListener('DOMContentLoaded', () => {
-        const init = () => {
-            if (!window.supabaseClient) {
-                window.supabaseClient = window.supabase.createClient(
-                    window.SUPABASE_CONFIG.url,
-                    window.SUPABASE_CONFIG.anonKey
-                );
-            }
-            window.supabaseClient.auth.onAuthStateChange((event, session) => {
-                if (session) {
-                    hideLoginModal();
-                    window._authSession = session;
-                    loadUserSubscription(session.user.id);
-                } else {
-                    // Don't auto-show modal — user opens it via Sign In button
-                    window._authSession = null;
-                    document.getElementById('authLoginBtn')?.classList.remove('hidden');
-                    document.getElementById('logoutBtn')?.classList.add('hidden');
-                    document.getElementById('adminNavLink')?.classList.add('hidden');
-                }
-            });
-            window.supabaseClient.auth.getSession().then(({ data: { session } }) => {
-                if (session) { window._authSession = session; loadUserSubscription(session.user.id); }
-                // No modal on load — wait for user to click Sign In
-            });
-        };
-        if (window.supabase) init();
-        else document.querySelector('script[src*="supabase"]').addEventListener('load', init);
-    });
-
-    function showLoginModal() { document.getElementById('loginModal').classList.remove('hidden'); }
-    function hideLoginModal() { document.getElementById('loginModal').classList.add('hidden'); }
-
-    async function handleLogin() {
-        const email = document.getElementById('loginEmail').value.trim();
-        const password = document.getElementById('loginPassword').value;
-        const errEl = document.getElementById('loginError');
-        errEl.style.color = '';
-        errEl.classList.add('hidden');
-        if (!email || !password) { errEl.textContent = 'Please enter your email and password.'; errEl.classList.remove('hidden'); return; }
-        const { data, error } = await window.supabaseClient.auth.signInWithPassword({ email, password });
-        if (error) {
-            const msg = error.message || 'Sign in failed. Check your email and password.';
-            errEl.textContent = msg;
-            errEl.classList.remove('hidden');
-        }
-    }
-
-    async function handleSignup() {
-        const email = document.getElementById('loginEmail').value.trim();
-        const password = document.getElementById('loginPassword').value;
-        const errEl = document.getElementById('loginError');
-        errEl.style.color = '';
-        errEl.classList.add('hidden');
-        if (!email || !password) { errEl.textContent = 'Please enter your email and password.'; errEl.classList.remove('hidden'); return; }
-        if (password.length < 6) { errEl.textContent = 'Password must be at least 6 characters.'; errEl.classList.remove('hidden'); return; }
-        const { data, error } = await window.supabaseClient.auth.signUp({ email, password, options: { emailRedirectTo: window.location.origin } });
-        if (error) {
-            errEl.textContent = error.message || 'Sign up failed. Please try again.';
-            errEl.classList.remove('hidden');
-        } else {
-            errEl.style.color = '#34d399';
-            errEl.textContent = 'Account created! Signing you in...';
-            errEl.classList.remove('hidden');
-        }
-    }
-
-    async function handleLogout() {
-        await window.supabaseClient.auth.signOut();
-        window._userSubscription = null;
-    }
-
-    async function loadUserSubscription(userId) {
-        const { data } = await window.supabaseClient
-            .from('subscriptions')
-            .select('plan, role, status')
-            .eq('user_id', userId)
-            .single();
-        window._userSubscription = data;
-        // Toggle nav buttons
-        document.getElementById('authLoginBtn')?.classList.add('hidden');
-        document.getElementById('logoutBtn')?.classList.remove('hidden');
-        if (data?.role === 'admin') {
-            document.getElementById('adminNavLink')?.classList.remove('hidden');
-        }
-    }
-    </script>
-
-    <!-- Navigation -->
+        <!-- Navigation -->
     <nav class="bg-black border-b-2 border-cyan-400 shadow-lg relative z-50">
         <div class="container mx-auto px-4">
             <div class="flex justify-between items-center py-4">
@@ -1073,13 +959,13 @@
                             Sign Out
                         </button>
                     </div>
-                    <button id="authLoginBtn" onclick="showLoginModal()" class="text-xs border border-cyan-400 text-cyan-400 hover:bg-cyan-400 hover:text-black px-3 py-1 rounded-lg font-semibold transition-all">
+                    <button id="authLoginBtn" onclick="showAuthModal('signin')" class="text-xs border border-cyan-400 text-cyan-400 hover:bg-cyan-400 hover:text-black px-3 py-1 rounded-lg font-semibold transition-all">
                         <i class="fas fa-user mr-1"></i>Sign In
                     </button>
                     <a id="adminNavLink" onclick="showPage('admin')" class="hidden cursor-pointer text-xs border border-yellow-500 text-yellow-400 hover:bg-yellow-900 px-3 py-1 rounded-lg font-semibold transition-all">
                         <i class="fas fa-shield-alt mr-1"></i>Admin
                     </a>
-                    <button id="logoutBtn" onclick="handleLogout()" class="hidden text-xs border border-gray-600 text-gray-400 hover:bg-gray-800 px-3 py-1 rounded-lg font-semibold transition-all">
+                    <button id="logoutBtn" onclick="signOutUser()" class="hidden text-xs border border-gray-600 text-gray-400 hover:bg-gray-800 px-3 py-1 rounded-lg font-semibold transition-all">
                         <i class="fas fa-sign-out-alt mr-1"></i>Sign Out
                     </button>
                     <!-- UI Language Switcher -->
@@ -16044,13 +15930,14 @@ Format as clean, readable text ready for narration.`;
                 updateAuthUI();
                 if (currentUser) {
                     loadUserProjects();
+                    loadUserSubscription(currentUser.id);
                 }
             });
             // Check existing session on load
             client.auth.getSession().then(({ data: { session } }) => {
                 currentUser = session?.user || null;
                 updateAuthUI();
-                if (currentUser) loadUserProjects();
+                if (currentUser) { loadUserProjects(); loadUserSubscription(currentUser.id); }
             });
         });
 
@@ -16138,14 +16025,34 @@ Format as clean, readable text ready for narration.`;
                 document.getElementById('authError').textContent = error.message;
             } else {
                 hideAuthModal();
-                showNotification('✅ Account created! Check your email to confirm.', 'success');
+                showNotification('✅ Account created! You are now signed in.', 'success');
             }
         }
 
         async function signOutUser() {
             const client = ensureSupabase();
             if (client) await client.auth.signOut();
+            window._userSubscription = null;
+            document.getElementById('logoutBtn')?.classList.add('hidden');
+            document.getElementById('adminNavLink')?.classList.add('hidden');
             showNotification('👋 Signed out', 'info');
+        }
+
+        async function loadUserSubscription(userId) {
+            const client = ensureSupabase();
+            if (!client || !userId) return;
+            const { data } = await client.from('subscriptions').select('plan, role, status').eq('user_id', userId).single();
+            window._userSubscription = data;
+            document.getElementById('authLoginBtn')?.classList.add('hidden');
+            document.getElementById('logoutBtn')?.classList.remove('hidden');
+            if (data?.role === 'admin') document.getElementById('adminNavLink')?.classList.remove('hidden');
+        }
+
+        async function getAuthToken() {
+            const client = ensureSupabase();
+            if (!client) return null;
+            const { data: { session } } = await client.auth.getSession();
+            return session?.access_token || null;
         }
 
         // ---- Project Save / Load ----
