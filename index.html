@@ -4576,11 +4576,11 @@ Return the COMPLETE text, dramatically rewritten with visible personality and hu
             return data.message.content;
         }
 
-        // Call OpenRouter (Llama via Authorr AI backend — no user key needed)
-        async function callOpenRouter(messages) {
+        // Call OpenRouter via Authorr AI backend — auto-retries once if rate limited
+        async function callOpenRouter(messages, _retryCount = 0) {
             const token = await getAuthToken();
             if (!token) throw new Error('Please log in to use Authorr AI.');
-            const model = localStorage.getItem('openrouterModel') || 'meta-llama/llama-3.3-70b-instruct:free';
+            const model = localStorage.getItem('openrouterModel') || 'google/gemma-4-31b-it:free';
             const response = await fetch('/api/generate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
@@ -4588,9 +4588,21 @@ Return the COMPLETE text, dramatically rewritten with visible personality and hu
             });
             if (!response.ok) {
                 const err = await response.json().catch(() => ({}));
-                const attempts = err?.error?.attempts;
-                const detail = attempts ? JSON.stringify(attempts) : (err?.error?.message || err?.message || `HTTP ${response.status}`);
-                throw new Error(`Generation error: ${detail}`);
+                // If rate limited and haven't retried yet, wait and retry once
+                if (response.status === 429 && _retryCount === 0) {
+                    const waitSecs = err?.error?.retry_after || 30;
+                    await new Promise(resolve => {
+                        let remaining = waitSecs;
+                        showNotification(`AI busy — retrying in ${remaining}s...`, 'warning');
+                        const iv = setInterval(() => {
+                            remaining--;
+                            if (remaining <= 0) { clearInterval(iv); resolve(); }
+                            else showNotification(`AI busy — retrying in ${remaining}s...`, 'warning');
+                        }, 1000);
+                    });
+                    return callOpenRouter(messages, 1);
+                }
+                throw new Error(`Generation error: ${err?.error?.message || `HTTP ${response.status}`}`);
             }
             const data = await response.json();
             return data.choices[0].message.content;

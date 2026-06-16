@@ -1,11 +1,12 @@
 const { requireAuth, sendError } = require('./_auth');
 
-// Free models tried in order — reasoning/thinking models excluded
+// Non-Venice models first (Google/NVIDIA infra), then Venice as fallback.
+// Venice hosts Llama/Hermes/Qwen free models and rate-limits them all together.
 const FALLBACK_MODELS = [
+  'google/gemma-4-31b-it:free',
+  'google/gemma-4-26b-a4b-it:free',
+  'nvidia/nemotron-3-super-120b-a12b:free',
   'meta-llama/llama-3.3-70b-instruct:free',
-  'nousresearch/hermes-3-llama-3.1-405b:free',
-  'qwen/qwen3-next-80b-a3b-instruct:free',
-  'cognitivecomputations/dolphin-mistral-24b-venice-edition:free',
   'meta-llama/llama-3.2-3b-instruct:free',
 ];
 
@@ -71,5 +72,16 @@ module.exports = async function handler(req, res) {
     }
   }
 
-  return res.status(502).json({ error: { message: 'All AI models unavailable', attempts } });
+  // Find shortest retry_after from rate-limited models so client can auto-retry
+  const retryAfter = attempts.reduce((min, a) => {
+    const secs = a?.error?.metadata?.retry_after_seconds;
+    return secs && secs < min ? secs : min;
+  }, Infinity);
+
+  return res.status(429).json({
+    error: {
+      message: 'All AI models temporarily rate-limited. Please wait a moment.',
+      retry_after: retryAfter < Infinity ? Math.ceil(retryAfter) + 2 : 30
+    }
+  });
 };
