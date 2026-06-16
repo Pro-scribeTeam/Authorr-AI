@@ -48,7 +48,7 @@ module.exports = async function handler(req, res) {
     ? [model, ...FALLBACK_MODELS]
     : [model || FALLBACK_MODELS[0], ...FALLBACK_MODELS.filter(m => m !== (model || FALLBACK_MODELS[0]))];
 
-  let lastError = 'All models unavailable';
+  const attempts = [];
   for (const tryModel of modelsToTry) {
     try {
       const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
@@ -56,9 +56,9 @@ module.exports = async function handler(req, res) {
         body: JSON.stringify({ model: tryModel, messages, temperature, max_tokens })
       });
       const data = await response.json();
+      attempts.push({ model: tryModel, status: response.status, error: data?.error || null });
       // If error, try next model
       if (!response.ok || data?.error) {
-        lastError = data?.error?.message || `HTTP ${response.status}`;
         continue;
       }
       // Strip any leaked <think> reasoning blocks from the response content
@@ -67,9 +67,9 @@ module.exports = async function handler(req, res) {
       }
       return res.json(data);
     } catch (err) {
-      lastError = err.message;
+      attempts.push({ model: tryModel, status: 0, error: err.message });
     }
   }
 
-  return res.status(502).json({ error: { message: `All AI models unavailable: ${lastError}` } });
+  return res.status(502).json({ error: { message: 'All AI models unavailable', attempts } });
 };

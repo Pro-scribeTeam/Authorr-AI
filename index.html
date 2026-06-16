@@ -4588,8 +4588,9 @@ Return the COMPLETE text, dramatically rewritten with visible personality and hu
             });
             if (!response.ok) {
                 const err = await response.json().catch(() => ({}));
-                const errMsg = err?.error?.message || (typeof err?.error === 'string' ? err.error : null) || err?.message || `HTTP ${response.status}`;
-                throw new Error(`Generation error: ${errMsg}`);
+                const attempts = err?.error?.attempts;
+                const detail = attempts ? JSON.stringify(attempts) : (err?.error?.message || err?.message || `HTTP ${response.status}`);
+                throw new Error(`Generation error: ${detail}`);
             }
             const data = await response.json();
             return data.choices[0].message.content;
