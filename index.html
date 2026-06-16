@@ -2546,7 +2546,7 @@
                             <li>• Version: 2.5 Fixed Platform</li>
                             <li>• AI Model: GPT-4o-mini with TTS-1-HD</li>
                             <li>• Voice Options: 6 Professional AI Voices</li>
-                            <li>• Image Generation: DALL-E 3 HD Quality</li>
+                            <li>• Image Generation: Flux AI via Pollinations (Free)</li>
                             <li>• Max Chapters: 25 per audiobook</li>
                             <li>• Max Words: 3,000 per chapter</li>
                         </ul>
@@ -4588,7 +4588,8 @@ Return the COMPLETE text, dramatically rewritten with visible personality and hu
             });
             if (!response.ok) {
                 const err = await response.json().catch(() => ({}));
-                throw new Error(`Generation error: ${err?.error || response.status}`);
+                const errMsg = err?.error?.message || (typeof err?.error === 'string' ? err.error : null) || err?.message || `HTTP ${response.status}`;
+                throw new Error(`Generation error: ${errMsg}`);
             }
             const data = await response.json();
             return data.choices[0].message.content;
@@ -6417,12 +6418,10 @@ Return the COMPLETE text, dramatically rewritten with visible personality and hu
                 if (imageProvider === 'cloudflare') {
                     progressMessage.textContent = 'Generating cover with AI — please wait (up to 60 seconds)...';
 
-                    // Use Pollinations.ai — completely free, no API key, no signup
-                    // gptimage model (GPT-image-1) handles book title/author text far better than flux
-                    // Fetch as blob so we get a local object URL that always displays correctly
+                    // Use Pollinations.ai with Flux — completely free, no API key, no signup
                     const encodedPrompt = encodeURIComponent(prompt);
                     const seed = Math.floor(Math.random() * 999999);
-                    const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=768&height=1024&seed=${seed}&nologo=true&model=gptimage&_cb=${Date.now()}`;
+                    const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=768&height=1024&seed=${seed}&nologo=true&model=flux&_cb=${Date.now()}`;
 
                     // Pollinations can be slow — retry up to 3 times with increasing timeout
                     let imgBlob = null;
