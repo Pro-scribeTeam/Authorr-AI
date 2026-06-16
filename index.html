@@ -931,7 +931,7 @@
                     <img src="https://page.gensparksite.com/v1/base64_upload/5ec0a971230da95148e537dd473d0fb1" alt="AUTHORR AI Logo" class="w-12 h-12 logo-image">
                     <h1 class="text-3xl font-bold authorr-brand-text">AUTHORR AI</h1>
                 </div>
-                <div class="hidden md:flex items-center space-x-6">
+                <div id="desktopNavButtons" class="hidden items-center space-x-6">
                     <button data-page="dashboard" onclick="showPage('dashboard')" class="nav-item px-4 py-2 rounded-lg font-semibold active">
                         <i class="fas fa-home mr-2"></i><span data-i18n="nav_dashboard">Dashboard</span>
                     </button>
@@ -1007,7 +1007,7 @@
     </nav>
     <!-- Mobile Navigation Drawer -->
     <div id="mobileNav" class="hidden bg-black border-b-2 border-cyan-400 md:hidden">
-        <div class="container mx-auto px-4 py-3 flex flex-col space-y-1">
+        <div id="mobileNavButtons" class="container mx-auto px-4 py-3 flex flex-col space-y-1">
             <button data-page="dashboard" onclick="showPage('dashboard')" class="nav-item px-4 py-3 rounded-lg font-semibold text-left active">
                 <i class="fas fa-home mr-2"></i><span data-i18n="nav_dashboard">Dashboard</span>
             </button>
@@ -1042,7 +1042,7 @@
                     Transform your stories into professional audiobooks with AI-powered writing, chapter generation,
                     and high-quality text-to-speech narration. Create, edit, and publish audiobooks in minutes.
                 </p>
-                <button onclick="showPage('workspace')" class="btn-primary px-8 py-4 rounded-lg text-lg font-semibold">
+                <button onclick="currentUser ? showPage('workspace') : showAuthModal('signin')" class="btn-primary px-8 py-4 rounded-lg text-lg font-semibold">
                     <i class="fas fa-rocket mr-2"></i><span data-i18n="btn_start_creating">Start Creating Your Audiobook</span>
                 </button>
             </div>
@@ -2695,6 +2695,11 @@
 
         // Page Navigation
         function showPage(pageId, clickEvent = null) {
+            // Gate all non-dashboard pages behind auth
+            if (pageId !== 'dashboard' && !currentUser) {
+                showAuthModal('signin');
+                return;
+            }
             // Close mobile nav when navigating
             const mobileNav = document.getElementById('mobileNav');
             const mobileIcon = document.getElementById('mobileMenuIcon');
@@ -15947,6 +15952,9 @@ Format as clean, readable text ready for narration.`;
             const authUserEmail = document.getElementById('authUserEmail');
             const myProjectsSection = document.getElementById('myProjectsSection');
             const signInPrompt = document.getElementById('signInPrompt');
+            const desktopNav = document.getElementById('desktopNavButtons');
+            const mobileNavBtns = document.getElementById('mobileNavButtons');
+            const mobileMenuBtn = document.getElementById('mobileMenuBtn');
 
             if (currentUser) {
                 if (authStatus) { authStatus.classList.remove('hidden'); authStatus.classList.add('flex'); }
@@ -15954,11 +15962,21 @@ Format as clean, readable text ready for narration.`;
                 if (authUserEmail) authUserEmail.textContent = currentUser.email;
                 if (myProjectsSection) myProjectsSection.classList.remove('hidden');
                 if (signInPrompt) signInPrompt.classList.add('hidden');
+                // Show nav buttons when logged in
+                if (desktopNav) { desktopNav.classList.remove('hidden'); desktopNav.classList.add('md:flex'); }
+                if (mobileNavBtns) mobileNavBtns.classList.remove('hidden');
+                if (mobileMenuBtn) mobileMenuBtn.classList.remove('hidden');
             } else {
                 if (authStatus) { authStatus.classList.add('hidden'); authStatus.classList.remove('flex'); }
                 if (authLoginBtn) authLoginBtn.classList.remove('hidden');
                 if (myProjectsSection) myProjectsSection.classList.add('hidden');
                 if (signInPrompt) signInPrompt.classList.remove('hidden');
+                // Hide nav buttons when logged out — dashboard is the home page
+                if (desktopNav) { desktopNav.classList.add('hidden'); desktopNav.classList.remove('md:flex'); }
+                if (mobileNavBtns) mobileNavBtns.classList.add('hidden');
+                if (mobileMenuBtn) mobileMenuBtn.classList.add('hidden');
+                // Redirect to dashboard if on a protected page
+                if (currentPage && currentPage !== 'dashboard') { showPage('dashboard'); }
             }
         }
 
