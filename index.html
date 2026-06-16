@@ -963,7 +963,7 @@
                     window._authSession = session;
                     loadUserSubscription(session.user.id);
                 } else {
-                    showLoginModal();
+                    // Don't auto-show modal — user opens it via Sign In button
                     window._authSession = null;
                     document.getElementById('authLoginBtn')?.classList.remove('hidden');
                     document.getElementById('logoutBtn')?.classList.add('hidden');
@@ -971,8 +971,8 @@
                 }
             });
             window.supabaseClient.auth.getSession().then(({ data: { session } }) => {
-                if (!session) showLoginModal();
-                else { window._authSession = session; loadUserSubscription(session.user.id); }
+                if (session) { window._authSession = session; loadUserSubscription(session.user.id); }
+                // No modal on load — wait for user to click Sign In
             });
         };
         if (window.supabase) init();
@@ -986,19 +986,34 @@
         const email = document.getElementById('loginEmail').value.trim();
         const password = document.getElementById('loginPassword').value;
         const errEl = document.getElementById('loginError');
+        errEl.style.color = '';
         errEl.classList.add('hidden');
-        const { error } = await window.supabaseClient.auth.signInWithPassword({ email, password });
-        if (error) { errEl.textContent = error.message; errEl.classList.remove('hidden'); }
+        if (!email || !password) { errEl.textContent = 'Please enter your email and password.'; errEl.classList.remove('hidden'); return; }
+        const { data, error } = await window.supabaseClient.auth.signInWithPassword({ email, password });
+        if (error) {
+            const msg = error.message || 'Sign in failed. Check your email and password.';
+            errEl.textContent = msg;
+            errEl.classList.remove('hidden');
+        }
     }
 
     async function handleSignup() {
         const email = document.getElementById('loginEmail').value.trim();
         const password = document.getElementById('loginPassword').value;
         const errEl = document.getElementById('loginError');
+        errEl.style.color = '';
         errEl.classList.add('hidden');
-        const { error } = await window.supabaseClient.auth.signUp({ email, password });
-        if (error) { errEl.textContent = error.message; errEl.classList.remove('hidden'); }
-        else { errEl.style.color = '#34d399'; errEl.textContent = 'Check your email to confirm your account!'; errEl.classList.remove('hidden'); }
+        if (!email || !password) { errEl.textContent = 'Please enter your email and password.'; errEl.classList.remove('hidden'); return; }
+        if (password.length < 6) { errEl.textContent = 'Password must be at least 6 characters.'; errEl.classList.remove('hidden'); return; }
+        const { data, error } = await window.supabaseClient.auth.signUp({ email, password, options: { emailRedirectTo: window.location.origin } });
+        if (error) {
+            errEl.textContent = error.message || 'Sign up failed. Please try again.';
+            errEl.classList.remove('hidden');
+        } else {
+            errEl.style.color = '#34d399';
+            errEl.textContent = 'Account created! Signing you in...';
+            errEl.classList.remove('hidden');
+        }
     }
 
     async function handleLogout() {
@@ -7840,7 +7855,7 @@ Format as clean, readable text ready for narration.`;
         async function getAuthToken() {
             if (!window.supabaseClient) return null;
             const { data: { session } } = await window.supabaseClient.auth.getSession();
-            if (!session) { showLoginModal(); return null; }
+            if (!session) return null;
             return session.access_token;
         }
 
