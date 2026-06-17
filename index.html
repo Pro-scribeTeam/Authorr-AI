@@ -9063,27 +9063,34 @@ Format as clean, readable text ready for narration.`;
                 sampleText += '...';
             }
             
-            console.log('🎙️ Previewing narrator voice:', selectedVoice);
-            console.log('📝 Sample text:', sampleText.substring(0, 100) + '...');
-            
-            // Show loading state
+            // Use browser SpeechSynthesis for instant preview — no API call needed
+            if (window.speechSynthesis) {
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(sampleText);
+                utterance.rate = 0.88;
+                utterance.pitch = 1.0;
+                // Pick best available voice
+                const voices = window.speechSynthesis.getVoices();
+                const preferred = voices.find(v => v.lang.startsWith('en') && v.localService) || voices.find(v => v.lang.startsWith('en')) || null;
+                if (preferred) utterance.voice = preferred;
+                window.speechSynthesis.speak(utterance);
+                showNotification('Playing preview — full narration uses Chatterbox AI voice', 'success');
+                return;
+            }
+
+            // Fallback: Chatterbox (slow) if browser has no speech synthesis
             const previewBtn = document.getElementById('narratorPreviewBtn');
             const originalText = previewBtn.innerHTML;
             previewBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Generating...';
             previewBtn.disabled = true;
-            
-            // Generate preview audio
             generatePreviewAudio(sampleText, selectedVoice)
                 .then(audioBlob => {
                     if (audioBlob) {
                         playPreviewAudio(audioBlob);
-                        showNotification('🎙️ Narrator voice preview generated!', 'success');
-                    } else {
-                        throw new Error('Failed to generate preview audio');
+                        showNotification('Narrator voice preview ready!', 'success');
                     }
                 })
                 .catch(error => {
-                    console.error('❌ Preview generation failed:', error);
                     showNotification(`Preview failed: ${error.message}`, 'error');
                 })
                 .finally(() => {
