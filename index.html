@@ -9545,29 +9545,60 @@ Format as clean, readable text ready for narration.`;
             return VOICE_FILE_MAP[key] || null;
         }
 
-        // ── Shared Fal.ai runner — direct synchronous endpoint (no polling needed) ──
+        // ── Shared Fal.ai runner — submits to queue then polls until complete ──
         async function falSubmitAndPoll(modelPath, inputPayload, labelForErrors) {
             const token = await getAuthToken();
             if (!token) throw new Error('Please log in to use Authorr AI.');
 
-            console.log(`${labelForErrors} calling /api/fal → fal.run/${modelPath}...`);
-            showLoading('Generating audio via Chatterbox…');
+            const falHeaders = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` };
 
-            const resp = await fetch('/api/fal', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            // 1. Submit to queue
+            console.log(`${labelForErrors} submitting to queue...`);
+            showLoading('Submitting to Chatterbox…');
+            const submitResp = await fetch('/api/fal', {
+                method: 'POST', headers: falHeaders,
                 body: JSON.stringify({ action: 'submit', model: modelPath, payload: inputPayload })
             });
-
-            if (!resp.ok) {
+            if (!submitResp.ok) {
                 hideLoading();
-                const errText = await resp.text();
-                throw new Error(`${labelForErrors} Error: ${resp.status} - ${errText}`);
+                throw new Error(`${labelForErrors} submit failed: ${submitResp.status}`);
+            }
+            const submitted = await submitResp.json();
+            const requestId = submitted.request_id;
+            if (!requestId) {
+                hideLoading();
+                throw new Error(`${labelForErrors}: no request_id returned`);
             }
 
-            const result = await resp.json();
-            console.log(`${labelForErrors} done.`);
+            // 2. Poll status until COMPLETED or FAILED (max 3 min)
+            showLoading('Generating audio — this takes 20–40 seconds…');
+            const maxAttempts = 90;
+            for (let i = 0; i < maxAttempts; i++) {
+                await new Promise(r => setTimeout(r, 2000));
+                const statusResp = await fetch('/api/fal', {
+                    method: 'POST', headers: falHeaders,
+                    body: JSON.stringify({ action: 'status', model: modelPath, request_id: requestId })
+                });
+                if (!statusResp.ok) continue;
+                const statusData = await statusResp.json();
+                const status = statusData?.status;
+                if (status === 'COMPLETED') break;
+                if (status === 'FAILED') {
+                    hideLoading();
+                    throw new Error(`${labelForErrors} failed on server`);
+                }
+            }
+
+            // 3. Fetch the result
+            showLoading('Fetching audio result…');
+            const resultResp = await fetch('/api/fal', {
+                method: 'POST', headers: falHeaders,
+                body: JSON.stringify({ action: 'result', model: modelPath, request_id: requestId })
+            });
             hideLoading();
+            if (!resultResp.ok) throw new Error(`${labelForErrors} result fetch failed: ${resultResp.status}`);
+            const result = await resultResp.json();
+            console.log(`${labelForErrors} done.`);
             return result;
         }
 
