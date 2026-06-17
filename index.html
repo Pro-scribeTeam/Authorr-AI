@@ -9179,34 +9179,27 @@ Format as clean, readable text ready for narration.`;
                 const chunks = splitTextIntoChunks(content, 800);
                 console.log(`📝 Split into ${chunks.length} chunks — sending each as a separate RunPod job`);
 
-                for (let i = 0; i < chunks.length; i++) {
-                    showLoading(`Relax while I generate your best seller's narration (${i + 1} of ${chunks.length})`);
-                    let audioBlob = null;
-                    let lastError = null;
+                showLoading(`Generating ${chunks.length} narration chunks in parallel…`);
+                // Generate all chunks concurrently — cuts total time to the slowest single chunk
+                const chunkBlobs = await Promise.all(chunks.map(async (chunkText, i) => {
                     for (let attempt = 1; attempt <= 3; attempt++) {
                         try {
-                            if (attempt > 1) showLoading(`Retrying chunk ${i + 1} of ${chunks.length} (attempt ${attempt})…`);
-                            audioBlob = await generateSegmentAudio({
+                            return await generateSegmentAudio({
                                 type: 'all_content',
-                                text: chunks[i],
+                                text: chunkText,
                                 voice: narratorVoice,
                                 character: 'Narrator'
                             });
-                            lastError = null;
-                            break; // success
                         } catch (err) {
-                            lastError = err;
                             console.warn(`⚠️ Chunk ${i + 1} attempt ${attempt} failed: ${err.message}`);
+                            if (attempt === 3) throw new Error(`Chunk ${i + 1} failed after 3 attempts: ${err.message}`);
                         }
                     }
-                    if (lastError) throw new Error(`Narration generation failed on chunk ${i + 1} after 3 attempts: ${lastError.message}`);
-                    if (audioBlob) {
-                        audioBlobs.push({
-                            blob: audioBlob,
-                            segment: { type: 'all_content', text: chunks[i], voice: narratorVoice, character: 'Narrator' }
-                        });
-                    }
-                }
+                }));
+                audioBlobs = chunkBlobs.map((blob, i) => ({
+                    blob,
+                    segment: { type: 'all_content', text: chunks[i], voice: narratorVoice, character: 'Narrator' }
+                }));
                 
                 // Merge all chunks into a single clip
                 if (audioBlobs.length > 1) {
@@ -10172,32 +10165,44 @@ Format as clean, readable text ready for narration.`;
         }
 
         // Parse WAV chunk structure and return fmt params + raw PCM data range.
-        // Handles non-standard headers by scanning for 'fmt ' and 'data' chunks.
+        // Handles non-standard headers, extra chunks (fact/LIST/JUNK), and guards
+        // against corrupt chunk sizes that would overflow the scanner.
         async function parseWavChunks(blob) {
             const ab = await blob.arrayBuffer();
             const view = new DataView(ab);
-            let offset = 12; // skip RIFF + filesize + WAVE
+
+            // Verify RIFF/WAVE signature
+            const readId = o => String.fromCharCode(view.getUint8(o), view.getUint8(o+1), view.getUint8(o+2), view.getUint8(o+3));
+            if (ab.byteLength < 44 || readId(0) !== 'RIFF' || readId(8) !== 'WAVE') {
+                const hdr = Array.from(new Uint8Array(ab, 0, Math.min(12, ab.byteLength))).map(b => b.toString(16).padStart(2,'0')).join(' ');
+                throw new Error(`Not a RIFF/WAVE file (header: ${hdr})`);
+            }
+
+            let offset = 12;
             let fmt = null, dataOffset = -1, dataSize = 0;
-            while (offset < ab.byteLength - 8) {
-                const id = String.fromCharCode(view.getUint8(offset), view.getUint8(offset+1), view.getUint8(offset+2), view.getUint8(offset+3));
+            while (offset + 8 <= ab.byteLength) {
+                const id = readId(offset);
                 const sz = view.getUint32(offset + 4, true);
-                if (id === 'fmt ') {
+                // Guard: corrupt sz would jump past end of file
+                if (sz > ab.byteLength - offset - 8) break;
+
+                if (id === 'fmt ' && sz >= 16) {
                     fmt = {
-                        audioFormat: view.getUint16(offset+8, true),
-                        channels:    view.getUint16(offset+10, true),
-                        sampleRate:  view.getUint32(offset+12, true),
-                        byteRate:    view.getUint32(offset+16, true),
-                        blockAlign:  view.getUint16(offset+20, true),
-                        bitsPerSample: view.getUint16(offset+22, true),
+                        audioFormat:  view.getUint16(offset+8,  true),
+                        channels:     view.getUint16(offset+10, true),
+                        sampleRate:   view.getUint32(offset+12, true),
+                        byteRate:     view.getUint32(offset+16, true),
+                        blockAlign:   view.getUint16(offset+20, true),
+                        bitsPerSample:view.getUint16(offset+22, true),
                     };
                 } else if (id === 'data') {
                     dataOffset = offset + 8;
-                    dataSize = sz;
+                    dataSize = Math.min(sz, ab.byteLength - dataOffset);
                     break;
                 }
-                offset += 8 + sz + (sz % 2); // WAV chunks are word-aligned
+                offset += 8 + sz + (sz & 1); // word-align
             }
-            if (!fmt || dataOffset < 0) throw new Error('Cannot parse WAV structure');
+            if (!fmt || dataOffset < 0) throw new Error('Cannot parse WAV structure (fmt or data chunk not found)');
             return { fmt, dataOffset, dataSize, buffer: ab };
         }
 
