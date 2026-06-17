@@ -3,6 +3,9 @@
   "installCommand": "npm install",
   "outputDirectory": ".",
   "framework": null,
+  "functions": {
+    "api/fal.js": { "maxDuration": 60 }
+  },
   "routes": [
     { "src": "/api/(.*)", "dest": "/api/$1" },
     { "src": "/(.*)", "dest": "/index.html" }

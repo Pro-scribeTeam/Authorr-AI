@@ -9063,22 +9063,7 @@ Format as clean, readable text ready for narration.`;
                 sampleText += '...';
             }
             
-            // Use browser SpeechSynthesis for instant preview — no API call needed
-            if (window.speechSynthesis) {
-                window.speechSynthesis.cancel();
-                const utterance = new SpeechSynthesisUtterance(sampleText);
-                utterance.rate = 0.88;
-                utterance.pitch = 1.0;
-                // Pick best available voice
-                const voices = window.speechSynthesis.getVoices();
-                const preferred = voices.find(v => v.lang.startsWith('en') && v.localService) || voices.find(v => v.lang.startsWith('en')) || null;
-                if (preferred) utterance.voice = preferred;
-                window.speechSynthesis.speak(utterance);
-                showNotification('Playing preview — full narration uses Chatterbox AI voice', 'success');
-                return;
-            }
-
-            // Fallback: Chatterbox (slow) if browser has no speech synthesis
+            // Use Fal.ai direct endpoint (fast, no queue) for preview
             const previewBtn = document.getElementById('narratorPreviewBtn');
             const originalText = previewBtn.innerHTML;
             previewBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Generating...';
@@ -9112,9 +9097,9 @@ Format as clean, readable text ready for narration.`;
                     if (!apiKey) throw new Error('ElevenLabs API key not configured');
                     return await generateElevenLabsAudio(text, voiceId, apiKey);
                 } else if (provider === 'chatterbox') {
-                    return await generateChatterboxAudio(text, null);
+                    return await generateChatterboxAudio(text, null, true);
                 } else if (provider === 'cbturbo') {
-                    return await generateChatterboxAudio(text, voiceIdToMp3(voice));
+                    return await generateChatterboxAudio(text, voiceIdToMp3(voice), true);
                 } else if (provider === 'cbmulti') {
                     const langCode = voice.replace('cbmulti_', '');
                     return await generateChatterboxMultilingualAudio(text, langCode);
@@ -9552,6 +9537,22 @@ Format as clean, readable text ready for narration.`;
             return VOICE_FILE_MAP[key] || null;
         }
 
+        // ── Fal.ai direct call — synchronous, faster for short audio (preview) ──
+        async function falRunDirect(modelPath, inputPayload, labelForErrors) {
+            const token = await getAuthToken();
+            if (!token) throw new Error('Please log in to use Authorr AI.');
+            const resp = await fetch('/api/fal', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ action: 'run', model: modelPath, payload: inputPayload })
+            });
+            if (!resp.ok) {
+                const errText = await resp.text();
+                throw new Error(`${labelForErrors} error: ${resp.status} - ${errText}`);
+            }
+            return await resp.json();
+        }
+
         // ── Shared Fal.ai runner — submits to queue then polls until complete ──
         async function falSubmitAndPoll(modelPath, inputPayload, labelForErrors) {
             const token = await getAuthToken();
@@ -9610,7 +9611,7 @@ Format as clean, readable text ready for narration.`;
         }
 
         // ── Fal.ai Chatterbox Classic — 32 custom MP3 voice references ──
-        async function generateChatterboxAudio(text, voiceFileName = null) {
+        async function generateChatterboxAudio(text, voiceFileName = null, useDirect = false) {
             console.log('Generating Chatterbox Classic audio via Fal.ai...');
             const ctrl = getChatterboxControlValues();
             const BASE_VOICE_URL = 'https://authorr-ai.pages.dev/';
@@ -9624,7 +9625,8 @@ Format as clean, readable text ready for narration.`;
                 ...(voiceFileName ? { audio_url: BASE_VOICE_URL + encodeURIComponent(voiceFileName) } : {})
             };
 
-            const result = await falSubmitAndPoll('fal-ai/chatterbox/text-to-speech', inputPayload, 'Chatterbox Classic');
+            const runner = useDirect ? falRunDirect : falSubmitAndPoll;
+            const result = await runner('fal-ai/chatterbox/text-to-speech', inputPayload, 'Chatterbox Classic');
             if (!result?.audio?.url) throw new Error('No audio URL returned from Chatterbox Classic');
 
             const audioResp = await fetch(result.audio.url);
