@@ -9546,15 +9546,17 @@ Format as clean, readable text ready for narration.`;
                 const e = await submitResp.text().catch(() => submitResp.status);
                 throw new Error(`${labelForErrors} submit error: ${e}`);
             }
-            const { request_id } = await submitResp.json();
+            const submitData = await submitResp.json();
+            const { request_id, status_url, response_url } = submitData;
             if (!request_id) throw new Error(`${labelForErrors}: no request_id from queue`);
+            console.log(`${labelForErrors} queued: ${request_id}`);
 
-            // 2. Poll status until COMPLETED (max 5 min)
+            // 2. Poll status until COMPLETED using Fal's own status_url (max 5 min)
             for (let i = 0; i < 100; i++) {
                 await new Promise(r => setTimeout(r, 3000));
                 const statusResp = await fetch('/api/fal', {
                     method: 'POST', headers,
-                    body: JSON.stringify({ action: 'status', model: modelPath, request_id })
+                    body: JSON.stringify({ action: 'status', model: modelPath, request_id, status_url })
                 });
                 if (!statusResp.ok) continue;
                 const { status } = await statusResp.json();
@@ -9562,10 +9564,10 @@ Format as clean, readable text ready for narration.`;
                 if (status === 'FAILED') throw new Error(`${labelForErrors}: Fal.ai job failed`);
             }
 
-            // 3. Fetch result to get audio URL
+            // 3. Fetch result using Fal's own response_url
             const resultResp = await fetch('/api/fal', {
                 method: 'POST', headers,
-                body: JSON.stringify({ action: 'result', model: modelPath, request_id })
+                body: JSON.stringify({ action: 'result', model: modelPath, request_id, response_url })
             });
             if (!resultResp.ok) throw new Error(`${labelForErrors}: failed to fetch result`);
             const result = await resultResp.json();

@@ -14,9 +14,12 @@ module.exports = async function handler(req, res) {
     if (action === 'submit') {
       url = `https://queue.fal.run/${model}`; method = 'POST'; body = JSON.stringify(payload);
     } else if (action === 'status') {
-      url = `https://queue.fal.run/${model}/requests/${request_id}/status`;
+      // Use status_url from submit response (Fal strips sub-paths in request URLs)
+      const { status_url } = req.body;
+      url = status_url || `https://queue.fal.run/${model}/requests/${request_id}/status`;
     } else if (action === 'result') {
-      url = `https://queue.fal.run/${model}/requests/${request_id}`;
+      const { response_url } = req.body;
+      url = response_url || `https://queue.fal.run/${model}/requests/${request_id}`;
     } else if (action === 'fetch_audio') {
       const { url: audioUrl } = req.body;
       if (!audioUrl) return res.status(400).json({ error: 'Missing url' });
