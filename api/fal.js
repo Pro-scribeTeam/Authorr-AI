@@ -20,9 +20,9 @@ module.exports = async function handler(req, res) {
       }
       const audioResp = await fetch(data.audio.url);
       const audioBuffer = await audioResp.arrayBuffer();
-      res.setHeader('Content-Type', audioResp.headers.get('content-type') || 'audio/wav');
-      res.setHeader('Content-Length', audioBuffer.byteLength);
-      return res.send(Buffer.from(audioBuffer));
+      const contentType = audioResp.headers.get('content-type') || 'audio/wav';
+      const base64 = Buffer.from(audioBuffer).toString('base64');
+      return res.json({ audio: base64, contentType });
     }
     else if (action === 'submit') { url = `https://queue.fal.run/${model}`; method = 'POST'; body = JSON.stringify(payload); }
     else if (action === 'status') { url = `https://queue.fal.run/${model}/requests/${request_id}/status`; }

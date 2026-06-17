@@ -9553,8 +9553,12 @@ Format as clean, readable text ready for narration.`;
                 const errText = await resp.text().catch(() => String(resp.status));
                 throw new Error(`${labelForErrors} error: ${errText}`);
             }
-            console.log(`${labelForErrors} done.`);
-            return await resp.blob();
+            const { audio: base64, contentType } = await resp.json();
+            const binary = atob(base64);
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+            console.log(`${labelForErrors} done. size=${bytes.length} type=${contentType}`);
+            return new Blob([bytes], { type: contentType || 'audio/wav' });
         }
 
         // ── Fal.ai Chatterbox Classic — 32 custom MP3 voice references ──
