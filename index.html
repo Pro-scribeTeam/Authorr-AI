@@ -9530,23 +9530,55 @@ Format as clean, readable text ready for narration.`;
             return VOICE_FILE_MAP[key] || null;
         }
 
-        // ── Shared Fal.ai runner — calls fal.run directly, server proxies audio binary ──
+        // ── Shared Fal.ai runner — queue submit → poll → fetch audio ──
+        // Submit returns instantly (<2s), polling avoids Vercel's 60s function timeout.
         async function falSubmitAndPoll(modelPath, inputPayload, labelForErrors) {
             const token = await getAuthToken();
             if (!token) throw new Error('Please log in to use Authorr AI.');
+            const headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` };
 
-            showLoading('Generating audio via Chatterbox…');
-            const resp = await fetch('/api/fal', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                body: JSON.stringify({ action: 'run', model: modelPath, payload: inputPayload })
+            // 1. Submit to queue — returns request_id immediately
+            const submitResp = await fetch('/api/fal', {
+                method: 'POST', headers,
+                body: JSON.stringify({ action: 'submit', model: modelPath, payload: inputPayload })
             });
-            hideLoading();
-            if (!resp.ok) {
-                const errText = await resp.text().catch(() => String(resp.status));
-                throw new Error(`${labelForErrors} error: ${errText}`);
+            if (!submitResp.ok) {
+                const e = await submitResp.text().catch(() => submitResp.status);
+                throw new Error(`${labelForErrors} submit error: ${e}`);
             }
-            const { audio: base64, contentType } = await resp.json();
+            const { request_id } = await submitResp.json();
+            if (!request_id) throw new Error(`${labelForErrors}: no request_id from queue`);
+
+            // 2. Poll status until COMPLETED (max 5 min)
+            for (let i = 0; i < 100; i++) {
+                await new Promise(r => setTimeout(r, 3000));
+                const statusResp = await fetch('/api/fal', {
+                    method: 'POST', headers,
+                    body: JSON.stringify({ action: 'status', model: modelPath, request_id })
+                });
+                if (!statusResp.ok) continue;
+                const { status } = await statusResp.json();
+                if (status === 'COMPLETED') break;
+                if (status === 'FAILED') throw new Error(`${labelForErrors}: Fal.ai job failed`);
+            }
+
+            // 3. Fetch result to get audio URL
+            const resultResp = await fetch('/api/fal', {
+                method: 'POST', headers,
+                body: JSON.stringify({ action: 'result', model: modelPath, request_id })
+            });
+            if (!resultResp.ok) throw new Error(`${labelForErrors}: failed to fetch result`);
+            const result = await resultResp.json();
+            const audioUrl = result?.audio?.url;
+            if (!audioUrl) throw new Error(`${labelForErrors}: no audio URL in result`);
+
+            // 4. Proxy audio through server (CDN blocks direct browser fetch)
+            const audioResp = await fetch('/api/fal', {
+                method: 'POST', headers,
+                body: JSON.stringify({ action: 'fetch_audio', url: audioUrl })
+            });
+            if (!audioResp.ok) throw new Error(`${labelForErrors}: audio proxy failed`);
+            const { audio: base64, contentType } = await audioResp.json();
             const binary = atob(base64);
             const bytes = new Uint8Array(binary.length);
             for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
