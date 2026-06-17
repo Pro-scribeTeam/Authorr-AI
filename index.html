@@ -6434,7 +6434,8 @@ Return the COMPLETE text, dramatically rewritten with visible personality and hu
                     // Use Pollinations.ai with Flux — completely free, no API key, no signup
                     const encodedPrompt = encodeURIComponent(prompt);
                     const seed = Math.floor(Math.random() * 999999);
-                    const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=768&height=1024&seed=${seed}&nologo=true&model=flux&_cb=${Date.now()}`;
+                    const encodedNegative = encodeURIComponent(COVER_NEGATIVE_PROMPT);
+                    const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=768&height=1024&seed=${seed}&nologo=true&model=flux&negative=${encodedNegative}&_cb=${Date.now()}`;
 
                     // Pollinations can be slow — retry up to 3 times with increasing timeout
                     let imgBlob = null;
@@ -6630,6 +6631,14 @@ Return the COMPLETE text, dramatically rewritten with visible personality and hu
             }
             return prompt;
         }
+
+        const COVER_NEGATIVE_PROMPT = [
+            'deformed hands', 'extra fingers', 'missing fingers', 'fused fingers', 'mutated hands',
+            'malformed limbs', 'extra limbs', 'missing limbs', 'distorted face', 'morphed face',
+            'ugly face', 'disfigured', 'bad anatomy', 'extra eyes', 'cloned face',
+            'poorly drawn face', 'poorly drawn hands', 'blurry', 'low quality',
+            'watermark', 'text', 'signature'
+        ].join(', ');
 
         function wrapText(ctx, text, maxWidth) {
             const words = text.split(' ');
