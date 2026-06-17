@@ -10809,37 +10809,27 @@ Format as clean, readable text ready for narration.`;
             // Create full-screen DAW modal with iframe
             const dawModal = document.createElement('div');
             dawModal.id = 'audioDAWModal';
-            dawModal.className = 'fixed inset-0 bg-black flex flex-col z-[9999]';
+            dawModal.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;background:#000;display:flex;flex-direction:column;z-index:9999;';
             dawModal.innerHTML = `
-                <div class="flex-1 flex flex-col">
                     <!-- DAW Header Bar -->
-                    <div class="bg-gray-900 px-6 py-3 border-b-2 border-cyan-500 flex items-center justify-between">
-                        <div class="flex items-center space-x-4">
-                            <h2 class="text-xl font-bold text-cyan-400">
-                                <i class="fas fa-sliders-h mr-2"></i>Professional Audio DAW
+                    <div style="flex-shrink:0;background:#111827;padding:12px 24px;border-bottom:2px solid #06b6d4;display:flex;align-items:center;justify-content:space-between;">
+                        <div style="display:flex;align-items:center;gap:16px;">
+                            <h2 style="color:#22d3ee;font-size:1.2rem;font-weight:700;margin:0;">
+                                <i class="fas fa-sliders-h" style="margin-right:8px;"></i>Professional Audio DAW
                             </h2>
-                            <span class="text-xs text-gray-400 bg-gray-800 px-3 py-1 rounded-full">
-                                Full-Featured Editor
-                            </span>
+                            <span style="color:#9ca3af;font-size:0.75rem;background:#1f2937;padding:4px 12px;border-radius:999px;">Full-Featured Editor</span>
                         </div>
-                        <div class="flex items-center space-x-3">
-                            <button onclick="closeAudioDAW()" class="bg-red-600 hover:bg-red-500 px-6 py-2 rounded-lg font-semibold transition-all">
-                                <i class="fas fa-times mr-2"></i>Close DAW
-                            </button>
-                        </div>
+                        <button onclick="closeAudioDAW()" style="background:#dc2626;color:#fff;border:none;padding:8px 20px;border-radius:8px;font-weight:600;cursor:pointer;font-size:0.9rem;">
+                            <i class="fas fa-times" style="margin-right:6px;"></i>Close DAW
+                        </button>
                     </div>
-                    
                     <!-- Full DAW Interface (iframe) -->
-                    <div class="flex-1 relative">
-                        <iframe 
-                            id="dawIframe" 
-                            src="daw-redesigned.html" 
-                            class="w-full h-full border-0"
-                            style="background: #0A0A0A;"
-                            title="Professional Audio DAW"
-                        ></iframe>
-                    </div>
-                </div>
+                    <iframe
+                        id="dawIframe"
+                        src="daw-redesigned.html"
+                        style="flex:1;width:100%;border:none;background:#0A0A0A;"
+                        title="Professional Audio DAW"
+                    ></iframe>
             `;
             
             // OLD INLINE DAW CODE PRESERVED BELOW FOR REFERENCE/BACKUP
@@ -15578,12 +15568,8 @@ Format as clean, readable text ready for narration.`;
         }
 
         function closeAudioDAW() {
-            console.log('🔄 Closing Audio DAW...');
             const modal = document.getElementById('audioDAWModal');
-            if (modal) {
-                modal.classList.add('hidden');
-            }
-            console.log('✅ Audio DAW closed');
+            if (modal) modal.remove();
         }
 
         // Add drag and drop functionality for timeline
