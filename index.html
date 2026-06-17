@@ -10217,10 +10217,8 @@ Format as clean, readable text ready for narration.`;
             while (offset + 8 <= ab.byteLength) {
                 const id = readId(offset);
                 const sz = view.getUint32(offset + 4, true);
-                // Guard: corrupt sz would jump past end of file
-                if (sz > ab.byteLength - offset - 8) break;
 
-                if (id === 'fmt ' && sz >= 16) {
+                if (id === 'fmt ' && sz >= 16 && sz <= ab.byteLength - offset - 8) {
                     fmt = {
                         audioFormat:  view.getUint16(offset+8,  true),
                         channels:     view.getUint16(offset+10, true),
@@ -10230,11 +10228,15 @@ Format as clean, readable text ready for narration.`;
                         bitsPerSample:view.getUint16(offset+22, true),
                     };
                 } else if (id === 'data') {
+                    // data chunk sz may be 0xFFFFFFFF in streaming WAV — always use actual remaining bytes
                     dataOffset = offset + 8;
-                    dataSize = Math.min(sz, ab.byteLength - dataOffset);
+                    dataSize = ab.byteLength - dataOffset;
                     break;
                 }
-                offset += 8 + sz + (sz & 1); // word-align
+                // Advance to next chunk; guard against corrupt sz jumping past EOF
+                const nextOffset = offset + 8 + sz + (sz & 1);
+                if (nextOffset <= offset || nextOffset > ab.byteLength) break;
+                offset = nextOffset;
             }
             if (!fmt || dataOffset < 0) {
                 const hdr = Array.from(new Uint8Array(ab, 0, Math.min(64, ab.byteLength))).map(b=>b.toString(16).padStart(2,'0')).join(' ');
