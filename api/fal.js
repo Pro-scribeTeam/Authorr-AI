@@ -29,5 +29,5 @@ module.exports = async function handler(req, res) {
 
     const response = await fetch(url, { method, headers, body });
     res.status(response.status).json(await response.json());
-  } catch (err) { sendError(res, err); }
+  } catch (err) { console.error('fal.js error:', err.message, err.stack); sendError(res, err); }
 };
