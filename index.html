@@ -6435,7 +6435,7 @@ Return the COMPLETE text, dramatically rewritten with visible personality and hu
                     const encodedPrompt = encodeURIComponent(prompt);
                     const seed = Math.floor(Math.random() * 999999);
                     const encodedNegative = encodeURIComponent(COVER_NEGATIVE_PROMPT);
-                    const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=768&height=1024&seed=${seed}&nologo=true&model=flux&negative=${encodedNegative}&_cb=${Date.now()}`;
+                    const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=768&height=1024&seed=${seed}&nologo=true&model=flux-realism&negative=${encodedNegative}&_cb=${Date.now()}`;
 
                     // Pollinations can be slow — retry up to 3 times with increasing timeout
                     let imgBlob = null;
@@ -6624,6 +6624,7 @@ Return the COMPLETE text, dramatically rewritten with visible personality and hu
             let prompt = `A professional ${artStyle} book cover background with ${style} aesthetic. `;
             prompt += `Visual scene: ${description}. `;
             prompt += `Portrait orientation, eye-catching composition, genre-appropriate mood. `;
+            prompt += `Realistic human anatomy, natural proportions, well-defined facial features, correct number of fingers. `;
             prompt += `No text, no words, no letters, no numbers, no typography anywhere on the image. `;
             prompt += `No watermarks, no signatures, no artist marks, no handwriting, no cursive marks, no stamps, no inscriptions.`;
             if (avoid) {
