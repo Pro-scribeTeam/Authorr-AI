@@ -10239,8 +10239,10 @@ Format as clean, readable text ready for narration.`;
                 offset = nextOffset;
             }
             if (!fmt || dataOffset < 0) {
-                const hdr = Array.from(new Uint8Array(ab, 0, Math.min(64, ab.byteLength))).map(b=>b.toString(16).padStart(2,'0')).join(' ');
-                throw new Error(`WAV parse failed: fmt=${!!fmt} data=${dataOffset>=0} lastOffset=${offset} size=${ab.byteLength} hdr=[${hdr}]`);
+                const idAtEnd = (offset + 8 <= ab.byteLength) ? readId(offset) : 'EOF';
+                const szAtEnd = (offset + 8 <= ab.byteLength) ? view.getUint32(offset+4, true) : 0;
+                const near = Array.from(new Uint8Array(ab, Math.max(0,offset), Math.min(16, ab.byteLength-offset))).map(b=>b.toString(16).padStart(2,'0')).join(' ');
+                throw new Error(`WAV: fmt=${!!fmt} data=${dataOffset>=0} offset=${offset} id="${idAtEnd}" sz=${szAtEnd} near=[${near}] fileSize=${ab.byteLength}`);
             }
             return { fmt, dataOffset, dataSize, buffer: ab };
         }
