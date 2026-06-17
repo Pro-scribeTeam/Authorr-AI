@@ -10236,7 +10236,10 @@ Format as clean, readable text ready for narration.`;
                 }
                 offset += 8 + sz + (sz & 1); // word-align
             }
-            if (!fmt || dataOffset < 0) throw new Error('Cannot parse WAV structure (fmt or data chunk not found)');
+            if (!fmt || dataOffset < 0) {
+                const hdr = Array.from(new Uint8Array(ab, 0, Math.min(64, ab.byteLength))).map(b=>b.toString(16).padStart(2,'0')).join(' ');
+                throw new Error(`WAV parse failed: fmt=${!!fmt} data=${dataOffset>=0} lastOffset=${offset} size=${ab.byteLength} hdr=[${hdr}]`);
+            }
             return { fmt, dataOffset, dataSize, buffer: ab };
         }
 
