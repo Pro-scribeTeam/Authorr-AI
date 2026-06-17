@@ -10,7 +10,7 @@ module.exports = async function handler(req, res) {
   try {
     let url, method = 'GET', body;
     if (action === 'submit') {
-      url = `https://queue.fal.run/${model}`; method = 'POST'; body = JSON.stringify({ input: payload });
+      url = `https://queue.fal.run/${model}`; method = 'POST'; body = JSON.stringify(payload);
     } else if (action === 'status') {
       url = `https://queue.fal.run/${model}/requests/${request_id}/status`;
     } else if (action === 'result') {
