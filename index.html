@@ -9097,9 +9097,9 @@ Format as clean, readable text ready for narration.`;
                     if (!apiKey) throw new Error('ElevenLabs API key not configured');
                     return await generateElevenLabsAudio(text, voiceId, apiKey);
                 } else if (provider === 'chatterbox') {
-                    return await generateChatterboxAudio(text, null, true);
+                    return await generateChatterboxAudio(text, null);
                 } else if (provider === 'cbturbo') {
-                    return await generateChatterboxAudio(text, voiceIdToMp3(voice), true);
+                    return await generateChatterboxAudio(text, voiceIdToMp3(voice));
                 } else if (provider === 'cbmulti') {
                     const langCode = voice.replace('cbmulti_', '');
                     return await generateChatterboxMultilingualAudio(text, langCode);
@@ -9560,58 +9560,24 @@ Format as clean, readable text ready for narration.`;
 
             const falHeaders = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` };
 
-            // 1. Submit to queue
-            console.log(`${labelForErrors} submitting to queue...`);
-            showLoading('Submitting to Chatterbox…');
-            const submitResp = await fetch('/api/fal', {
+            // Use direct fal.run endpoint — synchronous, no queue/polling needed
+            showLoading('Generating audio via Chatterbox…');
+            const resp = await fetch('/api/fal', {
                 method: 'POST', headers: falHeaders,
-                body: JSON.stringify({ action: 'submit', model: modelPath, payload: inputPayload })
-            });
-            if (!submitResp.ok) {
-                hideLoading();
-                throw new Error(`${labelForErrors} submit failed: ${submitResp.status}`);
-            }
-            const submitted = await submitResp.json();
-            const requestId = submitted.request_id;
-            if (!requestId) {
-                hideLoading();
-                throw new Error(`${labelForErrors}: no request_id returned`);
-            }
-
-            // 2. Poll status until COMPLETED or FAILED (max 3 min)
-            showLoading('Generating audio — this takes 20–40 seconds…');
-            const maxAttempts = 90;
-            for (let i = 0; i < maxAttempts; i++) {
-                await new Promise(r => setTimeout(r, 2000));
-                const statusResp = await fetch('/api/fal', {
-                    method: 'POST', headers: falHeaders,
-                    body: JSON.stringify({ action: 'status', model: modelPath, request_id: requestId })
-                });
-                if (!statusResp.ok) continue;
-                const statusData = await statusResp.json();
-                const status = statusData?.status;
-                if (status === 'COMPLETED') break;
-                if (status === 'FAILED') {
-                    hideLoading();
-                    throw new Error(`${labelForErrors} failed on server`);
-                }
-            }
-
-            // 3. Fetch the result
-            showLoading('Fetching audio result…');
-            const resultResp = await fetch('/api/fal', {
-                method: 'POST', headers: falHeaders,
-                body: JSON.stringify({ action: 'result', model: modelPath, request_id: requestId })
+                body: JSON.stringify({ action: 'run', model: modelPath, payload: inputPayload })
             });
             hideLoading();
-            if (!resultResp.ok) throw new Error(`${labelForErrors} result fetch failed: ${resultResp.status}`);
-            const result = await resultResp.json();
+            if (!resp.ok) {
+                const errText = await resp.text().catch(() => resp.status);
+                throw new Error(`${labelForErrors} error: ${errText}`);
+            }
+            const result = await resp.json();
             console.log(`${labelForErrors} done.`);
             return result;
         }
 
         // ── Fal.ai Chatterbox Classic — 32 custom MP3 voice references ──
-        async function generateChatterboxAudio(text, voiceFileName = null, useDirect = false) {
+        async function generateChatterboxAudio(text, voiceFileName = null) {
             console.log('Generating Chatterbox Classic audio via Fal.ai...');
             const ctrl = getChatterboxControlValues();
             const BASE_VOICE_URL = 'https://authorr-ai.pages.dev/';
@@ -9625,7 +9591,7 @@ Format as clean, readable text ready for narration.`;
                 ...(voiceFileName ? { audio_url: BASE_VOICE_URL + encodeURIComponent(voiceFileName) } : {})
             };
 
-            const runner = useDirect ? falRunDirect : falSubmitAndPoll;
+            const runner = falSubmitAndPoll;
             const result = await runner('fal-ai/chatterbox/text-to-speech', inputPayload, 'Chatterbox Classic');
             if (!result?.audio?.url) throw new Error('No audio URL returned from Chatterbox Classic');
 
