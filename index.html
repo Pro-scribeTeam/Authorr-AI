@@ -10171,24 +10171,59 @@ Format as clean, readable text ready for narration.`;
             return new Blob([wav], { type: 'audio/wav' });
         }
 
+        // Parse WAV chunk structure and return fmt params + raw PCM data range.
+        // Handles non-standard headers by scanning for 'fmt ' and 'data' chunks.
+        async function parseWavChunks(blob) {
+            const ab = await blob.arrayBuffer();
+            const view = new DataView(ab);
+            let offset = 12; // skip RIFF + filesize + WAVE
+            let fmt = null, dataOffset = -1, dataSize = 0;
+            while (offset < ab.byteLength - 8) {
+                const id = String.fromCharCode(view.getUint8(offset), view.getUint8(offset+1), view.getUint8(offset+2), view.getUint8(offset+3));
+                const sz = view.getUint32(offset + 4, true);
+                if (id === 'fmt ') {
+                    fmt = {
+                        audioFormat: view.getUint16(offset+8, true),
+                        channels:    view.getUint16(offset+10, true),
+                        sampleRate:  view.getUint32(offset+12, true),
+                        byteRate:    view.getUint32(offset+16, true),
+                        blockAlign:  view.getUint16(offset+20, true),
+                        bitsPerSample: view.getUint16(offset+22, true),
+                    };
+                } else if (id === 'data') {
+                    dataOffset = offset + 8;
+                    dataSize = sz;
+                    break;
+                }
+                offset += 8 + sz + (sz % 2); // WAV chunks are word-aligned
+            }
+            if (!fmt || dataOffset < 0) throw new Error('Cannot parse WAV structure');
+            return { fmt, dataOffset, dataSize, buffer: ab };
+        }
+
         async function mergeWavBlobs(blobs) {
             if (blobs.length === 1) return blobs[0];
-            // Decode each blob via Web Audio API so any WAV variant is handled correctly
-            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            const audioBuffers = await Promise.all(blobs.map(async b => {
-                const ab = await b.arrayBuffer();
-                return audioCtx.decodeAudioData(ab);
-            }));
-            const sampleRate = audioBuffers[0].sampleRate;
-            const channels = audioBuffers[0].numberOfChannels;
-            const totalLength = audioBuffers.reduce((sum, b) => sum + b.length, 0);
-            const combined = audioCtx.createBuffer(channels, totalLength, sampleRate);
-            let offset = 0;
-            for (const buf of audioBuffers) {
-                for (let c = 0; c < channels; c++) combined.getChannelData(c).set(buf.getChannelData(c), offset);
-                offset += buf.length;
+            // Parse each blob's WAV structure directly — no AudioContext needed
+            const wavs = await Promise.all(blobs.map(b => parseWavChunks(b)));
+            const { fmt } = wavs[0];
+            const totalData = wavs.reduce((s, w) => s + w.dataSize, 0);
+            const out = new ArrayBuffer(44 + totalData);
+            const view = new DataView(out);
+            const ws = (o, s) => { for (let i = 0; i < s.length; i++) view.setUint8(o+i, s.charCodeAt(i)); };
+            ws(0,'RIFF'); view.setUint32(4, 36 + totalData, true);
+            ws(8,'WAVE'); ws(12,'fmt '); view.setUint32(16, 16, true);
+            view.setUint16(20, fmt.audioFormat, true); view.setUint16(22, fmt.channels, true);
+            view.setUint32(24, fmt.sampleRate, true); view.setUint32(28, fmt.byteRate, true);
+            view.setUint16(32, fmt.blockAlign, true); view.setUint16(34, fmt.bitsPerSample, true);
+            ws(36,'data'); view.setUint32(40, totalData, true);
+            const outBytes = new Uint8Array(out);
+            let writeOff = 44;
+            for (const w of wavs) {
+                outBytes.set(new Uint8Array(w.buffer, w.dataOffset, w.dataSize), writeOff);
+                writeOff += w.dataSize;
             }
-            return audioBufferToWavBlob(combined);
+            console.log(`🔗 WAV merge: ${wavs.length} chunks, ${fmt.sampleRate}Hz ${fmt.channels}ch ${fmt.bitsPerSample}bit, total=${totalData} bytes`);
+            return new Blob([out], { type: 'audio/wav' });
         }
 
         function writeString(view, offset, string) {
