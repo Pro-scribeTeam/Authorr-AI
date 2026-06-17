@@ -9537,43 +9537,24 @@ Format as clean, readable text ready for narration.`;
             return VOICE_FILE_MAP[key] || null;
         }
 
-        // ── Fal.ai direct call — synchronous, faster for short audio (preview) ──
-        async function falRunDirect(modelPath, inputPayload, labelForErrors) {
+        // ── Shared Fal.ai runner — calls fal.run directly, server proxies audio binary ──
+        async function falSubmitAndPoll(modelPath, inputPayload, labelForErrors) {
             const token = await getAuthToken();
             if (!token) throw new Error('Please log in to use Authorr AI.');
+
+            showLoading('Generating audio via Chatterbox…');
             const resp = await fetch('/api/fal', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({ action: 'run', model: modelPath, payload: inputPayload })
             });
-            if (!resp.ok) {
-                const errText = await resp.text();
-                throw new Error(`${labelForErrors} error: ${resp.status} - ${errText}`);
-            }
-            return await resp.json();
-        }
-
-        // ── Shared Fal.ai runner — submits to queue then polls until complete ──
-        async function falSubmitAndPoll(modelPath, inputPayload, labelForErrors) {
-            const token = await getAuthToken();
-            if (!token) throw new Error('Please log in to use Authorr AI.');
-
-            const falHeaders = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` };
-
-            // Use direct fal.run endpoint — synchronous, no queue/polling needed
-            showLoading('Generating audio via Chatterbox…');
-            const resp = await fetch('/api/fal', {
-                method: 'POST', headers: falHeaders,
-                body: JSON.stringify({ action: 'run', model: modelPath, payload: inputPayload })
-            });
             hideLoading();
             if (!resp.ok) {
-                const errText = await resp.text().catch(() => resp.status);
+                const errText = await resp.text().catch(() => String(resp.status));
                 throw new Error(`${labelForErrors} error: ${errText}`);
             }
-            const result = await resp.json();
             console.log(`${labelForErrors} done.`);
-            return result;
+            return await resp.blob();
         }
 
         // ── Fal.ai Chatterbox Classic — 32 custom MP3 voice references ──
@@ -9591,12 +9572,9 @@ Format as clean, readable text ready for narration.`;
                 ...(voiceFileName ? { audio_url: BASE_VOICE_URL + encodeURIComponent(voiceFileName) } : {})
             };
 
-            const runner = falSubmitAndPoll;
-            const result = await runner('fal-ai/chatterbox/text-to-speech', inputPayload, 'Chatterbox Classic');
-            if (!result?.audio?.url) throw new Error('No audio URL returned from Chatterbox Classic');
-
-            const audioResp = await fetch(result.audio.url);
-            return await audioResp.blob();
+            const audioBlob = await falSubmitAndPoll('fal-ai/chatterbox/text-to-speech', inputPayload, 'Chatterbox Classic');
+            if (!audioBlob || audioBlob.size < 100) throw new Error('No audio returned from Chatterbox Classic');
+            return audioBlob;
         }
 
         // ── Fal.ai Chatterbox Multilingual — 23 languages, 300 char limit (chunked) ──
@@ -9635,10 +9613,9 @@ Format as clean, readable text ready for narration.`;
                     cfg_scale:    ctrl.cfg_weight,
                     ...(ctrl.seed !== undefined ? { seed: ctrl.seed } : {})
                 };
-                const result = await falSubmitAndPoll('fal-ai/chatterbox/text-to-speech/multilingual', inputPayload, 'Chatterbox Multilingual');
-                if (!result?.audio?.url) throw new Error(`No audio URL returned for chunk ${i + 1}`);
-                const audioResp = await fetch(result.audio.url);
-                audioBlobs.push(await audioResp.blob());
+                const chunkBlob = await falSubmitAndPoll('fal-ai/chatterbox/text-to-speech/multilingual', inputPayload, 'Chatterbox Multilingual');
+                if (!chunkBlob || chunkBlob.size < 100) throw new Error(`No audio returned for chunk ${i + 1}`);
+                audioBlobs.push(chunkBlob);
             }
 
             if (audioBlobs.length === 1) return audioBlobs[0];

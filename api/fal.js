@@ -9,7 +9,21 @@ module.exports = async function handler(req, res) {
 
   try {
     let url, method = 'GET', body;
-    if (action === 'run') { url = `https://fal.run/${model}`; method = 'POST'; body = JSON.stringify(payload); }
+    if (action === 'run') {
+      // Direct synchronous call — proxy audio binary back to avoid CORS
+      const falResp = await fetch(`https://fal.run/${model}`, {
+        method: 'POST', headers, body: JSON.stringify(payload)
+      });
+      const data = await falResp.json();
+      if (!falResp.ok || !data?.audio?.url) {
+        return res.status(falResp.status || 500).json({ error: data?.detail || 'Fal.ai error' });
+      }
+      const audioResp = await fetch(data.audio.url);
+      const audioBuffer = await audioResp.arrayBuffer();
+      res.setHeader('Content-Type', audioResp.headers.get('content-type') || 'audio/wav');
+      res.setHeader('Content-Length', audioBuffer.byteLength);
+      return res.send(Buffer.from(audioBuffer));
+    }
     else if (action === 'submit') { url = `https://queue.fal.run/${model}`; method = 'POST'; body = JSON.stringify(payload); }
     else if (action === 'status') { url = `https://queue.fal.run/${model}/requests/${request_id}/status`; }
     else if (action === 'result') { url = `https://queue.fal.run/${model}/requests/${request_id}`; }
