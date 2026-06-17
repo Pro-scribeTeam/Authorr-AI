@@ -2,7 +2,9 @@ const { requireAuth, sendError } = require('./_auth');
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
-  try { await requireAuth(req); } catch (err) { return sendError(res, err); }
+  try { await requireAuth(req); } catch (err) {
+    return res.status(err.status || 500).json({ error: err.message, step: 'auth' });
+  }
 
   const { action, model, request_id, payload } = req.body;
   const headers = { 'Authorization': `Key ${process.env.FAL_API_KEY}`, 'Content-Type': 'application/json' };
@@ -16,7 +18,6 @@ module.exports = async function handler(req, res) {
     } else if (action === 'result') {
       url = `https://queue.fal.run/${model}/requests/${request_id}`;
     } else if (action === 'fetch_audio') {
-      // Proxy CDN audio as base64 to avoid browser CORS restrictions
       const { url: audioUrl } = req.body;
       if (!audioUrl) return res.status(400).json({ error: 'Missing url' });
       const audioResp = await fetch(audioUrl, { headers: { 'Authorization': `Key ${process.env.FAL_API_KEY}` } });
@@ -28,6 +29,9 @@ module.exports = async function handler(req, res) {
     }
 
     const response = await fetch(url, { method, headers, body });
-    res.status(response.status).json(await response.json());
-  } catch (err) { console.error('fal.js error:', err.message, err.stack); sendError(res, err); }
+    const data = await response.json();
+    res.status(response.status).json(data);
+  } catch (err) {
+    res.status(500).json({ error: err.message, step: 'fal_call', action });
+  }
 };
