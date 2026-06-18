@@ -9303,12 +9303,9 @@ Format as clean, readable text ready for narration.`;
 
             if (current.trim()) chunks.push(current.trim());
 
-            // Ensure every chunk closes with punctuation so Chatterbox fully renders the last word
-            const punctRe = /[.!?,;:]$/;
-            const finalChunks = chunks.map(c => {
-                const t = c.trim();
-                return punctRe.test(t) ? t : t + '.';
-            });
+            // Always append trailing ellipsis — gives Chatterbox extra runway after the last real
+            // word so it doesn't cut off the final syllable before the audio buffer ends.
+            const finalChunks = chunks.map(c => c.trim() + ' ...');
 
             console.log(`📚 Split into ${finalChunks.length} chunks (max ${maxChunkSize} chars):`);
             finalChunks.forEach((c, i) => console.log(`  [${i+1}] ${c.length} chars — "${c.substring(0, 55)}..."`));
@@ -10257,7 +10254,11 @@ Format as clean, readable text ready for narration.`;
             // Parse each blob's WAV structure directly — no AudioContext needed
             const wavs = await Promise.all(blobs.map(b => parseWavChunks(b)));
             const { fmt } = wavs[0];
-            const totalData = wavs.reduce((s, w) => s + w.dataSize, 0);
+            // 300ms silence between chunks (Chatterbox sometimes clips the tail of the last word)
+            const silenceMs = 300;
+            const silenceBytes = Math.round(fmt.sampleRate * (silenceMs / 1000)) * fmt.blockAlign;
+            const gapCount = wavs.length - 1;
+            const totalData = wavs.reduce((s, w) => s + w.dataSize, 0) + gapCount * silenceBytes;
             const out = new ArrayBuffer(44 + totalData);
             const view = new DataView(out);
             const ws = (o, s) => { for (let i = 0; i < s.length; i++) view.setUint8(o+i, s.charCodeAt(i)); };
@@ -10269,11 +10270,13 @@ Format as clean, readable text ready for narration.`;
             ws(36,'data'); view.setUint32(40, totalData, true);
             const outBytes = new Uint8Array(out);
             let writeOff = 44;
-            for (const w of wavs) {
+            for (let i = 0; i < wavs.length; i++) {
+                const w = wavs[i];
                 outBytes.set(new Uint8Array(w.buffer, w.dataOffset, w.dataSize), writeOff);
                 writeOff += w.dataSize;
+                if (i < wavs.length - 1) writeOff += silenceBytes; // silence gap is already zero-filled
             }
-            console.log(`🔗 WAV merge: ${wavs.length} chunks, ${fmt.sampleRate}Hz ${fmt.channels}ch ${fmt.bitsPerSample}bit, total=${totalData} bytes`);
+            console.log(`🔗 WAV merge: ${wavs.length} chunks + ${gapCount}×${silenceMs}ms gaps, ${fmt.sampleRate}Hz ${fmt.channels}ch ${fmt.bitsPerSample}bit, total=${totalData} bytes`);
             return new Blob([out], { type: 'audio/wav' });
         }
 
@@ -10867,25 +10870,12 @@ Format as clean, readable text ready for narration.`;
             // Create full-screen DAW modal with iframe
             const dawModal = document.createElement('div');
             dawModal.id = 'audioDAWModal';
-            dawModal.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;background:#000;display:flex;flex-direction:column;z-index:9999;';
+            dawModal.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;background:#000;z-index:9999;';
             dawModal.innerHTML = `
-                    <!-- DAW Header Bar -->
-                    <div style="flex-shrink:0;background:#111827;padding:12px 24px;border-bottom:2px solid #06b6d4;display:flex;align-items:center;justify-content:space-between;">
-                        <div style="display:flex;align-items:center;gap:16px;">
-                            <h2 style="color:#22d3ee;font-size:1.2rem;font-weight:700;margin:0;">
-                                <i class="fas fa-sliders-h" style="margin-right:8px;"></i>Professional Audio DAW
-                            </h2>
-                            <span style="color:#9ca3af;font-size:0.75rem;background:#1f2937;padding:4px 12px;border-radius:999px;">Full-Featured Editor</span>
-                        </div>
-                        <button onclick="closeAudioDAW()" style="background:#dc2626;color:#fff;border:none;padding:8px 20px;border-radius:8px;font-weight:600;cursor:pointer;font-size:0.9rem;">
-                            <i class="fas fa-times" style="margin-right:6px;"></i>Close DAW
-                        </button>
-                    </div>
-                    <!-- Full DAW Interface (iframe) -->
                     <iframe
                         id="dawIframe"
                         src="daw-redesigned.html"
-                        style="flex:1;width:100%;border:none;background:#0A0A0A;"
+                        style="width:100%;height:100%;border:none;background:#0A0A0A;"
                         title="Professional Audio DAW"
                     ></iframe>
             `;
