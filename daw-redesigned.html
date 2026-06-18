@@ -4399,24 +4399,22 @@
             }).join('');
         }
 
-        async function dawFetchTracks(genre, extra = {}) {
-            const clientId = localStorage.getItem('jamendoClientId');
-            if (!clientId) {
-                alert('Add your Jamendo Client ID in Config (main app settings) first.');
-                return null;
-            }
-            const params = new URLSearchParams({
-                client_id: clientId,
-                format: 'json',
-                limit: 12,
-                tags: genre,
-                vocalinstrumental: 'instrumental',
-                audioformat: 'mp31',
-                boost: 'popularity_total',
-                ...extra
-            });
-            const res = await fetch(`https://api.jamendo.com/v3.0/tracks/?${params}`);
-            if (!res.ok) throw new Error(`Jamendo API ${res.status}`);
+        // Get JWT from parent window (embedded mode) or return null
+        async function getDawAuthToken() {
+            try {
+                if (window.parent && window.parent !== window && typeof window.parent.getAuthToken === 'function') {
+                    return await window.parent.getAuthToken();
+                }
+            } catch (e) {}
+            return null;
+        }
+
+        async function dawFetchTracks(genre) {
+            const token = await getDawAuthToken();
+            const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+            const params = new URLSearchParams({ tags: genre, limit: 12 });
+            const res = await fetch(`/api/music?${params}`, { headers });
+            if (!res.ok) throw new Error(`Music search failed (${res.status})`);
             const data = await res.json();
             if (data.headers?.status === 'failed') throw new Error(data.headers.error_message);
             return data.results;
@@ -4455,24 +4453,16 @@
             const category = sel?.value;
             if (!category) { alert('Select a category first.'); return; }
 
-            const freesoundKey = localStorage.getItem('freesoundApiKey');
-            if (!freesoundKey) {
-                alert('Add your Freesound API key in Config > Settings.\nGet it free at freesound.org/apiv2/apply');
-                return;
-            }
-
             const resultsEl = document.getElementById(`${trackId}Results`);
             resultsEl.innerHTML = '<div style="padding:4px;color:#9ca3af;">Searching Freesound…</div>';
             resultsEl.style.display = 'block';
             try {
+                const token = await getDawAuthToken();
+                const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
                 const query = SFX_QUERIES[category] || category;
-                const params = new URLSearchParams({
-                    query, token: freesoundKey, format: 'json',
-                    fields: 'id,name,previews,duration,username',
-                    page_size: 15, filter: 'duration:[1 TO 300]'
-                });
-                const res = await fetch(`/api/sfx?${params}`);
-                if (!res.ok) throw new Error(`Freesound API ${res.status}`);
+                const params = new URLSearchParams({ query, page_size: 15 });
+                const res = await fetch(`/api/sfx?${params}`, { headers });
+                if (!res.ok) throw new Error(`SFX search failed (${res.status})`);
                 const data = await res.json();
                 if (!data.results?.length) {
                     resultsEl.innerHTML = '<div style="padding:4px;color:#9ca3af;">No results found.</div>';
@@ -4491,11 +4481,6 @@
         }
 
         async function headerSearchFreesound() {
-            const freesoundKey = localStorage.getItem('freesoundApiKey');
-            if (!freesoundKey) {
-                alert('Add your Freesound API key in Config > Settings.\nGet it free at freesound.org/apiv2/apply');
-                return;
-            }
             const category = document.getElementById('headerSfxCategory').value;
             if (!category) { alert('Select a SFX category first.'); return; }
 
@@ -4504,13 +4489,11 @@
             panel.innerHTML = `<div style="padding:8px 16px;color:#9ca3af;font-size:12px;">Searching Freesound for <b style="color:#fff;">${category}</b>…</div>`;
 
             try {
+                const token = await getDawAuthToken();
+                const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
                 const query = SFX_QUERIES[category] || category;
-                const params = new URLSearchParams({
-                    query, token: freesoundKey, format: 'json',
-                    fields: 'id,name,previews,duration,username',
-                    page_size: 15, filter: 'duration:[1 TO 300]'
-                });
-                const res = await fetch(`/api/sfx?${params}`);
+                const params = new URLSearchParams({ query, page_size: 15 });
+                const res = await fetch(`/api/sfx?${params}`, { headers });
                 if (!res.ok) throw new Error(`Freesound API ${res.status}`);
                 const data = await res.json();
                 if (!data.results?.length) {
@@ -4601,11 +4584,6 @@
 
         async function headerSearchJamendo(type) {
             if (type === 'sfx') { return headerSearchFreesound(); }
-            const clientId = localStorage.getItem('jamendoClientId');
-            if (!clientId) {
-                alert('Add your Jamendo Client ID in the main app Config page first.');
-                return;
-            }
             const genre = document.getElementById('headerMusicGenre').value;
             if (!genre) {
                 alert(`Select a ${type === 'music' ? 'genre' : 'category'} first.`);
