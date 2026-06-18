@@ -10238,6 +10238,11 @@ Format as clean, readable text ready for narration.`;
                 if (nextOffset <= offset || nextOffset > ab.byteLength) break;
                 offset = nextOffset;
             }
+            // Fal.ai WAV has no 'data' chunk header — PCM starts directly after LIST/INFO metadata
+            if (fmt && dataOffset < 0 && offset < ab.byteLength) {
+                dataOffset = offset;
+                dataSize = ab.byteLength - offset;
+            }
             if (!fmt || dataOffset < 0) {
                 const idAtEnd = (offset + 8 <= ab.byteLength) ? readId(offset) : 'EOF';
                 const szAtEnd = (offset + 8 <= ab.byteLength) ? view.getUint32(offset+4, true) : 0;
