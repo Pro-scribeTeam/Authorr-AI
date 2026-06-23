@@ -12,8 +12,8 @@ function preprocessText(text) {
     // Strip bold/italic markers
     .replace(/\*{1,3}(.*?)\*{1,3}/g, '$1')
     .replace(/_{1,2}(.*?)_{1,2}/g, '$1')
-    // Replace trailing comma at end of a chunk with a period
-    .replace(/,(\s*)$/m, '.$1')
+    // Replace trailing comma at the very end of the transcript with a period
+    .replace(/,\s*$/, '.')
     // Collapse multiple blank lines
     .replace(/\n{3,}/g, '\n\n')
     // Collapse multiple spaces
