@@ -2342,29 +2342,95 @@
                     </div>
                 </div>
 
-                <div class="bg-theme-secondary p-6 rounded-xl border-2 border-theme">
-                    <h2 class="text-xl font-bold mb-4">
+                <!-- Publish to Platforms -->
+                <div class="bg-theme-secondary p-6 rounded-xl border-2 border-theme lg:col-span-1">
+                    <h2 class="text-xl font-bold mb-1">
                         <i class="fas fa-share-alt text-cyan-400 mr-2"></i>
-                        <span data-i18n="exp_publishing">Publishing Options</span>
+                        Publish to Platforms
                     </h2>
+                    <p class="text-xs text-theme-secondary mb-4">Select a platform to prepare your audiobook for submission</p>
 
-                    <div class="space-y-4">
-                        <div class="border border-theme p-4 rounded-lg">
-                            <h3 class="font-semibold mb-2" data-i18n="exp_audible_ready">Audible Ready</h3>
-                            <p class="text-sm text-theme-secondary mb-3" data-i18n="exp_audible_desc">Downloads audio with Audible-compliant filename (WAV, 44.1kHz)</p>
-                            <button onclick="exportForAudible()" class="btn-primary px-4 py-1 rounded text-sm w-full" data-i18n="exp_prepare_audible">Prepare for Audible</button>
+                    <!-- Platform cards grid -->
+                    <div class="grid grid-cols-2 gap-2 mb-4" id="publishPlatformGrid">
+                        <button onclick="selectPublishPlatform('acx')" id="ppcard-acx"
+                            class="pub-platform-card p-3 rounded-lg bg-theme-primary border border-theme hover:border-orange-400 transition-colors text-left">
+                            <i class="fab fa-amazon text-orange-400 text-xl mb-1 block"></i>
+                            <div class="font-semibold text-xs leading-tight">Audible / ACX</div>
+                            <div class="text-xs text-theme-secondary">Amazon</div>
+                        </button>
+                        <button onclick="selectPublishPlatform('spotify')" id="ppcard-spotify"
+                            class="pub-platform-card p-3 rounded-lg bg-theme-primary border border-theme hover:border-green-400 transition-colors text-left">
+                            <i class="fab fa-spotify text-green-400 text-xl mb-1 block"></i>
+                            <div class="font-semibold text-xs leading-tight">Spotify</div>
+                            <div class="text-xs text-theme-secondary">Audiobooks</div>
+                        </button>
+                        <button onclick="selectPublishPlatform('apple')" id="ppcard-apple"
+                            class="pub-platform-card p-3 rounded-lg bg-theme-primary border border-theme hover:border-gray-300 transition-colors text-left">
+                            <i class="fab fa-apple text-gray-300 text-xl mb-1 block"></i>
+                            <div class="font-semibold text-xs leading-tight">Apple Books</div>
+                            <div class="text-xs text-theme-secondary">iTunes Connect</div>
+                        </button>
+                        <button onclick="selectPublishPlatform('google')" id="ppcard-google"
+                            class="pub-platform-card p-3 rounded-lg bg-theme-primary border border-theme hover:border-blue-400 transition-colors text-left">
+                            <i class="fab fa-google text-blue-400 text-xl mb-1 block"></i>
+                            <div class="font-semibold text-xs leading-tight">Google Play</div>
+                            <div class="text-xs text-theme-secondary">Books</div>
+                        </button>
+                        <button onclick="selectPublishPlatform('overdrive')" id="ppcard-overdrive"
+                            class="pub-platform-card p-3 rounded-lg bg-theme-primary border border-theme hover:border-purple-400 transition-colors text-left">
+                            <i class="fas fa-book text-purple-400 text-xl mb-1 block"></i>
+                            <div class="font-semibold text-xs leading-tight">OverDrive</div>
+                            <div class="text-xs text-theme-secondary">Libraries / Libby</div>
+                        </button>
+                        <button onclick="selectPublishPlatform('findaway')" id="ppcard-findaway"
+                            class="pub-platform-card p-3 rounded-lg bg-theme-primary border border-theme hover:border-yellow-400 transition-colors text-left">
+                            <i class="fas fa-headphones text-yellow-400 text-xl mb-1 block"></i>
+                            <div class="font-semibold text-xs leading-tight">Findaway Voices</div>
+                            <div class="text-xs text-theme-secondary">40+ platforms</div>
+                        </button>
+                        <button onclick="selectPublishPlatform('kobo')" id="ppcard-kobo"
+                            class="pub-platform-card p-3 rounded-lg bg-theme-primary border border-theme hover:border-red-400 transition-colors text-left">
+                            <i class="fas fa-book-open text-red-400 text-xl mb-1 block"></i>
+                            <div class="font-semibold text-xs leading-tight">Kobo</div>
+                            <div class="text-xs text-theme-secondary">Writing Life</div>
+                        </button>
+                        <button onclick="selectPublishPlatform('bn')" id="ppcard-bn"
+                            class="pub-platform-card p-3 rounded-lg bg-theme-primary border border-theme hover:border-blue-300 transition-colors text-left">
+                            <i class="fas fa-store text-blue-300 text-xl mb-1 block"></i>
+                            <div class="font-semibold text-xs leading-tight">B&amp;N Press</div>
+                            <div class="text-xs text-theme-secondary">Barnes &amp; Noble</div>
+                        </button>
+                        <button onclick="selectPublishPlatform('podcast')" id="ppcard-podcast"
+                            class="pub-platform-card p-3 rounded-lg bg-theme-primary border border-theme hover:border-pink-400 transition-colors text-left">
+                            <i class="fas fa-podcast text-pink-400 text-xl mb-1 block"></i>
+                            <div class="font-semibold text-xs leading-tight">Podcast / RSS</div>
+                            <div class="text-xs text-theme-secondary">Anchor / Buzzsprout</div>
+                        </button>
+                        <button onclick="selectPublishPlatform('youtube')" id="ppcard-youtube"
+                            class="pub-platform-card p-3 rounded-lg bg-theme-primary border border-theme hover:border-red-500 transition-colors text-left">
+                            <i class="fab fa-youtube text-red-500 text-xl mb-1 block"></i>
+                            <div class="font-semibold text-xs leading-tight">YouTube</div>
+                            <div class="text-xs text-theme-secondary">Video Series</div>
+                        </button>
+                    </div>
+
+                    <!-- Platform detail panel (shown after selection) -->
+                    <div id="publishPlatformDetail" class="hidden border-2 border-cyan-500 rounded-lg p-4">
+                        <div class="flex items-center gap-2 mb-2">
+                            <i id="ppDetailIcon" class="text-2xl"></i>
+                            <h3 id="ppDetailName" class="font-bold text-base"></h3>
                         </div>
-
-                        <div class="border border-theme p-4 rounded-lg">
-                            <h3 class="font-semibold mb-2" data-i18n="exp_podcast">Podcast Format</h3>
-                            <p class="text-sm text-theme-secondary mb-3" data-i18n="exp_podcast_desc">Downloads audio episode + show notes text file</p>
-                            <button onclick="exportPodcast()" class="btn-secondary px-4 py-1 rounded text-sm w-full" data-i18n="exp_gen_podcast">Generate Podcast</button>
-                        </div>
-
-                        <div class="border border-theme p-4 rounded-lg">
-                            <h3 class="font-semibold mb-2" data-i18n="exp_youtube">YouTube Series</h3>
-                            <p class="text-sm text-theme-secondary mb-3" data-i18n="exp_youtube_desc">Downloads audio + chapter timestamps text file</p>
-                            <button onclick="exportYouTube()" class="btn-secondary px-4 py-1 rounded text-sm w-full" data-i18n="exp_create_video">Create Video Series</button>
+                        <p id="ppDetailDesc" class="text-xs text-theme-secondary mb-3"></p>
+                        <div id="ppDetailSpecs" class="bg-theme-primary rounded-lg p-3 text-xs text-theme-secondary mb-3 leading-relaxed whitespace-pre-line"></div>
+                        <div class="flex flex-col gap-2">
+                            <button id="ppDetailPrepareBtn" onclick="exportForPlatform(window._selectedPublishPlatform)"
+                                class="btn-primary py-2 rounded text-sm font-semibold w-full">
+                                <i class="fas fa-download mr-2"></i>Prepare Package
+                            </button>
+                            <a id="ppDetailUploadLink" href="#" target="_blank" rel="noopener noreferrer"
+                                class="btn-secondary py-2 rounded text-sm font-semibold w-full text-center block">
+                                <i class="fas fa-external-link-alt mr-2"></i>Open Upload Page
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -10795,6 +10861,330 @@ Format as clean, readable text ready for narration.`;
             await new Promise(r => setTimeout(r, 500));
             triggerTextDownload(timestamps, `${safe}_youtube_description.txt`);
             showNotification('YouTube audio + description downloaded!', 'success');
+        }
+
+        // ── Platform Publishing ────────────────────────────────────────────────────
+
+        const PUBLISH_PLATFORMS = {
+            acx: {
+                name: 'Audible / ACX',
+                icon: 'fab fa-amazon',
+                color: 'text-orange-400',
+                desc: 'Sell your audiobook on Amazon Audible via the ACX marketplace.',
+                specs: `Format: WAV or MP3 (192kbps+)\nSample rate: 44,100 Hz\nBit depth: 16-bit (convert before upload)\nLoudness: -23 LUFS integrated\nNoise floor: below -60dB RMS\nPeak: -3dB or lower\nRoom tone: 0.5–1 sec at head & tail\nTip: Use Audacity "Normalize" before uploading.`,
+                filenameFn: s => `${s}_ACX_44100hz_stereo.wav`,
+                notesFn: (title) => [
+                    `AUDIBLE / ACX SUBMISSION NOTES`,
+                    `================================`,
+                    `Title: ${title}`,
+                    `Generated: ${new Date().toLocaleDateString()}`,
+                    ``,
+                    `Requirements:`,
+                    `- Sample rate: 44100 Hz`,
+                    `- Bit depth: 16-bit (export from Audacity)`,
+                    `- Format: WAV or MP3 192kbps+`,
+                    `- Noise floor: < -60dB RMS`,
+                    `- Peak: -3dB or below`,
+                    `- Room tone: 0.5–1 sec at head/tail`,
+                    `- Upload chapters as separate files for long books`,
+                    ``,
+                    `Upload at: https://www.acx.com/`,
+                ].join('\n'),
+                notesFile: s => `${s}_ACX_notes.txt`,
+                uploadUrl: 'https://www.acx.com/',
+            },
+            spotify: {
+                name: 'Spotify Audiobooks',
+                icon: 'fab fa-spotify',
+                color: 'text-green-400',
+                desc: 'Distribute your audiobook to Spotify via Findaway Voices or direct distribution.',
+                specs: `Format: WAV or MP3 (192kbps+)\nSample rate: 44,100 Hz\nMetadata: title, author, narrator, ISBN\nCover: 3000×3000 JPG\nChapters: separate files preferred\nDistribute via Findaway Voices or DistroKid.`,
+                filenameFn: s => `${s}_Spotify_audiobook.wav`,
+                notesFn: (title) => [
+                    `SPOTIFY AUDIOBOOKS SUBMISSION NOTES`,
+                    `====================================`,
+                    `Title: ${title}`,
+                    `Generated: ${new Date().toLocaleDateString()}`,
+                    ``,
+                    `Requirements:`,
+                    `- Format: WAV or MP3 192kbps+`,
+                    `- Sample rate: 44,100 Hz`,
+                    `- Cover art: 3000×3000 JPG`,
+                    `- Metadata: title, author, narrator, ISBN (optional)`,
+                    `- Preferred: one file per chapter`,
+                    ``,
+                    `Distribute via Findaway Voices (findawayvoices.com)`,
+                    `or direct via Spotify for Podcasters for podcast format.`,
+                    ``,
+                    `Upload at: https://podcasters.spotify.com/`,
+                ].join('\n'),
+                notesFile: s => `${s}_Spotify_notes.txt`,
+                uploadUrl: 'https://podcasters.spotify.com/',
+            },
+            apple: {
+                name: 'Apple Books',
+                icon: 'fab fa-apple',
+                color: 'text-gray-300',
+                desc: 'Sell your audiobook on Apple Books via iTunes Connect.',
+                specs: `Format: M4B or MP3 (256kbps recommended)\nSample rate: 44,100 Hz\nCover: 1400×1400 JPG minimum (2400×2400 ideal)\nMetadata: title, author, narrator\nISBN: required for Apple Books\nChapters: embed as metadata markers.`,
+                filenameFn: s => `${s}_Apple_Books.wav`,
+                notesFn: (title) => [
+                    `APPLE BOOKS SUBMISSION NOTES`,
+                    `=============================`,
+                    `Title: ${title}`,
+                    `Generated: ${new Date().toLocaleDateString()}`,
+                    ``,
+                    `Requirements:`,
+                    `- Format: M4B preferred, or MP3 256kbps+`,
+                    `- Sample rate: 44,100 Hz`,
+                    `- Cover: 1400×1400 JPG minimum (2400×2400 recommended)`,
+                    `- ISBN: required (get free ISBN at isbn.org)`,
+                    `- Metadata: title, author, narrator, description`,
+                    `- Chapters can be embedded as track markers`,
+                    ``,
+                    `Upload at: https://authors.apple.com/`,
+                ].join('\n'),
+                notesFile: s => `${s}_Apple_notes.txt`,
+                uploadUrl: 'https://authors.apple.com/',
+            },
+            google: {
+                name: 'Google Play Books',
+                icon: 'fab fa-google',
+                color: 'text-blue-400',
+                desc: 'Sell your audiobook on Google Play Books.',
+                specs: `Format: MP3 or WAV (128kbps+ MP3)\nSample rate: 44,100 Hz\nCover: 1400×1400 JPG minimum\nMetadata: title, author, narrator, ISBN\nChapters: one file per chapter or timestamp markers.`,
+                filenameFn: s => `${s}_GooglePlay.wav`,
+                notesFn: (title) => [
+                    `GOOGLE PLAY BOOKS SUBMISSION NOTES`,
+                    `===================================`,
+                    `Title: ${title}`,
+                    `Generated: ${new Date().toLocaleDateString()}`,
+                    ``,
+                    `Requirements:`,
+                    `- Format: MP3 (128kbps+) or WAV`,
+                    `- Sample rate: 44,100 Hz`,
+                    `- Cover: JPEG, minimum 1400×1400`,
+                    `- ISBN: recommended`,
+                    `- Metadata: title, author, narrator`,
+                    `- Chapters: upload as separate MP3 files`,
+                    ``,
+                    `Upload at: https://play.google.com/books/publish`,
+                ].join('\n'),
+                notesFile: s => `${s}_GooglePlay_notes.txt`,
+                uploadUrl: 'https://play.google.com/books/publish',
+            },
+            overdrive: {
+                name: 'OverDrive / Libby',
+                icon: 'fas fa-book',
+                color: 'text-purple-400',
+                desc: 'Reach library patrons via OverDrive and the Libby app. Must go through an aggregator.',
+                specs: `Format: MP3, one file per chapter\nSample rate: 44,100 Hz, 128kbps+\nDistribute via: Findaway Voices or StreetLib\nCover: 1400×1400 JPG\nISBN required.`,
+                filenameFn: s => `${s}_OverDrive.wav`,
+                notesFn: (title) => [
+                    `OVERDRIVE / LIBBY SUBMISSION NOTES`,
+                    `===================================`,
+                    `Title: ${title}`,
+                    `Generated: ${new Date().toLocaleDateString()}`,
+                    ``,
+                    `Requirements:`,
+                    `- Format: MP3, 128kbps+`,
+                    `- One file per chapter recommended`,
+                    `- Sample rate: 44,100 Hz`,
+                    `- ISBN required`,
+                    `- Cover: JPEG 1400×1400`,
+                    ``,
+                    `OverDrive requires distribution via an approved aggregator.`,
+                    `Recommended: Findaway Voices — distributes to OverDrive automatically.`,
+                    ``,
+                    `Upload at: https://marketplace.overdrive.com/`,
+                ].join('\n'),
+                notesFile: s => `${s}_OverDrive_notes.txt`,
+                uploadUrl: 'https://marketplace.overdrive.com/',
+            },
+            findaway: {
+                name: 'Findaway Voices',
+                icon: 'fas fa-headphones',
+                color: 'text-yellow-400',
+                desc: 'One upload reaches 40+ platforms including Spotify, OverDrive, Scribd, and more.',
+                specs: `Format: WAV or MP3 (192kbps+)\nSample rate: 44,100 Hz\nCover: 2400×2400 JPG\nOne file per chapter\nISBN optional but recommended\nMetadata: title, author, narrator, genre.`,
+                filenameFn: s => `${s}_Findaway.wav`,
+                notesFn: (title) => [
+                    `FINDAWAY VOICES SUBMISSION NOTES`,
+                    `=================================`,
+                    `Title: ${title}`,
+                    `Generated: ${new Date().toLocaleDateString()}`,
+                    ``,
+                    `Requirements:`,
+                    `- Format: WAV or MP3 192kbps+`,
+                    `- Sample rate: 44,100 Hz`,
+                    `- Cover: 2400×2400 JPG`,
+                    `- One audio file per chapter`,
+                    `- Metadata: title, author, narrator, genre, description`,
+                    ``,
+                    `Findaway distributes to 40+ platforms including:`,
+                    `Spotify, OverDrive, Scribd, Hoopla, Downpour, and more.`,
+                    ``,
+                    `Upload at: https://findawayvoices.com/submit`,
+                ].join('\n'),
+                notesFile: s => `${s}_Findaway_notes.txt`,
+                uploadUrl: 'https://findawayvoices.com/submit',
+            },
+            kobo: {
+                name: 'Kobo Writing Life',
+                icon: 'fas fa-book-open',
+                color: 'text-red-400',
+                desc: 'Self-publish your audiobook on Kobo directly.',
+                specs: `Format: MP3 or M4B\nSample rate: 44,100 Hz, 128kbps+\nCover: 1600×2400 JPG (portrait)\nISBN optional\nChapters: single file or per-chapter.`,
+                filenameFn: s => `${s}_Kobo.wav`,
+                notesFn: (title) => [
+                    `KOBO WRITING LIFE SUBMISSION NOTES`,
+                    `===================================`,
+                    `Title: ${title}`,
+                    `Generated: ${new Date().toLocaleDateString()}`,
+                    ``,
+                    `Requirements:`,
+                    `- Format: MP3 (128kbps+) or M4B`,
+                    `- Sample rate: 44,100 Hz`,
+                    `- Cover: 1600×2400 JPG (portrait aspect ratio)`,
+                    `- ISBN: optional`,
+                    `- Description and metadata required`,
+                    ``,
+                    `Upload at: https://www.kobo.com/us/en/p/writinglife`,
+                ].join('\n'),
+                notesFile: s => `${s}_Kobo_notes.txt`,
+                uploadUrl: 'https://www.kobo.com/us/en/p/writinglife',
+            },
+            bn: {
+                name: 'Barnes & Noble Press',
+                icon: 'fas fa-store',
+                color: 'text-blue-300',
+                desc: 'Sell your audiobook on Barnes & Noble Nook.',
+                specs: `Format: MP3, 128kbps+\nSample rate: 44,100 Hz\nCover: 1400×1400 JPG minimum\nISBN required for B&N\nMetadata: title, author, narrator.`,
+                filenameFn: s => `${s}_BN_Press.wav`,
+                notesFn: (title) => [
+                    `BARNES & NOBLE PRESS SUBMISSION NOTES`,
+                    `======================================`,
+                    `Title: ${title}`,
+                    `Generated: ${new Date().toLocaleDateString()}`,
+                    ``,
+                    `Requirements:`,
+                    `- Format: MP3 128kbps+`,
+                    `- Sample rate: 44,100 Hz`,
+                    `- Cover: JPEG minimum 1400×1400`,
+                    `- ISBN: required`,
+                    `- Metadata: title, author, narrator, description`,
+                    ``,
+                    `Upload at: https://press.barnesandnoble.com/`,
+                ].join('\n'),
+                notesFile: s => `${s}_BN_notes.txt`,
+                uploadUrl: 'https://press.barnesandnoble.com/',
+            },
+            podcast: {
+                name: 'Podcast / RSS',
+                icon: 'fas fa-podcast',
+                color: 'text-pink-400',
+                desc: 'Release as a podcast episode via Anchor, Buzzsprout, or any podcast host.',
+                specs: `Format: MP3, 128–192kbps\nSample rate: 44,100 Hz\nCover: 1400×1400 to 3000×3000 JPG\nShow notes: episode title, description, chapters\nHost: Anchor (free), Buzzsprout, Podbean.`,
+                filenameFn: s => `${s}_podcast_episode.wav`,
+                notesFn: (title) => {
+                    const text = getExportText();
+                    const excerpt = text?.slice(0, 300)?.trim() || '';
+                    return [
+                        `PODCAST SHOW NOTES`,
+                        `==================`,
+                        `Episode Title: ${title}`,
+                        `Date: ${new Date().toLocaleDateString()}`,
+                        ``,
+                        `Description:`,
+                        excerpt ? excerpt + (text?.length > 300 ? '…' : '') : '(add your episode description here)',
+                        ``,
+                        `Created with Authorr AI — https://authorr-ai.vercel.app`,
+                        ``,
+                        `Hosting platforms: Anchor (free), Buzzsprout, Podbean, Transistor`,
+                        `Upload at: https://podcasters.spotify.com/`,
+                    ].join('\n');
+                },
+                notesFile: s => `${s}_show_notes.txt`,
+                uploadUrl: 'https://podcasters.spotify.com/',
+            },
+            youtube: {
+                name: 'YouTube',
+                icon: 'fab fa-youtube',
+                color: 'text-red-500',
+                desc: 'Release as a YouTube video or audiobook series with chapter timestamps.',
+                specs: `Format: WAV or MP3 (YouTube accepts any audio)\nUpload as video: use cover art as static image\nAdd chapter timestamps in description (0:00 format)\nRecommended: split into chapters for playlists\nTip: Use DaVinci Resolve or iMovie to create video.`,
+                filenameFn: s => `${s}_youtube_audio.wav`,
+                notesFn: (title) => {
+                    const text = getExportText();
+                    const chapterLines = (text || '').split('\n').filter(l => /^chapter\s+\w+/i.test(l.trim()));
+                    return [
+                        `YOUTUBE VIDEO DESCRIPTION`,
+                        `=========================`,
+                        `${title}`,
+                        ``,
+                        `Chapters:`,
+                        `0:00 Introduction`,
+                        ...chapterLines.map(ch => `(timestamp) ${ch.trim()}`),
+                        ``,
+                        `Tip: Pair your audio with your cover art image in a video editor.`,
+                        `Tools: DaVinci Resolve (free), iMovie, CapCut`,
+                        ``,
+                        `Created with Authorr AI — https://authorr-ai.vercel.app`,
+                        `Upload at: https://studio.youtube.com/`,
+                    ].join('\n');
+                },
+                notesFile: s => `${s}_youtube_description.txt`,
+                uploadUrl: 'https://studio.youtube.com/',
+            },
+        };
+
+        window._selectedPublishPlatform = null;
+
+        function selectPublishPlatform(id) {
+            const platform = PUBLISH_PLATFORMS[id];
+            if (!platform) return;
+            window._selectedPublishPlatform = id;
+
+            // Highlight selected card
+            document.querySelectorAll('.pub-platform-card').forEach(el => {
+                el.classList.remove('border-cyan-400', 'border-2');
+                el.classList.add('border-theme');
+            });
+            const card = document.getElementById(`ppcard-${id}`);
+            if (card) {
+                card.classList.remove('border-theme');
+                card.classList.add('border-cyan-400', 'border-2');
+            }
+
+            // Populate detail panel
+            document.getElementById('ppDetailIcon').className = `${platform.icon} ${platform.color} text-2xl`;
+            document.getElementById('ppDetailName').textContent = platform.name;
+            document.getElementById('ppDetailDesc').textContent = platform.desc;
+            document.getElementById('ppDetailSpecs').textContent = platform.specs;
+            document.getElementById('ppDetailPrepareBtn').innerHTML =
+                `<i class="fas fa-download mr-2"></i>Prepare for ${platform.name}`;
+            const link = document.getElementById('ppDetailUploadLink');
+            link.href = platform.uploadUrl;
+            link.innerHTML = `<i class="fas fa-external-link-alt mr-2"></i>Open ${platform.name} Upload Page`;
+
+            document.getElementById('publishPlatformDetail').classList.remove('hidden');
+        }
+
+        async function exportForPlatform(id) {
+            const platform = PUBLISH_PLATFORMS[id];
+            if (!platform) return;
+            const audioBlob = await getExportAudioBlob();
+            if (!audioBlob) {
+                showNotification('No narration audio found. Generate narration first.', 'error');
+                return;
+            }
+            const title = getExportTitle();
+            const safe = safeName(title);
+            triggerBlobDownload(audioBlob, platform.filenameFn(safe));
+            await new Promise(r => setTimeout(r, 500));
+            const notes = typeof platform.notesFn === 'function' ? platform.notesFn(title) : '';
+            triggerTextDownload(notes, platform.notesFile(safe));
+            showNotification(`${platform.name} package downloaded! Check the notes file for upload instructions.`, 'success');
         }
 
         // ── end Export page helpers ────────────────────────────────────────────────
