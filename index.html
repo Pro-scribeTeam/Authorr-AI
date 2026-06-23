@@ -16821,11 +16821,15 @@ Format as clean, readable text ready for narration.`;
                     loadUserSubscription(currentUser.id);
                 }
             });
-            // Check existing session on load
+            // Check existing session on load — send returning users straight to Workspace
             client.auth.getSession().then(({ data: { session } }) => {
                 currentUser = session?.user || null;
                 updateAuthUI();
-                if (currentUser) { loadUserProjects(); loadUserSubscription(currentUser.id); }
+                if (currentUser) {
+                    loadUserProjects();
+                    loadUserSubscription(currentUser.id);
+                    showPage('workspace');
+                }
             });
         });
 
@@ -16903,6 +16907,7 @@ Format as clean, readable text ready for narration.`;
             } else {
                 hideAuthModal();
                 showNotification('✅ Signed in successfully!', 'success');
+                showPage('workspace');
             }
         }
 
