@@ -1093,52 +1093,116 @@
         </section>
 
         <!-- ═══════════════════════════════════════════════
-             PUBLISH-TO BAR  (platform logos)
+             PUBLISH-TO BAR  (auto-scrolling platform logos)
         ═══════════════════════════════════════════════ -->
-        <section class="border-y border-theme py-6 bg-theme-secondary">
+        <style>
+        @keyframes scroll-platforms {
+            0%   { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+        .platform-scroll-wrap {
+            overflow: hidden;
+            -webkit-mask-image: linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%);
+            mask-image: linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%);
+        }
+        .platform-scroll-track {
+            display: flex;
+            gap: 3.5rem;
+            width: max-content;
+            animation: scroll-platforms 22s linear infinite;
+        }
+        .platform-scroll-track:hover { animation-play-state: paused; }
+        .pub-icon { filter: drop-shadow(0 0 10px var(--glow-color)); }
+        </style>
+
+        <section class="border-y border-theme py-8 bg-theme-secondary">
             <div class="container mx-auto px-4">
-                <p class="text-center text-sm text-theme-secondary font-semibold uppercase tracking-widest mb-5">Publish directly to</p>
-                <div class="flex flex-wrap justify-center items-center gap-6 md:gap-10 text-2xl">
-                    <span title="Audible / ACX" class="flex flex-col items-center gap-1 opacity-70 hover:opacity-100 transition-opacity">
-                        <i class="fab fa-amazon text-orange-400"></i>
-                        <span class="text-xs text-theme-secondary">Audible</span>
-                    </span>
-                    <span title="Spotify" class="flex flex-col items-center gap-1 opacity-70 hover:opacity-100 transition-opacity">
-                        <i class="fab fa-spotify text-green-400"></i>
-                        <span class="text-xs text-theme-secondary">Spotify</span>
-                    </span>
-                    <span title="Apple Books" class="flex flex-col items-center gap-1 opacity-70 hover:opacity-100 transition-opacity">
-                        <i class="fab fa-apple text-gray-300"></i>
-                        <span class="text-xs text-theme-secondary">Apple Books</span>
-                    </span>
-                    <span title="Google Play Books" class="flex flex-col items-center gap-1 opacity-70 hover:opacity-100 transition-opacity">
-                        <i class="fab fa-google text-blue-400"></i>
-                        <span class="text-xs text-theme-secondary">Google Play</span>
-                    </span>
-                    <span title="OverDrive / Libby" class="flex flex-col items-center gap-1 opacity-70 hover:opacity-100 transition-opacity">
-                        <i class="fas fa-book text-purple-400"></i>
-                        <span class="text-xs text-theme-secondary">OverDrive</span>
-                    </span>
-                    <span title="Findaway Voices" class="flex flex-col items-center gap-1 opacity-70 hover:opacity-100 transition-opacity">
-                        <i class="fas fa-headphones text-yellow-400"></i>
-                        <span class="text-xs text-theme-secondary">Findaway</span>
-                    </span>
-                    <span title="Kobo" class="flex flex-col items-center gap-1 opacity-70 hover:opacity-100 transition-opacity">
-                        <i class="fas fa-book-open text-red-400"></i>
-                        <span class="text-xs text-theme-secondary">Kobo</span>
-                    </span>
-                    <span title="Barnes & Noble" class="flex flex-col items-center gap-1 opacity-70 hover:opacity-100 transition-opacity">
-                        <i class="fas fa-store text-blue-300"></i>
-                        <span class="text-xs text-theme-secondary">B&amp;N Press</span>
-                    </span>
-                    <span title="YouTube" class="flex flex-col items-center gap-1 opacity-70 hover:opacity-100 transition-opacity">
-                        <i class="fab fa-youtube text-red-500"></i>
-                        <span class="text-xs text-theme-secondary">YouTube</span>
-                    </span>
-                    <span title="Podcast" class="flex flex-col items-center gap-1 opacity-70 hover:opacity-100 transition-opacity">
-                        <i class="fas fa-podcast text-pink-400"></i>
-                        <span class="text-xs text-theme-secondary">Podcast</span>
-                    </span>
+                <p class="text-center text-sm text-theme-secondary font-semibold uppercase tracking-widest mb-6">Publish directly to</p>
+                <div class="platform-scroll-wrap">
+                    <div class="platform-scroll-track">
+                        <!-- Set 1 -->
+                        <span title="Audible / ACX" class="flex flex-col items-center gap-2 cursor-default">
+                            <i class="fab fa-amazon text-orange-400 text-5xl pub-icon" style="--glow-color:#fb923c"></i>
+                            <span class="text-xs text-theme-secondary whitespace-nowrap">Audible</span>
+                        </span>
+                        <span title="Spotify" class="flex flex-col items-center gap-2 cursor-default">
+                            <i class="fab fa-spotify text-green-400 text-5xl pub-icon" style="--glow-color:#4ade80"></i>
+                            <span class="text-xs text-theme-secondary whitespace-nowrap">Spotify</span>
+                        </span>
+                        <span title="Apple Books" class="flex flex-col items-center gap-2 cursor-default">
+                            <i class="fab fa-apple text-gray-300 text-5xl pub-icon" style="--glow-color:#d1d5db"></i>
+                            <span class="text-xs text-theme-secondary whitespace-nowrap">Apple Books</span>
+                        </span>
+                        <span title="Google Play Books" class="flex flex-col items-center gap-2 cursor-default">
+                            <i class="fab fa-google text-blue-400 text-5xl pub-icon" style="--glow-color:#60a5fa"></i>
+                            <span class="text-xs text-theme-secondary whitespace-nowrap">Google Play</span>
+                        </span>
+                        <span title="OverDrive / Libby" class="flex flex-col items-center gap-2 cursor-default">
+                            <i class="fas fa-book text-purple-400 text-5xl pub-icon" style="--glow-color:#c084fc"></i>
+                            <span class="text-xs text-theme-secondary whitespace-nowrap">OverDrive</span>
+                        </span>
+                        <span title="Findaway Voices" class="flex flex-col items-center gap-2 cursor-default">
+                            <i class="fas fa-headphones text-yellow-400 text-5xl pub-icon" style="--glow-color:#facc15"></i>
+                            <span class="text-xs text-theme-secondary whitespace-nowrap">Findaway</span>
+                        </span>
+                        <span title="Kobo" class="flex flex-col items-center gap-2 cursor-default">
+                            <i class="fas fa-book-open text-red-400 text-5xl pub-icon" style="--glow-color:#f87171"></i>
+                            <span class="text-xs text-theme-secondary whitespace-nowrap">Kobo</span>
+                        </span>
+                        <span title="Barnes & Noble" class="flex flex-col items-center gap-2 cursor-default">
+                            <i class="fas fa-store text-blue-300 text-5xl pub-icon" style="--glow-color:#93c5fd"></i>
+                            <span class="text-xs text-theme-secondary whitespace-nowrap">B&amp;N Press</span>
+                        </span>
+                        <span title="YouTube" class="flex flex-col items-center gap-2 cursor-default">
+                            <i class="fab fa-youtube text-red-500 text-5xl pub-icon" style="--glow-color:#ef4444"></i>
+                            <span class="text-xs text-theme-secondary whitespace-nowrap">YouTube</span>
+                        </span>
+                        <span title="Podcast" class="flex flex-col items-center gap-2 cursor-default">
+                            <i class="fas fa-podcast text-pink-400 text-5xl pub-icon" style="--glow-color:#f472b6"></i>
+                            <span class="text-xs text-theme-secondary whitespace-nowrap">Podcast</span>
+                        </span>
+                        <!-- Set 2 (duplicate for seamless loop) -->
+                        <span title="Audible / ACX" class="flex flex-col items-center gap-2 cursor-default">
+                            <i class="fab fa-amazon text-orange-400 text-5xl pub-icon" style="--glow-color:#fb923c"></i>
+                            <span class="text-xs text-theme-secondary whitespace-nowrap">Audible</span>
+                        </span>
+                        <span title="Spotify" class="flex flex-col items-center gap-2 cursor-default">
+                            <i class="fab fa-spotify text-green-400 text-5xl pub-icon" style="--glow-color:#4ade80"></i>
+                            <span class="text-xs text-theme-secondary whitespace-nowrap">Spotify</span>
+                        </span>
+                        <span title="Apple Books" class="flex flex-col items-center gap-2 cursor-default">
+                            <i class="fab fa-apple text-gray-300 text-5xl pub-icon" style="--glow-color:#d1d5db"></i>
+                            <span class="text-xs text-theme-secondary whitespace-nowrap">Apple Books</span>
+                        </span>
+                        <span title="Google Play Books" class="flex flex-col items-center gap-2 cursor-default">
+                            <i class="fab fa-google text-blue-400 text-5xl pub-icon" style="--glow-color:#60a5fa"></i>
+                            <span class="text-xs text-theme-secondary whitespace-nowrap">Google Play</span>
+                        </span>
+                        <span title="OverDrive / Libby" class="flex flex-col items-center gap-2 cursor-default">
+                            <i class="fas fa-book text-purple-400 text-5xl pub-icon" style="--glow-color:#c084fc"></i>
+                            <span class="text-xs text-theme-secondary whitespace-nowrap">OverDrive</span>
+                        </span>
+                        <span title="Findaway Voices" class="flex flex-col items-center gap-2 cursor-default">
+                            <i class="fas fa-headphones text-yellow-400 text-5xl pub-icon" style="--glow-color:#facc15"></i>
+                            <span class="text-xs text-theme-secondary whitespace-nowrap">Findaway</span>
+                        </span>
+                        <span title="Kobo" class="flex flex-col items-center gap-2 cursor-default">
+                            <i class="fas fa-book-open text-red-400 text-5xl pub-icon" style="--glow-color:#f87171"></i>
+                            <span class="text-xs text-theme-secondary whitespace-nowrap">Kobo</span>
+                        </span>
+                        <span title="Barnes & Noble" class="flex flex-col items-center gap-2 cursor-default">
+                            <i class="fas fa-store text-blue-300 text-5xl pub-icon" style="--glow-color:#93c5fd"></i>
+                            <span class="text-xs text-theme-secondary whitespace-nowrap">B&amp;N Press</span>
+                        </span>
+                        <span title="YouTube" class="flex flex-col items-center gap-2 cursor-default">
+                            <i class="fab fa-youtube text-red-500 text-5xl pub-icon" style="--glow-color:#ef4444"></i>
+                            <span class="text-xs text-theme-secondary whitespace-nowrap">YouTube</span>
+                        </span>
+                        <span title="Podcast" class="flex flex-col items-center gap-2 cursor-default">
+                            <i class="fas fa-podcast text-pink-400 text-5xl pub-icon" style="--glow-color:#f472b6"></i>
+                            <span class="text-xs text-theme-secondary whitespace-nowrap">Podcast</span>
+                        </span>
+                    </div>
                 </div>
             </div>
         </section>
@@ -1201,60 +1265,97 @@
                     </ul>
                 </div>
             </div>
+
+            <!-- Video placeholder below The Problem -->
+            <div class="max-w-4xl mx-auto mt-14">
+                <div class="rounded-2xl border-2 border-dashed border-cyan-500/30 bg-theme-secondary/40 flex flex-col items-center justify-center py-20 px-8 text-center">
+                    <div class="w-20 h-20 rounded-full border-2 border-cyan-500/40 flex items-center justify-center mb-4">
+                        <i class="fas fa-play text-cyan-400 text-3xl ml-1"></i>
+                    </div>
+                    <p class="text-theme-secondary font-semibold mb-1">Video Coming Soon</p>
+                    <p class="text-xs text-theme-secondary opacity-60">See the real cost comparison in action</p>
+                </div>
+            </div>
         </section>
 
         <!-- ═══════════════════════════════════════════════
-             HOW IT WORKS
+             HOW IT WORKS  (5 steps)
         ═══════════════════════════════════════════════ -->
         <section class="bg-theme-secondary py-20">
             <div class="container mx-auto px-4">
                 <div class="text-center mb-14">
-                    <span class="text-cyan-400 font-semibold uppercase tracking-widest text-sm">Simple 4-Step Process</span>
-                    <h2 class="text-3xl md:text-4xl font-bold mt-2">Your audiobook in four steps</h2>
+                    <span class="text-cyan-400 font-semibold uppercase tracking-widest text-sm">Simple 5-Step Process</span>
+                    <h2 class="text-3xl md:text-4xl font-bold mt-2">Your audiobook in five steps</h2>
                 </div>
-                <div class="grid md:grid-cols-4 gap-8 max-w-5xl mx-auto relative">
-                    <!-- Connector line on desktop -->
-                    <div class="hidden md:block absolute top-10 left-1/8 right-1/8 h-0.5 bg-gradient-to-r from-cyan-400/20 via-cyan-400/60 to-cyan-400/20" style="top:2.5rem;left:12%;right:12%;"></div>
 
-                    <div class="text-center relative">
+                <!-- Steps grid -->
+                <div class="grid grid-cols-2 md:grid-cols-5 gap-6 max-w-5xl mx-auto relative">
+                    <!-- Connector line on desktop -->
+                    <div class="hidden md:block absolute h-0.5 bg-gradient-to-r from-cyan-400/10 via-cyan-400/60 to-cyan-400/10 z-0" style="top:2.5rem;left:10%;right:10%;"></div>
+
+                    <!-- Step 1: Write -->
+                    <div class="text-center relative col-span-1">
                         <div class="w-20 h-20 rounded-2xl bg-cyan-500/20 border-2 border-cyan-500 flex items-center justify-center mx-auto mb-4 text-3xl text-cyan-400 relative z-10">
                             <i class="fas fa-pen-nib"></i>
                         </div>
-                        <div class="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-cyan-400 text-black text-xs font-bold flex items-center justify-center md:hidden">1</div>
                         <div class="hidden md:flex absolute -top-3 left-1/2 -translate-x-1/2 w-7 h-7 rounded-full bg-cyan-400 text-black text-xs font-bold items-center justify-center z-20">1</div>
-                        <h3 class="font-bold text-lg mb-2">Write Your Story</h3>
-                        <p class="text-sm text-theme-secondary">Paste your manuscript or let AI generate your chapters, characters, and dialogue</p>
+                        <h3 class="font-bold text-base mb-1">Write Your Story</h3>
+                        <p class="text-xs text-theme-secondary">Paste your manuscript or let AI generate chapters and dialogue</p>
                     </div>
 
-                    <div class="text-center relative">
+                    <!-- Step 2: Narration -->
+                    <div class="text-center relative col-span-1">
                         <div class="w-20 h-20 rounded-2xl bg-cyan-500/20 border-2 border-cyan-500 flex items-center justify-center mx-auto mb-4 text-3xl text-cyan-400 relative z-10">
                             <i class="fas fa-microphone-alt"></i>
                         </div>
                         <div class="hidden md:flex absolute -top-3 left-1/2 -translate-x-1/2 w-7 h-7 rounded-full bg-cyan-400 text-black text-xs font-bold items-center justify-center z-20">2</div>
-                        <h3 class="font-bold text-lg mb-2">Generate Narration</h3>
-                        <p class="text-sm text-theme-secondary">Multi-voice AI narration assigns unique voices to each character automatically</p>
+                        <h3 class="font-bold text-base mb-1">Generate Narration</h3>
+                        <p class="text-xs text-theme-secondary">Multi-voice AI assigns unique voices to each character automatically</p>
                     </div>
 
-                    <div class="text-center relative">
+                    <!-- Step 3: DAW (NEW) -->
+                    <div class="text-center relative col-span-2 md:col-span-1">
+                        <div class="w-20 h-20 rounded-2xl bg-cyan-500/20 border-2 border-cyan-500 flex items-center justify-center mx-auto mb-4 text-3xl text-cyan-400 relative z-10">
+                            <i class="fas fa-sliders-h"></i>
+                        </div>
+                        <div class="hidden md:flex absolute -top-3 left-1/2 -translate-x-1/2 w-7 h-7 rounded-full bg-cyan-400 text-black text-xs font-bold items-center justify-center z-20">3</div>
+                        <h3 class="font-bold text-base mb-1">Mix in the Studio</h3>
+                        <p class="text-xs text-theme-secondary">Add background music, sound effects, and mix tracks in the built-in DAW</p>
+                    </div>
+
+                    <!-- Step 4: Cover (was 3) -->
+                    <div class="text-center relative col-span-1">
                         <div class="w-20 h-20 rounded-2xl bg-cyan-500/20 border-2 border-cyan-500 flex items-center justify-center mx-auto mb-4 text-3xl text-cyan-400 relative z-10">
                             <i class="fas fa-paint-brush"></i>
                         </div>
-                        <div class="hidden md:flex absolute -top-3 left-1/2 -translate-x-1/2 w-7 h-7 rounded-full bg-cyan-400 text-black text-xs font-bold items-center justify-center z-20">3</div>
-                        <h3 class="font-bold text-lg mb-2">Design Your Cover</h3>
-                        <p class="text-sm text-theme-secondary">AI-generated Flux Pro cover art styled to your genre, sized for every platform</p>
+                        <div class="hidden md:flex absolute -top-3 left-1/2 -translate-x-1/2 w-7 h-7 rounded-full bg-cyan-400 text-black text-xs font-bold items-center justify-center z-20">4</div>
+                        <h3 class="font-bold text-base mb-1">Design Your Cover</h3>
+                        <p class="text-xs text-theme-secondary">AI-generated cover art styled to your genre, sized for every platform</p>
                     </div>
 
-                    <div class="text-center relative">
+                    <!-- Step 5: Export & Publish (was 4) -->
+                    <div class="text-center relative col-span-1">
                         <div class="w-20 h-20 rounded-2xl bg-cyan-500/20 border-2 border-cyan-500 flex items-center justify-center mx-auto mb-4 text-3xl text-cyan-400 relative z-10">
                             <i class="fas fa-share-alt"></i>
                         </div>
-                        <div class="hidden md:flex absolute -top-3 left-1/2 -translate-x-1/2 w-7 h-7 rounded-full bg-cyan-400 text-black text-xs font-bold items-center justify-center z-20">4</div>
-                        <h3 class="font-bold text-lg mb-2">Export &amp; Publish</h3>
-                        <p class="text-sm text-theme-secondary">Download platform-ready packages and publish to Audible, Spotify, Apple &amp; more</p>
+                        <div class="hidden md:flex absolute -top-3 left-1/2 -translate-x-1/2 w-7 h-7 rounded-full bg-cyan-400 text-black text-xs font-bold items-center justify-center z-20">5</div>
+                        <h3 class="font-bold text-base mb-1">Export &amp; Publish</h3>
+                        <p class="text-xs text-theme-secondary">Download platform-ready packages and publish to Audible, Spotify &amp; more</p>
                     </div>
                 </div>
 
-                <div class="text-center mt-12">
+                <!-- Video placeholder below the 5-step process -->
+                <div class="max-w-4xl mx-auto mt-14">
+                    <div class="rounded-2xl border-2 border-dashed border-cyan-500/30 bg-theme-primary/40 flex flex-col items-center justify-center py-20 px-8 text-center">
+                        <div class="w-20 h-20 rounded-full border-2 border-cyan-500/40 flex items-center justify-center mb-4">
+                            <i class="fas fa-play text-cyan-400 text-3xl ml-1"></i>
+                        </div>
+                        <p class="text-theme-secondary font-semibold mb-1">Video Coming Soon</p>
+                        <p class="text-xs text-theme-secondary opacity-60">Watch each step in action from start to finished audiobook</p>
+                    </div>
+                </div>
+
+                <div class="text-center mt-10">
                     <button onclick="currentUser ? showPage('workspace') : showAuthModal('signin')"
                         class="btn-primary px-10 py-4 rounded-xl text-lg font-bold">
                         <i class="fas fa-play mr-2"></i>Try It Free — Start Now
@@ -1294,7 +1395,7 @@
                         <i class="fas fa-microphone text-cyan-400 text-xl"></i>
                     </div>
                     <h3 class="font-bold text-lg mb-2">Voice Cloning</h3>
-                    <p class="text-theme-secondary text-sm leading-relaxed">Record or upload 30 seconds of your voice and narrate your entire book in your own voice using Fal.ai Chatterbox.</p>
+                    <p class="text-theme-secondary text-sm leading-relaxed">Record or upload 30 seconds of your voice and narrate your entire book in your own voice with AI voice cloning technology.</p>
                 </div>
 
                 <div class="bg-theme-secondary rounded-2xl p-6 border border-theme hover:border-cyan-400 transition-all group">
@@ -1310,7 +1411,7 @@
                         <i class="fas fa-image text-cyan-400 text-xl"></i>
                     </div>
                     <h3 class="font-bold text-lg mb-2">AI Cover Art</h3>
-                    <p class="text-theme-secondary text-sm leading-relaxed">Flux Pro AI generates stunning, genre-accurate covers sized for every platform — Audible, Spotify, Apple, and more.</p>
+                    <p class="text-theme-secondary text-sm leading-relaxed">AI generates stunning, genre-accurate covers sized for every platform — Audible, Spotify, Apple, and more.</p>
                 </div>
 
                 <div class="bg-theme-secondary rounded-2xl p-6 border border-theme hover:border-cyan-400 transition-all group">
