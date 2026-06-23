@@ -34,13 +34,26 @@ module.exports = async function handler(req, res) {
       const { audio_b64, filename = 'voice.wav', content_type = 'audio/wav' } = req.body;
       if (!audio_b64) return res.status(400).json({ error: 'Missing audio_b64' });
       const audioBuffer = Buffer.from(audio_b64, 'base64');
-      const uploadResp = await fetch(
-        `https://api.fal.ai/v1/serverless/files/file/local/${encodeURIComponent(filename)}`,
-        { method: 'POST', headers: { 'Authorization': `Key ${process.env.FAL_API_KEY}`, 'Content-Type': content_type }, body: audioBuffer }
-      );
-      const uploadData = await uploadResp.json();
-      if (!uploadResp.ok) return res.status(uploadResp.status).json(uploadData);
-      return res.json({ url: uploadData.url });
+      const falKey = process.env.FAL_API_KEY;
+
+      // Step 1: Get a pre-signed upload URL from Fal.ai storage
+      const initiateResp = await fetch('https://rest.alpha.fal.ai/storage/upload/initiate', {
+        method: 'POST',
+        headers: { 'Authorization': `Key ${falKey}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content_type, file_name: filename })
+      });
+      const { file_url, upload_url } = await initiateResp.json();
+      if (!initiateResp.ok || !upload_url) return res.status(initiateResp.status).json({ error: 'Failed to initiate upload', file_url, upload_url });
+
+      // Step 2: PUT the audio binary to the pre-signed URL
+      const putResp = await fetch(upload_url, {
+        method: 'PUT',
+        headers: { 'Content-Type': content_type },
+        body: audioBuffer
+      });
+      if (!putResp.ok) return res.status(putResp.status).json({ error: `Upload PUT failed: ${putResp.status}` });
+
+      return res.json({ url: file_url });
     } else {
       return res.status(400).json({ error: 'Invalid action' });
     }
