@@ -2319,52 +2319,52 @@
                         <div class="border border-theme p-4 rounded-lg">
                             <div class="flex items-center justify-between mb-2">
                                 <h3 class="font-semibold" data-i18n="exp_complete_pkg">Complete Audiobook Package</h3>
-                                <button class="btn-primary px-4 py-1 rounded text-sm" data-i18n="exp_download_btn">Download</button>
+                                <button onclick="exportCompletePackage()" class="btn-primary px-4 py-1 rounded text-sm" data-i18n="exp_download_btn">Download</button>
                             </div>
-                            <p class="text-sm text-theme-secondary" data-i18n="exp_complete_desc">All audio files, cover image, and metadata in ZIP format</p>
+                            <p class="text-sm text-theme-secondary" data-i18n="exp_complete_desc">Audio + manuscript + metadata as separate downloads</p>
                         </div>
-                        
+
                         <div class="border border-theme p-4 rounded-lg">
                             <div class="flex items-center justify-between mb-2">
                                 <h3 class="font-semibold" data-i18n="exp_audio_only">Audio Files Only</h3>
-                                <button class="btn-secondary px-4 py-1 rounded text-sm" data-i18n="exp_download_btn">Download</button>
+                                <button onclick="exportAudioOnly()" class="btn-secondary px-4 py-1 rounded text-sm" data-i18n="exp_download_btn">Download</button>
                             </div>
-                            <p class="text-sm text-theme-secondary" data-i18n="exp_audio_desc">MP3 files for each chapter</p>
+                            <p class="text-sm text-theme-secondary" data-i18n="exp_audio_desc">WAV audio file of your narration</p>
                         </div>
-                        
+
                         <div class="border border-theme p-4 rounded-lg">
                             <div class="flex items-center justify-between mb-2">
                                 <h3 class="font-semibold" data-i18n="exp_manuscript">Text Manuscript</h3>
-                                <button class="btn-secondary px-4 py-1 rounded text-sm" data-i18n="exp_download_btn">Download</button>
+                                <button onclick="exportManuscript()" class="btn-secondary px-4 py-1 rounded text-sm" data-i18n="exp_download_btn">Download</button>
                             </div>
-                            <p class="text-sm text-theme-secondary" data-i18n="exp_manuscript_desc">Complete story text in DOC/PDF format</p>
+                            <p class="text-sm text-theme-secondary" data-i18n="exp_manuscript_desc">Complete story text as .txt file</p>
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="bg-theme-secondary p-6 rounded-xl border-2 border-theme">
                     <h2 class="text-xl font-bold mb-4">
                         <i class="fas fa-share-alt text-cyan-400 mr-2"></i>
                         <span data-i18n="exp_publishing">Publishing Options</span>
                     </h2>
-                    
+
                     <div class="space-y-4">
                         <div class="border border-theme p-4 rounded-lg">
                             <h3 class="font-semibold mb-2" data-i18n="exp_audible_ready">Audible Ready</h3>
-                            <p class="text-sm text-theme-secondary mb-3" data-i18n="exp_audible_desc">Format optimized for Audible submission</p>
-                            <button class="btn-primary px-4 py-1 rounded text-sm w-full" data-i18n="exp_prepare_audible">Prepare for Audible</button>
+                            <p class="text-sm text-theme-secondary mb-3" data-i18n="exp_audible_desc">Downloads audio with Audible-compliant filename (WAV, 44.1kHz)</p>
+                            <button onclick="exportForAudible()" class="btn-primary px-4 py-1 rounded text-sm w-full" data-i18n="exp_prepare_audible">Prepare for Audible</button>
                         </div>
-                        
+
                         <div class="border border-theme p-4 rounded-lg">
                             <h3 class="font-semibold mb-2" data-i18n="exp_podcast">Podcast Format</h3>
-                            <p class="text-sm text-theme-secondary mb-3" data-i18n="exp_podcast_desc">Individual episodes with RSS feed</p>
-                            <button class="btn-secondary px-4 py-1 rounded text-sm w-full" data-i18n="exp_gen_podcast">Generate Podcast</button>
+                            <p class="text-sm text-theme-secondary mb-3" data-i18n="exp_podcast_desc">Downloads audio episode + show notes text file</p>
+                            <button onclick="exportPodcast()" class="btn-secondary px-4 py-1 rounded text-sm w-full" data-i18n="exp_gen_podcast">Generate Podcast</button>
                         </div>
-                        
+
                         <div class="border border-theme p-4 rounded-lg">
                             <h3 class="font-semibold mb-2" data-i18n="exp_youtube">YouTube Series</h3>
-                            <p class="text-sm text-theme-secondary mb-3" data-i18n="exp_youtube_desc">Video format with static cover image</p>
-                            <button class="btn-secondary px-4 py-1 rounded text-sm w-full" data-i18n="exp_create_video">Create Video Series</button>
+                            <p class="text-sm text-theme-secondary mb-3" data-i18n="exp_youtube_desc">Downloads audio + chapter timestamps text file</p>
+                            <button onclick="exportYouTube()" class="btn-secondary px-4 py-1 rounded text-sm w-full" data-i18n="exp_create_video">Create Video Series</button>
                         </div>
                     </div>
                 </div>
@@ -2683,6 +2683,11 @@
             // Initialize covers page
             if (pageId === 'covers') {
                 initializeCoversPage();
+            }
+
+            // Update export summary
+            if (pageId === 'export') {
+                updateExportSummary();
             }
         }
         
@@ -10604,6 +10609,196 @@ Format as clean, readable text ready for narration.`;
             document.body.appendChild(modal);
         }
         
+        // ── Export page helpers ────────────────────────────────────────────────────
+
+        // Returns the narration blob from memory or IndexedDB, or null
+        async function getExportAudioBlob() {
+            if (window.dawNarrationAudio?.blob) return window.dawNarrationAudio.blob;
+            const blob = await loadAudioFromDB('narration_combined').catch(() => null);
+            return blob || null;
+        }
+
+        function getExportTitle() {
+            return document.getElementById('bookTitle')?.value?.trim()
+                || storyData?.title?.trim()
+                || 'Audiobook';
+        }
+
+        function getExportText() {
+            return storyData?.currentContent
+                || document.getElementById('storyEditor')?.value
+                || '';
+        }
+
+        function triggerBlobDownload(blob, filename) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            setTimeout(() => URL.revokeObjectURL(url), 5000);
+        }
+
+        function triggerTextDownload(text, filename) {
+            triggerBlobDownload(new Blob([text], { type: 'text/plain' }), filename);
+        }
+
+        function safeName(title) {
+            return title.replace(/[^a-z0-9_\-]/gi, '_').slice(0, 60);
+        }
+
+        // Update Export page summary with real data
+        function updateExportSummary() {
+            const text = getExportText();
+            const wordCount = text ? text.trim().split(/\s+/).filter(w => w).length : 0;
+            const chapterMatches = text.match(/^chapter\s+\w+/gim) || [];
+            const chapters = chapterMatches.length || (storyData?.chapters?.length) || (text ? 1 : 0);
+            const durationMins = Math.round(wordCount / 150); // ~150 wpm narration
+            const durationStr = durationMins >= 60
+                ? `~${(durationMins / 60).toFixed(1)} hours`
+                : durationMins > 0 ? `~${durationMins} min` : '—';
+
+            const cc = document.getElementById('exportChapterCount');
+            const tw = document.getElementById('exportTotalWords');
+            const ed = document.getElementById('exportDuration');
+            if (cc) cc.textContent = chapters || '—';
+            if (tw) tw.textContent = wordCount > 0 ? wordCount.toLocaleString() : '—';
+            if (ed) ed.textContent = durationStr;
+        }
+
+        // 1. Complete Package — audio + manuscript
+        async function exportCompletePackage() {
+            const title = getExportTitle();
+            const safe = safeName(title);
+            const audioBlob = await getExportAudioBlob();
+            const text = getExportText();
+
+            if (!audioBlob && !text) {
+                showNotification('No content to export yet. Generate narration first.', 'error');
+                return;
+            }
+            showNotification('Preparing downloads…', 'info');
+            if (audioBlob) triggerBlobDownload(audioBlob, `${safe}_narration.wav`);
+            if (text) {
+                await new Promise(r => setTimeout(r, 500));
+                triggerTextDownload(`${title}\n${'='.repeat(title.length)}\n\n${text}`, `${safe}_manuscript.txt`);
+            }
+            showNotification('Complete package downloaded!', 'success');
+        }
+
+        // 2. Audio only
+        async function exportAudioOnly() {
+            const audioBlob = await getExportAudioBlob();
+            if (!audioBlob) {
+                showNotification('No narration audio found. Generate narration first, then come back to Export.', 'error');
+                return;
+            }
+            triggerBlobDownload(audioBlob, `${safeName(getExportTitle())}_narration.wav`);
+            showNotification('Audio downloaded!', 'success');
+        }
+
+        // 3. Text manuscript
+        function exportManuscript() {
+            const text = getExportText();
+            if (!text?.trim()) {
+                showNotification('No story content found. Write your story in Workspace first.', 'error');
+                return;
+            }
+            const title = getExportTitle();
+            triggerTextDownload(`${title}\n${'='.repeat(title.length)}\n\n${text}`, `${safeName(title)}_manuscript.txt`);
+            showNotification('Manuscript downloaded!', 'success');
+        }
+
+        // 4. Audible — audio + ACX spec notes
+        async function exportForAudible() {
+            const audioBlob = await getExportAudioBlob();
+            if (!audioBlob) {
+                showNotification('No narration audio found. Generate narration first.', 'error');
+                return;
+            }
+            const title = getExportTitle();
+            const safe = safeName(title);
+            triggerBlobDownload(audioBlob, `${safe}_ACX_44100hz_stereo.wav`);
+            const notes = [
+                `AUDIBLE / ACX SUBMISSION NOTES`,
+                `================================`,
+                `Title: ${title}`,
+                `Generated: ${new Date().toLocaleDateString()}`,
+                ``,
+                `ACX Requirements Checklist:`,
+                `- Sample rate: 44100 Hz ✓ (Cartesia output)`,
+                `- Bit depth: 32-bit float → convert to 16-bit before upload`,
+                `- Format: WAV or MP3 (192kbps+)`,
+                `- Noise floor: < -60dB RMS`,
+                `- Peak: -3dB or below`,
+                `- Room tone: 0.5–1 second at start and end`,
+                ``,
+                `Tip: Run through Audacity (Effect > Normalize) before uploading.`,
+            ].join('\n');
+            await new Promise(r => setTimeout(r, 500));
+            triggerTextDownload(notes, `${safe}_ACX_notes.txt`);
+            showNotification('Audible package downloaded! See ACX notes file.', 'success');
+        }
+
+        // 5. Podcast — audio + show notes
+        async function exportPodcast() {
+            const audioBlob = await getExportAudioBlob();
+            if (!audioBlob) {
+                showNotification('No narration audio found. Generate narration first.', 'error');
+                return;
+            }
+            const title = getExportTitle();
+            const safe = safeName(title);
+            const text = getExportText();
+            const excerpt = text?.slice(0, 300)?.trim() || '';
+            triggerBlobDownload(audioBlob, `${safe}_episode.wav`);
+            const showNotes = [
+                `PODCAST SHOW NOTES`,
+                `==================`,
+                `Episode Title: ${title}`,
+                `Date: ${new Date().toLocaleDateString()}`,
+                ``,
+                `Description:`,
+                excerpt ? excerpt + (text.length > 300 ? '…' : '') : '(add description here)',
+                ``,
+                `Created with Authorr AI — https://authorr-ai.vercel.app`,
+            ].join('\n');
+            await new Promise(r => setTimeout(r, 500));
+            triggerTextDownload(showNotes, `${safe}_show_notes.txt`);
+            showNotification('Podcast episode downloaded!', 'success');
+        }
+
+        // 6. YouTube — audio + chapter timestamps
+        async function exportYouTube() {
+            const audioBlob = await getExportAudioBlob();
+            if (!audioBlob) {
+                showNotification('No narration audio found. Generate narration first.', 'error');
+                return;
+            }
+            const title = getExportTitle();
+            const safe = safeName(title);
+            const text = getExportText();
+            // Build chapter timestamps from chapter headings
+            const chapterLines = (text || '').split('\n').filter(l => /^chapter\s+\w+/i.test(l.trim()));
+            triggerBlobDownload(audioBlob, `${safe}_youtube_audio.wav`);
+            const timestamps = [
+                `YOUTUBE VIDEO DESCRIPTION`,
+                `=========================`,
+                `${title}`,
+                ``,
+                `Chapters:`,
+                `0:00 Introduction`,
+                ...chapterLines.map((ch, i) => `(timestamp) ${ch.trim()}`),
+                ``,
+                `Created with Authorr AI — https://authorr-ai.vercel.app`,
+            ].join('\n');
+            await new Promise(r => setTimeout(r, 500));
+            triggerTextDownload(timestamps, `${safe}_youtube_description.txt`);
+            showNotification('YouTube audio + description downloaded!', 'success');
+        }
+
+        // ── end Export page helpers ────────────────────────────────────────────────
+
         function downloadCombinedBook() {
             const content = storyData.combinedContent || storyData.currentContent;
             const title = document.getElementById('bookTitle')?.value || storyData.title || 'Untitled Book';
