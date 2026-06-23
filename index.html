@@ -8147,99 +8147,106 @@ Format as clean, readable text ready for narration.`;
 
             voiceSelect.innerHTML = '';
 
-            // ── Chatterbox Voices — MP3 reference clones via Fal.ai ──
-            const turboOptgroup = document.createElement('optgroup');
-            turboOptgroup.label = '🎙️ Chatterbox Voices (Fal.ai)';
-            voiceSelect.appendChild(turboOptgroup);
+            const langNames = {
+                es: '🇪🇸 Spanish', fr: '🇫🇷 French', de: '🇩🇪 German',
+                hi: '🇮🇳 Hindi', he: '🇮🇱 Hebrew', ar: '🇸🇦 Arabic',
+                ja: '🇯🇵 Japanese', ko: '🇰🇷 Korean', pt: '🇧🇷 Portuguese',
+                it: '🇮🇹 Italian', nl: '🇳🇱 Dutch', zh: '🇨🇳 Chinese',
+                pl: '🇵🇱 Polish', ru: '🇷🇺 Russian', tl: '🇵🇭 Filipino',
+                tr: '🇹🇷 Turkish', sv: '🇸🇪 Swedish', fi: '🇫🇮 Finnish',
+                da: '🇩🇰 Danish', no: '🇳🇴 Norwegian', cs: '🇨🇿 Czech',
+                th: '🇹🇭 Thai', vi: '🇻🇳 Vietnamese', hu: '🇭🇺 Hungarian',
+                id: '🇮🇩 Indonesian', ms: '🇲🇾 Malay', el: '🇬🇷 Greek',
+                uk: '🇺🇦 Ukrainian', ro: '🇷🇴 Romanian', bg: '🇧🇬 Bulgarian',
+                hr: '🇭🇷 Croatian', sk: '🇸🇰 Slovak',
+            };
 
-            const turboVoices = [
-                { id: 'adam',        file: 'Adam.mp3',         label: 'Adam — Male' },
-                { id: 'alexandra',   file: 'Alexandra.mp3',    label: 'Alexandra — Female' },
-                { id: 'annie',       file: 'Annie.mp3',        label: 'Annie — Female' },
-                { id: 'benjamin',    file: 'Benjamin.mp3',     label: 'Benjamin — Male' },
-                { id: 'betty',       file: 'Betty.mp3',        label: 'Betty — Female' },
-                { id: 'bob',         file: 'Bob.mp3',          label: 'Bob — Male' },
-                { id: 'brandy_ny',   file: 'Brandy NY.mp3',    label: 'Brandy NY — Female' },
-                { id: 'clark',       file: 'Clark.mp3',        label: 'Clark — Male' },
-                { id: 'damon',       file: 'Damon.mp3',        label: 'Damon — Male' },
-                { id: 'darren',      file: 'Darren.mp3',       label: 'Darren — Male' },
-                { id: 'diana',       file: 'Diana.mp3',        label: 'Diana — Female' },
-                { id: 'dwight',      file: 'Dwight.mp3',       label: 'Dwight — Male' },
-                { id: 'edward',      file: 'Edward.mp3',       label: 'Edward — Male' },
-                { id: 'erica',       file: 'Erica.mp3',        label: 'Erica — Female' },
-                { id: 'explainer',   file: 'Explainer.mp3',    label: 'Explainer — Male' },
-                { id: 'glen',        file: 'Glen.mp3',         label: 'Glen — Male' },
-                { id: 'helen',       file: 'Helen.mp3',        label: 'Helen — Female' },
-                { id: 'helen2',      file: 'Helen-2.mp3',      label: 'Helen-2 — Female' },
-                { id: 'jeffrey',     file: 'Jeffrey.mp3',      label: 'Jeffrey — Male' },
-                { id: 'jenny',       file: 'Jenny.mp3',        label: 'Jenny — Female' },
-                { id: 'john_forcast',file: 'John Forcast.mp3', label: 'John Forcast — Male' },
-                { id: 'kim',         file: 'Kim.mp3',          label: 'Kim — Female' },
-                { id: 'lerry',       file: 'Lerry.mp3',        label: 'Lerry — Male' },
-                { id: 'lizz',        file: 'Lizz.mp3',         label: 'Lizz — Female' },
-                { id: 'marie',       file: 'Marie.mp3',        label: 'Marie — Female' },
-                { id: 'maxwell',     file: 'Maxwell.mp3',      label: 'Maxwell — Male' },
-                { id: 'melissa',     file: 'Melissa.mp3',      label: 'Melissa — Female' },
-                { id: 'mia',         file: 'Mia.mp3',          label: 'Mia — Female' },
-                { id: 'mike',        file: 'Mike.mp3',         label: 'Mike — Male' },
-                { id: 'paul',        file: 'Paul.mp3',         label: 'Paul — Male' },
-                { id: 'sean',        file: 'Sean.mp3',         label: 'Sean — Male' },
-                { id: 'shaundria',   file: 'Shaundria.mp3',    label: 'Shaundria — Female' },
-                { id: 'tawnya',      file: 'Tawnya.mp3',       label: 'Tawnya — Female' },
+            // ── Cartesia English Voices ──
+            const cartesiaOptgroup = document.createElement('optgroup');
+            cartesiaOptgroup.label = '⚡ Cartesia — English';
+            voiceSelect.appendChild(cartesiaOptgroup);
+
+            const cartesiaFallbackVoices = [
+                { id: '7cf0e2b1-8daf-4fe4-89ad-f6039398f359', label: 'Benedict - Royal Narrator — Male' },
+                { id: '98a34ef2-2140-4c28-9c71-663dc4dd7022', label: 'Clyde - Calm Narrator — Male' },
+                { id: '23112795-d54e-4560-9568-791a87c30201', label: 'Darius - Engaging Narrator — Male' },
+                { id: '083de431-6b5c-4b18-a2dc-264eafa205f2', label: 'Diana - Animated Narrator — Female' },
+                { id: '7edf9efb-58fc-46ba-a648-3a00a86b111b', label: 'Elliott - Reflective Storyteller — Male' },
+                { id: 'd1d9c946-7cfc-4378-85a4-07d09827cb7e', label: 'Jolene - Warm Storyteller — Female' },
+                { id: 'a33f7a4c-100f-41cf-a1fd-5822e8fc253f', label: 'Lauren - Lively Narrator — Female' },
+                { id: 'd2c66146-c1c8-4c3a-9870-38e5a6b72442', label: 'Lawson - Suave Storyteller — Male' },
+                { id: '26403c37-80c1-4a1a-8692-540551ca2ae5', label: 'Marian - Poised Narrator — Female' },
+                { id: '8985388c-1332-4ce7-8d55-789628aa3df4', label: 'Robyn - Storycrafter — Female' },
+                { id: 'f688c0a6-dddd-48ba-8246-c099d494a162', label: 'Romeo - Calm Narrator — Male' },
+                { id: '7e19344f-9f17-47d7-a13a-4366ad06ebf3', label: 'Silas - Nighttime Narrator — Male' },
+                { id: '79f8b5fb-2cc8-479a-80df-29f7a7cf1a3e', label: 'Theo - Modern Narrator — Male' },
+                { id: 'ca31ce53-ebf6-4e51-b87d-2f65d5d1f7f8', label: 'Vivian - Fierce Narrator — Female' },
+                { id: '39d518b7-fd0b-4676-9b8b-29d64ff31e12', label: 'Aarav - Old Time Storyteller — Male' },
             ];
 
-            turboVoices.forEach(v => {
-                const opt = document.createElement('option');
-                opt.value = 'cbturbo_' + v.id;
-                opt.textContent = v.label;
-                opt.dataset.provider = 'cbturbo';
-                opt.dataset.file = v.file; // exact MP3 filename
-                turboOptgroup.appendChild(opt);
-            });
+            // ── Cartesia Multilingual optgroups (built after fetch) ──
+            const multiOptgroups = {};
 
-            // ── Chatterbox Multilingual — 23 languages via Fal.ai ──
-            const multiOptgroup = document.createElement('optgroup');
-            multiOptgroup.label = '🌍 Chatterbox Multilingual (Fal.ai)';
-            voiceSelect.appendChild(multiOptgroup);
+            try {
+                const token = await getAuthToken();
+                const resp = await fetch('/api/cartesia', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ action: 'voices' })
+                });
+                if (resp.ok) {
+                    const voices = await resp.json();
+                    if (Array.isArray(voices)) {
+                        // English voices
+                        const englishPublic = voices.filter(v => v.is_public && (!v.language || v.language === 'en'));
+                        if (englishPublic.length > 0) {
+                            englishPublic.forEach(v => {
+                                const opt = document.createElement('option');
+                                opt.value = 'cartesia_' + v.id;
+                                opt.textContent = v.name + (v.gender ? ` — ${v.gender}` : '');
+                                opt.dataset.provider = 'cartesia';
+                                opt.dataset.voiceId = v.id;
+                                cartesiaOptgroup.appendChild(opt);
+                            });
+                        } else {
+                            cartesiaFallbackVoices.forEach(v => addCartesiaFallback(cartesiaOptgroup, v));
+                        }
 
-            const multilingualVoices = [
-                { id: 'english',    label: '🇺🇸 English' },
-                { id: 'spanish',    label: '🇪🇸 Spanish' },
-                { id: 'french',     label: '🇫🇷 French' },
-                { id: 'german',     label: '🇩🇪 German' },
-                { id: 'portuguese', label: '🇧🇷 Portuguese' },
-                { id: 'italian',    label: '🇮🇹 Italian' },
-                { id: 'hindi',      label: '🇮🇳 Hindi' },
-                { id: 'arabic',     label: '🇸🇦 Arabic' },
-                { id: 'chinese',    label: '🇨🇳 Chinese' },
-                { id: 'japanese',   label: '🇯🇵 Japanese' },
-                { id: 'korean',     label: '🇰🇷 Korean' },
-                { id: 'russian',    label: '🇷🇺 Russian' },
-                { id: 'dutch',      label: '🇳🇱 Dutch' },
-                { id: 'polish',     label: '🇵🇱 Polish' },
-                { id: 'swedish',    label: '🇸🇪 Swedish' },
-                { id: 'norwegian',  label: '🇳🇴 Norwegian' },
-                { id: 'danish',     label: '🇩🇰 Danish' },
-                { id: 'finnish',    label: '🇫🇮 Finnish' },
-                { id: 'greek',      label: '🇬🇷 Greek' },
-                { id: 'hebrew',     label: '🇮🇱 Hebrew' },
-                { id: 'malay',      label: '🇲🇾 Malay' },
-                { id: 'swahili',    label: '🇰🇪 Swahili' },
-                { id: 'turkish',    label: '🇹🇷 Turkish' },
-            ];
+                        // Multilingual voices — grouped by language
+                        const nonEnglish = voices.filter(v => v.is_public && v.language && v.language !== 'en');
+                        const byLang = {};
+                        nonEnglish.forEach(v => {
+                            if (!byLang[v.language]) byLang[v.language] = [];
+                            byLang[v.language].push(v);
+                        });
+                        Object.keys(byLang).sort((a, b) => (langNames[a] || a).localeCompare(langNames[b] || b)).forEach(lang => {
+                            const grp = document.createElement('optgroup');
+                            grp.label = '🌍 Cartesia — ' + (langNames[lang] || lang.toUpperCase());
+                            voiceSelect.appendChild(grp);
+                            byLang[lang].forEach(v => {
+                                const opt = document.createElement('option');
+                                opt.value = 'cartesia_' + v.id;
+                                opt.textContent = v.name + (v.gender ? ` — ${v.gender}` : '');
+                                opt.dataset.provider = 'cartesia';
+                                opt.dataset.voiceId = v.id;
+                                opt.dataset.language = v.language;
+                                grp.appendChild(opt);
+                            });
+                        });
+                    } else {
+                        cartesiaFallbackVoices.forEach(v => addCartesiaFallback(cartesiaOptgroup, v));
+                    }
+                } else {
+                    cartesiaFallbackVoices.forEach(v => addCartesiaFallback(cartesiaOptgroup, v));
+                }
+            } catch (e) {
+                console.warn('Cartesia voices fetch failed, using fallback list:', e.message);
+                cartesiaFallbackVoices.forEach(v => addCartesiaFallback(cartesiaOptgroup, v));
+            }
 
-            multilingualVoices.forEach(v => {
-                const opt = document.createElement('option');
-                opt.value = 'cbmulti_' + v.id;
-                opt.textContent = v.label;
-                opt.dataset.provider = 'cbmulti';
-                opt.dataset.voice = v.id;
-                multiOptgroup.appendChild(opt);
-            });
-
-            // Default to Adam
-            const defaultOpt = voiceSelect.querySelector('option[value="cbturbo_adam"]');
-            if (defaultOpt) defaultOpt.selected = true;
+            // Default to first Cartesia voice
+            const firstCartesia = voiceSelect.querySelector('option[value^="cartesia_"]');
+            if (firstCartesia) firstCartesia.selected = true;
             else if (voiceSelect.options.length > 0) voiceSelect.selectedIndex = 0;
         }
 
@@ -9090,19 +9097,37 @@ Format as clean, readable text ready for narration.`;
                 const provider = voiceInfo[0];
                 const voiceId = voiceInfo[1];
 
-                if (provider === 'openai') {
+                if (provider === 'cartesia') {
+                    // Cartesia: single API call, 40-90ms — no queue, no polling
+                    const fullVoiceId = voice.replace('cartesia_', '');
+                    return await generateCartesiaAudio(text, fullVoiceId);
+                } else if (provider === 'openai') {
                     return await generateOpenAIAudio(text, voiceId);
                 } else if (provider === 'elevenlabs') {
                     const apiKey = getElevenLabsApiKey();
                     if (!apiKey) throw new Error('ElevenLabs API key not configured');
                     return await generateElevenLabsAudio(text, voiceId, apiKey);
                 } else if (provider === 'chatterbox') {
-                    return await generateChatterboxAudio(text, null);
+                    // Use direct (no-queue) endpoint for fast preview
+                    const ctrl = getChatterboxControlValues();
+                    return await falDirect('fal-ai/chatterbox/text-to-speech', {
+                        text, exaggeration: ctrl.exaggeration, cfg: ctrl.cfg_weight, temperature: ctrl.temperature
+                    }, 'Chatterbox Preview');
                 } else if (provider === 'cbturbo') {
-                    return await generateChatterboxAudio(text, voiceIdToMp3(voice));
+                    // Use direct (no-queue) endpoint for fast preview
+                    const ctrl = getChatterboxControlValues();
+                    const BASE_VOICE_URL = 'https://authorr-ai.pages.dev/';
+                    const voiceFile = voiceIdToMp3(voice);
+                    return await falDirect('fal-ai/chatterbox/text-to-speech', {
+                        text, exaggeration: ctrl.exaggeration, cfg: ctrl.cfg_weight, temperature: ctrl.temperature,
+                        ...(voiceFile ? { audio_url: BASE_VOICE_URL + encodeURIComponent(voiceFile) } : {})
+                    }, 'Chatterbox Turbo Preview');
                 } else if (provider === 'cbmulti') {
                     const langCode = voice.replace('cbmulti_', '');
-                    return await generateChatterboxMultilingualAudio(text, langCode);
+                    const ctrl = getChatterboxControlValues();
+                    return await falDirect('fal-ai/chatterbox/text-to-speech/multilingual', {
+                        text, voice: langCode, exaggeration: ctrl.exaggeration, temperature: ctrl.temperature, cfg_scale: ctrl.cfg_weight
+                    }, 'Chatterbox Multilingual Preview');
                 } else {
                     throw new Error(`Unknown voice provider: ${provider}`);
                 }
@@ -9170,14 +9195,14 @@ Format as clean, readable text ready for narration.`;
                 console.log('🎙️ NARRATOR-ONLY GENERATION - Using FULL content:', content.length, 'characters');
 
                 // Client-side chunking: split into ~800-char chunks and send each as its own
-                // RunPod job so no single job exceeds the 3-minute timeout.
+                // fal.ai job so generation runs concurrently and no single chunk is too large.
                 let audioBlobs = [];
 
                 // Ensure content ends with punctuation
                 if (!/[.!?,;:]$/.test(content.trim())) content = content.trim() + '.';
 
                 const chunks = splitTextIntoChunks(content, 800);
-                console.log(`📝 Split into ${chunks.length} chunks — sending each as a separate RunPod job`);
+                console.log(`📝 Split into ${chunks.length} chunks — sending each as a separate fal.ai job`);
 
                 showLoading(`Generating ${chunks.length} narration chunks in parallel…`);
                 // Generate all chunks concurrently — cuts total time to the slowest single chunk
@@ -9549,8 +9574,8 @@ Format as clean, readable text ready for narration.`;
             console.log(`${labelForErrors} queued: ${request_id}`);
 
             // 2. Poll status until COMPLETED using Fal's own status_url (max 5 min)
-            for (let i = 0; i < 100; i++) {
-                await new Promise(r => setTimeout(r, 3000));
+            for (let i = 0; i < 200; i++) {
+                await new Promise(r => setTimeout(r, 1500));
                 const statusResp = await fetch('/api/fal', {
                     method: 'POST', headers,
                     body: JSON.stringify({ action: 'status', model: modelPath, request_id, status_url })
@@ -9582,6 +9607,68 @@ Format as clean, readable text ready for narration.`;
             const bytes = new Uint8Array(binary.length);
             for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
             console.log(`${labelForErrors} done. size=${bytes.length} type=${contentType}`);
+            return new Blob([bytes], { type: contentType || 'audio/wav' });
+        }
+
+        // ── Cartesia helpers ──────────────────────────────────────────────────────
+        function addCartesiaFallback(optgroup, v) {
+            const opt = document.createElement('option');
+            opt.value = 'cartesia_' + v.id;
+            opt.textContent = v.label;
+            opt.dataset.provider = 'cartesia';
+            opt.dataset.voiceId = v.id;
+            optgroup.appendChild(opt);
+        }
+
+        async function generateCartesiaAudio(text, voiceId) {
+            console.log('Generating Cartesia audio, voice:', voiceId);
+            const token = await getAuthToken();
+            if (!token) throw new Error('Please log in to use Authorr AI.');
+            const resp = await fetch('/api/cartesia', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ action: 'tts', text, voice_id: voiceId })
+            });
+            if (!resp.ok) {
+                const err = await resp.json().catch(() => ({ error: resp.status }));
+                throw new Error(`Cartesia TTS error: ${err.error || resp.status}`);
+            }
+            const { audio: base64, contentType } = await resp.json();
+            const binary = atob(base64);
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+            console.log(`Cartesia done. size=${bytes.length} type=${contentType}`);
+            return new Blob([bytes], { type: contentType || 'audio/wav' });
+        }
+
+        // ── Fal.ai direct (synchronous) — used for previews to skip queue overhead ──
+        async function falDirect(modelPath, inputPayload, labelForErrors) {
+            const token = await getAuthToken();
+            if (!token) throw new Error('Please log in to use Authorr AI.');
+            const headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` };
+
+            const resp = await fetch('/api/fal', {
+                method: 'POST', headers,
+                body: JSON.stringify({ action: 'direct', model: modelPath, payload: inputPayload })
+            });
+            if (!resp.ok) {
+                const e = await resp.text().catch(() => resp.status);
+                throw new Error(`${labelForErrors} direct error: ${e}`);
+            }
+            const result = await resp.json();
+            const audioUrl = result?.audio?.url;
+            if (!audioUrl) throw new Error(`${labelForErrors}: no audio URL in direct result`);
+
+            const audioResp = await fetch('/api/fal', {
+                method: 'POST', headers,
+                body: JSON.stringify({ action: 'fetch_audio', url: audioUrl })
+            });
+            if (!audioResp.ok) throw new Error(`${labelForErrors}: audio proxy failed`);
+            const { audio: base64, contentType } = await audioResp.json();
+            const binary = atob(base64);
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+            console.log(`${labelForErrors} direct done. size=${bytes.length} type=${contentType}`);
             return new Blob([bytes], { type: contentType || 'audio/wav' });
         }
 
@@ -9735,22 +9822,29 @@ Format as clean, readable text ready for narration.`;
 
         async function generateSegmentAudio(segment) {
             const voice = segment.voice || '';
-            const paddedText = padChatterboxText(segment.text);
 
             let blob;
-            if (voice.startsWith('cbturbo_')) {
+            if (voice.startsWith('cartesia_')) {
+                // Cartesia: fast direct API, no queue, no padding needed
+                const voiceId = voice.replace('cartesia_', '');
+                blob = await generateCartesiaAudio(segment.text, voiceId);
+            } else if (voice.startsWith('cbturbo_')) {
+                const paddedText = padChatterboxText(segment.text);
                 blob = await generateChatterboxAudio(paddedText, voiceIdToMp3(voice));
             } else if (voice.startsWith('cbmulti_')) {
-                // Multilingual → Fal Multilingual
+                const paddedText = padChatterboxText(segment.text);
                 const langCode = voice.replace('cbmulti_', '');
                 blob = await generateChatterboxMultilingualAudio(paddedText, langCode);
             } else {
-                // Fallback — Fal Classic without voice reference
+                const paddedText = padChatterboxText(segment.text);
                 blob = await generateChatterboxAudio(paddedText, null);
             }
 
-            // Append 400ms silence so the model's natural tail-clip doesn't eat real audio
-            return appendSilenceToWav(blob, 400);
+            // Chatterbox needs 400ms silence appended; Cartesia handles its own tail cleanly
+            if (!voice.startsWith('cartesia_')) {
+                return appendSilenceToWav(blob, 400);
+            }
+            return blob;
         }
 
         async function generateOpenAIAudio(text, voice) {
@@ -10463,7 +10557,10 @@ Format as clean, readable text ready for narration.`;
                 showLoading(`Previewing ${characterName}'s voice...`);
                 
                 let audioBlob;
-                if (provider === 'openai') {
+                if (provider === 'cartesia') {
+                    const fullVoiceId = voiceValue.replace('cartesia_', '');
+                    audioBlob = await generateCartesiaAudio(previewText, fullVoiceId);
+                } else if (provider === 'openai') {
                     audioBlob = await generateOpenAIAudio(previewText, voiceId);
                 } else if (provider === 'elevenlabs') {
                     const apiKey = getElevenLabsApiKey();
@@ -10473,6 +10570,8 @@ Format as clean, readable text ready for narration.`;
                         return;
                     }
                     audioBlob = await generateElevenLabsAudio(previewText, voiceId, apiKey);
+                } else if (provider === 'cbturbo' || provider === 'chatterbox' || provider === 'cbmulti') {
+                    audioBlob = await generatePreviewAudio(previewText, voiceValue);
                 }
                 
                 if (audioBlob) {
