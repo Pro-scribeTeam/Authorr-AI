@@ -1705,71 +1705,6 @@
                             </div>
                         </div>
 
-                        <!-- Chatterbox Classic Controls -->
-                        <div class="bg-theme-primary p-4 rounded-lg border border-cyan-500/50">
-                            <div class="flex items-center justify-between mb-3">
-                                <h4 class="text-sm font-bold text-cyan-400"><i class="fas fa-sliders-h mr-1"></i> <span data-i18n="nar_cbx_controls">Chatterbox Classic Controls</span></h4>
-                                <button onclick="resetChatterboxControls()" class="text-xs text-cyan-400 hover:text-cyan-300 underline">
-                                    <i class="fas fa-undo mr-1"></i><span data-i18n="nar_reset_defaults">Reset defaults</span>
-                                </button>
-                            </div>
-                            <div class="grid grid-cols-2 gap-3 mb-3">
-                                <div>
-                                    <label class="block text-xs font-semibold text-theme-secondary mb-1">
-                                        <span data-i18n="nar_exaggeration">Exaggeration</span> <span class="text-cyan-400 ml-1" id="exaggerationVal">0.5</span>
-                                    </label>
-                                    <input type="range" id="cbExaggeration" min="0" max="1" step="0.05" value="0.5"
-                                           class="w-full accent-cyan-400"
-                                           oninput="document.getElementById('exaggerationVal').textContent = parseFloat(this.value).toFixed(2)">
-                                    <div class="flex justify-between text-xs text-theme-secondary mt-0.5"><span data-i18n="nar_neutral">Neutral</span><span data-i18n="nar_intense">Intense</span></div>
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-semibold text-theme-secondary mb-1">
-                                        <span data-i18n="nar_cfg_weight">CFG Weight</span> <span class="text-cyan-400 ml-1" id="cfgWeightVal">0.5</span>
-                                    </label>
-                                    <input type="range" id="cbCfgWeight" min="0" max="1" step="0.05" value="0.5"
-                                           class="w-full accent-cyan-400"
-                                           oninput="document.getElementById('cfgWeightVal').textContent = parseFloat(this.value).toFixed(2)">
-                                    <div class="flex justify-between text-xs text-theme-secondary mt-0.5"><span data-i18n="nar_free">Free</span><span data-i18n="nar_guided">Guided</span></div>
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-semibold text-theme-secondary mb-1">
-                                        <span data-i18n="nar_temperature">Temperature</span> <span class="text-cyan-400 ml-1" id="cbTempVal">0.8</span>
-                                    </label>
-                                    <input type="range" id="cbTemperature" min="0.05" max="2.0" step="0.05" value="0.8"
-                                           class="w-full accent-cyan-400"
-                                           oninput="document.getElementById('cbTempVal').textContent = parseFloat(this.value).toFixed(2)">
-                                    <div class="flex justify-between text-xs text-theme-secondary mt-0.5"><span data-i18n="nar_steady">Steady</span><span data-i18n="nar_varied">Varied</span></div>
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-semibold text-theme-secondary mb-1">
-                                        <span data-i18n="nar_speed">Speed</span> <span class="text-cyan-400 ml-1" id="cbSpeedVal">1.0</span>
-                                    </label>
-                                    <input type="range" id="cbSpeedFactor" min="0.5" max="2.0" step="0.05" value="1.0"
-                                           class="w-full accent-cyan-400"
-                                           oninput="document.getElementById('cbSpeedVal').textContent = parseFloat(this.value).toFixed(2)">
-                                    <div class="flex justify-between text-xs text-theme-secondary mt-0.5"><span data-i18n="nar_slow">Slow</span><span data-i18n="nar_fast">Fast</span></div>
-                                </div>
-                            </div>
-                            <p class="text-xs text-theme-secondary mb-3" style="opacity:0.7">
-                                High exaggeration speeds up speech — lower CFG weight to compensate. Default 0.5/0.5 works for most content.
-                            </p>
-                            <div class="grid grid-cols-2 gap-3">
-                                <div>
-                                    <label class="block text-xs font-semibold text-theme-secondary mb-1" data-i18n="nar_output_format">Output Format</label>
-                                    <select id="cbFormat" class="w-full px-3 py-1.5 rounded-lg text-sm form-field bg-theme-secondary text-theme-primary">
-                                        <option value="wav" selected>WAV (Best Quality)</option>
-                                        <option value="flac">FLAC (Lossless)</option>
-                                        <option value="ogg">OGG (Compressed)</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-semibold text-theme-secondary mb-1"><span data-i18n="nar_seed">Seed</span> <span class="font-normal" data-i18n="nar_seed_hint">(blank = random)</span></label>
-                                    <input type="number" id="cbSeed" placeholder="e.g. 42"
-                                           class="w-full px-3 py-1.5 rounded-lg text-sm form-field bg-theme-secondary text-theme-primary">
-                                </div>
-                            </div>
-                        </div>
 
                         <!-- Clone Quality & Model -->
                         <div class="space-y-3">
@@ -7378,14 +7313,24 @@ Format as clean, readable text ready for narration.`;
             const lang = document.getElementById('storyLanguage')?.value || 'english';
             localStorage.setItem('storyLanguage', lang);
             if (storyData && storyData.settings) storyData.settings.language = lang;
-            // Auto-switch narration voice to matching multilingual voice
-            if (lang !== 'english') {
+            // Auto-switch narration voice to matching Cartesia language voice
+            const langCodeMap = {
+                spanish:'es', french:'fr', german:'de', portuguese:'pt', italian:'it',
+                hindi:'hi', arabic:'ar', japanese:'ja', korean:'ko', chinese:'zh',
+                russian:'ru', dutch:'nl', polish:'pl', swedish:'sv', norwegian:'no',
+                danish:'da', finnish:'fi', greek:'el', hebrew:'he', turkish:'tr',
+                malay:'ms', thai:'th', vietnamese:'vi'
+            };
+            const cartesiaLang = langCodeMap[lang];
+            if (cartesiaLang) {
                 const voiceSelect = document.getElementById('voiceSelection');
                 if (voiceSelect) {
-                    const target = voiceSelect.querySelector(`option[value="cbmulti_${lang}"]`);
+                    const target = voiceSelect.querySelector(`option[data-language="${cartesiaLang}"]`);
                     if (target) {
                         voiceSelect.value = target.value;
                         showNotification(`Story language set to ${lang.charAt(0).toUpperCase() + lang.slice(1)} — narration voice updated automatically.`, 'info');
+                    } else {
+                        showNotification(`Story language set to ${lang.charAt(0).toUpperCase() + lang.slice(1)}.`, 'info');
                     }
                 }
             } else {
@@ -7649,13 +7594,9 @@ Format as clean, readable text ready for narration.`;
                         return;
                     }
                     audioBlob = await generateElevenLabsAudio(previewText, voiceId, apiKey);
-                } else if (provider === 'chatterbox') {
-                    audioBlob = await generateChatterboxAudio(previewText, null);
-                } else if (provider === 'cbturbo') {
-                    audioBlob = await generateChatterboxAudio(previewText, voiceIdToMp3(voiceId ? 'cbturbo_' + voiceId : voice));
-                } else if (provider === 'cbmulti') {
-                    const langCode = selectedOption.dataset.voice;
-                    audioBlob = await generateChatterboxMultilingualAudio(previewText, langCode);
+                } else if (provider === 'cartesia') {
+                    const cartesiaVoiceId = selectedOption.dataset.voiceId;
+                    audioBlob = await generateCartesiaAudio(previewText, cartesiaVoiceId);
                 } else {
                     showNotification('Unknown voice provider', 'error');
                     return;
@@ -9823,27 +9764,9 @@ Format as clean, readable text ready for narration.`;
         async function generateSegmentAudio(segment) {
             const voice = segment.voice || '';
 
-            let blob;
-            if (voice.startsWith('cartesia_')) {
-                // Cartesia: fast direct API, no queue, no padding needed
-                const voiceId = voice.replace('cartesia_', '');
-                blob = await generateCartesiaAudio(segment.text, voiceId);
-            } else if (voice.startsWith('cbturbo_')) {
-                const paddedText = padChatterboxText(segment.text);
-                blob = await generateChatterboxAudio(paddedText, voiceIdToMp3(voice));
-            } else if (voice.startsWith('cbmulti_')) {
-                const paddedText = padChatterboxText(segment.text);
-                const langCode = voice.replace('cbmulti_', '');
-                blob = await generateChatterboxMultilingualAudio(paddedText, langCode);
-            } else {
-                const paddedText = padChatterboxText(segment.text);
-                blob = await generateChatterboxAudio(paddedText, null);
-            }
-
-            // Chatterbox needs 400ms silence appended; Cartesia handles its own tail cleanly
-            if (!voice.startsWith('cartesia_')) {
-                return appendSilenceToWav(blob, 400);
-            }
+            // All voices are now Cartesia — extract voiceId regardless of prefix format
+            const voiceId = voice.replace('cartesia_', '');
+            const blob = await generateCartesiaAudio(segment.text, voiceId);
             return blob;
         }
 

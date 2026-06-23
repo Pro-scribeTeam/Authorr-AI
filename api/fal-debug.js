@@ -1,7 +1,6 @@
-const { createClient } = require('@supabase/supabase-js');
-
+// Deprecated diagnostic endpoint — disabled
 module.exports = async function handler(req, res) {
-  if (req.method !== 'POST') return res.status(405).end();
+  return res.status(410).json({ error: 'Endpoint removed' });
   const results = {};
 
   // Step 1: env vars present?

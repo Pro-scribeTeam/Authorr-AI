@@ -1,6 +1,6 @@
-// TEMPORARY diagnostic — no auth, tests fal queue submit directly
+// Deprecated diagnostic endpoint — disabled
 module.exports = async function handler(req, res) {
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+  return res.status(410).json({ error: 'Endpoint removed' });
   try {
     const falKey = process.env.FAL_API_KEY;
     if (!falKey) return res.json({ step: 'env', error: 'FAL_API_KEY missing' });
