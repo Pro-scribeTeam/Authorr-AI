@@ -1031,163 +1031,536 @@
 
     <!-- Dashboard Page -->
     <div id="dashboard" class="page">
-        <div class="container mx-auto px-4 py-8">
-            <!-- Hero Section -->
-            <div class="text-center mb-12">
-                <div class="flex justify-center items-center mb-6">
-                    <img src="https://page.gensparksite.com/v1/base64_upload/5ec0a971230da95148e537dd473d0fb1" alt="AUTHORR AI Logo" class="w-20 h-20 logo-image mr-4">
-                    <h1 class="text-6xl font-bold authorr-brand-text">AUTHORR AI</h1>
+
+        <!-- ═══════════════════════════════════════════════
+             HERO SECTION
+        ═══════════════════════════════════════════════ -->
+        <section class="relative overflow-hidden">
+            <!-- Background glow -->
+            <div class="absolute inset-0 pointer-events-none" style="background:radial-gradient(ellipse 80% 60% at 50% -10%, rgba(6,182,212,0.18) 0%, transparent 70%);"></div>
+
+            <div class="container mx-auto px-4 pt-20 pb-16 text-center relative z-10">
+                <!-- Logo + brand -->
+                <div class="flex justify-center items-center gap-4 mb-6">
+                    <img src="https://page.gensparksite.com/v1/base64_upload/5ec0a971230da95148e537dd473d0fb1" alt="AUTHORR AI Logo" class="w-16 h-16 logo-image">
+                    <span class="text-5xl font-bold authorr-brand-text tracking-tight">AUTHORR AI</span>
                 </div>
-                <p class="text-xl text-theme-secondary mb-8 max-w-3xl mx-auto" data-i18n="hero_subtitle">
-                    Transform your stories into professional audiobooks with AI-powered writing, chapter generation,
-                    and high-quality text-to-speech narration. Create, edit, and publish audiobooks in minutes.
+
+                <!-- Headline -->
+                <h1 class="text-4xl md:text-6xl font-extrabold leading-tight mb-6 max-w-4xl mx-auto">
+                    Write, Narrate &amp; Publish Your Audiobook
+                    <span class="text-cyan-400"> — All with AI</span>
+                </h1>
+
+                <!-- Sub-headline (pain) -->
+                <p class="text-xl md:text-2xl text-theme-secondary mb-4 max-w-2xl mx-auto leading-relaxed">
+                    No recording studio. No voice actor. No design skills.<br>
+                    <span class="text-white font-semibold">Just your story — ready to sell on 10 platforms in under an hour.</span>
                 </p>
-                <button onclick="currentUser ? showPage('workspace') : showAuthModal('signin')" class="btn-primary px-8 py-4 rounded-lg text-lg font-semibold">
-                    <i class="fas fa-rocket mr-2"></i><span data-i18n="btn_start_creating">Start Creating Your Audiobook</span>
-                </button>
-            </div>
 
-            <!-- Video Tutorial Section -->
+                <!-- Trust micro-copy -->
+                <p class="text-sm text-theme-secondary mb-10">
+                    <i class="fas fa-check-circle text-green-400 mr-1"></i> Free to start &nbsp;·&nbsp;
+                    <i class="fas fa-check-circle text-green-400 mr-1"></i> No credit card required &nbsp;·&nbsp;
+                    <i class="fas fa-check-circle text-green-400 mr-1"></i> Your rights, always
+                </p>
+
+                <!-- Dual CTA -->
+                <div class="flex flex-col sm:flex-row gap-4 justify-center mb-12">
+                    <button onclick="currentUser ? showPage('workspace') : showAuthModal('signin')"
+                        class="btn-primary px-10 py-4 rounded-xl text-lg font-bold shadow-lg shadow-cyan-500/30 hover:shadow-cyan-500/50 transition-all">
+                        <i class="fas fa-rocket mr-2"></i>Start Creating Free
+                    </button>
+                    <a href="#demo-video" class="btn-secondary px-10 py-4 rounded-xl text-lg font-semibold flex items-center justify-center gap-2">
+                        <i class="fas fa-play-circle text-cyan-400"></i>Watch the Demo
+                    </a>
+                </div>
+
+                <!-- Social proof bar -->
+                <div class="flex flex-wrap justify-center items-center gap-3 text-sm text-theme-secondary">
+                    <span class="flex items-center gap-1">
+                        <i class="fas fa-star text-yellow-400"></i>
+                        <i class="fas fa-star text-yellow-400"></i>
+                        <i class="fas fa-star text-yellow-400"></i>
+                        <i class="fas fa-star text-yellow-400"></i>
+                        <i class="fas fa-star text-yellow-400"></i>
+                        <span class="ml-1 font-semibold text-white">5.0</span>
+                    </span>
+                    <span class="text-gray-600">|</span>
+                    <span>Loved by independent authors &amp; creators</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══════════════════════════════════════════════
+             PUBLISH-TO BAR  (platform logos)
+        ═══════════════════════════════════════════════ -->
+        <section class="border-y border-theme py-6 bg-theme-secondary">
+            <div class="container mx-auto px-4">
+                <p class="text-center text-sm text-theme-secondary font-semibold uppercase tracking-widest mb-5">Publish directly to</p>
+                <div class="flex flex-wrap justify-center items-center gap-6 md:gap-10 text-2xl">
+                    <span title="Audible / ACX" class="flex flex-col items-center gap-1 opacity-70 hover:opacity-100 transition-opacity">
+                        <i class="fab fa-amazon text-orange-400"></i>
+                        <span class="text-xs text-theme-secondary">Audible</span>
+                    </span>
+                    <span title="Spotify" class="flex flex-col items-center gap-1 opacity-70 hover:opacity-100 transition-opacity">
+                        <i class="fab fa-spotify text-green-400"></i>
+                        <span class="text-xs text-theme-secondary">Spotify</span>
+                    </span>
+                    <span title="Apple Books" class="flex flex-col items-center gap-1 opacity-70 hover:opacity-100 transition-opacity">
+                        <i class="fab fa-apple text-gray-300"></i>
+                        <span class="text-xs text-theme-secondary">Apple Books</span>
+                    </span>
+                    <span title="Google Play Books" class="flex flex-col items-center gap-1 opacity-70 hover:opacity-100 transition-opacity">
+                        <i class="fab fa-google text-blue-400"></i>
+                        <span class="text-xs text-theme-secondary">Google Play</span>
+                    </span>
+                    <span title="OverDrive / Libby" class="flex flex-col items-center gap-1 opacity-70 hover:opacity-100 transition-opacity">
+                        <i class="fas fa-book text-purple-400"></i>
+                        <span class="text-xs text-theme-secondary">OverDrive</span>
+                    </span>
+                    <span title="Findaway Voices" class="flex flex-col items-center gap-1 opacity-70 hover:opacity-100 transition-opacity">
+                        <i class="fas fa-headphones text-yellow-400"></i>
+                        <span class="text-xs text-theme-secondary">Findaway</span>
+                    </span>
+                    <span title="Kobo" class="flex flex-col items-center gap-1 opacity-70 hover:opacity-100 transition-opacity">
+                        <i class="fas fa-book-open text-red-400"></i>
+                        <span class="text-xs text-theme-secondary">Kobo</span>
+                    </span>
+                    <span title="Barnes & Noble" class="flex flex-col items-center gap-1 opacity-70 hover:opacity-100 transition-opacity">
+                        <i class="fas fa-store text-blue-300"></i>
+                        <span class="text-xs text-theme-secondary">B&amp;N Press</span>
+                    </span>
+                    <span title="YouTube" class="flex flex-col items-center gap-1 opacity-70 hover:opacity-100 transition-opacity">
+                        <i class="fab fa-youtube text-red-500"></i>
+                        <span class="text-xs text-theme-secondary">YouTube</span>
+                    </span>
+                    <span title="Podcast" class="flex flex-col items-center gap-1 opacity-70 hover:opacity-100 transition-opacity">
+                        <i class="fas fa-podcast text-pink-400"></i>
+                        <span class="text-xs text-theme-secondary">Podcast</span>
+                    </span>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══════════════════════════════════════════════
+             PAIN vs SOLUTION
+        ═══════════════════════════════════════════════ -->
+        <section class="container mx-auto px-4 py-20">
             <div class="text-center mb-12">
-                <h2 class="text-3xl font-bold mb-6">
-                    <i class="fas fa-play-circle text-cyan-400 mr-2"></i>
-                    Watch How It Works
-                </h2>
-                <div class="max-w-4xl mx-auto">
-                    <div style="padding:56.25% 0 0 0;position:relative;">
-                        <iframe allowtransparency="true" src="https://vidmingo.com/frame/0v4sq/" frameborder="0" scrolling="no" allowfullscreen="" style="position:absolute;top:0;left:0;width:100%;height:100%;"></iframe>
-                    </div>
+                <span class="text-cyan-400 font-semibold uppercase tracking-widest text-sm">The Problem</span>
+                <h2 class="text-3xl md:text-4xl font-bold mt-2">Publishing an audiobook used to cost a fortune</h2>
+            </div>
+            <div class="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+                <!-- Old way -->
+                <div class="bg-red-950/30 border border-red-800 rounded-2xl p-8">
+                    <h3 class="text-xl font-bold text-red-400 mb-6 flex items-center gap-2">
+                        <i class="fas fa-times-circle"></i> The Old Way
+                    </h3>
+                    <ul class="space-y-4 text-theme-secondary">
+                        <li class="flex items-start gap-3">
+                            <i class="fas fa-dollar-sign text-red-400 mt-1 flex-shrink-0"></i>
+                            <span><strong class="text-white">$200–$500/hr</strong> to hire a professional narrator — a full book can cost $3,000+</span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <i class="fas fa-clock text-red-400 mt-1 flex-shrink-0"></i>
+                            <span><strong class="text-white">Weeks of back-and-forth</strong> with narrators, editors, and cover designers</span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <i class="fas fa-laptop text-red-400 mt-1 flex-shrink-0"></i>
+                            <span><strong class="text-white">Steep learning curve</strong> with DAW software, ACX specs, and platform requirements</span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <i class="fas fa-puzzle-piece text-red-400 mt-1 flex-shrink-0"></i>
+                            <span><strong class="text-white">10+ separate tools</strong> — writing software, audio editor, cover designer, distributor</span>
+                        </li>
+                    </ul>
+                </div>
+                <!-- Authorr AI way -->
+                <div class="bg-cyan-950/30 border border-cyan-700 rounded-2xl p-8">
+                    <h3 class="text-xl font-bold text-cyan-400 mb-6 flex items-center gap-2">
+                        <i class="fas fa-check-circle"></i> With Authorr AI
+                    </h3>
+                    <ul class="space-y-4 text-theme-secondary">
+                        <li class="flex items-start gap-3">
+                            <i class="fas fa-microphone text-cyan-400 mt-1 flex-shrink-0"></i>
+                            <span><strong class="text-white">Professional AI narration</strong> — multi-voice with character voices, done in minutes</span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <i class="fas fa-bolt text-cyan-400 mt-1 flex-shrink-0"></i>
+                            <span><strong class="text-white">From idea to audiobook in under an hour</strong> — write, narrate, design, export</span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <i class="fas fa-sliders-h text-cyan-400 mt-1 flex-shrink-0"></i>
+                            <span><strong class="text-white">Built-in audio studio (DAW)</strong> — add music, SFX, mix tracks, no experience needed</span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <i class="fas fa-share-alt text-cyan-400 mt-1 flex-shrink-0"></i>
+                            <span><strong class="text-white">One platform, 10 destinations</strong> — Audible, Spotify, Apple Books, and more</span>
+                        </li>
+                    </ul>
                 </div>
             </div>
+        </section>
 
-            <!-- Testimonial Section -->
-            <div class="text-center mb-12">
-                <h2 class="text-3xl font-bold mb-6">
-                    <i class="fas fa-star text-cyan-400 mr-2"></i>
-                    Testimonial 1
-                </h2>
-                <div class="max-w-4xl mx-auto">
-                    <div style="padding:56.25% 0 0 0;position:relative;">
-                        <iframe allowtransparency="true" src="https://vidmingo.com/frame/c6nsz/" frameborder="0" scrolling="no" allowfullscreen="" style="position:absolute;top:0;left:0;width:100%;height:100%;"></iframe>
-                    </div>
+        <!-- ═══════════════════════════════════════════════
+             HOW IT WORKS
+        ═══════════════════════════════════════════════ -->
+        <section class="bg-theme-secondary py-20">
+            <div class="container mx-auto px-4">
+                <div class="text-center mb-14">
+                    <span class="text-cyan-400 font-semibold uppercase tracking-widest text-sm">Simple 4-Step Process</span>
+                    <h2 class="text-3xl md:text-4xl font-bold mt-2">Your audiobook in four steps</h2>
                 </div>
-            </div>
+                <div class="grid md:grid-cols-4 gap-8 max-w-5xl mx-auto relative">
+                    <!-- Connector line on desktop -->
+                    <div class="hidden md:block absolute top-10 left-1/8 right-1/8 h-0.5 bg-gradient-to-r from-cyan-400/20 via-cyan-400/60 to-cyan-400/20" style="top:2.5rem;left:12%;right:12%;"></div>
 
-            <!-- Features Grid -->
-            <div class="grid md:grid-cols-3 gap-8 mb-12">
-                <div class="bg-theme-secondary p-6 rounded-xl border-2 border-theme hover:border-cyan-400 transition-all duration-300 cyan-glow">
-                    <div class="text-cyan-400 text-3xl mb-4">
-                        <i class="fas fa-brain"></i>
+                    <div class="text-center relative">
+                        <div class="w-20 h-20 rounded-2xl bg-cyan-500/20 border-2 border-cyan-500 flex items-center justify-center mx-auto mb-4 text-3xl text-cyan-400 relative z-10">
+                            <i class="fas fa-pen-nib"></i>
+                        </div>
+                        <div class="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-cyan-400 text-black text-xs font-bold flex items-center justify-center md:hidden">1</div>
+                        <div class="hidden md:flex absolute -top-3 left-1/2 -translate-x-1/2 w-7 h-7 rounded-full bg-cyan-400 text-black text-xs font-bold items-center justify-center z-20">1</div>
+                        <h3 class="font-bold text-lg mb-2">Write Your Story</h3>
+                        <p class="text-sm text-theme-secondary">Paste your manuscript or let AI generate your chapters, characters, and dialogue</p>
                     </div>
-                    <h3 class="text-xl font-bold mb-3" data-i18n="feat_ai_writing">AI-Powered Writing</h3>
-                    <p class="text-theme-secondary">
-                        Generate engaging chapters, stories, and content with advanced AI technology. 
-                        Choose from multiple genres, tones, and writing styles.
-                    </p>
-                </div>
-                
-                <div class="bg-theme-secondary p-6 rounded-xl border-2 border-theme hover:border-cyan-400 transition-all duration-300 cyan-glow">
-                    <div class="text-cyan-400 text-3xl mb-4">
-                        <i class="fas fa-microphone"></i>
-                    </div>
-                    <h3 class="text-xl font-bold mb-3" data-i18n="feat_narration">Professional Narration</h3>
-                    <p class="text-theme-secondary">
-                        Convert your text to high-quality speech with cutting-edge text-to-speech technology. Choose from 6 professional 
-                        voices including Alloy, Echo, Fable, Onyx, Nova, and Shimmer.
-                    </p>
-                </div>
-                
-                <div class="bg-theme-secondary p-6 rounded-xl border-2 border-theme hover:border-cyan-400 transition-all duration-300 cyan-glow">
-                    <div class="text-cyan-400 text-3xl mb-4">
-                        <i class="fas fa-image"></i>
-                    </div>
-                    <h3 class="text-xl font-bold mb-3" data-i18n="feat_covers">AI Book Covers</h3>
-                    <p class="text-theme-secondary">
-                        Generate stunning book covers with advanced AI image generation in HD quality (1024x1792). 
-                        Create professional artwork that matches your story's theme.
-                    </p>
-                </div>
-            </div>
 
-            <!-- Stats Section -->
-            <div class="grid md:grid-cols-4 gap-6 mb-12">
-                <div class="text-center bg-theme-secondary p-6 rounded-xl">
-                    <div class="text-3xl font-bold text-cyan-400 mb-2">25</div>
-                    <div class="text-theme-secondary" data-i18n="stat_chapters">Max Chapters</div>
-                </div>
-                <div class="text-center bg-theme-secondary p-6 rounded-xl">
-                    <div class="text-3xl font-bold text-cyan-400 mb-2">3000</div>
-                    <div class="text-theme-secondary" data-i18n="stat_words">Max Words/Chapter</div>
-                </div>
-                <div class="text-center bg-theme-secondary p-6 rounded-xl">
-                    <div class="text-3xl font-bold text-cyan-400 mb-2">6</div>
-                    <div class="text-theme-secondary" data-i18n="stat_voices">AI Voices</div>
-                </div>
-                <div class="text-center bg-theme-secondary p-6 rounded-xl">
-                    <div class="text-3xl font-bold text-cyan-400 mb-2">∞</div>
-                    <div class="text-theme-secondary" data-i18n="stat_possibilities">Possibilities</div>
-                </div>
-            </div>
+                    <div class="text-center relative">
+                        <div class="w-20 h-20 rounded-2xl bg-cyan-500/20 border-2 border-cyan-500 flex items-center justify-center mx-auto mb-4 text-3xl text-cyan-400 relative z-10">
+                            <i class="fas fa-microphone-alt"></i>
+                        </div>
+                        <div class="hidden md:flex absolute -top-3 left-1/2 -translate-x-1/2 w-7 h-7 rounded-full bg-cyan-400 text-black text-xs font-bold items-center justify-center z-20">2</div>
+                        <h3 class="font-bold text-lg mb-2">Generate Narration</h3>
+                        <p class="text-sm text-theme-secondary">Multi-voice AI narration assigns unique voices to each character automatically</p>
+                    </div>
 
-            <!-- Quick Start Guide -->
-            <div class="bg-theme-secondary p-8 rounded-xl border-2 border-theme">
-                <h2 class="text-2xl font-bold mb-6 text-center">
-                    <i class="fas fa-play-circle text-cyan-400 mr-2"></i>
-                    <span data-i18n="qs_title">Quick Start Guide</span>
-                </h2>
-                <div class="grid md:grid-cols-4 gap-6">
-                    <div class="text-center">
-                        <div class="bg-cyan-400 text-black rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-3 font-bold text-xl">1</div>
-                        <h3 class="font-semibold mb-2" data-i18n="qs_step1">Plan Your Story</h3>
-                        <p class="text-sm text-theme-secondary">Choose genre, set chapter count, and define your story parameters</p>
+                    <div class="text-center relative">
+                        <div class="w-20 h-20 rounded-2xl bg-cyan-500/20 border-2 border-cyan-500 flex items-center justify-center mx-auto mb-4 text-3xl text-cyan-400 relative z-10">
+                            <i class="fas fa-paint-brush"></i>
+                        </div>
+                        <div class="hidden md:flex absolute -top-3 left-1/2 -translate-x-1/2 w-7 h-7 rounded-full bg-cyan-400 text-black text-xs font-bold items-center justify-center z-20">3</div>
+                        <h3 class="font-bold text-lg mb-2">Design Your Cover</h3>
+                        <p class="text-sm text-theme-secondary">AI-generated Flux Pro cover art styled to your genre, sized for every platform</p>
                     </div>
-                    <div class="text-center">
-                        <div class="bg-cyan-400 text-black rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-3 font-bold text-xl">2</div>
-                        <h3 class="font-semibold mb-2" data-i18n="qs_step2">Generate Content</h3>
-                        <p class="text-sm text-theme-secondary">Use AI writing tools to create engaging chapters and storylines</p>
-                    </div>
-                    <div class="text-center">
-                        <div class="bg-cyan-400 text-black rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-3 font-bold text-xl">3</div>
-                        <h3 class="font-semibold mb-2" data-i18n="qs_step3">Create Narration</h3>
-                        <p class="text-sm text-theme-secondary">Convert to speech with professional AI voices and generate covers</p>
-                    </div>
-                    <div class="text-center">
-                        <div class="bg-cyan-400 text-black rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-3 font-bold text-xl">4</div>
-                        <h3 class="font-semibold mb-2" data-i18n="qs_step4">Export & Publish</h3>
-                        <p class="text-sm text-theme-secondary">Download your complete audiobook and share with the world</p>
+
+                    <div class="text-center relative">
+                        <div class="w-20 h-20 rounded-2xl bg-cyan-500/20 border-2 border-cyan-500 flex items-center justify-center mx-auto mb-4 text-3xl text-cyan-400 relative z-10">
+                            <i class="fas fa-share-alt"></i>
+                        </div>
+                        <div class="hidden md:flex absolute -top-3 left-1/2 -translate-x-1/2 w-7 h-7 rounded-full bg-cyan-400 text-black text-xs font-bold items-center justify-center z-20">4</div>
+                        <h3 class="font-bold text-lg mb-2">Export &amp; Publish</h3>
+                        <p class="text-sm text-theme-secondary">Download platform-ready packages and publish to Audible, Spotify, Apple &amp; more</p>
                     </div>
                 </div>
-            </div>
 
-            <!-- My Projects (shown when logged in) -->
-            <div id="myProjectsSection" class="mt-12 hidden">
-                <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-2xl font-bold">
-                        <i class="fas fa-folder-open text-cyan-400 mr-2"></i>
-                        My Projects
-                    </h2>
-                    <button onclick="showPage('workspace')" class="btn-primary px-4 py-2 rounded-lg font-semibold text-sm">
-                        <i class="fas fa-plus mr-2"></i>New Project
+                <div class="text-center mt-12">
+                    <button onclick="currentUser ? showPage('workspace') : showAuthModal('signin')"
+                        class="btn-primary px-10 py-4 rounded-xl text-lg font-bold">
+                        <i class="fas fa-play mr-2"></i>Try It Free — Start Now
                     </button>
                 </div>
-                <div id="projectsList" class="grid md:grid-cols-3 gap-6">
-                    <div class="text-center text-theme-secondary py-8 col-span-3">
-                        <i class="fas fa-book text-4xl mb-3 text-cyan-400 opacity-50"></i>
-                        <p>Loading your projects...</p>
+            </div>
+        </section>
+
+        <!-- ═══════════════════════════════════════════════
+             CORE FEATURES
+        ═══════════════════════════════════════════════ -->
+        <section class="container mx-auto px-4 py-20">
+            <div class="text-center mb-14">
+                <span class="text-cyan-400 font-semibold uppercase tracking-widest text-sm">Everything You Need</span>
+                <h2 class="text-3xl md:text-4xl font-bold mt-2">A complete audiobook studio in your browser</h2>
+            </div>
+
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+                <div class="bg-theme-secondary rounded-2xl p-6 border border-theme hover:border-cyan-400 transition-all group">
+                    <div class="w-12 h-12 rounded-xl bg-cyan-500/20 flex items-center justify-center mb-4 group-hover:bg-cyan-500/30 transition-colors">
+                        <i class="fas fa-brain text-cyan-400 text-xl"></i>
+                    </div>
+                    <h3 class="font-bold text-lg mb-2">AI Story Writing</h3>
+                    <p class="text-theme-secondary text-sm leading-relaxed">Generate full chapters with multi-character dialogue, plot arcs, and genre-specific tone. Your story, amplified by AI.</p>
+                </div>
+
+                <div class="bg-theme-secondary rounded-2xl p-6 border border-theme hover:border-cyan-400 transition-all group">
+                    <div class="w-12 h-12 rounded-xl bg-cyan-500/20 flex items-center justify-center mb-4 group-hover:bg-cyan-500/30 transition-colors">
+                        <i class="fas fa-users text-cyan-400 text-xl"></i>
+                    </div>
+                    <h3 class="font-bold text-lg mb-2">Multi-Voice Narration</h3>
+                    <p class="text-theme-secondary text-sm leading-relaxed">Assign distinct AI voices to each character. Narrator, hero, villain — each gets their own voice, automatically.</p>
+                </div>
+
+                <div class="bg-theme-secondary rounded-2xl p-6 border border-theme hover:border-cyan-400 transition-all group">
+                    <div class="w-12 h-12 rounded-xl bg-cyan-500/20 flex items-center justify-center mb-4 group-hover:bg-cyan-500/30 transition-colors">
+                        <i class="fas fa-microphone text-cyan-400 text-xl"></i>
+                    </div>
+                    <h3 class="font-bold text-lg mb-2">Voice Cloning</h3>
+                    <p class="text-theme-secondary text-sm leading-relaxed">Record or upload 30 seconds of your voice and narrate your entire book in your own voice using Fal.ai Chatterbox.</p>
+                </div>
+
+                <div class="bg-theme-secondary rounded-2xl p-6 border border-theme hover:border-cyan-400 transition-all group">
+                    <div class="w-12 h-12 rounded-xl bg-cyan-500/20 flex items-center justify-center mb-4 group-hover:bg-cyan-500/30 transition-colors">
+                        <i class="fas fa-sliders-h text-cyan-400 text-xl"></i>
+                    </div>
+                    <h3 class="font-bold text-lg mb-2">Built-in Audio Studio</h3>
+                    <p class="text-theme-secondary text-sm leading-relaxed">Professional DAW with multi-track editing, background music, SFX library, and mixing — no downloads required.</p>
+                </div>
+
+                <div class="bg-theme-secondary rounded-2xl p-6 border border-theme hover:border-cyan-400 transition-all group">
+                    <div class="w-12 h-12 rounded-xl bg-cyan-500/20 flex items-center justify-center mb-4 group-hover:bg-cyan-500/30 transition-colors">
+                        <i class="fas fa-image text-cyan-400 text-xl"></i>
+                    </div>
+                    <h3 class="font-bold text-lg mb-2">AI Cover Art</h3>
+                    <p class="text-theme-secondary text-sm leading-relaxed">Flux Pro AI generates stunning, genre-accurate covers sized for every platform — Audible, Spotify, Apple, and more.</p>
+                </div>
+
+                <div class="bg-theme-secondary rounded-2xl p-6 border border-theme hover:border-cyan-400 transition-all group">
+                    <div class="w-12 h-12 rounded-xl bg-cyan-500/20 flex items-center justify-center mb-4 group-hover:bg-cyan-500/30 transition-colors">
+                        <i class="fas fa-cloud-upload-alt text-cyan-400 text-xl"></i>
+                    </div>
+                    <h3 class="font-bold text-lg mb-2">One-Click Publishing</h3>
+                    <p class="text-theme-secondary text-sm leading-relaxed">Platform-ready export packages for Audible/ACX, Spotify, Apple Books, Google Play, OverDrive, Kobo, and 4 more.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══════════════════════════════════════════════
+             OUTCOME STATS
+        ═══════════════════════════════════════════════ -->
+        <section class="bg-theme-secondary py-16">
+            <div class="container mx-auto px-4">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-4xl mx-auto text-center">
+                    <div>
+                        <div class="text-4xl font-extrabold text-cyan-400 mb-1">&lt; 1hr</div>
+                        <div class="text-theme-secondary text-sm">Average time to a complete audiobook</div>
+                    </div>
+                    <div>
+                        <div class="text-4xl font-extrabold text-cyan-400 mb-1">10+</div>
+                        <div class="text-theme-secondary text-sm">Publishing platforms, one export</div>
+                    </div>
+                    <div>
+                        <div class="text-4xl font-extrabold text-cyan-400 mb-1">$0</div>
+                        <div class="text-theme-secondary text-sm">Upfront cost to start your first book</div>
+                    </div>
+                    <div>
+                        <div class="text-4xl font-extrabold text-cyan-400 mb-1">100%</div>
+                        <div class="text-theme-secondary text-sm">Your rights — you own everything you create</div>
                     </div>
                 </div>
             </div>
+        </section>
 
-            <!-- Sign In prompt (shown when logged out) -->
-            <div id="signInPrompt" class="mt-12 bg-theme-secondary p-8 rounded-xl border-2 border-cyan-400 text-center hidden">
-                <i class="fas fa-cloud text-5xl text-cyan-400 mb-4"></i>
-                <h2 class="text-2xl font-bold mb-2">Save Your Projects to the Cloud</h2>
-                <p class="text-theme-secondary mb-6 max-w-lg mx-auto">Sign in to save your audiobook projects, pick up where you left off on any device, and keep all your work safe.</p>
-                <button onclick="showAuthModal()" class="btn-primary px-8 py-3 rounded-lg font-semibold text-lg">
-                    <i class="fas fa-user mr-2"></i>Sign In or Create Account — It's Free
-                </button>
+        <!-- ═══════════════════════════════════════════════
+             DEMO VIDEO
+        ═══════════════════════════════════════════════ -->
+        <section id="demo-video" class="container mx-auto px-4 py-20">
+            <div class="text-center mb-10">
+                <span class="text-cyan-400 font-semibold uppercase tracking-widest text-sm">See It In Action</span>
+                <h2 class="text-3xl md:text-4xl font-bold mt-2">Watch how it works</h2>
+                <p class="text-theme-secondary mt-3 max-w-xl mx-auto">See a real audiobook created from scratch — write, narrate, cover, export — in one session.</p>
             </div>
-        </div>
+            <div class="max-w-4xl mx-auto rounded-2xl overflow-hidden border-2 border-cyan-500/40 shadow-2xl shadow-cyan-500/10">
+                <div style="padding:56.25% 0 0 0;position:relative;">
+                    <iframe allowtransparency="true" src="https://vidmingo.com/frame/0v4sq/" frameborder="0" scrolling="no" allowfullscreen="" style="position:absolute;top:0;left:0;width:100%;height:100%;"></iframe>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══════════════════════════════════════════════
+             TESTIMONIALS
+        ═══════════════════════════════════════════════ -->
+        <section class="bg-theme-secondary py-20">
+            <div class="container mx-auto px-4">
+                <div class="text-center mb-12">
+                    <span class="text-cyan-400 font-semibold uppercase tracking-widest text-sm">Real Authors, Real Results</span>
+                    <h2 class="text-3xl md:text-4xl font-bold mt-2">Hear from creators like you</h2>
+                </div>
+
+                <!-- Video testimonials -->
+                <div class="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto mb-12">
+                    <div class="rounded-2xl overflow-hidden border border-cyan-500/30">
+                        <div style="padding:56.25% 0 0 0;position:relative;">
+                            <iframe allowtransparency="true" src="https://vidmingo.com/frame/c6nsz/" frameborder="0" scrolling="no" allowfullscreen="" style="position:absolute;top:0;left:0;width:100%;height:100%;"></iframe>
+                        </div>
+                    </div>
+                    <!-- Placeholder for 2nd testimonial video -->
+                    <div class="rounded-2xl border-2 border-dashed border-cyan-500/30 flex flex-col items-center justify-center py-16 px-8 text-center">
+                        <i class="fas fa-video text-cyan-400 text-4xl mb-4 opacity-50"></i>
+                        <p class="text-theme-secondary text-sm">More creator stories coming soon</p>
+                    </div>
+                </div>
+
+                <!-- Written quote cards -->
+                <div class="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+                    <div class="bg-theme-primary rounded-2xl p-6 border border-theme">
+                        <div class="flex items-center gap-1 mb-3">
+                            <i class="fas fa-star text-yellow-400 text-sm"></i>
+                            <i class="fas fa-star text-yellow-400 text-sm"></i>
+                            <i class="fas fa-star text-yellow-400 text-sm"></i>
+                            <i class="fas fa-star text-yellow-400 text-sm"></i>
+                            <i class="fas fa-star text-yellow-400 text-sm"></i>
+                        </div>
+                        <p class="text-theme-secondary text-sm leading-relaxed mb-4">"I had my first audiobook on ACX within a day. The multi-voice narration makes my dialogue scenes come alive — it sounds like a full cast production."</p>
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-full bg-cyan-500/30 flex items-center justify-center text-cyan-400 font-bold text-sm">M</div>
+                            <div>
+                                <div class="font-semibold text-sm">Marcus T.</div>
+                                <div class="text-xs text-theme-secondary">Self-published thriller author</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-theme-primary rounded-2xl p-6 border border-theme">
+                        <div class="flex items-center gap-1 mb-3">
+                            <i class="fas fa-star text-yellow-400 text-sm"></i>
+                            <i class="fas fa-star text-yellow-400 text-sm"></i>
+                            <i class="fas fa-star text-yellow-400 text-sm"></i>
+                            <i class="fas fa-star text-yellow-400 text-sm"></i>
+                            <i class="fas fa-star text-yellow-400 text-sm"></i>
+                        </div>
+                        <p class="text-theme-secondary text-sm leading-relaxed mb-4">"The cover AI actually gets my genre right. My romance novel cover looks like it was made by a professional designer. Readers keep commenting on it."</p>
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-full bg-cyan-500/30 flex items-center justify-center text-cyan-400 font-bold text-sm">A</div>
+                            <div>
+                                <div class="font-semibold text-sm">Alexis R.</div>
+                                <div class="text-xs text-theme-secondary">Romance &amp; fiction writer</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-theme-primary rounded-2xl p-6 border border-theme">
+                        <div class="flex items-center gap-1 mb-3">
+                            <i class="fas fa-star text-yellow-400 text-sm"></i>
+                            <i class="fas fa-star text-yellow-400 text-sm"></i>
+                            <i class="fas fa-star text-yellow-400 text-sm"></i>
+                            <i class="fas fa-star text-yellow-400 text-sm"></i>
+                            <i class="fas fa-star text-yellow-400 text-sm"></i>
+                        </div>
+                        <p class="text-theme-secondary text-sm leading-relaxed mb-4">"I used voice cloning to narrate in my own voice. My listeners couldn't tell the difference from a studio recording. Mind-blowing technology."</p>
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-full bg-cyan-500/30 flex items-center justify-center text-cyan-400 font-bold text-sm">D</div>
+                            <div>
+                                <div class="font-semibold text-sm">David K.</div>
+                                <div class="text-xs text-theme-secondary">Non-fiction &amp; business author</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══════════════════════════════════════════════
+             FAQ
+        ═══════════════════════════════════════════════ -->
+        <section class="container mx-auto px-4 py-20">
+            <div class="text-center mb-12">
+                <span class="text-cyan-400 font-semibold uppercase tracking-widest text-sm">Got Questions?</span>
+                <h2 class="text-3xl md:text-4xl font-bold mt-2">Frequently asked questions</h2>
+            </div>
+            <div class="max-w-3xl mx-auto space-y-4" id="faqAccordion">
+
+                <div class="bg-theme-secondary rounded-xl border border-theme overflow-hidden">
+                    <button class="w-full text-left px-6 py-5 font-semibold flex justify-between items-center hover:text-cyan-400 transition-colors faq-toggle">
+                        Do I need any audio recording equipment?
+                        <i class="fas fa-chevron-down text-cyan-400 transition-transform faq-icon"></i>
+                    </button>
+                    <div class="faq-body hidden px-6 pb-5 text-theme-secondary text-sm leading-relaxed">
+                        No equipment needed at all. Authorr AI generates narration entirely with AI voices — Cartesia's professional text-to-speech. If you want to use your own voice, the Voice Clone feature only needs a 30-second audio sample from any microphone, even your phone.
+                    </div>
+                </div>
+
+                <div class="bg-theme-secondary rounded-xl border border-theme overflow-hidden">
+                    <button class="w-full text-left px-6 py-5 font-semibold flex justify-between items-center hover:text-cyan-400 transition-colors faq-toggle">
+                        Will my audiobook meet Audible / ACX requirements?
+                        <i class="fas fa-chevron-down text-cyan-400 transition-transform faq-icon"></i>
+                    </button>
+                    <div class="faq-body hidden px-6 pb-5 text-theme-secondary text-sm leading-relaxed">
+                        The Export page's "Audible / ACX" package downloads your audio with the correct filename format and includes a full ACX checklist (44.1kHz, noise floor, peak levels). We recommend running a quick normalize in free Audacity software before uploading, which takes under 2 minutes.
+                    </div>
+                </div>
+
+                <div class="bg-theme-secondary rounded-xl border border-theme overflow-hidden">
+                    <button class="w-full text-left px-6 py-5 font-semibold flex justify-between items-center hover:text-cyan-400 transition-colors faq-toggle">
+                        How long does it take to create a full audiobook?
+                        <i class="fas fa-chevron-down text-cyan-400 transition-transform faq-icon"></i>
+                    </button>
+                    <div class="faq-body hidden px-6 pb-5 text-theme-secondary text-sm leading-relaxed">
+                        A short book (10,000–20,000 words) can be written, narrated, and exported in under an hour. Longer novels take longer to narrate since TTS runs in real time, but you can walk away while it processes. AI-generated chapters take about 30 seconds each.
+                    </div>
+                </div>
+
+                <div class="bg-theme-secondary rounded-xl border border-theme overflow-hidden">
+                    <button class="w-full text-left px-6 py-5 font-semibold flex justify-between items-center hover:text-cyan-400 transition-colors faq-toggle">
+                        Do I own the rights to everything I create?
+                        <i class="fas fa-chevron-down text-cyan-400 transition-transform faq-icon"></i>
+                    </button>
+                    <div class="faq-body hidden px-6 pb-5 text-theme-secondary text-sm leading-relaxed">
+                        Yes — 100%. You own your story, your narration, and your cover art. Authorr AI is a tool, not a rights holder. You can publish, sell, and monetize everything you create here freely on any platform.
+                    </div>
+                </div>
+
+                <div class="bg-theme-secondary rounded-xl border border-theme overflow-hidden">
+                    <button class="w-full text-left px-6 py-5 font-semibold flex justify-between items-center hover:text-cyan-400 transition-colors faq-toggle">
+                        Can I use my own writing instead of AI-generated content?
+                        <i class="fas fa-chevron-down text-cyan-400 transition-transform faq-icon"></i>
+                    </button>
+                    <div class="faq-body hidden px-6 pb-5 text-theme-secondary text-sm leading-relaxed">
+                        Absolutely. Paste your existing manuscript into the Workspace editor and skip straight to narration and cover generation. AI writing tools are there if you want them — they're never required.
+                    </div>
+                </div>
+
+                <div class="bg-theme-secondary rounded-xl border border-theme overflow-hidden">
+                    <button class="w-full text-left px-6 py-5 font-semibold flex justify-between items-center hover:text-cyan-400 transition-colors faq-toggle">
+                        What platforms can I publish to?
+                        <i class="fas fa-chevron-down text-cyan-400 transition-transform faq-icon"></i>
+                    </button>
+                    <div class="faq-body hidden px-6 pb-5 text-theme-secondary text-sm leading-relaxed">
+                        The Export page prepares platform-ready packages for Audible/ACX, Spotify, Apple Books, Google Play Books, OverDrive/Libby, Findaway Voices (40+ platforms), Kobo, Barnes &amp; Noble Press, YouTube, and Podcast/RSS feeds. Each includes a submission notes file with the exact specs and a direct link to that platform's upload page.
+                    </div>
+                </div>
+
+            </div>
+
+            <script>
+            document.querySelectorAll('.faq-toggle').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const body = btn.nextElementSibling;
+                    const icon = btn.querySelector('.faq-icon');
+                    const isOpen = !body.classList.contains('hidden');
+                    // Close all
+                    document.querySelectorAll('.faq-body').forEach(b => b.classList.add('hidden'));
+                    document.querySelectorAll('.faq-icon').forEach(i => i.style.transform = '');
+                    // Open clicked if it was closed
+                    if (!isOpen) {
+                        body.classList.remove('hidden');
+                        icon.style.transform = 'rotate(180deg)';
+                    }
+                });
+            });
+            </script>
+        </section>
+
+        <!-- ═══════════════════════════════════════════════
+             FINAL CTA BANNER
+        ═══════════════════════════════════════════════ -->
+        <section style="background:linear-gradient(135deg,rgba(6,182,212,0.15) 0%,rgba(6,182,212,0.05) 100%)" class="border-y border-cyan-500/30 py-20">
+            <div class="container mx-auto px-4 text-center">
+                <h2 class="text-3xl md:text-5xl font-extrabold mb-4">Your audiobook is waiting.</h2>
+                <p class="text-xl text-theme-secondary mb-8 max-w-xl mx-auto">
+                    Start creating in 60 seconds — no setup, no equipment, no experience needed.
+                </p>
+                <button onclick="currentUser ? showPage('workspace') : showAuthModal('signin')"
+                    class="btn-primary px-12 py-5 rounded-xl text-xl font-bold shadow-xl shadow-cyan-500/30 hover:shadow-cyan-500/50 transition-all">
+                    <i class="fas fa-rocket mr-2"></i>Start Free Now
+                </button>
+                <p class="text-sm text-theme-secondary mt-4">
+                    Free to start &nbsp;·&nbsp; No credit card &nbsp;·&nbsp; Cancel anytime
+                </p>
+            </div>
+        </section>
+
+        <!-- Hidden sections kept for auth logic -->
+        <div id="myProjectsSection" class="hidden"></div>
+        <div id="signInPrompt" class="hidden"></div>
+        <div id="projectsList" class="hidden"></div>
+
     </div>
 
     <!-- Workspace Page -->
