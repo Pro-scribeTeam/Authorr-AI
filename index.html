@@ -1706,6 +1706,15 @@
                         </div>
 
 
+                        <!-- Voice Clone Name -->
+                        <div class="border-2 border-cyan-500 p-4 rounded-lg">
+                            <label class="text-sm font-semibold text-cyan-400 block mb-2">
+                                <i class="fas fa-tag mr-2"></i>Voice Clone Name
+                            </label>
+                            <input type="text" id="voiceCloneName" placeholder="e.g. My Voice, Character A..."
+                                class="w-full px-3 py-2 rounded-lg form-field bg-theme-primary text-theme-primary text-sm">
+                        </div>
+
                         <!-- Clone Quality & Model -->
                         <div class="space-y-3">
                             <div class="flex justify-between items-center">
@@ -1739,6 +1748,16 @@
                                     <div id="cloningBar" class="bg-gradient-to-r from-cyan-500 to-blue-500 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
                                 </div>
                             </div>
+                        </div>
+
+                        <!-- My Cloned Voices -->
+                        <div id="savedClonedVoices" class="hidden mt-2">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-sm font-semibold text-cyan-400">
+                                    <i class="fas fa-dna mr-1"></i>My Cloned Voices
+                                </span>
+                            </div>
+                            <div id="clonedVoicesList" class="space-y-2 max-h-48 overflow-y-auto"></div>
                         </div>
                     </div>
                 </div>
@@ -5662,39 +5681,98 @@ Return the COMPLETE text, dramatically rewritten with visible personality and hu
             }
         }
         
-        function initiateVoiceClone() {
+        async function initiateVoiceClone() {
             const uploadInput = document.getElementById('voiceUpload');
-            const files = uploadInput.files;
-            
-            if (files.length === 0) {
-                showNotification('Please select voice samples first', 'error');
+            const nameInput = document.getElementById('voiceCloneName');
+            const recordedEl = document.getElementById('recordedAudioEl');
+
+            // Determine audio source: uploaded file or recorded audio
+            let audioBlob = null;
+            let filename = 'voice.wav';
+            let contentType = 'audio/wav';
+
+            if (uploadInput && uploadInput.files.length > 0) {
+                const file = uploadInput.files[0];
+                audioBlob = file;
+                filename = file.name;
+                contentType = file.type || 'audio/wav';
+            } else if (recordedEl && recordedEl.src && recordedEl.src.startsWith('blob:')) {
+                const resp = await fetch(recordedEl.src);
+                audioBlob = await resp.blob();
+                filename = 'recording.wav';
+                contentType = 'audio/wav';
+            } else {
+                showNotification('Please upload or record a voice sample first', 'error');
                 return;
             }
-            
-            // Show progress animation
+
+            const cloneName = nameInput?.value?.trim();
+            if (!cloneName) {
+                showNotification('Please enter a name for this voice clone', 'error');
+                nameInput?.focus();
+                return;
+            }
+
             const progressDiv = document.getElementById('cloningProgress');
             const progressBar = document.getElementById('cloningBar');
             const progressPercent = document.getElementById('cloningPercent');
-            
+
             progressDiv.classList.remove('hidden');
-            
-            // Simulate cloning progress
-            let progress = 0;
-            const interval = setInterval(() => {
-                progress += Math.random() * 15;
-                if (progress > 100) progress = 100;
-                
-                progressBar.style.width = `${progress}%`;
-                progressPercent.textContent = `${Math.round(progress)}%`;
-                
-                if (progress >= 100) {
-                    clearInterval(interval);
-                    setTimeout(() => {
-                        progressDiv.classList.add('hidden');
-                        showNotification('Voice clone created successfully!', 'success');
-                    }, 1000);
+            progressBar.style.width = '20%';
+            progressPercent.textContent = '20%';
+
+            try {
+                // Convert audio to base64
+                const arrayBuffer = await audioBlob.arrayBuffer();
+                const audio_b64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+
+                progressBar.style.width = '50%';
+                progressPercent.textContent = '50%';
+
+                // Upload to Fal.ai storage
+                const token = await getAuthToken();
+                const resp = await fetch('/api/fal', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ action: 'upload_audio', audio_b64, filename, content_type: contentType })
+                });
+
+                progressBar.style.width = '80%';
+                progressPercent.textContent = '80%';
+
+                if (!resp.ok) {
+                    const err = await resp.json();
+                    throw new Error(err.error || `Upload failed (${resp.status})`);
                 }
-            }, 500);
+
+                const { url } = await resp.json();
+                if (!url) throw new Error('No URL returned from Fal.ai storage');
+
+                // Save to localStorage
+                const saved = JSON.parse(localStorage.getItem('clonedVoices') || '[]');
+                const idx = saved.findIndex(v => v.name === cloneName);
+                if (idx >= 0) saved[idx] = { name: cloneName, url };
+                else saved.push({ name: cloneName, url });
+                localStorage.setItem('clonedVoices', JSON.stringify(saved));
+                localStorage.setItem('clonedActiveVoice', cloneName);
+
+                progressBar.style.width = '100%';
+                progressPercent.textContent = '100%';
+
+                setTimeout(() => {
+                    progressDiv.classList.add('hidden');
+                    progressBar.style.width = '0%';
+                    showNotification(`Voice clone "${cloneName}" saved and ready to use!`, 'success');
+                    if (nameInput) nameInput.value = '';
+                    renderClonedVoicesList();
+                    populateVoiceOptions();
+                }, 800);
+
+            } catch (err) {
+                progressDiv.classList.add('hidden');
+                progressBar.style.width = '0%';
+                showNotification(`Clone failed: ${err.message}`, 'error');
+            }
         }
         
         // Setup word count monitoring on page load
@@ -7534,26 +7612,24 @@ Format as clean, readable text ready for narration.`;
                 return;
             }
 
-            const apiKey = getOpenAIApiKey();
-            if (!apiKey) {
-                showNotification('Voice preview requires an OpenAI API key. Add one in Config → OpenAI Key.', 'error');
+            // Use active cloned voice from localStorage
+            const activeName = localStorage.getItem('clonedActiveVoice');
+            const saved = JSON.parse(localStorage.getItem('clonedVoices') || '[]');
+            const cloneVoice = activeName ? saved.find(v => v.name === activeName) : saved[0];
+
+            if (!cloneVoice) {
+                showNotification('No cloned voice available. Upload a sample and initialize first.', 'error');
                 return;
             }
 
-            showNotification('Generating voice preview...', 'info');
+            showNotification(`Previewing with "${cloneVoice.name}" via Fal.ai Chatterbox...`, 'info');
 
             try {
-                const voice = document.getElementById('voiceSelection')?.value || 'alloy';
-                const speed = parseFloat(document.getElementById('speechRate')?.value || 1.0);
-
-                const audioBlob = await generateChapterAudio(text, voice, speed, apiKey);
+                const audioBlob = await generateChatterboxAudio(text, null, cloneVoice.url);
                 const audioUrl = URL.createObjectURL(audioBlob);
-                
-                // Play the preview
                 const audio = new Audio(audioUrl);
                 audio.play();
-                
-                showNotification('Voice preview generated successfully!', 'success');
+                showNotification('Clone preview ready!', 'success');
             } catch (error) {
                 showNotification(`Preview failed: ${error.message}`, 'error');
             }
@@ -8183,6 +8259,21 @@ Format as clean, readable text ready for narration.`;
             } catch (e) {
                 console.warn('Cartesia voices fetch failed, using fallback list:', e.message);
                 cartesiaFallbackVoices.forEach(v => addCartesiaFallback(cartesiaOptgroup, v));
+            }
+
+            // ── My Cloned Voices (Fal.ai Chatterbox) — inserted at top ──
+            const clonedVoices = JSON.parse(localStorage.getItem('clonedVoices') || '[]');
+            if (clonedVoices.length > 0) {
+                const cloneGrp = document.createElement('optgroup');
+                cloneGrp.label = '🎙️ My Cloned Voices (Fal.ai)';
+                clonedVoices.forEach(v => {
+                    const opt = document.createElement('option');
+                    opt.value = 'clone_' + v.name;
+                    opt.textContent = v.name + ' — Cloned';
+                    opt.dataset.provider = 'clone';
+                    cloneGrp.appendChild(opt);
+                });
+                voiceSelect.insertBefore(cloneGrp, voiceSelect.firstChild);
             }
 
             // Default to first Cartesia voice
@@ -9398,6 +9489,53 @@ Format as clean, readable text ready for narration.`;
             document.getElementById('voiceClipUpload').value = '';
         }
 
+        function renderClonedVoicesList() {
+            const container = document.getElementById('clonedVoicesList');
+            const panel = document.getElementById('savedClonedVoices');
+            if (!container) return;
+            const saved = JSON.parse(localStorage.getItem('clonedVoices') || '[]');
+            if (saved.length === 0) {
+                if (panel) panel.classList.add('hidden');
+                return;
+            }
+            if (panel) panel.classList.remove('hidden');
+            const active = localStorage.getItem('clonedActiveVoice') || '';
+            container.innerHTML = '';
+            saved.forEach(v => {
+                const isActive = v.name === active;
+                const div = document.createElement('div');
+                div.className = 'flex items-center justify-between bg-theme-primary p-2 rounded-lg border ' + (isActive ? 'border-cyan-400' : 'border-gray-700');
+                div.innerHTML = `
+                    <div class="flex items-center space-x-2">
+                        <i class="fas fa-dna text-xs ${isActive ? 'text-cyan-400' : 'text-gray-500'}"></i>
+                        <span class="text-sm ${isActive ? 'text-cyan-300 font-semibold' : ''}">${v.name}</span>
+                        ${isActive ? '<span class="text-xs text-cyan-500">(active)</span>' : ''}
+                    </div>
+                    <div class="flex space-x-2">
+                        ${!isActive ? `<button onclick="setActiveClonedVoice('${v.name.replace(/'/g, "\\'")}')" class="text-xs text-cyan-400 hover:text-cyan-300">Use</button>` : ''}
+                        <button onclick="deleteClonedVoice('${v.name.replace(/'/g, "\\'")}')" class="text-xs text-red-400 hover:text-red-300">Delete</button>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function setActiveClonedVoice(name) {
+            localStorage.setItem('clonedActiveVoice', name);
+            showNotification(`"${name}" set as active clone voice`, 'success');
+            renderClonedVoicesList();
+        }
+
+        function deleteClonedVoice(name) {
+            if (!confirm(`Delete cloned voice "${name}"?`)) return;
+            let saved = JSON.parse(localStorage.getItem('clonedVoices') || '[]');
+            saved = saved.filter(v => v.name !== name);
+            localStorage.setItem('clonedVoices', JSON.stringify(saved));
+            if (localStorage.getItem('clonedActiveVoice') === name) localStorage.removeItem('clonedActiveVoice');
+            renderClonedVoicesList();
+            populateVoiceOptions();
+        }
+
         function renderSavedVoicesList() {
             const container = document.getElementById('savedVoicesList');
             if (!container) return;
@@ -9613,19 +9751,20 @@ Format as clean, readable text ready for narration.`;
             return new Blob([bytes], { type: contentType || 'audio/wav' });
         }
 
-        // ── Fal.ai Chatterbox Classic — 32 custom MP3 voice references ──
-        async function generateChatterboxAudio(text, voiceFileName = null) {
-            console.log('Generating Chatterbox Classic audio via Fal.ai...');
+        // ── Fal.ai Chatterbox Classic — voice cloning with uploaded reference audio ──
+        async function generateChatterboxAudio(text, voiceFileName = null, audioUrl = null) {
+            console.log('Generating Chatterbox audio via Fal.ai...');
             const ctrl = getChatterboxControlValues();
             const BASE_VOICE_URL = 'https://authorr-ai.pages.dev/';
 
+            const resolvedUrl = audioUrl || (voiceFileName ? BASE_VOICE_URL + encodeURIComponent(voiceFileName) : null);
             const inputPayload = {
                 text,
                 exaggeration: ctrl.exaggeration,
                 cfg:          ctrl.cfg_weight,
                 temperature:  ctrl.temperature,
                 ...(ctrl.seed !== undefined ? { seed: ctrl.seed } : {}),
-                ...(voiceFileName ? { audio_url: BASE_VOICE_URL + encodeURIComponent(voiceFileName) } : {})
+                ...(resolvedUrl ? { audio_url: resolvedUrl } : {})
             };
 
             const audioBlob = await falSubmitAndPoll('fal-ai/chatterbox/text-to-speech', inputPayload, 'Chatterbox Classic');
@@ -9764,7 +9903,16 @@ Format as clean, readable text ready for narration.`;
         async function generateSegmentAudio(segment) {
             const voice = segment.voice || '';
 
-            // All voices are now Cartesia — extract voiceId regardless of prefix format
+            // Cloned voices (Fal.ai Chatterbox)
+            if (voice.startsWith('clone_')) {
+                const name = voice.replace('clone_', '');
+                const saved = JSON.parse(localStorage.getItem('clonedVoices') || '[]');
+                const cv = saved.find(v => v.name === name);
+                if (!cv) throw new Error(`Cloned voice "${name}" not found. Re-upload in Clone Station.`);
+                return await generateChatterboxAudio(segment.text, null, cv.url);
+            }
+
+            // All other voices are Cartesia — extract voiceId regardless of prefix format
             const voiceId = voice.replace('cartesia_', '');
             const blob = await generateCartesiaAudio(segment.text, voiceId);
             return blob;
@@ -15686,6 +15834,7 @@ Format as clean, readable text ready for narration.`;
                 populateVoiceOptions();
                 populateNarratorVoices();
                 updateContentStatus(); // Check content status on load
+                renderClonedVoicesList(); // Show any already-saved clones
             }, 1000);
             
             // Add text area listener for character count
