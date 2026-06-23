@@ -6442,45 +6442,8 @@ Return the COMPLETE text, dramatically rewritten with visible personality and hu
                 let imageUrl;
 
                 if (imageProvider === 'cloudflare') {
-                    progressMessage.textContent = 'Generating cover with AI — please wait (up to 60 seconds)...';
-
-                    // Use Pollinations.ai with Flux — completely free, no API key, no signup
-                    const encodedPrompt = encodeURIComponent(prompt);
-                    const seed = Math.floor(Math.random() * 999999);
-                    const encodedNegative = encodeURIComponent(COVER_NEGATIVE_PROMPT);
-                    const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=768&height=1024&seed=${seed}&nologo=true&model=flux-realism&negative=${encodedNegative}&_cb=${Date.now()}`;
-
-                    // Pollinations can be slow — retry up to 3 times with increasing timeout
-                    let imgBlob = null;
-                    const maxAttempts = 3;
-                    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-                        try {
-                            progressMessage.textContent = attempt > 1
-                                ? `Attempt ${attempt}/${maxAttempts} — AI is still painting your cover...`
-                                : 'AI is generating your cover image — please wait...';
-
-                            const controller = new AbortController();
-                            const timeoutId = setTimeout(() => controller.abort(), 60000); // 60s timeout per attempt
-
-                            const pollResp = await fetch(pollinationsUrl, { signal: controller.signal });
-                            clearTimeout(timeoutId);
-
-                            if (pollResp.ok) {
-                                imgBlob = await pollResp.blob();
-                                if (imgBlob.size > 1000) break; // valid image received
-                            }
-                        } catch (fetchErr) {
-                            if (attempt === maxAttempts) throw new Error('Cover generation timed out. Please try again.');
-                            // Wait 5 seconds before retrying
-                            await new Promise(r => setTimeout(r, 5000));
-                        }
-                    }
-
-                    if (!imgBlob || imgBlob.size < 1000) {
-                        throw new Error('Image generation failed. Please try again in a moment.');
-                    }
-
-                    imageUrl = URL.createObjectURL(imgBlob);
+                    progressMessage.textContent = 'Generating cover with Flux Pro — please wait (up to 60 seconds)...';
+                    imageUrl = await generateFluxProImage(prompt);
 
                 } else {
                     // Fall back to DALL-E
@@ -9633,6 +9596,70 @@ Format as clean, readable text ready for narration.`;
             // voiceValue is like 'cbturbo_brandy_ny' — strip prefix to get key
             const key = voiceValue.replace('cbturbo_', '');
             return VOICE_FILE_MAP[key] || null;
+        }
+
+        // ── Fal.ai Flux Pro image generation — queue submit → poll → image blob ──
+        async function generateFluxProImage(prompt) {
+            const token = await getAuthToken();
+            if (!token) throw new Error('Please log in to use Authorr AI.');
+            const headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` };
+            const modelPath = 'fal-ai/flux-pro/v1.1';
+
+            const payload = {
+                prompt,
+                image_size: { width: 768, height: 1024 },
+                num_inference_steps: 28,
+                guidance_scale: 3.5,
+                num_images: 1,
+                safety_tolerance: '2',
+                output_format: 'jpeg'
+            };
+
+            // Submit to queue
+            const submitResp = await fetch('/api/fal', {
+                method: 'POST', headers,
+                body: JSON.stringify({ action: 'submit', model: modelPath, payload })
+            });
+            if (!submitResp.ok) throw new Error(`Flux Pro submit failed: ${await submitResp.text().catch(() => submitResp.status)}`);
+            const { request_id, status_url, response_url } = await submitResp.json();
+            if (!request_id) throw new Error('Flux Pro: no request_id from queue');
+            console.log('Flux Pro queued:', request_id);
+
+            // Poll until COMPLETED (max 3 min)
+            for (let i = 0; i < 120; i++) {
+                await new Promise(r => setTimeout(r, 1500));
+                const statusResp = await fetch('/api/fal', {
+                    method: 'POST', headers,
+                    body: JSON.stringify({ action: 'status', model: modelPath, request_id, status_url })
+                });
+                if (!statusResp.ok) continue;
+                const { status } = await statusResp.json();
+                if (status === 'COMPLETED') break;
+                if (status === 'FAILED') throw new Error('Flux Pro: image generation failed');
+            }
+
+            // Get result
+            const resultResp = await fetch('/api/fal', {
+                method: 'POST', headers,
+                body: JSON.stringify({ action: 'result', model: modelPath, request_id, response_url })
+            });
+            if (!resultResp.ok) throw new Error('Flux Pro: failed to fetch result');
+            const result = await resultResp.json();
+            const imageUrl = result?.images?.[0]?.url;
+            if (!imageUrl) throw new Error('Flux Pro: no image URL in result');
+            console.log('Flux Pro image URL:', imageUrl);
+
+            // Fetch image blob (proxy through server to avoid CORS)
+            const imgResp = await fetch('/api/fal', {
+                method: 'POST', headers,
+                body: JSON.stringify({ action: 'fetch_audio', url: imageUrl })
+            });
+            if (!imgResp.ok) throw new Error('Flux Pro: image proxy failed');
+            const { audio: base64, contentType } = await imgResp.json();
+            const binary = atob(base64);
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+            return URL.createObjectURL(new Blob([bytes], { type: contentType || 'image/jpeg' }));
         }
 
         // ── Shared Fal.ai runner — queue submit → poll → fetch audio ──
