@@ -1,5 +1,26 @@
 const { requireAuth, sendError } = require('./_auth');
 
+// Clean text before sending to Cartesia so symbols aren't read aloud
+function preprocessText(text) {
+  return text
+    // Strip === title === style dividers, keeping the title text
+    .replace(/={2,}\s*(.*?)\s*={2,}/g, '$1')
+    // Strip standalone === or --- or *** divider lines
+    .replace(/^[=\-*]{2,}\s*$/gm, '')
+    // Strip markdown headers (# ## ###) keeping the heading text
+    .replace(/^#{1,6}\s+/gm, '')
+    // Strip bold/italic markers
+    .replace(/\*{1,3}(.*?)\*{1,3}/g, '$1')
+    .replace(/_{1,2}(.*?)_{1,2}/g, '$1')
+    // Replace trailing comma at end of a chunk with a period
+    .replace(/,(\s*)$/m, '.$1')
+    // Collapse multiple blank lines
+    .replace(/\n{3,}/g, '\n\n')
+    // Collapse multiple spaces
+    .replace(/[ \t]{2,}/g, ' ')
+    .trim();
+}
+
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
   try { await requireAuth(req); } catch (err) { return sendError(res, err); }
@@ -22,16 +43,18 @@ module.exports = async function handler(req, res) {
     }
 
     if (action === 'tts') {
-      const { text, voice_id, model_id = 'sonic-2' } = req.body;
+      const { text, voice_id, model_id = 'sonic-3.5' } = req.body;
       if (!text) return res.status(400).json({ error: 'Missing text' });
       if (!voice_id) return res.status(400).json({ error: 'Missing voice_id' });
+
+      const cleanedText = preprocessText(text);
 
       const resp = await fetch('https://api.cartesia.ai/tts/bytes', {
         method: 'POST',
         headers,
         body: JSON.stringify({
           model_id,
-          transcript: text,
+          transcript: cleanedText,
           voice: { mode: 'id', id: voice_id },
           output_format: { container: 'wav', encoding: 'pcm_f32le', sample_rate: 44100 }
         })
