@@ -2247,6 +2247,7 @@
                                     <i class="fas fa-play mr-1"></i>Preview
                                 </button>
                             </div>
+                            <audio id="clonePreviewPlayer" controls class="w-full mt-2 hidden"></audio>
                         </div>
 
                         <!-- Wave animation — always reserves space above the recording box, invisible when not recording -->
@@ -8414,9 +8415,15 @@ Format as clean, readable text ready for narration.`;
             try {
                 const audioBlob = await generateChatterboxAudio(text, null, cloneVoice.url);
                 const audioUrl = URL.createObjectURL(audioBlob);
-                const audio = new Audio(audioUrl);
-                audio.play();
-                showNotification('Clone preview ready!', 'success');
+                const player = document.getElementById('clonePreviewPlayer');
+                if (player) {
+                    player.src = audioUrl;
+                    player.classList.remove('hidden');
+                    player.play().catch(() => {});  // Chrome may block autoplay after async wait — player is visible so user can click
+                } else {
+                    new Audio(audioUrl).play().catch(() => {});
+                }
+                showNotification('Clone preview ready! Press play if audio does not start automatically.', 'success');
             } catch (error) {
                 showNotification(`Preview failed: ${error.message}`, 'error');
             }
