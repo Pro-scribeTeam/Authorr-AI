@@ -6502,7 +6502,7 @@ Return the COMPLETE text, dramatically rewritten with visible personality and hu
             }
         }
         
-        async function initiateVoiceClone() {
+        async async function initiateVoiceClone() {
             const uploadInput = document.getElementById('voiceUpload');
             const nameInput = document.getElementById('voiceCloneName');
             const recordedEl = document.getElementById('recordedAudioEl');
@@ -8392,7 +8392,7 @@ Format as clean, readable text ready for narration.`;
             }
         }
 
-        async function previewCloneText() {
+        async async function previewCloneText() {
             const text = document.getElementById('cloneTextInput')?.value?.trim();
             if (!text) {
                 showNotification('Please enter some text to preview', 'error');
@@ -8489,7 +8489,7 @@ Format as clean, readable text ready for narration.`;
         let recordedChunks = [];
         let currentRecordingUrl = null;
 
-        async function startRecording() {
+        async async function startRecording() {
             try {
                 // Revoke previous recording blob to free memory
                 if (currentRecordingUrl) {
@@ -8518,11 +8518,15 @@ Format as clean, readable text ready for narration.`;
                 };
 
                 mediaRecorder.onstop = () => {
-                    const blob = new Blob(recordedChunks, { type: mediaRecorder.mimeType || 'audio/webm' });
+                    // Use the actual MIME type the browser recorded with.
+                    // Safari records audio/mp4; Chrome records audio/webm. Never force webm.
+                    const actualMime = mediaRecorder.mimeType || 'audio/mp4';
+                    const blob = new Blob(recordedChunks, { type: actualMime });
                     currentRecordingUrl = URL.createObjectURL(blob);
 
                     const recordedAudio = document.getElementById('recordedAudio');
                     const audioEl = document.getElementById('recordedAudioEl');
+                    audioEl.type = actualMime;
                     audioEl.src = currentRecordingUrl;
                     audioEl.load();
                     recordedAudio.classList.remove('hidden');
