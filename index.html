@@ -6502,7 +6502,7 @@ Return the COMPLETE text, dramatically rewritten with visible personality and hu
             }
         }
         
-        async async function initiateVoiceClone() {
+        async function initiateVoiceClone() {
             const uploadInput = document.getElementById('voiceUpload');
             const nameInput = document.getElementById('voiceCloneName');
             const recordedEl = document.getElementById('recordedAudioEl');
@@ -8392,7 +8392,7 @@ Format as clean, readable text ready for narration.`;
             }
         }
 
-        async async function previewCloneText() {
+        async function previewCloneText() {
             const text = document.getElementById('cloneTextInput')?.value?.trim();
             if (!text) {
                 showNotification('Please enter some text to preview', 'error');
@@ -8489,7 +8489,7 @@ Format as clean, readable text ready for narration.`;
         let recordedChunks = [];
         let currentRecordingUrl = null;
 
-        async async function startRecording() {
+        async function startRecording() {
             try {
                 // Revoke previous recording blob to free memory
                 if (currentRecordingUrl) {
