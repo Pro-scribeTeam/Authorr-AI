@@ -1891,6 +1891,118 @@
                         <button onclick="saveStory()" id="saveBtn" class="btn-primary px-3 py-1 rounded text-sm">
                             <i class="fas fa-save"></i> <span data-i18n="ws_save">Save</span>
                         </button>
+                        <button onclick="toggleTranslatePanel()" id="translateToggleBtn" class="btn-secondary px-3 py-1 rounded text-sm flex items-center gap-1" title="Translate story to another language">
+                            <i class="fas fa-language text-blue-400"></i> <span>Translate</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ── TRANSLATION PANEL ──────────────────────────────── -->
+                <div id="translatePanel" class="hidden mb-4 rounded-xl border border-blue-700 overflow-hidden" style="background:rgba(30,58,138,0.18)">
+                    <div class="px-4 py-3 border-b border-blue-800/50 flex items-center justify-between">
+                        <span class="font-semibold text-blue-300 flex items-center gap-2">
+                            <i class="fas fa-language"></i> Translate Your Story
+                        </span>
+                        <button onclick="toggleTranslatePanel()" class="text-theme-secondary hover:text-white text-sm"><i class="fas fa-times"></i></button>
+                    </div>
+                    <div class="px-4 py-4">
+                        <!-- From / To row -->
+                        <div class="flex flex-wrap items-center gap-3 mb-4">
+                            <div class="flex items-center gap-2">
+                                <label class="text-xs text-theme-secondary font-semibold uppercase tracking-wide whitespace-nowrap">Written in</label>
+                                <select id="translateFromLang" class="px-2 py-1.5 rounded-lg form-field bg-theme-primary text-theme-primary text-sm min-w-36">
+
+                            <option value="english">🇺🇸 English</option>
+                            <option value="spanish">🇪🇸 Spanish</option>
+                            <option value="french">🇫🇷 French</option>
+                            <option value="german">🇩🇪 German</option>
+                            <option value="portuguese">🇧🇷 Portuguese</option>
+                            <option value="italian">🇮🇹 Italian</option>
+                            <option value="hindi">🇮🇳 Hindi</option>
+                            <option value="arabic">🇸🇦 Arabic</option>
+                            <option value="chinese">🇨🇳 Chinese (Simplified)</option>
+                            <option value="japanese">🇯🇵 Japanese</option>
+                            <option value="korean">🇰🇷 Korean</option>
+                            <option value="russian">🇷🇺 Russian</option>
+                            <option value="dutch">🇳🇱 Dutch</option>
+                            <option value="polish">🇵🇱 Polish</option>
+                            <option value="swedish">🇸🇪 Swedish</option>
+                            <option value="norwegian">🇳🇴 Norwegian</option>
+                            <option value="danish">🇩🇰 Danish</option>
+                            <option value="turkish">🇹🇷 Turkish</option>
+                                </select>
+                            </div>
+                            <div class="flex items-center text-blue-400 text-lg font-bold px-2">→</div>
+                            <div class="flex items-center gap-2">
+                                <label class="text-xs text-theme-secondary font-semibold uppercase tracking-wide whitespace-nowrap">Translate to</label>
+                                <select id="translateToLang" class="px-2 py-1.5 rounded-lg form-field bg-theme-primary text-theme-primary text-sm min-w-36">
+
+                            <option value="english">🇺🇸 English</option>
+                            <option value="spanish">🇪🇸 Spanish</option>
+                            <option value="french">🇫🇷 French</option>
+                            <option value="german">🇩🇪 German</option>
+                            <option value="portuguese">🇧🇷 Portuguese</option>
+                            <option value="italian">🇮🇹 Italian</option>
+                            <option value="hindi">🇮🇳 Hindi</option>
+                            <option value="arabic">🇸🇦 Arabic</option>
+                            <option value="chinese">🇨🇳 Chinese (Simplified)</option>
+                            <option value="japanese">🇯🇵 Japanese</option>
+                            <option value="korean">🇰🇷 Korean</option>
+                            <option value="russian">🇷🇺 Russian</option>
+                            <option value="dutch">🇳🇱 Dutch</option>
+                            <option value="polish">🇵🇱 Polish</option>
+                            <option value="swedish">🇸🇪 Swedish</option>
+                            <option value="norwegian">🇳🇴 Norwegian</option>
+                            <option value="danish">🇩🇰 Danish</option>
+                            <option value="turkish">🇹🇷 Turkish</option>
+                                </select>
+                            </div>
+                            <button onclick="translateStory()" id="translateBtn"
+                                class="btn-primary px-5 py-2 rounded-lg text-sm font-bold flex items-center gap-2 ml-auto">
+                                <i class="fas fa-language"></i> Translate Book
+                            </button>
+                        </div>
+                        <p class="text-xs text-theme-secondary mb-3">
+                            <i class="fas fa-info-circle text-blue-400 mr-1"></i>
+                            Your story will be translated chapter by chapter, preserving all character names, dialogue style, and structure.
+                            Long books may take 1–2 minutes.
+                        </p>
+
+                        <!-- Progress -->
+                        <div id="translateProgress" class="hidden mb-3">
+                            <div class="flex items-center gap-2 text-sm text-cyan-400 mb-2">
+                                <i class="fas fa-spinner fa-spin"></i>
+                                <span id="translateProgressText">Translating...</span>
+                            </div>
+                            <div class="w-full bg-gray-700 rounded-full h-2">
+                                <div id="translateProgressBar" class="bg-cyan-400 h-2 rounded-full transition-all duration-500" style="width:0%"></div>
+                            </div>
+                        </div>
+
+                        <!-- Result -->
+                        <div id="translateResult" class="hidden">
+                            <div class="flex items-center justify-between mb-2 flex-wrap gap-2">
+                                <span class="text-sm text-green-400 font-semibold flex items-center gap-1">
+                                    <i class="fas fa-check-circle"></i> Translation complete!
+                                </span>
+                                <div class="flex gap-2">
+                                    <button onclick="applyTranslation()" class="btn-primary px-4 py-1.5 rounded-lg text-sm font-bold flex items-center gap-1">
+                                        <i class="fas fa-check"></i> Apply to Editor
+                                    </button>
+                                    <button onclick="copyTranslation()" class="btn-secondary px-3 py-1.5 rounded-lg text-sm flex items-center gap-1">
+                                        <i class="fas fa-copy"></i> Copy
+                                    </button>
+                                    <button onclick="discardTranslation()" class="btn-secondary px-3 py-1.5 rounded-lg text-sm text-red-400">
+                                        Discard
+                                    </button>
+                                </div>
+                            </div>
+                            <textarea id="translatedPreview" class="w-full px-3 py-2 rounded-lg form-field bg-theme-primary text-theme-primary text-sm h-48 resize-y" readonly placeholder="Translation will appear here..."></textarea>
+                            <p class="text-xs text-theme-secondary mt-1">
+                                <i class="fas fa-lightbulb text-yellow-400 mr-1"></i>
+                                "Apply to Editor" replaces your story with the translation and sets the story language. You can always Undo (Ctrl+Z).
+                            </p>
+                        </div>
                     </div>
                 </div>
                 
@@ -4979,6 +5091,161 @@ ${genreNote}
 Return the COMPLETE text, dramatically rewritten with visible personality and human imperfection throughout.`;
         }
 
+        
+        // ── STORY TRANSLATION ────────────────────────────────────────────────────
+        function toggleTranslatePanel() {
+            const panel = document.getElementById('translatePanel');
+            if (!panel) return;
+            const isHidden = panel.classList.contains('hidden');
+            panel.classList.toggle('hidden');
+            if (isHidden) {
+                // Sync "from" language with the story language dropdown
+                const storyLang = document.getElementById('storyLanguage');
+                const fromLang  = document.getElementById('translateFromLang');
+                if (storyLang && fromLang) fromLang.value = storyLang.value;
+                // Default "to" to Spanish if from is English, else English
+                const toLang = document.getElementById('translateToLang');
+                if (toLang && fromLang) {
+                    toLang.value = fromLang.value === 'english' ? 'spanish' : 'english';
+                }
+            }
+        }
+
+        function discardTranslation() {
+            document.getElementById('translateResult').classList.add('hidden');
+            document.getElementById('translatedPreview').value = '';
+            window._translatedText = null;
+        }
+
+        function copyTranslation() {
+            const preview = document.getElementById('translatedPreview');
+            if (!preview || !preview.value) return;
+            navigator.clipboard.writeText(preview.value).then(() => {
+                showNotification('Translation copied to clipboard!', 'success');
+            });
+        }
+
+        function applyTranslation() {
+            const text = window._translatedText;
+            if (!text) return;
+            const editor = document.getElementById('storyEditor');
+            if (!editor) return;
+
+            // Save undo state
+            if (typeof saveEditState === 'function') saveEditState();
+
+            editor.value = text;
+            editor.dispatchEvent(new Event('input'));
+
+            // Update story language dropdown to the target language
+            const toLangEl = document.getElementById('translateToLang');
+            const storyLangEl = document.getElementById('storyLanguage');
+            if (toLangEl && storyLangEl) {
+                storyLangEl.value = toLangEl.value;
+                if (typeof saveStoryLanguage === 'function') saveStoryLanguage();
+            }
+
+            discardTranslation();
+            toggleTranslatePanel();
+            showNotification('Translation applied! Story is now in the target language.', 'success');
+        }
+
+        async function translateStory() {
+            const fromLangEl = document.getElementById('translateFromLang');
+            const toLangEl   = document.getElementById('translateToLang');
+            const editor     = document.getElementById('storyEditor');
+
+            if (!fromLangEl || !toLangEl || !editor) return;
+
+            const fromLang = fromLangEl.options[fromLangEl.selectedIndex].text.replace(/[^a-zA-Z ]/g,'').trim();
+            const toLang   = toLangEl.options[toLangEl.selectedIndex].text.replace(/[^a-zA-Z ]/g,'').trim();
+            const storyText = editor.value.trim();
+
+            if (!storyText) {
+                showNotification('Please write or generate a story before translating.', 'warning');
+                return;
+            }
+            if (fromLangEl.value === toLangEl.value) {
+                showNotification('Source and target language are the same. Please choose a different target.', 'warning');
+                return;
+            }
+
+            // UI: show progress, hide result
+            const progressEl = document.getElementById('translateProgress');
+            const progressBar = document.getElementById('translateProgressBar');
+            const progressText = document.getElementById('translateProgressText');
+            const resultEl = document.getElementById('translateResult');
+            const btn = document.getElementById('translateBtn');
+
+            progressEl.classList.remove('hidden');
+            resultEl.classList.add('hidden');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Translating...';
+
+            try {
+                // Split story into chunks of ~3500 chars each (by paragraph groups)
+                const chunks = splitIntoChunks(storyText, 3500);
+                const total  = chunks.length;
+                const translatedChunks = [];
+
+                for (let i = 0; i < chunks.length; i++) {
+                    const pct = Math.round(((i) / total) * 100);
+                    progressBar.style.width = pct + '%';
+                    progressText.textContent = total === 1
+                        ? `Translating from ${fromLang} to ${toLang}...`
+                        : `Translating chunk ${i + 1} of ${total} (${pct}%)...`;
+
+                    const systemPrompt = `You are a professional literary translator. Translate the following story excerpt from ${fromLang} to ${toLang}. Rules:
+- Preserve ALL character names exactly as written
+- Preserve all chapter headings and structure
+- Maintain the author's style, tone, and voice
+- Keep dialogue formatting (quotes, paragraph breaks)
+- Do NOT add any commentary, notes, or preamble
+- Return ONLY the translated text`;
+
+                    const translated = await callOpenAI([
+                        { role: 'system', content: systemPrompt },
+                        { role: 'user',   content: chunks[i] }
+                    ]);
+                    translatedChunks.push(translated.trim());
+                }
+
+                progressBar.style.width = '100%';
+                progressText.textContent = 'Complete!';
+
+                const finalText = translatedChunks.join('\n\n');
+                window._translatedText = finalText;
+
+                document.getElementById('translatedPreview').value = finalText;
+                resultEl.classList.remove('hidden');
+                setTimeout(() => progressEl.classList.add('hidden'), 800);
+
+            } catch (err) {
+                showNotification('Translation failed: ' + err.message, 'error');
+                progressEl.classList.add('hidden');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-language mr-1"></i> Translate Book';
+            }
+        }
+
+        function splitIntoChunks(text, maxChars) {
+            // Split by paragraph double-newlines, group into maxChars chunks
+            const paragraphs = text.split(/\n\n+/);
+            const chunks = [];
+            let current = '';
+            for (const para of paragraphs) {
+                if ((current + '\n\n' + para).length > maxChars && current) {
+                    chunks.push(current.trim());
+                    current = para;
+                } else {
+                    current = current ? current + '\n\n' + para : para;
+                }
+            }
+            if (current.trim()) chunks.push(current.trim());
+            return chunks.length ? chunks : [text];
+        }
+
         async function humanizeText() {
             const intensity = window._humanizeIntensity || 'moderate';
             const scope = window._humanizeScope || 'current';
@@ -7908,6 +8175,9 @@ Format as clean, readable text ready for narration.`;
             const lang = document.getElementById('storyLanguage')?.value || 'english';
             localStorage.setItem('storyLanguage', lang);
             if (storyData && storyData.settings) storyData.settings.language = lang;
+            // Keep translate-from in sync with story language
+            const fromEl = document.getElementById('translateFromLang');
+            if (fromEl) fromEl.value = lang;
             // Auto-switch narration voice to matching Cartesia language voice
             const langCodeMap = {
                 spanish:'es', french:'fr', german:'de', portuguese:'pt', italian:'it',
