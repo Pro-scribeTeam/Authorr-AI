@@ -2243,7 +2243,7 @@
                                       class="w-full px-3 py-2 rounded-lg form-field bg-theme-primary text-theme-primary h-20 resize-none text-sm"></textarea>
                             <div class="flex justify-between items-center mt-2 text-xs text-theme-secondary">
                                 <span id="textCharCount">0 characters</span>
-                                <button onclick="previewCloneText()" class="btn-secondary px-3 py-1 rounded text-xs">
+                                <button id="clonePreviewBtn" onclick="previewCloneText()" class="btn-secondary px-3 py-1 rounded text-xs">
                                     <i class="fas fa-play mr-1"></i>Preview
                                 </button>
                             </div>
@@ -8393,6 +8393,26 @@ Format as clean, readable text ready for narration.`;
             }
         }
 
+        let _clonePreviewUrl = null;
+
+        function playClonePreview() {
+            // Called when user clicks the "▶ Play Audio" button — direct user gesture, Chrome always allows this
+            const player = document.getElementById('clonePreviewPlayer');
+            if (player && _clonePreviewUrl) {
+                player.src = _clonePreviewUrl;
+                player.classList.remove('hidden');
+                player.play();
+            }
+            // Reset button back to Preview mode
+            const btn = document.getElementById('clonePreviewBtn');
+            if (btn) {
+                btn.innerHTML = '<i class="fas fa-play mr-1"></i>Preview';
+                btn.onclick = previewCloneText;
+                btn.disabled = false;
+                btn.classList.remove('bg-green-600', 'text-white');
+            }
+        }
+
         async function previewCloneText() {
             const text = document.getElementById('cloneTextInput')?.value?.trim();
             if (!text) {
@@ -8410,21 +8430,33 @@ Format as clean, readable text ready for narration.`;
                 return;
             }
 
-            showNotification(`Previewing with "${cloneVoice.name}" via Fal.ai Chatterbox...`, 'info');
+            // Show loading state on the button
+            const btn = document.getElementById('clonePreviewBtn');
+            if (btn) {
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Generating...';
+                btn.disabled = true;
+                btn.onclick = null;
+            }
+            showNotification(`Generating voice preview with "${cloneVoice.name}"... (30–60s)`, 'info');
 
             try {
                 const audioBlob = await generateChatterboxAudio(text, null, cloneVoice.url);
-                const audioUrl = URL.createObjectURL(audioBlob);
-                const player = document.getElementById('clonePreviewPlayer');
-                if (player) {
-                    player.src = audioUrl;
-                    player.classList.remove('hidden');
-                    player.play().catch(() => {});  // Chrome may block autoplay after async wait — player is visible so user can click
-                } else {
-                    new Audio(audioUrl).play().catch(() => {});
+                _clonePreviewUrl = URL.createObjectURL(audioBlob);
+
+                // Change button to "▶ Play Audio" — clicking it is a fresh user gesture Chrome allows
+                if (btn) {
+                    btn.innerHTML = '<i class="fas fa-volume-up mr-1"></i>▶ Play Audio';
+                    btn.disabled = false;
+                    btn.classList.add('bg-green-600', 'text-white');
+                    btn.onclick = playClonePreview;
                 }
-                showNotification('Clone preview ready! Press play if audio does not start automatically.', 'success');
+                showNotification('Voice ready! Click "▶ Play Audio" to hear your clone.', 'success');
             } catch (error) {
+                if (btn) {
+                    btn.innerHTML = '<i class="fas fa-play mr-1"></i>Preview';
+                    btn.disabled = false;
+                    btn.onclick = previewCloneText;
+                }
                 showNotification(`Preview failed: ${error.message}`, 'error');
             }
         }
