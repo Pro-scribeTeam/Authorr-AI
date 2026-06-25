@@ -70,7 +70,30 @@ module.exports = async function handler(req, res) {
       });
     }
 
-    return res.status(400).json({ error: 'Invalid action. Use "tts" or "voices".' });
+    if (action === 'clone') {
+      const { audio_b64, name, language = 'en', content_type = 'audio/webm' } = req.body;
+      if (!audio_b64) return res.status(400).json({ error: 'Missing audio_b64' });
+      if (!name) return res.status(400).json({ error: 'Missing name' });
+
+      const audioBuffer = Buffer.from(audio_b64, 'base64');
+      const ext = content_type.includes('mp4') ? 'm4a' : content_type.includes('webm') ? 'webm' : 'wav';
+
+      const form = new FormData();
+      form.append('clip', new Blob([audioBuffer], { type: content_type }), `recording.${ext}`);
+      form.append('name', name);
+      form.append('language', language);
+
+      const cloneResp = await fetch('https://api.cartesia.ai/voices/clone', {
+        method: 'POST',
+        headers: { 'X-API-Key': apiKey, 'Cartesia-Version': '2024-06-10' },
+        body: form
+      });
+      const cloneData = await cloneResp.json();
+      if (!cloneResp.ok) return res.status(cloneResp.status).json({ error: cloneData?.error || cloneData?.message || JSON.stringify(cloneData) });
+      return res.json({ id: cloneData.id, name: cloneData.name });
+    }
+
+    return res.status(400).json({ error: 'Invalid action. Use "tts", "voices", or "clone".' });
   } catch (err) {
     return sendError(res, err);
   }

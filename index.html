@@ -6547,19 +6547,24 @@ Return the COMPLETE text, dramatically rewritten with visible personality and hu
             progressPercent.textContent = '20%';
 
             try {
-                // Convert audio to base64
+                // Convert audio to base64 (chunked to avoid call stack overflow on large files)
                 const arrayBuffer = await audioBlob.arrayBuffer();
-                const audio_b64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+                const bytes = new Uint8Array(arrayBuffer);
+                let binary = '';
+                for (let i = 0; i < bytes.length; i += 8192) {
+                    binary += String.fromCharCode(...bytes.subarray(i, i + 8192));
+                }
+                const audio_b64 = btoa(binary);
 
                 progressBar.style.width = '50%';
                 progressPercent.textContent = '50%';
 
-                // Upload to Fal.ai storage
+                // Clone voice via Cartesia
                 const token = await getAuthToken();
-                const resp = await fetch('/api/fal', {
+                const resp = await fetch('/api/cartesia', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                    body: JSON.stringify({ action: 'upload_audio', audio_b64, filename, content_type: contentType })
+                    body: JSON.stringify({ action: 'clone', audio_b64, name: cloneName, language: 'en', content_type: contentType })
                 });
 
                 progressBar.style.width = '80%';
@@ -6567,17 +6572,17 @@ Return the COMPLETE text, dramatically rewritten with visible personality and hu
 
                 if (!resp.ok) {
                     const err = await resp.json();
-                    throw new Error(err.error || `Upload failed (${resp.status})`);
+                    throw new Error(err.error || `Cloning failed (${resp.status})`);
                 }
 
-                const { url } = await resp.json();
-                if (!url) throw new Error('No URL returned from Fal.ai storage');
+                const { id: cartesiaId } = await resp.json();
+                if (!cartesiaId) throw new Error('No voice ID returned from Cartesia');
 
-                // Save to localStorage
+                // Save to localStorage with Cartesia voice ID
                 const saved = JSON.parse(localStorage.getItem('clonedVoices') || '[]');
                 const idx = saved.findIndex(v => v.name === cloneName);
-                if (idx >= 0) saved[idx] = { name: cloneName, url };
-                else saved.push({ name: cloneName, url });
+                if (idx >= 0) saved[idx] = { name: cloneName, cartesiaId };
+                else saved.push({ name: cloneName, cartesiaId });
                 localStorage.setItem('clonedVoices', JSON.stringify(saved));
                 localStorage.setItem('clonedActiveVoice', cloneName);
 
@@ -8440,10 +8445,11 @@ Format as clean, readable text ready for narration.`;
                 btn.disabled = true;
                 btn.onclick = null;
             }
-            showNotification(`Generating voice preview with "${cloneVoice.name}"... (30–60s)`, 'info');
+            showNotification(`Generating voice preview with "${cloneVoice.name}"...`, 'info');
 
             try {
-                const audioBlob = await generateChatterboxAudio(text, null, cloneVoice.url);
+                if (!cloneVoice.cartesiaId) throw new Error('Clone was created with old system — please delete it and re-initialize.');
+                const audioBlob = await generateCartesiaAudio(text, cloneVoice.cartesiaId);
                 _clonePreviewUrl = URL.createObjectURL(audioBlob);
 
                 // Change button to "▶ Play Audio" — clicking it is a fresh user gesture Chrome allows
@@ -9107,7 +9113,7 @@ Format as clean, readable text ready for narration.`;
             const clonedVoices = JSON.parse(localStorage.getItem('clonedVoices') || '[]');
             if (clonedVoices.length > 0) {
                 const cloneGrp = document.createElement('optgroup');
-                cloneGrp.label = '🎙️ My Cloned Voices (Fal.ai)';
+                cloneGrp.label = '🎙️ My Cloned Voices (Cartesia)';
                 clonedVoices.forEach(v => {
                     const opt = document.createElement('option');
                     opt.value = 'clone_' + v.name;
@@ -10816,13 +10822,14 @@ Format as clean, readable text ready for narration.`;
         async function generateSegmentAudio(segment) {
             const voice = segment.voice || '';
 
-            // Cloned voices (Fal.ai Chatterbox)
+            // Cloned voices (Cartesia)
             if (voice.startsWith('clone_')) {
                 const name = voice.replace('clone_', '');
                 const saved = JSON.parse(localStorage.getItem('clonedVoices') || '[]');
                 const cv = saved.find(v => v.name === name);
-                if (!cv) throw new Error(`Cloned voice "${name}" not found. Re-upload in Clone Station.`);
-                return await generateChatterboxAudio(segment.text, null, cv.url);
+                if (!cv) throw new Error(`Cloned voice "${name}" not found. Re-initialize in Clone Station.`);
+                if (!cv.cartesiaId) throw new Error(`Clone "${name}" was created with old system — please delete and re-initialize.`);
+                return await generateCartesiaAudio(segment.text, cv.cartesiaId);
             }
 
             // All other voices are Cartesia — extract voiceId regardless of prefix format
