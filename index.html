@@ -6521,8 +6521,11 @@ Return the COMPLETE text, dramatically rewritten with visible personality and hu
             } else if (recordedEl && recordedEl.src && recordedEl.src.startsWith('blob:')) {
                 const resp = await fetch(recordedEl.src);
                 audioBlob = await resp.blob();
-                filename = 'recording.wav';
-                contentType = 'audio/wav';
+                // Use the actual recorded MIME type (Chrome = webm, Safari = mp4)
+                const actualType = audioBlob.type || (mediaRecorder && mediaRecorder.mimeType) || 'audio/webm';
+                const ext = actualType.includes('mp4') ? 'm4a' : actualType.includes('webm') ? 'webm' : 'wav';
+                filename = `recording.${ext}`;
+                contentType = actualType;
             } else {
                 showNotification('Please upload or record a voice sample first', 'error');
                 return;
