@@ -8544,13 +8544,22 @@ Format as clean, readable text ready for narration.`;
 
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
+                // Boost mic gain so the recording is loud enough for Chatterbox to clone from
+                const audioCtx = new AudioContext();
+                const micSource = audioCtx.createMediaStreamSource(stream);
+                const gainNode = audioCtx.createGain();
+                gainNode.gain.value = 2.5;  // 2.5x boost — makes quiet mics audible
+                const boostedDest = audioCtx.createMediaStreamDestination();
+                micSource.connect(gainNode);
+                gainNode.connect(boostedDest);
+
                 // Pick a MIME type the browser actually supports
                 const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
                     ? 'audio/webm;codecs=opus'
                     : MediaRecorder.isTypeSupported('audio/webm')
                         ? 'audio/webm'
                         : '';
-                mediaRecorder = new MediaRecorder(stream, mimeType ? { mimeType } : {});
+                mediaRecorder = new MediaRecorder(boostedDest.stream, mimeType ? { mimeType } : {});
                 recordedChunks = [];
 
                 mediaRecorder.ondataavailable = (event) => {
@@ -10659,10 +10668,13 @@ Format as clean, readable text ready for narration.`;
             const BASE_VOICE_URL = 'https://authorr-ai.pages.dev/';
 
             const resolvedUrl = audioUrl || (voiceFileName ? BASE_VOICE_URL + encodeURIComponent(voiceFileName) : null);
+            // When cloning from a reference voice, use high cfg (0.85) so Chatterbox
+            // closely follows the speaker's voice instead of using a generic voice.
+            const cfgValue = resolvedUrl ? 0.85 : ctrl.cfg_weight;
             const inputPayload = {
                 text,
                 exaggeration: ctrl.exaggeration,
-                cfg:          ctrl.cfg_weight,
+                cfg:          cfgValue,
                 temperature:  ctrl.temperature,
                 ...(ctrl.seed !== undefined ? { seed: ctrl.seed } : {}),
                 ...(resolvedUrl ? { audio_url: resolvedUrl } : {})
