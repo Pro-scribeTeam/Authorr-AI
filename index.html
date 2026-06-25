@@ -1548,6 +1548,102 @@
         </section>
 
         <!-- ═══════════════════════════════════════════════
+             PRICING
+        ═══════════════════════════════════════════════ -->
+        <section id="pricingSection" class="container mx-auto px-4 py-20">
+            <div class="text-center mb-14">
+                <span class="text-cyan-400 font-semibold uppercase tracking-widest text-sm">Simple Pricing</span>
+                <h2 class="text-3xl md:text-4xl font-bold mt-2">Choose your plan</h2>
+                <p class="text-theme-secondary mt-4 max-w-xl mx-auto">Credits power every narration. 1 credit = 1 character of AI audio — no hidden fees, cancel anytime.</p>
+            </div>
+            <div class="grid md:grid-cols-5 gap-4 max-w-6xl mx-auto">
+
+                <!-- Free -->
+                <div class="bg-theme-secondary rounded-2xl border-2 border-theme p-6 flex flex-col">
+                    <div class="text-sm font-bold text-gray-400 uppercase tracking-wide mb-2">Free</div>
+                    <div class="text-4xl font-black mb-1">$0</div>
+                    <div class="text-xs text-theme-secondary mb-4">forever</div>
+                    <div class="text-cyan-400 font-bold text-lg mb-1">10,000</div>
+                    <div class="text-xs text-theme-secondary mb-6">credits / month<br><span class="text-gray-500">~1 short story</span></div>
+                    <ul class="text-sm space-y-2 text-theme-secondary mb-6 flex-1">
+                        <li><i class="fas fa-check text-cyan-400 mr-2"></i>AI writing</li>
+                        <li><i class="fas fa-check text-cyan-400 mr-2"></i>1 Cartesia voice</li>
+                        <li><i class="fas fa-check text-cyan-400 mr-2"></i>Basic export</li>
+                        <li><i class="fas fa-times text-gray-600 mr-2"></i>Voice cloning</li>
+                    </ul>
+                    <button onclick="showPage('workspace')" class="btn-secondary w-full py-2 rounded-lg text-sm font-semibold">Get Started</button>
+                </div>
+
+                <!-- Starter -->
+                <div class="bg-theme-secondary rounded-2xl border-2 border-theme p-6 flex flex-col">
+                    <div class="text-sm font-bold text-cyan-400 uppercase tracking-wide mb-2">Starter</div>
+                    <div class="text-4xl font-black mb-1">$19</div>
+                    <div class="text-xs text-theme-secondary mb-4">/ month</div>
+                    <div class="text-cyan-400 font-bold text-lg mb-1">150,000</div>
+                    <div class="text-xs text-theme-secondary mb-6">credits / month<br><span class="text-gray-500">~3 short books</span></div>
+                    <ul class="text-sm space-y-2 text-theme-secondary mb-6 flex-1">
+                        <li><i class="fas fa-check text-cyan-400 mr-2"></i>Everything in Free</li>
+                        <li><i class="fas fa-check text-cyan-400 mr-2"></i>All Cartesia voices</li>
+                        <li><i class="fas fa-check text-cyan-400 mr-2"></i>Voice cloning</li>
+                        <li><i class="fas fa-check text-cyan-400 mr-2"></i>All export formats</li>
+                    </ul>
+                    <button onclick="showUpgradeModal('starter')" class="btn-secondary w-full py-2 rounded-lg text-sm font-semibold">Upgrade</button>
+                </div>
+
+                <!-- Author — POPULAR -->
+                <div class="bg-gradient-to-b from-cyan-900/60 to-theme-secondary rounded-2xl border-2 border-cyan-400 p-6 flex flex-col relative">
+                    <div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-cyan-400 text-black text-xs font-black px-3 py-1 rounded-full">MOST POPULAR</div>
+                    <div class="text-sm font-bold text-cyan-400 uppercase tracking-wide mb-2 mt-2">Author</div>
+                    <div class="text-4xl font-black mb-1">$49</div>
+                    <div class="text-xs text-theme-secondary mb-4">/ month</div>
+                    <div class="text-cyan-400 font-bold text-lg mb-1">450,000</div>
+                    <div class="text-xs text-theme-secondary mb-6">credits / month<br><span class="text-gray-500">~9 full books</span></div>
+                    <ul class="text-sm space-y-2 text-theme-secondary mb-6 flex-1">
+                        <li><i class="fas fa-check text-cyan-400 mr-2"></i>Everything in Starter</li>
+                        <li><i class="fas fa-check text-cyan-400 mr-2"></i>Priority generation</li>
+                        <li><i class="fas fa-check text-cyan-400 mr-2"></i>Cover image AI</li>
+                        <li><i class="fas fa-check text-cyan-400 mr-2"></i>SFX & music AI</li>
+                    </ul>
+                    <button onclick="showUpgradeModal('author')" class="bg-cyan-400 text-black w-full py-2 rounded-lg text-sm font-bold hover:bg-cyan-300 transition-colors">Upgrade</button>
+                </div>
+
+                <!-- Publisher -->
+                <div class="bg-theme-secondary rounded-2xl border-2 border-theme p-6 flex flex-col">
+                    <div class="text-sm font-bold text-purple-400 uppercase tracking-wide mb-2">Publisher</div>
+                    <div class="text-4xl font-black mb-1">$99</div>
+                    <div class="text-xs text-theme-secondary mb-4">/ month</div>
+                    <div class="text-cyan-400 font-bold text-lg mb-1">1,200,000</div>
+                    <div class="text-xs text-theme-secondary mb-6">credits / month<br><span class="text-gray-500">~25 full books</span></div>
+                    <ul class="text-sm space-y-2 text-theme-secondary mb-6 flex-1">
+                        <li><i class="fas fa-check text-cyan-400 mr-2"></i>Everything in Author</li>
+                        <li><i class="fas fa-check text-cyan-400 mr-2"></i>Team seats (3)</li>
+                        <li><i class="fas fa-check text-cyan-400 mr-2"></i>Bulk export</li>
+                        <li><i class="fas fa-check text-cyan-400 mr-2"></i>API access</li>
+                    </ul>
+                    <button onclick="showUpgradeModal('publisher')" class="btn-secondary w-full py-2 rounded-lg text-sm font-semibold">Upgrade</button>
+                </div>
+
+                <!-- Studio -->
+                <div class="bg-theme-secondary rounded-2xl border-2 border-theme p-6 flex flex-col">
+                    <div class="text-sm font-bold text-yellow-400 uppercase tracking-wide mb-2">Studio</div>
+                    <div class="text-4xl font-black mb-1">$249</div>
+                    <div class="text-xs text-theme-secondary mb-4">/ month</div>
+                    <div class="text-cyan-400 font-bold text-lg mb-1">3,000,000</div>
+                    <div class="text-xs text-theme-secondary mb-6">credits / month<br><span class="text-gray-500">~65 full books</span></div>
+                    <ul class="text-sm space-y-2 text-theme-secondary mb-6 flex-1">
+                        <li><i class="fas fa-check text-cyan-400 mr-2"></i>Everything in Publisher</li>
+                        <li><i class="fas fa-check text-cyan-400 mr-2"></i>Unlimited team seats</li>
+                        <li><i class="fas fa-check text-cyan-400 mr-2"></i>White-label exports</li>
+                        <li><i class="fas fa-check text-cyan-400 mr-2"></i>Dedicated support</li>
+                    </ul>
+                    <button onclick="showUpgradeModal('studio')" class="btn-secondary w-full py-2 rounded-lg text-sm font-semibold">Upgrade</button>
+                </div>
+
+            </div>
+            <p class="text-center text-xs text-gray-500 mt-8">All plans include a 7-day free trial. Credits reset monthly. 1 credit = 1 character of narration (~1,500 credits per finished minute of audio).</p>
+        </section>
+
+        <!-- ═══════════════════════════════════════════════
              FAQ
         ═══════════════════════════════════════════════ -->
         <section class="container mx-auto px-4 py-20">
@@ -3084,6 +3180,27 @@
                         <div class="bg-gray-800 rounded-lg p-4">
                             <div class="text-sm text-gray-400 mb-1">Account Status</div>
                             <div id="cfgUserStatus" class="font-semibold text-green-400">Active</div>
+                        </div>
+                        <!-- Credits Usage Bar -->
+                        <div class="bg-gray-800 rounded-lg p-4">
+                            <div class="flex justify-between items-center mb-2">
+                                <div class="text-sm text-gray-400">Credits Used This Month</div>
+                                <button onclick="loadCreditStatus()" class="text-xs text-cyan-400 hover:text-cyan-300">
+                                    <i class="fas fa-sync-alt"></i>
+                                </button>
+                            </div>
+                            <div id="cfgCreditBar" class="w-full bg-gray-700 rounded-full h-3 mb-2">
+                                <div id="cfgCreditBarFill" class="h-3 rounded-full bg-cyan-400 transition-all" style="width:0%"></div>
+                            </div>
+                            <div class="flex justify-between text-xs text-gray-400">
+                                <span id="cfgCreditUsed">— used</span>
+                                <span id="cfgCreditTotal">— total</span>
+                            </div>
+                            <div id="cfgCreditReset" class="text-xs text-gray-500 mt-1"></div>
+                            <div id="cfgCreditWarn" class="hidden mt-2 text-xs text-amber-400 font-semibold">
+                                <i class="fas fa-exclamation-triangle mr-1"></i>80%+ credits used —
+                                <button onclick="showUpgradeModal()" class="underline hover:text-amber-300">Upgrade your plan</button>
+                            </div>
                         </div>
                         <button onclick="handleLogout()" class="btn-secondary w-full py-2 rounded-lg font-semibold">
                             <i class="fas fa-sign-out-alt mr-2"></i>Sign Out
@@ -10626,6 +10743,10 @@ Format as clean, readable text ready for narration.`;
             });
             if (!resp.ok) {
                 const err = await resp.json().catch(() => ({ error: resp.status }));
+                if (resp.status === 402 || err.code === 'CREDITS_EXHAUSTED') {
+                    showUpgradeModal();
+                    throw new Error(err.error || 'Insufficient credits — please upgrade your plan.');
+                }
                 throw new Error(`Cartesia TTS error: ${err.error || resp.status}`);
             }
             const { audio: base64, contentType } = await resp.json();
@@ -10633,6 +10754,8 @@ Format as clean, readable text ready for narration.`;
             const bytes = new Uint8Array(binary.length);
             for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
             console.log(`Cartesia done. size=${bytes.length} type=${contentType}`);
+            // Refresh credit display in background
+            loadCreditStatus().catch(() => {});
             return new Blob([bytes], { type: contentType || 'audio/wav' });
         }
 
@@ -17762,6 +17885,14 @@ Format as clean, readable text ready for narration.`;
             showNotification('👋 Signed out', 'info');
         }
 
+        const PLAN_CONFIG = {
+            free:      { credits: 10000,    label: 'Free',      price: 0   },
+            starter:   { credits: 150000,   label: 'Starter',   price: 19  },
+            author:    { credits: 450000,   label: 'Author',    price: 49  },
+            publisher: { credits: 1200000,  label: 'Publisher', price: 99  },
+            studio:    { credits: 3000000,  label: 'Studio',    price: 249 }
+        };
+
         async function loadUserSubscription(userId) {
             const client = ensureSupabase();
             if (!client || !userId) return;
@@ -17770,6 +17901,63 @@ Format as clean, readable text ready for narration.`;
             document.getElementById('authLoginBtn')?.classList.add('hidden');
             document.getElementById('logoutBtn')?.classList.remove('hidden');
             if (data?.role === 'admin') document.getElementById('adminNavLink')?.classList.remove('hidden');
+            // Load credit status after subscription loads
+            loadCreditStatus();
+        }
+
+        async function loadCreditStatus() {
+            const token = await getAuthToken();
+            if (!token) return;
+            try {
+                const resp = await fetch('/api/plans', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!resp.ok) return;
+                const data = await resp.json();
+                window._creditStatus = data;
+                updateCreditUI(data);
+            } catch (e) {
+                console.warn('Credit status fetch failed:', e);
+            }
+        }
+
+        function updateCreditUI(data) {
+            if (!data) return;
+            const used = data.credits_used || 0;
+            const total = data.credits_total || (PLAN_CONFIG[data.plan]?.credits) || 10000;
+            const pct = Math.min(100, Math.round((used / total) * 100));
+
+            const fill = document.getElementById('cfgCreditBarFill');
+            const usedEl = document.getElementById('cfgCreditUsed');
+            const totalEl = document.getElementById('cfgCreditTotal');
+            const resetEl = document.getElementById('cfgCreditReset');
+            const warnEl = document.getElementById('cfgCreditWarn');
+
+            if (fill) {
+                fill.style.width = pct + '%';
+                fill.className = 'h-3 rounded-full transition-all ' +
+                    (pct >= 90 ? 'bg-red-500' : pct >= 80 ? 'bg-amber-400' : 'bg-cyan-400');
+            }
+            if (usedEl) usedEl.textContent = used.toLocaleString() + ' used';
+            if (totalEl) totalEl.textContent = total.toLocaleString() + ' total';
+            if (resetEl && data.period_end) {
+                const d = new Date(data.period_end);
+                resetEl.textContent = 'Resets ' + d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+            }
+            if (warnEl) {
+                if (pct >= 80) warnEl.classList.remove('hidden');
+                else warnEl.classList.add('hidden');
+            }
+
+            // Warn via notification if > 80% on audio generation
+            if (pct >= 80 && !window._creditWarnShown) {
+                window._creditWarnShown = true;
+                showNotification(`You've used ${pct}% of your monthly credits. Consider upgrading.`, 'warning');
+            }
+        }
+
+        function showUpgradeModal(highlightPlan) {
+            document.getElementById('upgradeModal')?.classList.remove('hidden');
         }
 
         async function getAuthToken() {
@@ -17931,6 +18119,62 @@ Format as clean, readable text ready for narration.`;
         }
 
     </script>
+
+    <!-- Upgrade Modal -->
+    <div id="upgradeModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-gray-900 border-2 border-cyan-400 rounded-2xl w-full max-w-lg p-8 relative">
+            <button onclick="document.getElementById('upgradeModal').classList.add('hidden')" class="absolute top-4 right-4 text-gray-400 hover:text-white text-xl">
+                <i class="fas fa-times"></i>
+            </button>
+            <div class="text-center mb-6">
+                <div class="text-4xl mb-3">🚀</div>
+                <h2 class="text-2xl font-bold">Upgrade Your Plan</h2>
+                <p class="text-gray-400 text-sm mt-2" id="upgradeModalSubtitle">Unlock more credits and features</p>
+            </div>
+            <div class="space-y-3 mb-6" id="upgradeModalPlans">
+                <div class="border border-theme rounded-xl p-4 flex items-center justify-between hover:border-cyan-400 cursor-pointer" onclick="showUpgradeModal('starter')">
+                    <div>
+                        <div class="font-bold">Starter</div>
+                        <div class="text-sm text-gray-400">150,000 credits/mo (~3 books)</div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-xl font-black text-cyan-400">$19<span class="text-sm text-gray-400">/mo</span></div>
+                    </div>
+                </div>
+                <div class="border-2 border-cyan-400 bg-cyan-900/20 rounded-xl p-4 flex items-center justify-between cursor-pointer">
+                    <div>
+                        <div class="font-bold">Author <span class="text-xs bg-cyan-400 text-black px-2 py-0.5 rounded-full ml-1">POPULAR</span></div>
+                        <div class="text-sm text-gray-400">450,000 credits/mo (~9 books)</div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-xl font-black text-cyan-400">$49<span class="text-sm text-gray-400">/mo</span></div>
+                    </div>
+                </div>
+                <div class="border border-theme rounded-xl p-4 flex items-center justify-between hover:border-cyan-400 cursor-pointer">
+                    <div>
+                        <div class="font-bold">Publisher</div>
+                        <div class="text-sm text-gray-400">1,200,000 credits/mo (~25 books)</div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-xl font-black text-cyan-400">$99<span class="text-sm text-gray-400">/mo</span></div>
+                    </div>
+                </div>
+                <div class="border border-theme rounded-xl p-4 flex items-center justify-between hover:border-cyan-400 cursor-pointer">
+                    <div>
+                        <div class="font-bold text-yellow-400">Studio</div>
+                        <div class="text-sm text-gray-400">3,000,000 credits/mo (~65 books)</div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-xl font-black text-cyan-400">$249<span class="text-sm text-gray-400">/mo</span></div>
+                    </div>
+                </div>
+            </div>
+            <button class="bg-cyan-400 text-black w-full py-3 rounded-xl font-bold text-lg hover:bg-cyan-300 transition-colors" onclick="document.getElementById('upgradeModal').classList.add('hidden'); showPage('config')">
+                View Full Pricing — Go to Config
+            </button>
+            <p class="text-center text-xs text-gray-500 mt-3">Billing handled securely via Stripe. Cancel anytime.</p>
+        </div>
+    </div>
 
     <!-- Auth Modal -->
     <div id="authModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">

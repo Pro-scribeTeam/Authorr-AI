@@ -1,4 +1,10 @@
 const { requireAuth, sendError } = require('./_auth');
+const { createClient } = require('@supabase/supabase-js');
+
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
+);
 
 // Clean text before sending to Cartesia so symbols aren't read aloud
 function preprocessText(text) {
@@ -23,7 +29,8 @@ function preprocessText(text) {
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
-  try { await requireAuth(req); } catch (err) { return sendError(res, err); }
+  let user;
+  try { ({ user } = await requireAuth(req)); } catch (err) { return sendError(res, err); }
 
   const { action } = req.body;
   const apiKey = process.env.CARTESIA_API_KEY;
@@ -48,6 +55,15 @@ module.exports = async function handler(req, res) {
       if (!voice_id) return res.status(400).json({ error: 'Missing voice_id' });
 
       const cleanedText = preprocessText(text);
+      const charCount = cleanedText.length;
+
+      // Deduct credits (1 credit = 1 character)
+      const { data: creditOk, error: creditErr } = await supabase.rpc('deduct_credits', {
+        user_id: user.id,
+        amount: charCount
+      });
+      if (creditErr) return res.status(500).json({ error: 'Credit check failed: ' + creditErr.message });
+      if (!creditOk) return res.status(402).json({ error: 'Insufficient credits. Please upgrade your plan.', code: 'CREDITS_EXHAUSTED' });
 
       const resp = await fetch('https://api.cartesia.ai/tts/bytes', {
         method: 'POST',
