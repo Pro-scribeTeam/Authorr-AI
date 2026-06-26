@@ -7,6 +7,17 @@
     "api/fal.js": { "maxDuration": 60 }
   },
   "routes": [
+    { "src": "/api/email-subscribe(.*)", "dest": "/api/email?route=subscribe$1" },
+    { "src": "/api/email-unsubscribe(.*)", "dest": "/api/email?route=unsubscribe$1" },
+    { "src": "/api/email-open(.*)", "dest": "/api/email?route=open$1" },
+    { "src": "/api/email-click(.*)", "dest": "/api/email?route=click$1" },
+    { "src": "/api/email-webhook(.*)", "dest": "/api/email?route=webhook$1" },
+    { "src": "/api/email-subscribers(.*)", "dest": "/api/email?route=subscribers$1" },
+    { "src": "/api/email-campaigns(.*)", "dest": "/api/email?route=campaigns$1" },
+    { "src": "/api/email-send(.*)", "dest": "/api/email?route=send$1" },
+    { "src": "/api/email-ai(.*)", "dest": "/api/email?route=ai$1" },
+    { "src": "/api/email-settings(.*)", "dest": "/api/email?route=settings$1" },
+    { "src": "/api/elevenlabs-voices(.*)", "dest": "/api/elevenlabs-tts$1" },
     { "src": "/api/(.*)", "dest": "/api/$1" },
     { "src": "/(.*\\.json)", "dest": "/$1" },
     { "src": "/(.*\\.html)", "dest": "/$1" },
