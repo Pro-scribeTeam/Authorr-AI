@@ -1,0 +1,1364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Authorr Email — Marketing Platform</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+  :root { --cyan: #22d3ee; --bg: #0a0a0a; --card: #111; --border: #1f2937; }
+  * { box-sizing: border-box; }
+  body { background: var(--bg); color: #e5e7eb; font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; margin: 0; }
+  .sidebar { width: 220px; min-height: 100vh; background: #0d0d0d; border-right: 1px solid var(--border); position: fixed; top: 0; left: 0; }
+  .main { margin-left: 220px; min-height: 100vh; }
+  .nav-link { display: flex; align-items: center; gap: 10px; padding: 10px 20px; color: #9ca3af; cursor: pointer; border-radius: 8px; margin: 2px 10px; font-size: 14px; font-weight: 500; transition: all .15s; }
+  .nav-link:hover, .nav-link.active { background: rgba(34,211,238,.08); color: var(--cyan); }
+  .nav-link.active { border-left: 2px solid var(--cyan); border-radius: 0 8px 8px 0; margin-left: 0; padding-left: 18px; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 24px; }
+  .stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+  .btn { padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; transition: all .15s; }
+  .btn-primary { background: var(--cyan); color: #000; }
+  .btn-primary:hover { background: #06b6d4; }
+  .btn-secondary { background: #1f2937; color: #e5e7eb; border: 1px solid #374151; }
+  .btn-secondary:hover { background: #374151; }
+  .btn-danger { background: #ef4444; color: #fff; }
+  .btn-danger:hover { background: #dc2626; }
+  .btn-ai { background: linear-gradient(135deg, #7c3aed, #2563eb); color: #fff; }
+  .btn-ai:hover { opacity: .9; }
+  .btn-ghost { background: transparent; color: #9ca3af; border: 1px solid #374151; }
+  .btn-ghost:hover { color: #e5e7eb; border-color: #6b7280; }
+  .input { background: #0a0a0a; border: 1px solid #374151; color: #e5e7eb; padding: 8px 12px; border-radius: 8px; font-size: 14px; width: 100%; outline: none; }
+  .input:focus { border-color: var(--cyan); }
+  select.input option { background: #111; }
+  .badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+  .badge-green { background: rgba(16,185,129,.15); color: #10b981; }
+  .badge-yellow { background: rgba(245,158,11,.15); color: #f59e0b; }
+  .badge-red { background: rgba(239,68,68,.15); color: #ef4444; }
+  .badge-blue { background: rgba(59,130,246,.15); color: #3b82f6; }
+  .badge-gray { background: rgba(107,114,128,.15); color: #9ca3af; }
+  .badge-purple { background: rgba(139,92,246,.15); color: #8b5cf6; }
+  .tab { padding: 8px 16px; border-radius: 8px 8px 0 0; font-size: 13px; cursor: pointer; color: #9ca3af; border: 1px solid transparent; }
+  .tab.active { background: var(--card); border-color: var(--border); border-bottom-color: var(--card); color: var(--cyan); }
+  .page { display: none; }
+  .page.active { display: block; }
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.7); z-index: 1000; align-items: center; justify-content: center; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: #111; border: 1px solid #374151; border-radius: 16px; width: 90%; max-width: 780px; max-height: 90vh; overflow-y: auto; }
+  .editor-area { background: #0a0a0a; border: 1px solid #374151; border-radius: 8px; font-family: 'Courier New', monospace; font-size: 13px; color: #e5e7eb; padding: 12px; resize: vertical; min-height: 320px; width: 100%; }
+  .preview-frame { width: 100%; border: 1px solid #374151; border-radius: 8px; background: #fff; min-height: 400px; }
+  table { width: 100%; border-collapse: collapse; }
+  th { text-align: left; padding: 10px 12px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: #6b7280; border-bottom: 1px solid var(--border); }
+  td { padding: 12px; font-size: 13px; border-bottom: 1px solid rgba(31,41,55,.5); }
+  tr:hover td { background: rgba(255,255,255,.02); }
+  .notification { position: fixed; top: 20px; right: 20px; z-index: 9999; padding: 12px 20px; border-radius: 10px; font-size: 13px; font-weight: 600; max-width: 360px; box-shadow: 0 8px 24px rgba(0,0,0,.4); animation: slideIn .2s ease; }
+  @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+  .spinner { width: 18px; height: 18px; border: 2px solid rgba(255,255,255,.2); border-top-color: #fff; border-radius: 50%; animation: spin .6s linear infinite; display: inline-block; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .tag-chip { display: inline-flex; align-items: center; gap: 4px; background: rgba(34,211,238,.1); color: var(--cyan); border-radius: 999px; padding: 2px 10px; font-size: 11px; font-weight: 500; }
+  .stat-number { font-size: 2rem; font-weight: 800; color: var(--cyan); }
+  .progress-bar { height: 6px; border-radius: 3px; background: #1f2937; overflow: hidden; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, var(--cyan), #3b82f6); border-radius: 3px; transition: width .3s; }
+  .ai-glow { box-shadow: 0 0 20px rgba(124,58,237,.3); }
+</style>
+</head>
+<body>
+
+<!-- ══════════════ SIDEBAR ══════════════ -->
+<aside class="sidebar flex flex-col">
+  <div class="p-5 border-b border-gray-800">
+    <div class="flex items-center gap-3">
+      <div style="background:linear-gradient(135deg,#22d3ee,#3b82f6);width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;">
+        <i class="fas fa-envelope text-black text-sm"></i>
+      </div>
+      <div>
+        <div class="font-black text-sm text-white">AUTHORR EMAIL</div>
+        <div class="text-xs text-gray-500">Marketing Platform</div>
+      </div>
+    </div>
+  </div>
+  <nav class="flex-1 py-4">
+    <div class="text-xs font-semibold text-gray-600 uppercase tracking-wider px-5 mb-2 mt-2">Main</div>
+    <a class="nav-link active" data-page="dashboard" onclick="showPage('dashboard')">
+      <i class="fas fa-chart-line w-4"></i> Dashboard
+    </a>
+    <a class="nav-link" data-page="subscribers" onclick="showPage('subscribers')">
+      <i class="fas fa-users w-4"></i> Subscribers
+    </a>
+    <a class="nav-link" data-page="campaigns" onclick="showPage('campaigns')">
+      <i class="fas fa-paper-plane w-4"></i> Campaigns
+    </a>
+    <div class="text-xs font-semibold text-gray-600 uppercase tracking-wider px-5 mb-2 mt-4">Tools</div>
+    <a class="nav-link" data-page="compose" onclick="showPage('compose')">
+      <i class="fas fa-magic w-4"></i> AI Compose
+    </a>
+    <a class="nav-link" data-page="forms" onclick="showPage('forms')">
+      <i class="fas fa-wpforms w-4"></i> Signup Forms
+    </a>
+    <a class="nav-link" data-page="settings" onclick="showPage('settings')">
+      <i class="fas fa-cog w-4"></i> Settings
+    </a>
+  </nav>
+  <div class="p-4 border-t border-gray-800">
+    <div id="sidebarUser" class="text-xs text-gray-500 truncate mb-2"></div>
+    <button onclick="signOut()" class="btn btn-ghost w-full text-xs"><i class="fas fa-sign-out-alt mr-1"></i>Sign Out</button>
+  </div>
+</aside>
+
+<!-- ══════════════ MAIN CONTENT ══════════════ -->
+<main class="main p-8">
+
+  <!-- ── Auth Gate ── -->
+  <div id="authGate" style="display:none;position:fixed;inset:0;background:#0a0a0a;z-index:999;display:flex;align-items:center;justify-content:center;">
+    <div class="card" style="max-width:380px;width:90%;text-align:center;">
+      <div style="width:56px;height:56px;background:linear-gradient(135deg,#22d3ee,#3b82f6);border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;">
+        <i class="fas fa-envelope text-black text-2xl"></i>
+      </div>
+      <h2 class="text-xl font-bold mb-1">Authorr Email</h2>
+      <p class="text-sm text-gray-400 mb-6">Admin access required</p>
+      <input id="loginEmail" type="email" placeholder="Admin email" class="input mb-3">
+      <input id="loginPass" type="password" placeholder="Password" class="input mb-4">
+      <button onclick="adminLogin()" class="btn btn-primary w-full py-2.5">Sign In</button>
+      <div id="loginError" class="text-red-400 text-xs mt-3 hidden"></div>
+    </div>
+  </div>
+
+  <!-- ── Dashboard ── -->
+  <div id="page-dashboard" class="page active">
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <h1 class="text-2xl font-black">Dashboard</h1>
+        <p class="text-gray-400 text-sm">Your email marketing overview</p>
+      </div>
+      <button onclick="showPage('campaigns');setTimeout(openNewCampaign,100)" class="btn btn-primary">
+        <i class="fas fa-plus mr-2"></i>New Campaign
+      </button>
+    </div>
+
+    <!-- Stats grid -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div class="stat-card">
+        <div class="text-xs text-gray-400 mb-1 font-medium">SUBSCRIBERS</div>
+        <div class="stat-number" id="statSubscribers">—</div>
+        <div class="text-xs text-gray-500 mt-1">Active contacts</div>
+      </div>
+      <div class="stat-card">
+        <div class="text-xs text-gray-400 mb-1 font-medium">CAMPAIGNS SENT</div>
+        <div class="stat-number" id="statCampaigns">—</div>
+        <div class="text-xs text-gray-500 mt-1">All time</div>
+      </div>
+      <div class="stat-card">
+        <div class="text-xs text-gray-400 mb-1 font-medium">AVG OPEN RATE</div>
+        <div class="stat-number" id="statOpenRate">—</div>
+        <div class="text-xs text-gray-500 mt-1">Industry avg: 21%</div>
+      </div>
+      <div class="stat-card">
+        <div class="text-xs text-gray-400 mb-1 font-medium">AVG CLICK RATE</div>
+        <div class="stat-number" id="statClickRate">—</div>
+        <div class="text-xs text-gray-500 mt-1">Industry avg: 2.6%</div>
+      </div>
+    </div>
+
+    <!-- Recent campaigns -->
+    <div class="card mb-6">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="font-bold">Recent Campaigns</h2>
+        <a onclick="showPage('campaigns')" class="text-xs text-cyan-400 cursor-pointer hover:text-cyan-300">View all</a>
+      </div>
+      <div id="dashCampaigns" class="text-gray-500 text-sm">Loading...</div>
+    </div>
+
+    <!-- Quick actions -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div class="card cursor-pointer hover:border-cyan-500 transition-colors" onclick="showPage('subscribers');setTimeout(openSyncModal,100)">
+        <div class="text-cyan-400 text-2xl mb-3"><i class="fas fa-sync"></i></div>
+        <div class="font-bold mb-1">Sync Authorr Users</div>
+        <div class="text-sm text-gray-400">Import all registered Authorr AI users as subscribers instantly</div>
+      </div>
+      <div class="card cursor-pointer hover:border-purple-500 transition-colors" onclick="showPage('compose')">
+        <div class="text-purple-400 text-2xl mb-3"><i class="fas fa-magic"></i></div>
+        <div class="font-bold mb-1">AI Compose</div>
+        <div class="text-sm text-gray-400">Let AI write your next campaign from scratch in seconds</div>
+      </div>
+      <div class="card cursor-pointer hover:border-green-500 transition-colors" onclick="showPage('forms')">
+        <div class="text-green-400 text-2xl mb-3"><i class="fas fa-wpforms"></i></div>
+        <div class="font-bold mb-1">Signup Form</div>
+        <div class="text-sm text-gray-400">Embed a signup form on any website to grow your list</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Subscribers ── -->
+  <div id="page-subscribers" class="page">
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <h1 class="text-2xl font-black">Subscribers</h1>
+        <p class="text-gray-400 text-sm"><span id="subCount">—</span> total subscribers</p>
+      </div>
+      <div class="flex gap-2">
+        <button onclick="openSyncModal()" class="btn btn-secondary"><i class="fas fa-sync mr-2"></i>Sync Users</button>
+        <button onclick="openAddSub()" class="btn btn-primary"><i class="fas fa-plus mr-2"></i>Add Subscriber</button>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card mb-4">
+      <div class="flex flex-wrap gap-3">
+        <input id="subSearch" type="text" placeholder="Search email..." class="input" style="width:220px" oninput="debounce(loadSubscribers,400)()">
+        <select id="subStatusFilter" class="input" style="width:160px" onchange="loadSubscribers()">
+          <option value="">All statuses</option>
+          <option value="subscribed">Subscribed</option>
+          <option value="unsubscribed">Unsubscribed</option>
+          <option value="bounced">Bounced</option>
+          <option value="complained">Complained</option>
+        </select>
+        <input id="subTagFilter" type="text" placeholder="Filter by tag..." class="input" style="width:160px" oninput="debounce(loadSubscribers,400)()">
+        <div class="ml-auto text-sm text-gray-400 self-center" id="subPagination"></div>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="card overflow-x-auto">
+      <table>
+        <thead>
+          <tr>
+            <th><input type="checkbox" id="selectAll" onchange="toggleSelectAll()"></th>
+            <th>Email</th>
+            <th>Name</th>
+            <th>Status</th>
+            <th>Plan</th>
+            <th>Tags</th>
+            <th>Joined</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="subTable"><tr><td colspan="8" class="text-center text-gray-500 py-8">Loading subscribers...</td></tr></tbody>
+      </table>
+      <!-- Pagination -->
+      <div class="flex justify-between items-center mt-4 pt-4 border-t border-gray-800">
+        <button id="subPrevBtn" onclick="subPage--; loadSubscribers()" class="btn btn-ghost text-xs" disabled>Previous</button>
+        <span id="subPageInfo" class="text-xs text-gray-500"></span>
+        <button id="subNextBtn" onclick="subPage++; loadSubscribers()" class="btn btn-ghost text-xs">Next</button>
+      </div>
+    </div>
+
+    <!-- Bulk action bar (appears when selected) -->
+    <div id="bulkBar" class="hidden fixed bottom-6 left-1/2 -translate-x-1/2 bg-gray-900 border border-gray-700 rounded-xl px-6 py-3 flex items-center gap-4 shadow-2xl">
+      <span id="bulkCount" class="text-sm font-semibold"></span>
+      <button onclick="bulkTag()" class="btn btn-secondary text-xs"><i class="fas fa-tag mr-1"></i>Add Tag</button>
+      <button onclick="bulkDelete()" class="btn btn-danger text-xs"><i class="fas fa-trash mr-1"></i>Delete</button>
+      <button onclick="clearSelection()" class="btn btn-ghost text-xs">Cancel</button>
+    </div>
+  </div>
+
+  <!-- ── Campaigns ── -->
+  <div id="page-campaigns" class="page">
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <h1 class="text-2xl font-black">Campaigns</h1>
+        <p class="text-gray-400 text-sm">Create and send email campaigns</p>
+      </div>
+      <button onclick="openNewCampaign()" class="btn btn-primary"><i class="fas fa-plus mr-2"></i>New Campaign</button>
+    </div>
+    <div class="card overflow-x-auto">
+      <table>
+        <thead>
+          <tr>
+            <th>Campaign</th>
+            <th>Status</th>
+            <th>Audience</th>
+            <th>Sent</th>
+            <th>Opens</th>
+            <th>Clicks</th>
+            <th>Date</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="campaignTable"><tr><td colspan="8" class="text-center text-gray-500 py-8">Loading campaigns...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── AI Compose ── -->
+  <div id="page-compose" class="page">
+    <div class="mb-6">
+      <h1 class="text-2xl font-black flex items-center gap-3">
+        <span style="background:linear-gradient(135deg,#7c3aed,#2563eb);width:36px;height:36px;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;">
+          <i class="fas fa-magic text-white text-sm"></i>
+        </span>
+        AI Email Composer
+      </h1>
+      <p class="text-gray-400 text-sm mt-1">Describe what you want to send — AI writes the full campaign</p>
+    </div>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div class="space-y-4">
+        <div class="card ai-glow border-purple-500/30">
+          <h3 class="font-bold mb-4 text-purple-300"><i class="fas fa-sparkles mr-2"></i>Campaign Brief</h3>
+          <div class="space-y-3">
+            <div>
+              <label class="text-xs text-gray-400 mb-1 block">What's this email about? *</label>
+              <input id="aiTopic" type="text" placeholder="e.g. Announcing our new voice cloning feature for Author plan users" class="input">
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="text-xs text-gray-400 mb-1 block">Tone</label>
+                <select id="aiTone" class="input">
+                  <option value="professional">Professional</option>
+                  <option value="casual">Casual & Friendly</option>
+                  <option value="excited">Excited & Bold</option>
+                  <option value="urgent">Urgent</option>
+                  <option value="educational">Educational</option>
+                </select>
+              </div>
+              <div>
+                <label class="text-xs text-gray-400 mb-1 block">Goal</label>
+                <select id="aiGoal" class="input">
+                  <option value="drive engagement">Drive Engagement</option>
+                  <option value="convert to paid plan">Convert Free → Paid</option>
+                  <option value="announce a new feature">Announce Feature</option>
+                  <option value="drive purchases">Drive Purchases</option>
+                  <option value="build loyalty">Build Loyalty</option>
+                  <option value="re-engage inactive users">Re-engage Inactive</option>
+                </select>
+              </div>
+            </div>
+            <div>
+              <label class="text-xs text-gray-400 mb-1 block">Key points (optional)</label>
+              <textarea id="aiKeyPoints" placeholder="- Launch price is $49/month&#10;- Available today&#10;- Clone your voice in 60 seconds" class="editor-area" style="min-height:80px"></textarea>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <button onclick="generateSubjectLines()" class="btn btn-secondary">
+                <i class="fas fa-list mr-2"></i>Generate Subjects
+              </button>
+              <button onclick="composeFullEmail()" class="btn btn-ai">
+                <i class="fas fa-magic mr-2"></i>Write Full Email
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Subject line variants -->
+        <div id="subjectVariants" class="card hidden">
+          <h3 class="font-bold mb-3 text-cyan-300"><i class="fas fa-list mr-2"></i>Subject Line Variants</h3>
+          <div id="subjectList" class="space-y-2"></div>
+        </div>
+
+        <!-- Spam check -->
+        <div id="spamCheckResult" class="card hidden">
+          <h3 class="font-bold mb-3"><i class="fas fa-shield-alt mr-2"></i>Deliverability Score</h3>
+          <div id="spamCheckContent"></div>
+        </div>
+      </div>
+
+      <!-- Live preview -->
+      <div class="card" style="padding:0;overflow:hidden;">
+        <div class="flex items-center justify-between px-4 py-3 border-b border-gray-800">
+          <span class="text-sm font-semibold">Email Preview</span>
+          <div class="flex gap-2">
+            <button onclick="checkSpam()" class="btn btn-ghost text-xs" id="spamCheckBtn" style="display:none"><i class="fas fa-shield-alt mr-1"></i>Spam Check</button>
+            <button onclick="saveComposedEmail()" class="btn btn-primary text-xs" id="saveComposedBtn" style="display:none"><i class="fas fa-save mr-1"></i>Save as Campaign</button>
+          </div>
+        </div>
+        <div id="composeLoading" class="hidden text-center py-16">
+          <div class="spinner mx-auto mb-3"></div>
+          <div class="text-sm text-gray-400" id="composeLoadingMsg">AI is writing your email...</div>
+        </div>
+        <iframe id="emailPreviewFrame" class="preview-frame" style="display:none;border:none;"></iframe>
+        <div id="composeEmpty" class="text-center py-16 text-gray-600">
+          <i class="fas fa-magic text-4xl mb-4 block"></i>
+          <div class="text-sm">Fill in the brief and click<br>"Write Full Email" to get started</div>
+        </div>
+      </div>
+    </div>
+    <!-- Composed email fields (hidden) -->
+    <input type="hidden" id="composedSubject">
+    <input type="hidden" id="composedHtml">
+  </div>
+
+  <!-- ── Signup Forms ── -->
+  <div id="page-forms" class="page">
+    <div class="mb-6">
+      <h1 class="text-2xl font-black">Signup Forms</h1>
+      <p class="text-gray-400 text-sm">Embed forms on any website to collect subscribers</p>
+    </div>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div class="card">
+        <h3 class="font-bold mb-4">Inline Embed Form</h3>
+        <div class="space-y-3 mb-4">
+          <div>
+            <label class="text-xs text-gray-400 mb-1 block">Heading text</label>
+            <input id="formHeading" type="text" value="Stay in the loop" class="input" oninput="updateFormPreview()">
+          </div>
+          <div>
+            <label class="text-xs text-gray-400 mb-1 block">Sub-text</label>
+            <input id="formSubtext" type="text" value="Get updates, tips, and exclusive offers from Authorr AI." class="input" oninput="updateFormPreview()">
+          </div>
+          <div>
+            <label class="text-xs text-gray-400 mb-1 block">Button text</label>
+            <input id="formBtnText" type="text" value="Subscribe Free" class="input" oninput="updateFormPreview()">
+          </div>
+          <div>
+            <label class="text-xs text-gray-400 mb-1 block">Tag subscribers as</label>
+            <input id="formTag" type="text" placeholder="e.g. website-lead" class="input">
+          </div>
+        </div>
+        <button onclick="generateEmbedCode()" class="btn btn-primary w-full mb-4">Generate Embed Code</button>
+        <div id="embedCodeSection" class="hidden">
+          <label class="text-xs text-gray-400 mb-1 block">Copy this code into your website</label>
+          <textarea id="embedCodeOutput" class="editor-area text-xs" style="min-height:120px" readonly></textarea>
+          <button onclick="copyEmbedCode()" class="btn btn-secondary text-xs mt-2"><i class="fas fa-copy mr-1"></i>Copy Code</button>
+        </div>
+      </div>
+      <div class="card">
+        <h3 class="font-bold mb-4">Form Preview</h3>
+        <div id="formPreviewContainer" class="bg-gray-900 rounded-xl p-6 text-center">
+          <div id="formPreview">
+            <h3 style="color:#22d3ee;font-size:1.25rem;font-weight:700;margin-bottom:8px">Stay in the loop</h3>
+            <p style="color:#9ca3af;font-size:14px;margin-bottom:16px">Get updates, tips, and exclusive offers from Authorr AI.</p>
+            <div style="display:flex;gap:8px;max-width:380px;margin:0 auto">
+              <input type="email" placeholder="Your email address" style="flex:1;padding:8px 12px;border-radius:8px;border:1px solid #374151;background:#0a0a0a;color:#e5e7eb;font-size:14px">
+              <button style="background:#22d3ee;color:#000;padding:8px 16px;border-radius:8px;border:none;font-weight:700;font-size:14px;cursor:pointer">Subscribe Free</button>
+            </div>
+          </div>
+        </div>
+        <div class="mt-4 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg text-xs text-blue-300">
+          <i class="fas fa-info-circle mr-1"></i>
+          API endpoint: <code class="bg-black/40 px-1 rounded">POST /api/email-subscribe</code>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Settings ── -->
+  <div id="page-settings" class="page">
+    <div class="mb-6">
+      <h1 class="text-2xl font-black">Settings</h1>
+      <p class="text-gray-400 text-sm">Configure your email sending defaults</p>
+    </div>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div class="card">
+        <h3 class="font-bold mb-4"><i class="fas fa-envelope mr-2 text-cyan-400"></i>Sending Defaults</h3>
+        <div class="space-y-4">
+          <div>
+            <label class="text-xs text-gray-400 mb-1 block">From Name</label>
+            <input id="setFromName" type="text" class="input" placeholder="Authorr AI">
+          </div>
+          <div>
+            <label class="text-xs text-gray-400 mb-1 block">From Email</label>
+            <input id="setFromEmail" type="email" class="input" placeholder="hello@authorr.ai">
+          </div>
+          <div>
+            <label class="text-xs text-gray-400 mb-1 block">Reply-To (optional)</label>
+            <input id="setReplyTo" type="email" class="input" placeholder="support@authorr.ai">
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <h3 class="font-bold mb-4"><i class="fas fa-key mr-2 text-yellow-400"></i>API Keys</h3>
+        <div class="space-y-4">
+          <div>
+            <label class="text-xs text-gray-400 mb-1 block">Resend API Key</label>
+            <input id="setResendKey" type="password" class="input" placeholder="re_••••••••">
+            <div class="text-xs text-gray-500 mt-1">Get your key at <a href="https://resend.com/api-keys" target="_blank" class="text-cyan-400 hover:underline">resend.com/api-keys</a></div>
+          </div>
+          <div>
+            <label class="text-xs text-gray-400 mb-1 block">Webhook Secret</label>
+            <input id="setWebhookSecret" type="password" class="input" placeholder="whsec_••••••••">
+            <div class="text-xs text-gray-500 mt-1">Set webhook URL in Resend: <code class="bg-black/40 px-1 rounded text-xs">/api/email-webhook</code></div>
+          </div>
+        </div>
+      </div>
+      <div class="card lg:col-span-2">
+        <h3 class="font-bold mb-4"><i class="fas fa-map-marker-alt mr-2 text-red-400"></i>Physical Address (CAN-SPAM Required)</h3>
+        <textarea id="setAddress" class="input" rows="2" placeholder="123 Main St, City, State 00000, USA"></textarea>
+        <div class="text-xs text-gray-500 mt-1">This appears in every email footer. Required by law.</div>
+      </div>
+      <div class="lg:col-span-2">
+        <button onclick="saveSettings()" class="btn btn-primary px-8">Save Settings</button>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- ══════════════ MODALS ══════════════ -->
+
+<!-- Add Subscriber Modal -->
+<div class="modal-overlay" id="addSubModal">
+  <div class="modal" style="max-width:480px;">
+    <div class="flex items-center justify-between p-5 border-b border-gray-800">
+      <h3 class="font-bold">Add Subscriber</h3>
+      <button onclick="closeModal('addSubModal')" class="text-gray-500 hover:text-white"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="p-5 space-y-4">
+      <div><label class="text-xs text-gray-400 mb-1 block">Email *</label><input id="addSubEmail" type="email" class="input" placeholder="user@example.com"></div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="text-xs text-gray-400 mb-1 block">First Name</label><input id="addSubFirst" type="text" class="input" placeholder="John"></div>
+        <div><label class="text-xs text-gray-400 mb-1 block">Last Name</label><input id="addSubLast" type="text" class="input" placeholder="Doe"></div>
+      </div>
+      <div><label class="text-xs text-gray-400 mb-1 block">Tags (comma separated)</label><input id="addSubTags" type="text" class="input" placeholder="prospect, trial"></div>
+      <div class="flex justify-end gap-2 pt-2">
+        <button onclick="closeModal('addSubModal')" class="btn btn-secondary">Cancel</button>
+        <button onclick="addSubscriber()" class="btn btn-primary">Add Subscriber</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Sync Modal -->
+<div class="modal-overlay" id="syncModal">
+  <div class="modal" style="max-width:440px;">
+    <div class="p-6 text-center">
+      <div class="text-4xl mb-4"><i class="fas fa-sync text-cyan-400"></i></div>
+      <h3 class="font-bold text-lg mb-2">Sync Authorr AI Users</h3>
+      <p class="text-gray-400 text-sm mb-6">This will import all registered Authorr AI users into your subscriber list. Existing subscribers will have their plan tier updated.</p>
+      <div class="flex justify-center gap-3">
+        <button onclick="closeModal('syncModal')" class="btn btn-secondary">Cancel</button>
+        <button onclick="syncUsers()" class="btn btn-primary" id="syncBtn"><i class="fas fa-sync mr-2"></i>Sync Now</button>
+      </div>
+      <div id="syncResult" class="mt-4 hidden"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Campaign Editor Modal -->
+<div class="modal-overlay" id="campaignModal">
+  <div class="modal" style="max-width:900px;">
+    <div class="flex items-center justify-between p-5 border-b border-gray-800">
+      <h3 class="font-bold" id="campaignModalTitle">New Campaign</h3>
+      <button onclick="closeModal('campaignModal')" class="text-gray-500 hover:text-white"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="p-5">
+      <!-- Tabs -->
+      <div class="flex gap-1 mb-5 border-b border-gray-800">
+        <button class="tab active" onclick="switchCampTab('details')" id="tab-details">Details</button>
+        <button class="tab" onclick="switchCampTab('content')" id="tab-content">Content</button>
+        <button class="tab" onclick="switchCampTab('audience')" id="tab-audience">Audience</button>
+        <button class="tab" onclick="switchCampTab('review')" id="tab-review">Review & Send</button>
+      </div>
+
+      <!-- Details tab -->
+      <div id="campTab-details" class="space-y-4">
+        <div><label class="text-xs text-gray-400 mb-1 block">Campaign Name (internal) *</label><input id="campName" class="input" placeholder="April Newsletter 2026"></div>
+        <div>
+          <div class="flex items-center gap-2 mb-1">
+            <label class="text-xs text-gray-400 block">Subject Line *</label>
+            <button onclick="quickSubjectAI()" class="btn btn-ai text-xs py-0.5 px-2"><i class="fas fa-magic mr-1"></i>AI</button>
+          </div>
+          <input id="campSubject" class="input" placeholder="Your subject line...">
+        </div>
+        <div><label class="text-xs text-gray-400 mb-1 block">Preview Text</label><input id="campPreview" class="input" placeholder="The first line recipients see in their inbox..."></div>
+        <div class="grid grid-cols-2 gap-3">
+          <div><label class="text-xs text-gray-400 mb-1 block">From Name</label><input id="campFromName" class="input" placeholder="Authorr AI"></div>
+          <div><label class="text-xs text-gray-400 mb-1 block">From Email</label><input id="campFromEmail" class="input" placeholder="hello@authorr.ai"></div>
+        </div>
+        <div><label class="text-xs text-gray-400 mb-1 block">Reply-To (optional)</label><input id="campReplyTo" class="input" placeholder="support@authorr.ai"></div>
+      </div>
+
+      <!-- Content tab -->
+      <div id="campTab-content" class="hidden">
+        <div class="flex gap-2 mb-3">
+          <button onclick="setCampTemplate('blank')" class="btn btn-ghost text-xs">Blank</button>
+          <button onclick="setCampTemplate('newsletter')" class="btn btn-ghost text-xs">Newsletter</button>
+          <button onclick="setCampTemplate('announcement')" class="btn btn-ghost text-xs">Announcement</button>
+          <button onclick="setCampTemplate('promo')" class="btn btn-ghost text-xs">Promotional</button>
+          <div class="ml-auto flex gap-2">
+            <button onclick="campAICompose()" class="btn btn-ai text-xs"><i class="fas fa-magic mr-1"></i>AI Write</button>
+            <button onclick="toggleCampPreview()" class="btn btn-secondary text-xs" id="previewToggleBtn"><i class="fas fa-eye mr-1"></i>Preview</button>
+          </div>
+        </div>
+        <div id="campEditorWrap">
+          <textarea id="campHtml" class="editor-area" placeholder="Paste or write your HTML email here..."></textarea>
+        </div>
+        <div id="campPreviewWrap" class="hidden">
+          <iframe id="campPreviewFrame" class="preview-frame" style="border:none;height:500px;"></iframe>
+        </div>
+        <div class="text-xs text-gray-500 mt-2">Use <code class="bg-black/40 px-1 rounded">{{first_name}}</code> as a merge tag. Footer with unsubscribe link is added automatically.</div>
+      </div>
+
+      <!-- Audience tab -->
+      <div id="campTab-audience" class="hidden space-y-4">
+        <div>
+          <label class="text-xs text-gray-400 mb-1 block">Send to</label>
+          <select id="campAudience" class="input" onchange="updateAudienceFilter()">
+            <option value="all">All Subscribers</option>
+            <option value="tag">Subscribers with Tag</option>
+            <option value="plan">Subscribers on Plan</option>
+          </select>
+        </div>
+        <div id="audienceFilterRow" class="hidden">
+          <label class="text-xs text-gray-400 mb-1 block" id="audienceFilterLabel">Tag</label>
+          <input id="campAudienceFilter" class="input" placeholder="">
+        </div>
+        <div id="audienceCount" class="p-3 bg-cyan-500/10 border border-cyan-500/30 rounded-lg text-sm text-cyan-300 hidden">
+          <i class="fas fa-users mr-2"></i><span id="audienceCountText"></span>
+        </div>
+        <div class="flex items-center gap-3">
+          <label class="flex items-center gap-2 cursor-pointer text-sm">
+            <input type="checkbox" id="campTrackOpens" checked class="accent-cyan-400"> Track opens
+          </label>
+          <label class="flex items-center gap-2 cursor-pointer text-sm">
+            <input type="checkbox" id="campTrackClicks" checked class="accent-cyan-400"> Track clicks
+          </label>
+        </div>
+      </div>
+
+      <!-- Review & Send tab -->
+      <div id="campTab-review" class="hidden">
+        <div id="campaignReviewContent" class="space-y-4">
+          <div class="card" style="background:#0a0a0a;">
+            <div class="grid grid-cols-2 gap-4 text-sm">
+              <div><div class="text-xs text-gray-500 mb-1">Campaign</div><div id="rvName" class="font-semibold">—</div></div>
+              <div><div class="text-xs text-gray-500 mb-1">Subject</div><div id="rvSubject" class="font-semibold">—</div></div>
+              <div><div class="text-xs text-gray-500 mb-1">From</div><div id="rvFrom" class="font-semibold">—</div></div>
+              <div><div class="text-xs text-gray-500 mb-1">Audience</div><div id="rvAudience" class="font-semibold">—</div></div>
+            </div>
+          </div>
+          <div>
+            <label class="text-xs text-gray-400 mb-1 block">Send test to</label>
+            <div class="flex gap-2">
+              <input id="testEmailInput" type="email" class="input" placeholder="your@email.com">
+              <button onclick="sendTestEmail()" class="btn btn-secondary whitespace-nowrap">Send Test</button>
+            </div>
+          </div>
+          <div class="p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg text-sm text-yellow-200">
+            <i class="fas fa-exclamation-triangle mr-2"></i>
+            Sending a campaign cannot be undone. Make sure your content looks correct in the preview.
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer buttons -->
+      <div class="flex items-center justify-between mt-6 pt-4 border-t border-gray-800">
+        <button onclick="saveCampaignDraft()" class="btn btn-ghost text-xs"><i class="fas fa-save mr-1"></i>Save Draft</button>
+        <div class="flex gap-2">
+          <button onclick="closeModal('campaignModal')" class="btn btn-secondary">Cancel</button>
+          <button onclick="sendCampaign()" id="sendCampaignBtn" class="btn btn-primary"><i class="fas fa-paper-plane mr-2"></i>Send Campaign</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════
+// SUPABASE + CONFIG
+// ══════════════════════════════════════════════════════════
+const SUPABASE_URL = 'https://svyjvvogjkhszijlaxig.supabase.co';
+const SUPABASE_ANON_KEY = ['eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9','eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN2eWp2dm9namt5c3ppamxheGlnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDUyOTM0MzUsImV4cCI6MjA2MDg2OTQzNX0','D4PVbW3jlnwuM6DTT9Y7JFk01RRyiZP2zIQZ0rO4KuA'].join('.');
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+let authToken = null;
+let currentCampaignId = null;
+let subPage = 1;
+const SUB_LIMIT = 50;
+const selectedSubs = new Set();
+
+// ══════════════════════════════════════════════════════════
+// AUTH
+// ══════════════════════════════════════════════════════════
+async function adminLogin() {
+  const email = document.getElementById('loginEmail').value;
+  const pass  = document.getElementById('loginPass').value;
+  const errEl = document.getElementById('loginError');
+  errEl.classList.add('hidden');
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password: pass });
+  if (error) { errEl.textContent = error.message; errEl.classList.remove('hidden'); return; }
+  // Check admin role
+  const { data: sub } = await supabase.from('subscriptions').select('role').eq('user_id', data.user.id).maybeSingle();
+  if (sub?.role !== 'admin') {
+    await supabase.auth.signOut();
+    errEl.textContent = 'Admin access required';
+    errEl.classList.remove('hidden');
+    return;
+  }
+  authToken = data.session.access_token;
+  document.getElementById('authGate').style.display = 'none';
+  document.getElementById('sidebarUser').textContent = data.user.email;
+  initApp();
+}
+
+async function signOut() {
+  await supabase.auth.signOut();
+  location.reload();
+}
+
+async function checkAuth() {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (session) {
+    const { data: sub } = await supabase.from('subscriptions').select('role').eq('user_id', session.user.id).maybeSingle();
+    if (sub?.role === 'admin') {
+      authToken = session.access_token;
+      document.getElementById('authGate').style.display = 'none';
+      document.getElementById('sidebarUser').textContent = session.user.email;
+      initApp();
+      return;
+    }
+  }
+  document.getElementById('authGate').style.display = 'flex';
+}
+
+// ══════════════════════════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════════════════════════
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+  const page = document.getElementById('page-' + id);
+  if (page) page.classList.add('active');
+  const link = document.querySelector(`.nav-link[data-page="${id}"]`);
+  if (link) link.classList.add('active');
+  if (id === 'dashboard') loadDashboard();
+  if (id === 'subscribers') loadSubscribers();
+  if (id === 'campaigns') loadCampaigns();
+  if (id === 'settings') loadSettings();
+}
+
+// ══════════════════════════════════════════════════════════
+// API HELPERS
+// ══════════════════════════════════════════════════════════
+async function api(path, method = 'GET', body = null) {
+  const opts = { method, headers: { Authorization: `Bearer ${authToken}`, 'Content-Type': 'application/json' } };
+  if (body) opts.body = JSON.stringify(body);
+  const r = await fetch(path, opts);
+  return r.json();
+}
+
+function notify(msg, type = 'success') {
+  const el = document.createElement('div');
+  el.className = 'notification';
+  el.style.background = type === 'success' ? '#065f46' : type === 'error' ? '#7f1d1d' : '#1e3a5f';
+  el.style.borderLeft = `4px solid ${type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#3b82f6'}`;
+  el.style.color = '#fff';
+  el.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'} mr-2"></i>${msg}`;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 4000);
+}
+
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function openModal(id)  { document.getElementById(id).classList.add('open');    }
+
+const debounce = (fn, ms) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; };
+
+function statusBadge(s) {
+  const map = { draft:'gray', sending:'yellow', sent:'green', cancelled:'red', scheduled:'blue' };
+  return `<span class="badge badge-${map[s]||'gray'}">${s}</span>`;
+}
+
+// ══════════════════════════════════════════════════════════
+// DASHBOARD
+// ══════════════════════════════════════════════════════════
+async function loadDashboard() {
+  // Stats
+  const [subRes, campRes] = await Promise.all([
+    supabase.from('email_subscribers').select('id', { count: 'exact', head: true }).eq('status', 'subscribed'),
+    supabase.from('email_campaigns').select('stats, status')
+  ]);
+  const subs = subRes.count || 0;
+  const camps = (campRes.data || []);
+  const sentCamps = camps.filter(c => c.status === 'sent');
+  const totalSent  = sentCamps.reduce((s,c) => s + (c.stats?.sent || 0), 0);
+  const totalOpens = sentCamps.reduce((s,c) => s + (c.stats?.opens || 0), 0);
+  const totalClicks= sentCamps.reduce((s,c) => s + (c.stats?.clicks || 0), 0);
+  document.getElementById('statSubscribers').textContent = subs.toLocaleString();
+  document.getElementById('statCampaigns').textContent = sentCamps.length;
+  document.getElementById('statOpenRate').textContent = totalSent ? ((totalOpens/totalSent)*100).toFixed(1)+'%' : '—';
+  document.getElementById('statClickRate').textContent = totalSent ? ((totalClicks/totalSent)*100).toFixed(1)+'%' : '—';
+
+  // Recent campaigns
+  const { data: recent } = await supabase.from('email_campaigns').select('id,name,subject,status,stats,sent_at,created_at').order('created_at', { ascending: false }).limit(5);
+  const el = document.getElementById('dashCampaigns');
+  if (!recent?.length) { el.innerHTML = '<div class="text-gray-500 text-sm py-4">No campaigns yet. <a onclick="openNewCampaign()" class="text-cyan-400 cursor-pointer">Create your first campaign.</a></div>'; return; }
+  el.innerHTML = `<table><thead><tr><th>Name</th><th>Status</th><th>Sent</th><th>Opens</th><th>Clicks</th><th>Date</th></tr></thead><tbody>
+  ${recent.map(c => `<tr>
+    <td class="font-medium">${c.name}</td>
+    <td>${statusBadge(c.status)}</td>
+    <td>${(c.stats?.sent||0).toLocaleString()}</td>
+    <td>${c.stats?.sent ? ((c.stats.opens||0)/(c.stats.sent)*100).toFixed(1)+'%' : '—'}</td>
+    <td>${c.stats?.sent ? ((c.stats.clicks||0)/(c.stats.sent)*100).toFixed(1)+'%' : '—'}</td>
+    <td class="text-gray-400">${(c.sent_at||c.created_at)?.slice(0,10)}</td>
+  </tr>`).join('')}
+  </tbody></table>`;
+}
+
+// ══════════════════════════════════════════════════════════
+// SUBSCRIBERS
+// ══════════════════════════════════════════════════════════
+async function loadSubscribers() {
+  const search = document.getElementById('subSearch')?.value || '';
+  const status = document.getElementById('subStatusFilter')?.value || '';
+  const tag    = document.getElementById('subTagFilter')?.value || '';
+  const offset = (subPage - 1) * SUB_LIMIT;
+
+  let q = supabase.from('email_subscribers').select('*', { count: 'exact' })
+    .order('created_at', { ascending: false }).range(offset, offset + SUB_LIMIT - 1);
+  if (status) q = q.eq('status', status);
+  if (tag)    q = q.contains('tags', [tag]);
+  if (search) q = q.ilike('email', `%${search}%`);
+
+  const { data, count } = await q;
+  document.getElementById('subCount').textContent = count?.toLocaleString() || '0';
+  document.getElementById('subPageInfo').textContent = `Page ${subPage} · ${count||0} total`;
+  document.getElementById('subPrevBtn').disabled = subPage <= 1;
+  document.getElementById('subNextBtn').disabled = (offset + SUB_LIMIT) >= (count || 0);
+
+  const tbody = document.getElementById('subTable');
+  if (!data?.length) { tbody.innerHTML = '<tr><td colspan="8" class="text-center text-gray-500 py-8">No subscribers found.</td></tr>'; return; }
+
+  tbody.innerHTML = data.map(s => `<tr>
+    <td><input type="checkbox" class="sub-check" value="${s.id}" onchange="toggleSubSelect('${s.id}')"></td>
+    <td class="font-medium">${s.email}</td>
+    <td class="text-gray-400">${[s.first_name, s.last_name].filter(Boolean).join(' ') || '—'}</td>
+    <td>${statusBadge(s.status)}</td>
+    <td>${s.plan ? `<span class="badge badge-blue">${s.plan}</span>` : '—'}</td>
+    <td>${(s.tags||[]).map(t=>`<span class="tag-chip">${t}</span>`).join(' ') || '—'}</td>
+    <td class="text-gray-400">${s.created_at?.slice(0,10)}</td>
+    <td>
+      <button onclick="deleteSub('${s.id}')" class="text-red-400 hover:text-red-300 text-xs"><i class="fas fa-trash"></i></button>
+    </td>
+  </tr>`).join('');
+}
+
+function openAddSub() { openModal('addSubModal'); }
+function openSyncModal() { openModal('syncModal'); }
+
+async function addSubscriber() {
+  const email = document.getElementById('addSubEmail').value;
+  const first = document.getElementById('addSubFirst').value;
+  const last  = document.getElementById('addSubLast').value;
+  const tags  = document.getElementById('addSubTags').value.split(',').map(t=>t.trim()).filter(Boolean);
+  if (!email) { notify('Email required', 'error'); return; }
+  const r = await api('/api/email-subscribers', 'POST', { email, first_name: first, last_name: last, tags });
+  if (r.error) { notify(r.error, 'error'); return; }
+  notify('Subscriber added');
+  closeModal('addSubModal');
+  loadSubscribers();
+}
+
+async function deleteSub(id) {
+  if (!confirm('Delete this subscriber?')) return;
+  const r = await api(`/api/email-subscribers?id=${id}`, 'DELETE');
+  if (r.error) { notify(r.error, 'error'); return; }
+  notify('Subscriber deleted');
+  loadSubscribers();
+}
+
+async function syncUsers() {
+  const btn = document.getElementById('syncBtn');
+  btn.innerHTML = '<span class="spinner"></span> Syncing...';
+  btn.disabled = true;
+  const { data, error } = await supabase.rpc('sync_authorr_users_to_subscribers');
+  btn.innerHTML = '<i class="fas fa-sync mr-2"></i>Sync Now';
+  btn.disabled = false;
+  const res = document.getElementById('syncResult');
+  res.classList.remove('hidden');
+  if (error) { res.innerHTML = `<div class="text-red-400 text-sm">${error.message}</div>`; return; }
+  res.innerHTML = `<div class="text-green-400 text-sm font-semibold"><i class="fas fa-check-circle mr-1"></i>${data} users synced successfully</div>`;
+  notify(`${data} Authorr users synced to subscribers`);
+  loadSubscribers();
+}
+
+function toggleSubSelect(id) {
+  if (selectedSubs.has(id)) selectedSubs.delete(id); else selectedSubs.add(id);
+  const bar = document.getElementById('bulkBar');
+  if (selectedSubs.size > 0) {
+    bar.classList.remove('hidden'); bar.classList.add('flex');
+    document.getElementById('bulkCount').textContent = `${selectedSubs.size} selected`;
+  } else { bar.classList.add('hidden'); bar.classList.remove('flex'); }
+}
+
+function toggleSelectAll() {
+  const checked = document.getElementById('selectAll').checked;
+  document.querySelectorAll('.sub-check').forEach(cb => { cb.checked = checked; toggleSubSelect(cb.value); });
+}
+
+function clearSelection() { selectedSubs.clear(); document.querySelectorAll('.sub-check').forEach(cb => cb.checked = false); document.getElementById('bulkBar').classList.add('hidden'); document.getElementById('bulkBar').classList.remove('flex'); }
+
+async function bulkDelete() {
+  if (!selectedSubs.size || !confirm(`Delete ${selectedSubs.size} subscribers?`)) return;
+  for (const id of selectedSubs) await api(`/api/email-subscribers?id=${id}`, 'DELETE');
+  notify(`${selectedSubs.size} subscribers deleted`);
+  clearSelection(); loadSubscribers();
+}
+
+async function bulkTag() {
+  const tag = prompt('Enter tag to add:');
+  if (!tag) return;
+  for (const id of selectedSubs) {
+    const { data: s } = await supabase.from('email_subscribers').select('tags').eq('id', id).single();
+    const tags = [...new Set([...(s?.tags||[]), tag.trim()])];
+    await api('/api/email-subscribers', 'PUT', { id, tags });
+  }
+  notify(`Tag "${tag}" added to ${selectedSubs.size} subscribers`);
+  clearSelection(); loadSubscribers();
+}
+
+// ══════════════════════════════════════════════════════════
+// CAMPAIGNS
+// ══════════════════════════════════════════════════════════
+async function loadCampaigns() {
+  const { data } = await supabase.from('email_campaigns').select('*').order('created_at', { ascending: false });
+  const tbody = document.getElementById('campaignTable');
+  if (!data?.length) { tbody.innerHTML = '<tr><td colspan="8" class="text-center text-gray-500 py-8">No campaigns yet.</td></tr>'; return; }
+  tbody.innerHTML = data.map(c => `<tr>
+    <td>
+      <div class="font-medium">${c.name}</div>
+      <div class="text-xs text-gray-500 truncate max-w-xs">${c.subject}</div>
+    </td>
+    <td>${statusBadge(c.status)}</td>
+    <td class="text-gray-400 text-xs">${c.audience}${c.audience_filter ? ':'+c.audience_filter : ''}</td>
+    <td>${(c.stats?.sent||0).toLocaleString()}</td>
+    <td>${c.stats?.sent ? ((c.stats.opens||0)/(c.stats.sent)*100).toFixed(1)+'%' : '—'}</td>
+    <td>${c.stats?.sent ? ((c.stats.clicks||0)/(c.stats.sent)*100).toFixed(1)+'%' : '—'}</td>
+    <td class="text-gray-400 text-xs">${(c.sent_at||c.created_at)?.slice(0,10)}</td>
+    <td>
+      ${c.status === 'draft' ? `<button onclick="editCampaign('${c.id}')" class="btn btn-secondary text-xs mr-1">Edit</button>` : ''}
+      ${c.status === 'sent' ? `<button onclick="viewCampaignStats('${c.id}')" class="btn btn-ghost text-xs mr-1">Stats</button>` : ''}
+      <button onclick="deleteCampaign('${c.id}')" class="text-red-400 hover:text-red-300 text-xs"><i class="fas fa-trash"></i></button>
+    </td>
+  </tr>`).join('');
+}
+
+function openNewCampaign() {
+  currentCampaignId = null;
+  document.getElementById('campaignModalTitle').textContent = 'New Campaign';
+  document.getElementById('campName').value = '';
+  document.getElementById('campSubject').value = '';
+  document.getElementById('campPreview').value = '';
+  document.getElementById('campHtml').value = '';
+  document.getElementById('campAudience').value = 'all';
+  // Load defaults from settings
+  supabase.from('email_settings').select('from_name,from_email,reply_to').eq('id',1).single().then(({data}) => {
+    if (data) { document.getElementById('campFromName').value = data.from_name||''; document.getElementById('campFromEmail').value = data.from_email||''; document.getElementById('campReplyTo').value = data.reply_to||''; }
+  });
+  switchCampTab('details');
+  openModal('campaignModal');
+}
+
+async function editCampaign(id) {
+  const { data } = await supabase.from('email_campaigns').select('*').eq('id', id).single();
+  if (!data) return;
+  currentCampaignId = id;
+  document.getElementById('campaignModalTitle').textContent = 'Edit Campaign';
+  document.getElementById('campName').value = data.name||'';
+  document.getElementById('campSubject').value = data.subject||'';
+  document.getElementById('campPreview').value = data.preview_text||'';
+  document.getElementById('campFromName').value = data.from_name||'';
+  document.getElementById('campFromEmail').value = data.from_email||'';
+  document.getElementById('campReplyTo').value = data.reply_to||'';
+  document.getElementById('campHtml').value = data.html_body||'';
+  document.getElementById('campAudience').value = data.audience||'all';
+  document.getElementById('campAudienceFilter').value = data.audience_filter||'';
+  switchCampTab('details');
+  openModal('campaignModal');
+}
+
+async function deleteCampaign(id) {
+  if (!confirm('Delete this campaign?')) return;
+  const r = await api(`/api/email-campaigns?id=${id}`, 'DELETE');
+  if (r.error) { notify(r.error, 'error'); return; }
+  notify('Campaign deleted');
+  loadCampaigns();
+}
+
+function switchCampTab(tab) {
+  ['details','content','audience','review'].forEach(t => {
+    document.getElementById('campTab-'+t).classList.toggle('hidden', t !== tab);
+    document.getElementById('tab-'+t).classList.toggle('active', t === tab);
+  });
+  if (tab === 'review') updateReviewPanel();
+}
+
+function updateReviewPanel() {
+  document.getElementById('rvName').textContent    = document.getElementById('campName').value || '—';
+  document.getElementById('rvSubject').textContent = document.getElementById('campSubject').value || '—';
+  document.getElementById('rvFrom').textContent    = `${document.getElementById('campFromName').value} <${document.getElementById('campFromEmail').value}>`;
+  const aud = document.getElementById('campAudience').value;
+  const filt = document.getElementById('campAudienceFilter').value;
+  document.getElementById('rvAudience').textContent = aud === 'all' ? 'All Subscribers' : `${aud}: ${filt}`;
+}
+
+function updateAudienceFilter() {
+  const aud = document.getElementById('campAudience').value;
+  const row = document.getElementById('audienceFilterRow');
+  if (aud !== 'all') {
+    row.classList.remove('hidden');
+    document.getElementById('audienceFilterLabel').textContent = aud === 'tag' ? 'Tag name' : 'Plan name (free/starter/author/publisher/studio)';
+    document.getElementById('campAudienceFilter').placeholder = aud === 'tag' ? 'e.g. newsletter' : 'e.g. author';
+  } else {
+    row.classList.add('hidden');
+  }
+}
+
+function toggleCampPreview() {
+  const edWrap = document.getElementById('campEditorWrap');
+  const pvWrap = document.getElementById('campPreviewWrap');
+  const btn    = document.getElementById('previewToggleBtn');
+  if (edWrap.classList.contains('hidden')) {
+    edWrap.classList.remove('hidden'); pvWrap.classList.add('hidden');
+    btn.innerHTML = '<i class="fas fa-eye mr-1"></i>Preview';
+  } else {
+    edWrap.classList.add('hidden'); pvWrap.classList.remove('hidden');
+    const frame = document.getElementById('campPreviewFrame');
+    frame.srcdoc = document.getElementById('campHtml').value;
+    btn.innerHTML = '<i class="fas fa-code mr-1"></i>Edit HTML';
+  }
+}
+
+async function saveCampaignDraft() {
+  const payload = {
+    name: document.getElementById('campName').value,
+    subject: document.getElementById('campSubject').value,
+    preview_text: document.getElementById('campPreview').value,
+    from_name: document.getElementById('campFromName').value,
+    from_email: document.getElementById('campFromEmail').value,
+    reply_to: document.getElementById('campReplyTo').value,
+    html_body: document.getElementById('campHtml').value,
+    audience: document.getElementById('campAudience').value,
+    audience_filter: document.getElementById('campAudienceFilter').value,
+    track_opens: document.getElementById('campTrackOpens').checked,
+    track_clicks: document.getElementById('campTrackClicks').checked,
+  };
+  let r;
+  if (currentCampaignId) {
+    r = await api('/api/email-campaigns', 'PUT', { id: currentCampaignId, ...payload });
+  } else {
+    r = await api('/api/email-campaigns', 'POST', payload);
+    if (r.campaign) currentCampaignId = r.campaign.id;
+  }
+  if (r.error) { notify(r.error, 'error'); return; }
+  notify('Draft saved');
+  loadCampaigns();
+}
+
+async function sendCampaign() {
+  if (!document.getElementById('campSubject').value) { notify('Subject line required', 'error'); switchCampTab('details'); return; }
+  if (!document.getElementById('campHtml').value) { notify('Email content required', 'error'); switchCampTab('content'); return; }
+  if (!confirm('Send this campaign now? This cannot be undone.')) return;
+
+  await saveCampaignDraft();
+  if (!currentCampaignId) { notify('Save failed', 'error'); return; }
+
+  const btn = document.getElementById('sendCampaignBtn');
+  btn.innerHTML = '<span class="spinner"></span> Sending...';
+  btn.disabled = true;
+
+  const r = await api('/api/email-send', 'POST', { campaign_id: currentCampaignId });
+  btn.innerHTML = '<i class="fas fa-paper-plane mr-2"></i>Send Campaign';
+  btn.disabled = false;
+
+  if (r.error) { notify(r.error, 'error'); return; }
+  notify(`Campaign sent to ${r.sent?.toLocaleString()} subscribers!`);
+  closeModal('campaignModal');
+  loadCampaigns();
+}
+
+async function sendTestEmail() {
+  const testEmail = document.getElementById('testEmailInput').value;
+  if (!testEmail) { notify('Enter a test email address', 'error'); return; }
+  await saveCampaignDraft();
+  const r = await api('/api/email-send', 'POST', { campaign_id: currentCampaignId, test_email: testEmail });
+  if (r.error) { notify(r.error, 'error'); return; }
+  notify(`Test email sent to ${testEmail}`);
+}
+
+// ══════════════════════════════════════════════════════════
+// CAMPAIGN TEMPLATES
+// ══════════════════════════════════════════════════════════
+function setCampTemplate(type) {
+  const templates = {
+    blank: '',
+    newsletter: `<div style="max-width:600px;margin:0 auto;background:#0f0f0f;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#e5e7eb;">
+  <div style="background:linear-gradient(135deg,#22d3ee,#3b82f6);padding:32px;text-align:center;">
+    <h1 style="color:#000;margin:0;font-size:28px;font-weight:800;">AUTHORR AI</h1>
+    <p style="color:rgba(0,0,0,0.7);margin:8px 0 0;font-size:14px;">Your Monthly Newsletter</p>
+  </div>
+  <div style="padding:32px;">
+    <p style="color:#9ca3af;font-size:15px;">Hi {{first_name}},</p>
+    <h2 style="color:#22d3ee;font-size:20px;margin-bottom:16px;">What's new this month</h2>
+    <p style="line-height:1.7;color:#d1d5db;">Your main content goes here. Write something compelling that delivers value to your readers and keeps them engaged.</p>
+    <div style="margin:28px 0;text-align:center;">
+      <a href="https://authorr-ai.vercel.app" style="background:#22d3ee;color:#000;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:700;font-size:15px;display:inline-block;">Get Started</a>
+    </div>
+    <p style="color:#6b7280;font-size:14px;">Thanks for being part of our community,<br>The Authorr AI Team</p>
+  </div>
+</div>`,
+    announcement: `<div style="max-width:600px;margin:0 auto;background:#fff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+  <div style="padding:40px;text-align:center;border-bottom:1px solid #e5e7eb;">
+    <h1 style="color:#111;font-size:32px;font-weight:900;margin:0;">Big Announcement</h1>
+    <p style="color:#6b7280;margin:12px 0 0;font-size:16px;">We have something exciting to share</p>
+  </div>
+  <div style="padding:40px;">
+    <p style="color:#374151;">Hi {{first_name}},</p>
+    <p style="color:#374151;line-height:1.8;font-size:16px;">We're thrilled to announce something that's going to change the way you create audiobooks forever.</p>
+    <div style="background:#f9fafb;border-left:4px solid #22d3ee;padding:20px;margin:24px 0;border-radius:0 8px 8px 0;">
+      <p style="margin:0;color:#111;font-size:16px;font-weight:600;">Your key message or feature highlight here.</p>
+    </div>
+    <div style="text-align:center;margin:32px 0;">
+      <a href="https://authorr-ai.vercel.app" style="background:#111;color:#fff;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:700;font-size:15px;display:inline-block;">Learn More</a>
+    </div>
+  </div>
+</div>`,
+    promo: `<div style="max-width:600px;margin:0 auto;background:#0a0a0a;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#e5e7eb;">
+  <div style="background:linear-gradient(135deg,#7c3aed,#1d4ed8);padding:48px 32px;text-align:center;">
+    <div style="display:inline-block;background:rgba(255,255,255,0.1);border-radius:999px;padding:6px 16px;font-size:12px;font-weight:700;letter-spacing:2px;margin-bottom:16px;color:#fff;">LIMITED TIME OFFER</div>
+    <h1 style="color:#fff;font-size:36px;font-weight:900;margin:0 0 12px;">Save 50% Today</h1>
+    <p style="color:rgba(255,255,255,0.8);font-size:16px;margin:0;">This offer expires in 48 hours</p>
+  </div>
+  <div style="padding:32px;">
+    <p style="color:#9ca3af;">Hi {{first_name}},</p>
+    <p style="color:#d1d5db;line-height:1.7;">For a limited time, we're offering an exclusive discount for our most loyal subscribers. Don't miss this opportunity.</p>
+    <div style="background:#1f2937;border-radius:12px;padding:24px;text-align:center;margin:24px 0;">
+      <div style="color:#f59e0b;font-size:14px;font-weight:600;margin-bottom:8px;">YOUR EXCLUSIVE CODE</div>
+      <div style="font-size:28px;font-weight:900;letter-spacing:4px;color:#fff;">SAVE50</div>
+    </div>
+    <div style="text-align:center;margin:24px 0;">
+      <a href="https://authorr-ai.vercel.app" style="background:linear-gradient(135deg,#7c3aed,#2563eb);color:#fff;padding:16px 40px;border-radius:10px;text-decoration:none;font-weight:700;font-size:16px;display:inline-block;">Claim Your Discount</a>
+    </div>
+  </div>
+</div>`
+  };
+  document.getElementById('campHtml').value = templates[type] || '';
+}
+
+// ══════════════════════════════════════════════════════════
+// AI FEATURES
+// ══════════════════════════════════════════════════════════
+async function quickSubjectAI() {
+  const topic = document.getElementById('campName').value || prompt('What is this campaign about?');
+  if (!topic) return;
+  const btn = event.target;
+  btn.innerHTML = '<span class="spinner"></span>';
+  const r = await api('/api/email-ai', 'POST', { action: 'subjects', topic });
+  btn.innerHTML = '<i class="fas fa-magic mr-1"></i>AI';
+  if (r.error) { notify(r.error, 'error'); return; }
+  if (r.variants?.length) {
+    const choice = await showSubjectPicker(r.variants);
+    if (choice) document.getElementById('campSubject').value = choice;
+  }
+}
+
+function showSubjectPicker(variants) {
+  return new Promise(resolve => {
+    const modal = document.createElement('div');
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:2000;display:flex;align-items:center;justify-content:center;';
+    modal.innerHTML = `<div style="background:#111;border:1px solid #374151;border-radius:16px;padding:24px;max-width:520px;width:90%;">
+      <h3 style="color:#e5e7eb;font-weight:700;margin-bottom:16px;">Choose a subject line</h3>
+      ${variants.map((v,i) => `<div onclick="this.closest('.spicker').dataset.val='${v.replace(/'/g,"&#39;")}';this.closest('.spicker').querySelectorAll('div.svopt').forEach(d=>d.style.background='');this.style.background='rgba(34,211,238,.1)';this.style.borderColor='#22d3ee';" class="svopt" style="padding:10px 14px;border:1px solid #374151;border-radius:8px;margin-bottom:8px;cursor:pointer;color:#e5e7eb;font-size:13px;transition:all .1s;">${v}</div>`).join('')}
+      <div style="display:flex;gap:8px;margin-top:16px;">
+        <button onclick="this.closest('.spicker').dataset.val='';document.body.removeChild(this.closest('div[style]').parentElement||this.closest('[style*=fixed]'));" style="flex:1;padding:8px;background:#1f2937;color:#e5e7eb;border:none;border-radius:8px;cursor:pointer;font-size:13px;">Cancel</button>
+        <button onclick="const v=this.closest('.spicker').dataset.val;document.body.removeChild(this.closest('[style*=fixed]'));" style="flex:1;padding:8px;background:#22d3ee;color:#000;border:none;border-radius:8px;cursor:pointer;font-weight:700;font-size:13px;" id="spPick">Use Selected</button>
+      </div>
+    </div>`;
+    modal.querySelector('#spPick').onclick = () => {
+      const val = modal.querySelector('.spicker')?.dataset.val || modal.querySelector('.svopt[style*=rgba]')?.textContent;
+      document.body.removeChild(modal);
+      resolve(val || null);
+    };
+    modal.querySelector('[onclick*=Cancel]').onclick = () => { document.body.removeChild(modal); resolve(null); };
+    // Wrap inner div in spicker class
+    modal.querySelector('div[style*=background]').className = 'spicker';
+    document.body.appendChild(modal);
+  });
+}
+
+async function campAICompose() {
+  const topic = document.getElementById('campName').value;
+  if (!topic) { notify('Enter a campaign name first', 'error'); return; }
+  const btn = event.target;
+  btn.innerHTML = '<span class="spinner"></span>';
+  btn.disabled = true;
+  const r = await api('/api/email-ai', 'POST', { action: 'compose', topic, tone: 'professional', goal: 'drive engagement' });
+  btn.innerHTML = '<i class="fas fa-magic mr-1"></i>AI Write';
+  btn.disabled = false;
+  if (r.error) { notify(r.error, 'error'); return; }
+  if (r.html) document.getElementById('campHtml').value = r.html;
+  if (r.subject && !document.getElementById('campSubject').value) document.getElementById('campSubject').value = r.subject;
+  notify('AI wrote your email content');
+}
+
+// AI Compose page
+async function generateSubjectLines() {
+  const topic = document.getElementById('aiTopic').value;
+  if (!topic) { notify('Enter a topic first', 'error'); return; }
+  const r = await api('/api/email-ai', 'POST', { action: 'subjects', topic, audience: 'Authorr AI users', goal: document.getElementById('aiGoal').value });
+  if (r.error) { notify(r.error, 'error'); return; }
+  const el = document.getElementById('subjectVariants');
+  el.classList.remove('hidden');
+  document.getElementById('subjectList').innerHTML = (r.variants||[]).map((v,i) => `<div class="flex items-center gap-2 p-3 bg-black/30 rounded-lg border border-gray-800 hover:border-cyan-500 cursor-pointer transition-colors" onclick="document.getElementById('composedSubject').value='${v.replace(/'/g,"&#39;")}';notify('Subject selected');">
+    <span class="text-xs text-gray-500 w-5">${i+1}</span>
+    <span class="text-sm flex-1">${v}</span>
+    <button onclick="event.stopPropagation();document.getElementById('campSubject').value='${v.replace(/'/g,"&#39;")}'" class="text-xs text-cyan-400 hover:text-cyan-300">Use</button>
+  </div>`).join('');
+}
+
+async function composeFullEmail() {
+  const topic = document.getElementById('aiTopic').value;
+  if (!topic) { notify('Enter a topic first', 'error'); return; }
+  const loading = document.getElementById('composeLoading');
+  const empty   = document.getElementById('composeEmpty');
+  const frame   = document.getElementById('emailPreviewFrame');
+  empty.style.display = 'none';
+  frame.style.display = 'none';
+  loading.classList.remove('hidden');
+
+  const r = await api('/api/email-ai', 'POST', {
+    action: 'compose',
+    topic,
+    tone: document.getElementById('aiTone').value,
+    goal: document.getElementById('aiGoal').value,
+    key_points: document.getElementById('aiKeyPoints').value,
+    audience: 'Authorr AI users',
+    brand: 'Authorr AI'
+  });
+
+  loading.classList.add('hidden');
+  if (r.error) { notify(r.error, 'error'); empty.style.display = ''; return; }
+
+  frame.style.display = 'block';
+  frame.srcdoc = r.html || '';
+  document.getElementById('composedSubject').value = r.subject || '';
+  document.getElementById('composedHtml').value = r.html || '';
+  document.getElementById('spamCheckBtn').style.display = '';
+  document.getElementById('saveComposedBtn').style.display = '';
+}
+
+async function checkSpam() {
+  const html = document.getElementById('composedHtml').value;
+  const subject = document.getElementById('composedSubject').value;
+  if (!html) { notify('Compose an email first', 'error'); return; }
+  const btn = document.getElementById('spamCheckBtn');
+  btn.innerHTML = '<span class="spinner"></span>';
+  const r = await api('/api/email-ai', 'POST', { action: 'spam_check', subject, html_body: html });
+  btn.innerHTML = '<i class="fas fa-shield-alt mr-1"></i>Spam Check';
+  if (r.error) { notify(r.error, 'error'); return; }
+  const el = document.getElementById('spamCheckResult');
+  el.classList.remove('hidden');
+  const gradeColor = { A: '#10b981', B: '#22d3ee', C: '#f59e0b', D: '#f97316', F: '#ef4444' };
+  document.getElementById('spamCheckContent').innerHTML = `
+    <div class="flex items-center gap-4 mb-3">
+      <div style="font-size:2.5rem;font-weight:900;color:${gradeColor[r.grade]||'#9ca3af'}">${r.grade}</div>
+      <div>
+        <div class="font-semibold">${r.summary || ''}</div>
+        <div class="progress-bar mt-1" style="width:200px"><div class="progress-fill" style="width:${r.score*10}%;background:${gradeColor[r.grade]||'#9ca3af'}"></div></div>
+        <div class="text-xs text-gray-400 mt-0.5">Score: ${r.score}/10</div>
+      </div>
+    </div>
+    ${r.issues?.length ? `<div class="text-xs text-red-300 mb-2">${r.issues.map(i=>`<div><i class="fas fa-times mr-1"></i>${i}</div>`).join('')}</div>` : ''}
+    ${r.suggestions?.length ? `<div class="text-xs text-green-300">${r.suggestions.map(s=>`<div><i class="fas fa-check mr-1"></i>${s}</div>`).join('')}</div>` : ''}
+  `;
+}
+
+function saveComposedEmail() {
+  const subject = document.getElementById('composedSubject').value;
+  const html    = document.getElementById('composedHtml').value;
+  // Open campaign modal pre-filled
+  openNewCampaign();
+  setTimeout(() => {
+    document.getElementById('campSubject').value = subject;
+    document.getElementById('campHtml').value = html;
+    document.getElementById('campName').value = subject.slice(0, 50);
+    switchCampTab('content');
+  }, 100);
+}
+
+// ══════════════════════════════════════════════════════════
+// SETTINGS
+// ══════════════════════════════════════════════════════════
+async function loadSettings() {
+  const { data } = await supabase.from('email_settings').select('*').eq('id', 1).single();
+  if (!data) return;
+  document.getElementById('setFromName').value   = data.from_name || '';
+  document.getElementById('setFromEmail').value  = data.from_email || '';
+  document.getElementById('setReplyTo').value    = data.reply_to || '';
+  document.getElementById('setAddress').value    = data.physical_address || '';
+  if (data.resend_api_key) document.getElementById('setResendKey').placeholder   = '(saved) re_••••••••';
+  if (data.webhook_secret) document.getElementById('setWebhookSecret').placeholder = '(saved) whsec_••••••••';
+}
+
+async function saveSettings() {
+  const payload = {
+    from_name: document.getElementById('setFromName').value,
+    from_email: document.getElementById('setFromEmail').value,
+    reply_to: document.getElementById('setReplyTo').value || null,
+    physical_address: document.getElementById('setAddress').value,
+  };
+  const resendKey = document.getElementById('setResendKey').value;
+  const whSecret  = document.getElementById('setWebhookSecret').value;
+  if (resendKey)  payload.resend_api_key = resendKey;
+  if (whSecret)   payload.webhook_secret = whSecret;
+
+  const r = await api('/api/email-settings', 'PUT', payload);
+  if (r.error) { notify(r.error, 'error'); return; }
+  notify('Settings saved');
+}
+
+// ══════════════════════════════════════════════════════════
+// SIGNUP FORM GENERATOR
+// ══════════════════════════════════════════════════════════
+function updateFormPreview() {
+  const h = document.getElementById('formHeading').value || 'Stay in the loop';
+  const s = document.getElementById('formSubtext').value || '';
+  const b = document.getElementById('formBtnText').value || 'Subscribe';
+  document.getElementById('formPreview').innerHTML = `
+    <h3 style="color:#22d3ee;font-size:1.25rem;font-weight:700;margin-bottom:8px">${h}</h3>
+    <p style="color:#9ca3af;font-size:14px;margin-bottom:16px">${s}</p>
+    <div style="display:flex;gap:8px;max-width:380px;margin:0 auto">
+      <input type="email" placeholder="Your email address" style="flex:1;padding:8px 12px;border-radius:8px;border:1px solid #374151;background:#0a0a0a;color:#e5e7eb;font-size:14px">
+      <button style="background:#22d3ee;color:#000;padding:8px 16px;border-radius:8px;border:none;font-weight:700;font-size:14px;cursor:pointer">${b}</button>
+    </div>`;
+}
+
+function generateEmbedCode() {
+  const heading = document.getElementById('formHeading').value || 'Stay in the loop';
+  const subtext = document.getElementById('formSubtext').value || '';
+  const btnText = document.getElementById('formBtnText').value || 'Subscribe';
+  const tag     = document.getElementById('formTag').value || 'website';
+  const apiUrl  = 'https://authorr-ai.vercel.app/api/email-subscribe';
+
+  const code = `<!-- Authorr Email Signup Form -->
+<div id="authorr-signup" style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;padding:24px;background:#0f0f0f;border-radius:12px;max-width:480px;">
+  <h3 style="color:#22d3ee;font-size:1.1rem;font-weight:700;margin:0 0 8px;">${heading}</h3>
+  <p style="color:#9ca3af;font-size:14px;margin:0 0 16px;">${subtext}</p>
+  <div style="display:flex;gap:8px;">
+    <input type="email" id="authorr-email" placeholder="Your email address" style="flex:1;padding:10px 14px;border-radius:8px;border:1px solid #374151;background:#1f2937;color:#e5e7eb;font-size:14px;outline:none;">
+    <button onclick="authorr_subscribe()" style="background:#22d3ee;color:#000;padding:10px 18px;border-radius:8px;border:none;font-weight:700;font-size:14px;cursor:pointer;">${btnText}</button>
+  </div>
+  <div id="authorr-msg" style="margin-top:10px;font-size:13px;display:none;"></div>
+</div>
+<script>
+async function authorr_subscribe() {
+  const email = document.getElementById('authorr-email').value;
+  const msg   = document.getElementById('authorr-msg');
+  if (!email) { msg.style.display='block';msg.style.color='#ef4444';msg.textContent='Please enter your email.'; return; }
+  const r = await fetch('${apiUrl}', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ email, source:'embed-form', tags:['${tag}'] })
+  }).then(r=>r.json()).catch(()=>({error:'Network error'}));
+  msg.style.display = 'block';
+  if (r.success) { msg.style.color='#10b981'; msg.textContent='Thanks! You are subscribed.'; document.getElementById('authorr-email').value=''; }
+  else { msg.style.color='#ef4444'; msg.textContent = r.error || 'Something went wrong.'; }
+}
+<\/script>`;
+
+  document.getElementById('embedCodeSection').classList.remove('hidden');
+  document.getElementById('embedCodeOutput').value = code;
+}
+
+function copyEmbedCode() {
+  navigator.clipboard.writeText(document.getElementById('embedCodeOutput').value);
+  notify('Embed code copied to clipboard');
+}
+
+// ══════════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════════
+function initApp() {
+  loadDashboard();
+}
+
+// Boot
+checkAuth();
+</script>
+</body>
+</html>
