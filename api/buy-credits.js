@@ -9,10 +9,10 @@ const supabase = createClient(
 
 // Credit packs: key -> { credits, price_cents, label }
 const CREDIT_PACKS = {
-  small:  { credits: 50000,   price_cents: 500,  label: '50,000 Credits',     desc: '~1 short book' },
-  medium: { credits: 200000,  price_cents: 1500, label: '200,000 Credits',    desc: '~4 books' },
-  large:  { credits: 500000,  price_cents: 3000, label: '500,000 Credits',    desc: '~10 books' },
-  mega:   { credits: 1500000, price_cents: 7500, label: '1,500,000 Credits',  desc: '~30 books' },
+  small:  { credits: 50000,   price_cents: 700,   label: '50,000 Credits',    desc: '~6 chapters / short story' },
+  medium: { credits: 200000,  price_cents: 2000,  label: '200,000 Credits',   desc: '~half a full audiobook' },
+  large:  { credits: 500000,  price_cents: 4900,  label: '500,000 Credits',   desc: '~1 full audiobook' },
+  mega:   { credits: 1500000, price_cents: 12900, label: '1,500,000 Credits', desc: '~3 full audiobooks' },
 };
 
 module.exports = async function handler(req, res) {
