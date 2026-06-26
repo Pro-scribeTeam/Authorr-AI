@@ -3172,7 +3172,8 @@
                     <!-- Platform cards grid -->
                     <div class="grid grid-cols-2 gap-2 mb-4" id="publishPlatformGrid">
                         <button onclick="selectPublishPlatform('acx')" id="ppcard-acx"
-                            class="pub-platform-card p-3 rounded-lg bg-theme-primary border border-theme hover:border-orange-400 transition-colors text-left">
+                            class="pub-platform-card p-3 rounded-lg bg-theme-primary border border-theme hover:border-orange-400 transition-colors text-left relative">
+                            <span class="absolute top-1 right-1 text-[9px] font-bold bg-yellow-500 text-black px-1 rounded">$</span>
                             <i class="fab fa-amazon text-orange-400 text-xl mb-1 block"></i>
                             <div class="font-semibold text-xs leading-tight">Audible / ACX</div>
                             <div class="text-xs text-theme-secondary">Amazon</div>
@@ -3184,7 +3185,8 @@
                             <div class="text-xs text-theme-secondary">Audiobooks</div>
                         </button>
                         <button onclick="selectPublishPlatform('apple')" id="ppcard-apple"
-                            class="pub-platform-card p-3 rounded-lg bg-theme-primary border border-theme hover:border-gray-300 transition-colors text-left">
+                            class="pub-platform-card p-3 rounded-lg bg-theme-primary border border-theme hover:border-gray-300 transition-colors text-left relative">
+                            <span class="absolute top-1 right-1 text-[9px] font-bold bg-yellow-500 text-black px-1 rounded">$</span>
                             <i class="fab fa-apple text-gray-300 text-xl mb-1 block"></i>
                             <div class="font-semibold text-xs leading-tight">Apple Books</div>
                             <div class="text-xs text-theme-secondary">iTunes Connect</div>
@@ -3208,19 +3210,22 @@
                             <div class="text-xs text-theme-secondary">40+ platforms</div>
                         </button>
                         <button onclick="selectPublishPlatform('kobo')" id="ppcard-kobo"
-                            class="pub-platform-card p-3 rounded-lg bg-theme-primary border border-theme hover:border-red-400 transition-colors text-left">
+                            class="pub-platform-card p-3 rounded-lg bg-theme-primary border border-theme hover:border-red-400 transition-colors text-left relative">
+                            <span class="absolute top-1 right-1 text-[9px] font-bold bg-yellow-500 text-black px-1 rounded">$</span>
                             <i class="fas fa-book-open text-red-400 text-xl mb-1 block"></i>
                             <div class="font-semibold text-xs leading-tight">Kobo</div>
                             <div class="text-xs text-theme-secondary">Writing Life</div>
                         </button>
                         <button onclick="selectPublishPlatform('bn')" id="ppcard-bn"
-                            class="pub-platform-card p-3 rounded-lg bg-theme-primary border border-theme hover:border-blue-300 transition-colors text-left">
+                            class="pub-platform-card p-3 rounded-lg bg-theme-primary border border-theme hover:border-blue-300 transition-colors text-left relative">
+                            <span class="absolute top-1 right-1 text-[9px] font-bold bg-yellow-500 text-black px-1 rounded">$</span>
                             <i class="fas fa-store text-blue-300 text-xl mb-1 block"></i>
                             <div class="font-semibold text-xs leading-tight">B&amp;N Press</div>
                             <div class="text-xs text-theme-secondary">Barnes &amp; Noble</div>
                         </button>
                         <button onclick="selectPublishPlatform('podcast')" id="ppcard-podcast"
-                            class="pub-platform-card p-3 rounded-lg bg-theme-primary border border-theme hover:border-pink-400 transition-colors text-left">
+                            class="pub-platform-card p-3 rounded-lg bg-theme-primary border border-theme hover:border-pink-400 transition-colors text-left relative">
+                            <span class="absolute top-1 right-1 text-[9px] font-bold bg-yellow-500 text-black px-1 rounded">$</span>
                             <i class="fas fa-podcast text-pink-400 text-xl mb-1 block"></i>
                             <div class="font-semibold text-xs leading-tight">Podcast / RSS</div>
                             <div class="text-xs text-theme-secondary">Anchor / Buzzsprout</div>
@@ -3250,6 +3255,18 @@
                                 class="btn-secondary py-2 rounded text-sm font-semibold w-full text-center block">
                                 <i class="fas fa-external-link-alt mr-2"></i>Open Upload Page
                             </a>
+                            <!-- Affiliate section -->
+                            <div id="ppDetailAffiliate" class="hidden mt-1 rounded-lg border border-yellow-500/40 bg-yellow-500/5 p-3">
+                                <div class="flex items-center gap-2 mb-1">
+                                    <i class="fas fa-dollar-sign text-yellow-400 text-sm"></i>
+                                    <span class="text-xs font-semibold text-yellow-300">Affiliate Program Available</span>
+                                </div>
+                                <p id="ppAffiliateNote" class="text-xs text-theme-secondary mb-2"></p>
+                                <a id="ppAffiliateLink" href="#" target="_blank" rel="noopener noreferrer"
+                                    class="inline-flex items-center gap-1 text-xs text-yellow-400 hover:text-yellow-300 underline underline-offset-2">
+                                    <i class="fas fa-external-link-alt text-[10px]"></i>Join Affiliate Program
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -11963,6 +11980,9 @@ Format as clean, readable text ready for narration.`;
                 ].join('\n'),
                 notesFile: s => `${s}_ACX_notes.txt`,
                 uploadUrl: 'https://www.acx.com/',
+                affiliateUrl: 'https://help.acx.com/s/article/bounty-referral-program',
+                affiliateEarns: '$50–$75 per new Audible member',
+                affiliateNote: 'ACX Bounty Referral Program — earn when a new listener joins Audible via your link. Access your unique link from your ACX Sales Dashboard after publishing a title.',
             },
             spotify: {
                 name: 'Spotify Audiobooks',
@@ -11990,7 +12010,9 @@ Format as clean, readable text ready for narration.`;
                     `Upload at: https://podcasters.spotify.com/`,
                 ].join('\n'),
                 notesFile: s => `${s}_Spotify_notes.txt`,
-                uploadUrl: 'https://podcasters.spotify.com/',
+                uploadUrl: 'https://authors.spotify.com/self-published-authors',
+                affiliateUrl: null,
+                affiliateNote: 'Spotify does not currently offer an affiliate or referral program for audiobook distribution.',
             },
             apple: {
                 name: 'Apple Books',
@@ -12017,6 +12039,9 @@ Format as clean, readable text ready for narration.`;
                 ].join('\n'),
                 notesFile: s => `${s}_Apple_notes.txt`,
                 uploadUrl: 'https://authors.apple.com/',
+                affiliateUrl: 'https://authors.apple.com/support/3977-apple-affiliate-program-books-audiobooks',
+                affiliateEarns: '7% commission on purchases',
+                affiliateNote: 'Apple Books Affiliate Program (via Impact/Partnerize) — earn 7% on any Apple Books purchase made within 30 days of a click. Apply through the Apple Books for Authors portal.',
             },
             google: {
                 name: 'Google Play Books',
@@ -12043,6 +12068,8 @@ Format as clean, readable text ready for narration.`;
                 ].join('\n'),
                 notesFile: s => `${s}_GooglePlay_notes.txt`,
                 uploadUrl: 'https://play.google.com/books/publish',
+                affiliateUrl: null,
+                affiliateNote: 'Google Play Books does not offer a publisher affiliate or referral program.',
             },
             overdrive: {
                 name: 'OverDrive / Libby',
@@ -12071,6 +12098,8 @@ Format as clean, readable text ready for narration.`;
                 ].join('\n'),
                 notesFile: s => `${s}_OverDrive_notes.txt`,
                 uploadUrl: 'https://marketplace.overdrive.com/',
+                affiliateUrl: null,
+                affiliateNote: 'OverDrive does not have a public affiliate program. Distribute via Findaway/INaudio to reach OverDrive libraries automatically.',
             },
             findaway: {
                 name: 'Findaway Voices',
@@ -12098,7 +12127,9 @@ Format as clean, readable text ready for narration.`;
                     `Upload at: https://findawayvoices.com/submit`,
                 ].join('\n'),
                 notesFile: s => `${s}_Findaway_notes.txt`,
-                uploadUrl: 'https://findawayvoices.com/submit',
+                uploadUrl: 'https://www.inaudio.com/',
+                affiliateUrl: null,
+                affiliateNote: 'Findaway Voices rebranded to Voices by INaudio (Aug 2025). No affiliate/referral program currently available.',
             },
             kobo: {
                 name: 'Kobo Writing Life',
@@ -12124,6 +12155,9 @@ Format as clean, readable text ready for narration.`;
                 ].join('\n'),
                 notesFile: s => `${s}_Kobo_notes.txt`,
                 uploadUrl: 'https://www.kobo.com/us/en/p/writinglife',
+                affiliateUrl: 'https://www.kobo.com/us/en/p/affiliate',
+                affiliateEarns: 'Commission on Kobo purchases (via Rakuten)',
+                affiliateNote: 'Kobo Affiliate Program via Rakuten Advertising — earn commission on purchases made within 14 days of a click. Free to join, no earning cap. Apply at kobo.com/affiliate.',
             },
             bn: {
                 name: 'Barnes & Noble Press',
@@ -12149,6 +12183,9 @@ Format as clean, readable text ready for narration.`;
                 ].join('\n'),
                 notesFile: s => `${s}_BN_notes.txt`,
                 uploadUrl: 'https://press.barnesandnoble.com/',
+                affiliateUrl: 'https://www.barnesandnoble.com/h/affiliates',
+                affiliateEarns: '2–4% on digital purchases',
+                affiliateNote: 'Barnes & Noble Affiliate Program via CJ Affiliate — earn 2% on physical, 4% on digital products. Email BNPressAffiliate@bn.com with your CJ Affiliate ID to join.',
             },
             podcast: {
                 name: 'Podcast / RSS',
@@ -12177,6 +12214,9 @@ Format as clean, readable text ready for narration.`;
                 },
                 notesFile: s => `${s}_show_notes.txt`,
                 uploadUrl: 'https://podcasters.spotify.com/',
+                affiliateUrl: 'https://www.buzzsprout.com/affiliate',
+                affiliateEarns: '$20 per paid Buzzsprout signup',
+                affiliateNote: 'Buzzsprout Affiliate Program — earn $20 for every person who signs up for a paid Buzzsprout plan via your link. Cookie never expires. Referred users also get $20 credit.',
             },
             youtube: {
                 name: 'YouTube',
@@ -12206,6 +12246,8 @@ Format as clean, readable text ready for narration.`;
                 },
                 notesFile: s => `${s}_youtube_description.txt`,
                 uploadUrl: 'https://studio.youtube.com/',
+                affiliateUrl: null,
+                affiliateNote: 'YouTube does not have a publisher affiliate program. Monetize your channel directly via YouTube Partner Program once eligible.',
             },
         };
 
@@ -12237,6 +12279,17 @@ Format as clean, readable text ready for narration.`;
             const link = document.getElementById('ppDetailUploadLink');
             link.href = platform.uploadUrl;
             link.innerHTML = `<i class="fas fa-external-link-alt mr-2"></i>Open ${platform.name} Upload Page`;
+
+            // Affiliate section
+            const affDiv = document.getElementById('ppDetailAffiliate');
+            if (platform.affiliateUrl) {
+                document.getElementById('ppAffiliateNote').textContent =
+                    `Earn ${platform.affiliateEarns || 'commission'} — ${platform.affiliateNote || ''}`;
+                document.getElementById('ppAffiliateLink').href = platform.affiliateUrl;
+                affDiv.classList.remove('hidden');
+            } else {
+                affDiv.classList.add('hidden');
+            }
 
             document.getElementById('publishPlatformDetail').classList.remove('hidden');
         }
