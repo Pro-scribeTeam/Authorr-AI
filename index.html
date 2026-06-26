@@ -152,15 +152,58 @@
         
         /* Navigation Styling */
         .nav-item {
-          color: white !important;
-          border: 2px solid transparent;
-          transition: all 0.3s ease;
+          color: #c8c8c8 !important;
+          font-size: 0.78rem;
+          padding: 5px 12px !important;
+          border-radius: 7px;
+          border: 1px solid rgba(255,255,255,0.10);
+          background:
+            linear-gradient(180deg,
+              rgba(255,255,255,0.13) 0%,
+              rgba(255,255,255,0.04) 45%,
+              rgba(0,0,0,0.30) 100%),
+            #0a0a0a;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.12);
+          transition: all 0.2s ease;
+          position: relative;
+          overflow: hidden;
         }
-        
-        .nav-item:hover, .nav-item.active {
-          border-color: var(--brand-cyan);
-          box-shadow: var(--brand-cyan-glow);
-          background: rgba(120, 227, 254, 0.1);
+
+        /* gloss sheen sweep on hover */
+        .nav-item::after {
+          content: '';
+          position: absolute;
+          top: 0; left: -80%;
+          width: 55%; height: 100%;
+          background: linear-gradient(120deg, transparent 0%, rgba(255,255,255,0.18) 50%, transparent 100%);
+          transform: skewX(-18deg);
+          transition: left 0.45s ease;
+          pointer-events: none;
+        }
+        .nav-item:hover::after { left: 140%; }
+
+        .nav-item:hover {
+          color: #fff !important;
+          border-color: rgba(120,227,254,0.45);
+          background:
+            linear-gradient(180deg,
+              rgba(255,255,255,0.16) 0%,
+              rgba(255,255,255,0.05) 45%,
+              rgba(0,0,0,0.22) 100%),
+            #111113;
+          box-shadow: 0 0 7px rgba(120,227,254,0.20), 0 2px 4px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.14);
+        }
+
+        .nav-item.active {
+          color: #78e3fe !important;
+          border-color: rgba(120,227,254,0.65);
+          background:
+            linear-gradient(180deg,
+              rgba(120,227,254,0.16) 0%,
+              rgba(120,227,254,0.04) 45%,
+              rgba(0,0,0,0.28) 100%),
+            #0a0a0a;
+          box-shadow: 0 0 10px rgba(120,227,254,0.30), 0 2px 4px rgba(0,0,0,0.6), inset 0 1px 0 rgba(120,227,254,0.18);
         }
         
         /* Glow Effects */
@@ -926,12 +969,12 @@
         <!-- Navigation -->
     <nav class="bg-black border-b-2 border-cyan-400 shadow-lg relative z-50">
         <div class="container mx-auto px-4">
-            <div class="flex justify-between items-center py-4">
-                <div class="flex items-center space-x-3">
+            <div class="flex items-center py-3 gap-6">
+                <div class="flex items-center space-x-3 shrink-0">
                     <img src="https://page.gensparksite.com/v1/base64_upload/5ec0a971230da95148e537dd473d0fb1" alt="AUTHORR AI Logo" class="w-12 h-12 logo-image">
                     <h1 class="text-3xl font-bold authorr-brand-text">AUTHORR AI</h1>
                 </div>
-                <div id="desktopNavButtons" class="hidden items-center space-x-6">
+                <div id="desktopNavButtons" class="hidden items-center space-x-1.5 ml-auto">
                     <button data-page="dashboard" onclick="showPage('dashboard')" class="nav-item px-4 py-2 rounded-lg font-semibold active">
                         <i class="fas fa-home mr-2"></i><span data-i18n="nav_dashboard">Dashboard</span>
                     </button>
@@ -1112,7 +1155,7 @@
             animation: scroll-platforms 22s linear infinite;
         }
         .platform-scroll-track:hover { animation-play-state: paused; }
-        .pub-icon { filter: drop-shadow(0 0 10px var(--glow-color)); }
+        .pub-icon { filter: none; }
         </style>
 
         <section class="border-y border-theme py-8 bg-theme-secondary">
