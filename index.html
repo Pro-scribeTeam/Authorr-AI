@@ -1090,10 +1090,11 @@
                 </div>
 
                 <!-- Headline -->
-                <h1 class="text-4xl md:text-6xl font-extrabold leading-tight mb-6 max-w-4xl mx-auto">
+                <h1 class="text-4xl md:text-6xl font-extrabold leading-tight mb-3 max-w-4xl mx-auto">
                     <span data-i18n="dash_hero_h1">Write, Narrate &amp; Publish Your Audiobook</span>
-                    <span class="text-cyan-400" data-i18n="dash_hero_h1_ai"> — All with AI</span>
+                    <span class="text-cyan-400"> — Today</span>
                 </h1>
+                <p class="text-sm md:text-base font-semibold tracking-[0.25em] text-gray-400 uppercase mb-6">With Authorr AI</p>
 
                 <!-- Sub-headline (pain) -->
                 <p class="text-xl md:text-2xl text-theme-secondary mb-4 max-w-2xl mx-auto leading-relaxed">
@@ -1246,6 +1247,68 @@
                             <span class="text-xs text-theme-secondary whitespace-nowrap">Podcast</span>
                         </span>
                     </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══════════════════════════════════════════════
+             MARKET OPPORTUNITY
+        ═══════════════════════════════════════════════ -->
+        <section class="py-20 relative overflow-hidden">
+            <!-- subtle background gradient -->
+            <div class="absolute inset-0 bg-gradient-to-br from-cyan-950/20 via-transparent to-transparent pointer-events-none"></div>
+            <div class="container mx-auto px-4 relative z-10">
+                <div class="text-center mb-12">
+                    <span class="text-cyan-400 font-semibold uppercase tracking-widest text-sm">The Opportunity</span>
+                    <h2 class="text-3xl md:text-4xl font-bold mt-2">The audiobook gold rush is here.<br class="hidden md:block"> <span class="text-cyan-400">Are you in?</span></h2>
+                    <p class="text-theme-secondary mt-4 max-w-2xl mx-auto">The audiobook industry is the fastest-growing sector in all of publishing — and the window to stake your claim is wide open right now.</p>
+                </div>
+
+                <!-- Stat cards row -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-14 max-w-5xl mx-auto">
+                    <div class="bg-theme-secondary rounded-2xl border border-theme p-6 text-center">
+                        <div class="text-4xl font-black text-cyan-400 mb-1">$14B</div>
+                        <div class="text-sm text-theme-secondary">Global market today</div>
+                    </div>
+                    <div class="bg-theme-secondary rounded-2xl border border-cyan-400/30 p-6 text-center relative overflow-hidden">
+                        <div class="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-cyan-400 to-transparent"></div>
+                        <div class="text-4xl font-black text-cyan-400 mb-1">22%</div>
+                        <div class="text-sm text-theme-secondary">Annual growth rate (CAGR)</div>
+                    </div>
+                    <div class="bg-theme-secondary rounded-2xl border border-theme p-6 text-center">
+                        <div class="text-4xl font-black text-cyan-400 mb-1">$93B</div>
+                        <div class="text-sm text-theme-secondary">Projected market by 2034</div>
+                    </div>
+                    <div class="bg-theme-secondary rounded-2xl border border-theme p-6 text-center">
+                        <div class="text-4xl font-black text-cyan-400 mb-1">99%</div>
+                        <div class="text-sm text-theme-secondary">Revenue now digital</div>
+                    </div>
+                </div>
+
+                <!-- Two-column insight blocks -->
+                <div class="grid md:grid-cols-2 gap-6 max-w-5xl mx-auto">
+                    <div class="bg-theme-secondary rounded-2xl border border-theme p-8">
+                        <div class="w-10 h-10 rounded-full bg-cyan-400/10 border border-cyan-400/30 flex items-center justify-center mb-4">
+                            <i class="fas fa-chart-line text-cyan-400"></i>
+                        </div>
+                        <h3 class="text-xl font-bold mb-3">Fiction dominates. Non-fiction is surging.</h3>
+                        <p class="text-theme-secondary text-sm leading-relaxed">Fiction commands over <span class="text-white font-semibold">60% of revenue</span> — driven by serial fantasy, romance, and thriller audiences who listen on repeat. Non-fiction is the <span class="text-white font-semibold">fastest-growing segment</span>, as listeners turn to self-help, business, and education content on their commutes and workouts.</p>
+                    </div>
+                    <div class="bg-theme-secondary rounded-2xl border border-theme p-8">
+                        <div class="w-10 h-10 rounded-full bg-cyan-400/10 border border-cyan-400/30 flex items-center justify-center mb-4">
+                            <i class="fas fa-mobile-alt text-cyan-400"></i>
+                        </div>
+                        <h3 class="text-xl font-bold mb-3">Smartphones unlocked a billion new listeners.</h3>
+                        <p class="text-theme-secondary text-sm leading-relaxed">Global smartphone penetration has turned every commute, gym session, and errand run into a listening opportunity. The U.S. alone tops <span class="text-white font-semibold">$2.2 billion in annual sales</span>, and digital platforms now account for nearly every dollar of revenue — meaning distribution costs are essentially zero.</p>
+                    </div>
+                </div>
+
+                <!-- CTA nudge -->
+                <div class="text-center mt-12">
+                    <p class="text-theme-secondary mb-4 text-sm">The tools to claim your share of this market used to cost tens of thousands of dollars. <span class="text-white font-semibold">Not anymore.</span></p>
+                    <button onclick="currentUser ? showPage('workspace') : showAuthModal('signin')" class="btn-primary px-8 py-3 rounded-xl font-bold shadow-lg shadow-cyan-500/30 hover:shadow-cyan-500/50 transition-all">
+                        <i class="fas fa-rocket mr-2"></i>Start Publishing Free
+                    </button>
                 </div>
             </div>
         </section>
