@@ -960,6 +960,38 @@
           .daw-fader-container { width: 50px; height: 250px; }
           .daw-fader-track { height: 200px; }
           .daw-fader-scale { right: -25px; height: 200px; }
+
+          /* Nav: scale down brand on small screens */
+          .nav-brand-title { font-size: 1.1rem !important; }
+          .nav-brand-logo { width: 32px !important; height: 32px !important; }
+
+          /* Touch targets: minimum 44px for iOS/Android */
+          .nav-item, button, .btn-primary, .btn-secondary { min-height: 44px; }
+
+          /* Upgrade modal padding */
+          #upgradeModal > div { padding: 1rem !important; }
+
+          /* Prevent horizontal overflow */
+          .container { max-width: 100vw; overflow-x: hidden; }
+
+          /* iOS safe area for nav and bottom */
+          nav { padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); }
+        }
+
+        /* iOS touch scroll for scrollable areas */
+        .platform-scroll-track, #voiceSelectionScroll, .overflow-y-auto, .overflow-x-auto {
+          -webkit-overflow-scrolling: touch;
+        }
+
+        /* Ensure tap highlight is subtle on mobile */
+        button, a { -webkit-tap-highlight-color: rgba(6,182,212,0.15); }
+
+        /* Safe area for fixed nav on notched iPhones */
+        nav { padding-top: env(safe-area-inset-top, 0px); }
+
+        @media (max-width: 480px) {
+          /* Very small phones: hide nav brand text, just show logo */
+          .nav-brand-title { display: none !important; }
         }
     </style>
 </head>
@@ -970,9 +1002,9 @@
     <nav class="bg-black border-b-2 border-cyan-400 shadow-lg relative z-50">
         <div class="container mx-auto px-4">
             <div class="flex items-center py-3 gap-6">
-                <div class="flex items-center space-x-3 shrink-0">
-                    <img src="https://page.gensparksite.com/v1/base64_upload/5ec0a971230da95148e537dd473d0fb1" alt="AUTHORR AI Logo" class="w-12 h-12 logo-image">
-                    <h1 class="text-3xl font-bold authorr-brand-text">AUTHORR AI</h1>
+                <div class="flex items-center space-x-2 shrink-0">
+                    <img src="https://page.gensparksite.com/v1/base64_upload/5ec0a971230da95148e537dd473d0fb1" alt="AUTHORR AI Logo" class="w-12 h-12 logo-image nav-brand-logo">
+                    <h1 class="text-3xl font-bold authorr-brand-text nav-brand-title">AUTHORR AI</h1>
                 </div>
                 <div id="desktopNavButtons" class="hidden items-center space-x-1.5 ml-auto">
                     <button data-page="dashboard" onclick="showPage('dashboard')" class="nav-item px-4 py-2 rounded-lg font-semibold active">
@@ -997,7 +1029,7 @@
                 <!-- Auth Status -->
                 <div class="flex items-center gap-3">
                     <div id="authStatus" class="hidden items-center gap-2">
-                        <span id="authUserEmail" class="text-cyan-400 text-sm font-semibold max-w-[140px] truncate"></span>
+                        <span id="authUserEmail" class="text-cyan-400 text-sm font-semibold max-w-[80px] md:max-w-[140px] truncate hidden sm:block"></span>
                         <button onclick="signOutUser()" class="text-xs border border-cyan-400 text-cyan-400 hover:bg-cyan-400 hover:text-black px-3 py-1 rounded-lg font-semibold transition-all">
                             Sign Out
                         </button>
@@ -1084,13 +1116,13 @@
 
             <div class="container mx-auto px-4 pt-20 pb-16 text-center relative z-10">
                 <!-- Logo + brand -->
-                <div class="flex justify-center items-center gap-4 mb-6">
-                    <img src="https://page.gensparksite.com/v1/base64_upload/5ec0a971230da95148e537dd473d0fb1" alt="AUTHORR AI Logo" class="w-16 h-16 logo-image">
-                    <span class="text-5xl font-bold authorr-brand-text tracking-tight">AUTHORR AI</span>
+                <div class="flex justify-center items-center gap-3 mb-6">
+                    <img src="https://page.gensparksite.com/v1/base64_upload/5ec0a971230da95148e537dd473d0fb1" alt="AUTHORR AI Logo" class="w-12 h-12 sm:w-16 sm:h-16 logo-image">
+                    <span class="text-3xl sm:text-5xl font-bold authorr-brand-text tracking-tight">AUTHORR AI</span>
                 </div>
 
                 <!-- Headline -->
-                <h1 class="text-4xl md:text-6xl font-extrabold leading-tight mb-3 max-w-4xl mx-auto">
+                <h1 class="text-2xl sm:text-4xl md:text-6xl font-extrabold leading-tight mb-3 max-w-4xl mx-auto">
                     <span data-i18n="dash_hero_h1">Write, Narrate &amp; Publish Your Audiobook</span>
                     <span class="text-cyan-400"> — Today</span>
                 </h1>
@@ -1156,6 +1188,10 @@
             animation: scroll-platforms 22s linear infinite;
         }
         .platform-scroll-track:hover { animation-play-state: paused; }
+        @media (hover: none) {
+            /* On touch devices, slow animation slightly and never pause */
+            .platform-scroll-track { animation-duration: 30s; }
+        }
         .pub-icon { filter: none; }
         </style>
 
@@ -1683,7 +1719,7 @@
                     <div class="text-xs text-theme-secondary mt-1">Revenue is digital</div>
                 </div>
             </div>
-            <div class="grid md:grid-cols-5 gap-4 max-w-6xl mx-auto">
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 max-w-6xl mx-auto">
 
                 <!-- Free -->
                 <div class="bg-theme-secondary rounded-2xl border-2 border-theme p-6 flex flex-col">
@@ -1718,7 +1754,7 @@
                 </div>
 
                 <!-- Author — POPULAR -->
-                <div class="bg-gradient-to-b from-cyan-900/60 to-theme-secondary rounded-2xl border-2 border-cyan-400 p-6 flex flex-col relative">
+                <div class="bg-gradient-to-b from-cyan-900/60 to-theme-secondary rounded-2xl border-2 border-cyan-400 p-6 flex flex-col relative sm:col-span-2 md:col-span-1">
                     <div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-cyan-400 text-black text-xs font-black px-3 py-1 rounded-full">MOST POPULAR</div>
                     <div class="text-sm font-bold text-cyan-400 uppercase tracking-wide mb-2 mt-2">Author</div>
                     <div class="text-4xl font-black mb-1">$49</div>
@@ -1873,14 +1909,14 @@
                 <div class="inline-flex items-center gap-2 bg-cyan-500/20 border border-cyan-500/40 text-cyan-300 text-sm font-semibold px-4 py-2 rounded-full mb-6">
                     <i class="fas fa-bolt"></i> <span data-i18n="dash_cta_badge">Join thousands of authors creating with AI</span>
                 </div>
-                <h2 class="text-4xl md:text-6xl font-extrabold mb-5 text-white leading-tight">
+                <h2 class="text-2xl sm:text-4xl md:text-6xl font-extrabold mb-5 text-white leading-tight">
                     <span data-i18n="dash_cta_h2">Your audiobook is waiting.</span><br class="hidden md:block">
                 </h2>
-                <p class="text-xl text-cyan-100/70 mb-10 max-w-xl mx-auto">
+                <p class="text-base sm:text-xl text-cyan-100/70 mb-10 max-w-xl mx-auto">
                     <span data-i18n="dash_cta_sub">Start creating in 60 seconds — no setup, no equipment, no experience needed.</span>
                 </p>
                 <button onclick="currentUser ? showPage('workspace') : showAuthModal('signin')"
-                    class="btn-primary px-14 py-5 rounded-xl text-xl font-bold shadow-2xl shadow-cyan-500/40 hover:shadow-cyan-500/60 transition-all hover:scale-105">
+                    class="btn-primary px-8 sm:px-14 py-4 sm:py-5 rounded-xl text-base sm:text-xl font-bold shadow-2xl shadow-cyan-500/40 hover:shadow-cyan-500/60 transition-all hover:scale-105">
                     <i class="fas fa-rocket mr-2"></i><span data-i18n="dash_cta_btn">Start Free Now</span>
                 </button>
                 <p class="text-sm text-cyan-300/60 mt-5">
@@ -18371,7 +18407,7 @@ Format as clean, readable text ready for narration.`;
 
     <!-- Upgrade Modal -->
     <div id="upgradeModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div class="bg-gray-900 border-2 border-cyan-400 rounded-2xl w-full max-w-lg p-8 relative max-h-[90vh] overflow-y-auto">
+        <div class="bg-gray-900 border-2 border-cyan-400 rounded-2xl w-full max-w-lg p-4 sm:p-8 relative max-h-[90vh] overflow-y-auto">
             <button onclick="document.getElementById('upgradeModal').classList.add('hidden')" class="absolute top-4 right-4 text-gray-400 hover:text-white text-xl">
                 <i class="fas fa-times"></i>
             </button>
@@ -18389,39 +18425,39 @@ Format as clean, readable text ready for narration.`;
 
             <!-- Monthly Plans -->
             <div id="upgradeTabPlanContent" class="space-y-3 mb-5">
-                <div class="border border-theme rounded-xl p-4 flex items-center justify-between hover:border-cyan-400 cursor-pointer">
-                    <div>
+                <div class="border border-theme rounded-xl p-3 sm:p-4 flex items-center justify-between hover:border-cyan-400 cursor-pointer gap-2">
+                    <div class="min-w-0">
                         <div class="font-bold">Starter</div>
-                        <div class="text-sm text-gray-400">150,000 credits/mo (~3 books)</div>
+                        <div class="text-xs sm:text-sm text-gray-400 truncate">150K credits/mo (~3 books)</div>
                     </div>
-                    <div class="text-right">
+                    <div class="text-right shrink-0">
                         <div class="text-xl font-black text-cyan-400">$19<span class="text-sm text-gray-400">/mo</span></div>
                     </div>
                 </div>
-                <div class="border-2 border-cyan-400 bg-cyan-900/20 rounded-xl p-4 flex items-center justify-between cursor-pointer">
-                    <div>
+                <div class="border-2 border-cyan-400 bg-cyan-900/20 rounded-xl p-3 sm:p-4 flex items-center justify-between cursor-pointer gap-2">
+                    <div class="min-w-0">
                         <div class="font-bold">Author <span class="text-xs bg-cyan-400 text-black px-2 py-0.5 rounded-full ml-1">POPULAR</span></div>
-                        <div class="text-sm text-gray-400">450,000 credits/mo (~9 books)</div>
+                        <div class="text-xs sm:text-sm text-gray-400 truncate">450K credits/mo (~9 books)</div>
                     </div>
-                    <div class="text-right">
+                    <div class="text-right shrink-0">
                         <div class="text-xl font-black text-cyan-400">$49<span class="text-sm text-gray-400">/mo</span></div>
                     </div>
                 </div>
-                <div class="border border-theme rounded-xl p-4 flex items-center justify-between hover:border-cyan-400 cursor-pointer">
-                    <div>
+                <div class="border border-theme rounded-xl p-3 sm:p-4 flex items-center justify-between hover:border-cyan-400 cursor-pointer gap-2">
+                    <div class="min-w-0">
                         <div class="font-bold">Publisher</div>
-                        <div class="text-sm text-gray-400">1,200,000 credits/mo (~25 books)</div>
+                        <div class="text-xs sm:text-sm text-gray-400 truncate">1.2M credits/mo (~25 books)</div>
                     </div>
-                    <div class="text-right">
+                    <div class="text-right shrink-0">
                         <div class="text-xl font-black text-cyan-400">$99<span class="text-sm text-gray-400">/mo</span></div>
                     </div>
                 </div>
-                <div class="border border-theme rounded-xl p-4 flex items-center justify-between hover:border-cyan-400 cursor-pointer">
-                    <div>
+                <div class="border border-theme rounded-xl p-3 sm:p-4 flex items-center justify-between hover:border-cyan-400 cursor-pointer gap-2">
+                    <div class="min-w-0">
                         <div class="font-bold text-yellow-400">Studio</div>
-                        <div class="text-sm text-gray-400">3,000,000 credits/mo (~65 books)</div>
+                        <div class="text-xs sm:text-sm text-gray-400 truncate">3M credits/mo (~65 books)</div>
                     </div>
-                    <div class="text-right">
+                    <div class="text-right shrink-0">
                         <div class="text-xl font-black text-cyan-400">$249<span class="text-sm text-gray-400">/mo</span></div>
                     </div>
                 </div>
