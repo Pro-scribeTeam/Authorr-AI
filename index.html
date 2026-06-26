@@ -3613,25 +3613,22 @@
                         </button>
                     </div>
                     <script>
-                    // Populate account info when page loads
-                    document.addEventListener('DOMContentLoaded', () => {
-                        const update = () => {
-                            if (window._authSession) {
-                                const el = document.getElementById('cfgUserEmail');
-                                if (el) el.textContent = window._authSession.user.email;
-                            }
-                            if (window._userSubscription) {
-                                const planName = window._userSubscription.plan || 'free';
-                                const plan = document.getElementById('cfgUserPlan');
-                                const badge = document.getElementById('cfgPlanBadge');
-                                const status = document.getElementById('cfgUserStatus');
-                                if (plan) plan.textContent = planName.charAt(0).toUpperCase() + planName.slice(1);
-                                if (badge) badge.textContent = planName;
-                                if (status) status.textContent = window._userSubscription.status || 'Active';
-                            }
-                        };
-                        setInterval(update, 500);
-                    });
+                    // Populate account info — called by showPage('config') and updateAuthUI()
+                    function refreshAccountPage() {
+                        if (typeof currentUser !== 'undefined' && currentUser) {
+                            const el = document.getElementById('cfgUserEmail');
+                            if (el) el.textContent = currentUser.email;
+                        }
+                        if (window._userSubscription) {
+                            const planName = window._userSubscription.plan || 'free';
+                            const plan = document.getElementById('cfgUserPlan');
+                            const badge = document.getElementById('cfgPlanBadge');
+                            const status = document.getElementById('cfgUserStatus');
+                            if (plan) plan.textContent = planName.charAt(0).toUpperCase() + planName.slice(1);
+                            if (badge) badge.textContent = planName;
+                            if (status) status.textContent = window._userSubscription.status || 'Active';
+                        }
+                    }
                     </script>
                 </div>
                 
@@ -3861,6 +3858,7 @@
             currentPage = pageId;
             window.scrollTo(0, 0);
             document.body.scrollTop = 0;
+            if (pageId === 'config' && typeof refreshAccountPage === 'function') refreshAccountPage();
             document.documentElement.scrollTop = 0;
 
             // Transfer story data when navigating to narration
@@ -18367,6 +18365,8 @@ Format as clean, readable text ready for narration.`;
                 if (authStatus) { authStatus.classList.remove('hidden'); authStatus.classList.add('flex'); }
                 if (authLoginBtn) authLoginBtn.classList.add('hidden');
                 if (authUserEmail) authUserEmail.textContent = currentUser.email;
+                const cfgEmail = document.getElementById('cfgUserEmail');
+                if (cfgEmail) cfgEmail.textContent = currentUser.email;
                 if (myProjectsSection) myProjectsSection.classList.remove('hidden');
                 if (signInPrompt) signInPrompt.classList.add('hidden');
                 // Show nav buttons when logged in
