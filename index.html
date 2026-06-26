@@ -1898,6 +1898,207 @@
         </section>
 
         <!-- ═══════════════════════════════════════════════
+             GEAR RECOMMENDATIONS
+        ═══════════════════════════════════════════════ -->
+        <section class="container mx-auto px-4 py-20">
+            <div class="text-center mb-12">
+                <span class="text-cyan-400 font-semibold uppercase tracking-widest text-sm">Studio Setup</span>
+                <h2 class="text-3xl md:text-4xl font-bold mt-2">Recommended Microphones</h2>
+                <p class="text-theme-secondary mt-3 max-w-xl mx-auto text-sm">Authorr AI works with any mic — but these USB options deliver pro-quality narration right out of the box. No audio interface needed.</p>
+            </div>
+
+            <!-- Tier tabs -->
+            <div class="flex justify-center mb-8">
+                <div class="inline-flex rounded-xl overflow-hidden border border-cyan-800">
+                    <button onclick="switchGearTab('low')" id="gearTabLow" class="gear-tab px-5 py-2 text-sm font-semibold bg-cyan-400 text-black transition-colors">Budget</button>
+                    <button onclick="switchGearTab('mid')" id="gearTabMid" class="gear-tab px-5 py-2 text-sm font-semibold bg-transparent text-gray-400 hover:text-white transition-colors">Mid-Range</button>
+                    <button onclick="switchGearTab('high')" id="gearTabHigh" class="gear-tab px-5 py-2 text-sm font-semibold bg-transparent text-gray-400 hover:text-white transition-colors">Pro</button>
+                </div>
+            </div>
+
+            <!-- Budget ($30–$80) -->
+            <div id="gearContentLow" class="gear-content grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-5xl mx-auto">
+                <!-- Fifine K669B -->
+                <div class="bg-theme-secondary rounded-2xl border border-theme p-5 flex flex-col">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-xs font-bold uppercase tracking-wide text-green-400 bg-green-400/10 px-2 py-1 rounded-full">Best Starter</span>
+                        <span class="text-xl font-black text-cyan-400">~$35</span>
+                    </div>
+                    <div class="text-lg font-bold mb-1">Fifine K669B</div>
+                    <div class="text-xs text-theme-secondary mb-4 flex-1">USB cardioid condenser. Plug-and-play, zero latency monitoring, solid for voice recording. Great entry point before committing to more.</div>
+                    <div class="text-xs text-gray-500 mb-3"><i class="fas fa-dollar-sign text-yellow-400 mr-1"></i>Affiliate: Fifine Direct Program</div>
+                    <a href="https://fifinemicrophone.com/products/usb-microphone-k669b" target="_blank" rel="noopener noreferrer sponsored"
+                        class="btn-primary py-2 rounded-lg text-sm font-bold text-center block">
+                        <i class="fas fa-external-link-alt mr-2"></i>Check Price
+                    </a>
+                </div>
+                <!-- HyperX SoloCast -->
+                <div class="bg-theme-secondary rounded-2xl border border-theme p-5 flex flex-col">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-xs font-bold uppercase tracking-wide text-cyan-400 bg-cyan-400/10 px-2 py-1 rounded-full">Plug &amp; Play</span>
+                        <span class="text-xl font-black text-cyan-400">~$50</span>
+                    </div>
+                    <div class="text-lg font-bold mb-1">HyperX SoloCast</div>
+                    <div class="text-xs text-theme-secondary mb-4 flex-1">Tap-to-mute, cardioid pattern, wide compatibility with Mac/PC/PS. Clean voice capture for short-form narration and chapter recordings.</div>
+                    <div class="text-xs text-gray-500 mb-3"><i class="fas fa-dollar-sign text-yellow-400 mr-1"></i>Affiliate: Amazon Associates (3–4%)</div>
+                    <a href="https://www.amazon.com/dp/B08KYMK6L5?tag=YOUR_AMAZON_TAG" target="_blank" rel="noopener noreferrer sponsored"
+                        class="btn-primary py-2 rounded-lg text-sm font-bold text-center block">
+                        <i class="fab fa-amazon mr-2"></i>View on Amazon
+                    </a>
+                </div>
+                <!-- Maono PD200X -->
+                <div class="bg-theme-secondary rounded-2xl border border-theme p-5 flex flex-col">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-xs font-bold uppercase tracking-wide text-purple-400 bg-purple-400/10 px-2 py-1 rounded-full">Dynamic USB</span>
+                        <span class="text-xl font-black text-cyan-400">~$60</span>
+                    </div>
+                    <div class="text-lg font-bold mb-1">Maono PD200X</div>
+                    <div class="text-xs text-theme-secondary mb-4 flex-1">Dynamic cardioid USB/XLR — rejects background noise better than condensers. Perfect for home studios without acoustic treatment.</div>
+                    <div class="text-xs text-gray-500 mb-3"><i class="fas fa-dollar-sign text-yellow-400 mr-1"></i>Affiliate: Amazon Associates (3–4%)</div>
+                    <a href="https://www.amazon.com/dp/B0C6JKRWLH?tag=YOUR_AMAZON_TAG" target="_blank" rel="noopener noreferrer sponsored"
+                        class="btn-primary py-2 rounded-lg text-sm font-bold text-center block">
+                        <i class="fab fa-amazon mr-2"></i>View on Amazon
+                    </a>
+                </div>
+            </div>
+
+            <!-- Mid-Range ($100–$200) -->
+            <div id="gearContentMid" class="gear-content hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-5xl mx-auto">
+                <!-- Blue Yeti -->
+                <div class="bg-theme-secondary rounded-2xl border border-theme p-5 flex flex-col">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-xs font-bold uppercase tracking-wide text-cyan-400 bg-cyan-400/10 px-2 py-1 rounded-full">Most Popular</span>
+                        <span class="text-xl font-black text-cyan-400">~$130</span>
+                    </div>
+                    <div class="text-lg font-bold mb-1">Blue Yeti</div>
+                    <div class="text-xs text-theme-secondary mb-4 flex-1">The industry standard for content creators. Four pickup patterns, onboard gain control, headphone monitoring. Works great for multi-voice audiobooks.</div>
+                    <div class="text-xs text-gray-500 mb-3"><i class="fas fa-dollar-sign text-yellow-400 mr-1"></i>Affiliate: Logitech/Impact (4–8%)</div>
+                    <a href="https://www.amazon.com/dp/B00N1YPXW2?tag=YOUR_AMAZON_TAG" target="_blank" rel="noopener noreferrer sponsored"
+                        class="btn-primary py-2 rounded-lg text-sm font-bold text-center block">
+                        <i class="fab fa-amazon mr-2"></i>View on Amazon
+                    </a>
+                </div>
+                <!-- RØDE NT-USB Mini -->
+                <div class="bg-theme-secondary rounded-2xl border-2 border-cyan-400/40 p-5 flex flex-col">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-xs font-bold uppercase tracking-wide text-yellow-400 bg-yellow-400/10 px-2 py-1 rounded-full">15% Affiliate</span>
+                        <span class="text-xl font-black text-cyan-400">~$99</span>
+                    </div>
+                    <div class="text-lg font-bold mb-1">RØDE NT-USB Mini</div>
+                    <div class="text-xs text-theme-secondary mb-4 flex-1">Compact studio-grade condenser. Revolution preamp, zero-latency monitoring, USB-C. Punches well above its price for audiobook narration.</div>
+                    <div class="text-xs text-gray-500 mb-3"><i class="fas fa-dollar-sign text-yellow-400 mr-1"></i>Affiliate: RØDE Direct (15%)</div>
+                    <a href="https://rode.com/en/microphones/usb-audio-interface/nt-usb-mini" target="_blank" rel="noopener noreferrer sponsored"
+                        class="btn-primary py-2 rounded-lg text-sm font-bold text-center block">
+                        <i class="fas fa-external-link-alt mr-2"></i>View at RØDE
+                    </a>
+                </div>
+                <!-- ATR2100x -->
+                <div class="bg-theme-secondary rounded-2xl border border-theme p-5 flex flex-col">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-xs font-bold uppercase tracking-wide text-green-400 bg-green-400/10 px-2 py-1 rounded-full">USB + XLR</span>
+                        <span class="text-xl font-black text-cyan-400">~$99</span>
+                    </div>
+                    <div class="text-lg font-bold mb-1">Audio-Technica ATR2100x</div>
+                    <div class="text-xs text-theme-secondary mb-4 flex-1">Dynamic mic with both USB and XLR outputs — upgrade your interface later without buying a new mic. Warm, smooth voice tone.</div>
+                    <div class="text-xs text-gray-500 mb-3"><i class="fas fa-dollar-sign text-yellow-400 mr-1"></i>Affiliate: Amazon Associates (3–4%)</div>
+                    <a href="https://www.amazon.com/dp/B07ZPC4BKN?tag=YOUR_AMAZON_TAG" target="_blank" rel="noopener noreferrer sponsored"
+                        class="btn-primary py-2 rounded-lg text-sm font-bold text-center block">
+                        <i class="fab fa-amazon mr-2"></i>View on Amazon
+                    </a>
+                </div>
+                <!-- HyperX QuadCast S -->
+                <div class="bg-theme-secondary rounded-2xl border border-theme p-5 flex flex-col">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-xs font-bold uppercase tracking-wide text-purple-400 bg-purple-400/10 px-2 py-1 rounded-full">Full Featured</span>
+                        <span class="text-xl font-black text-cyan-400">~$160</span>
+                    </div>
+                    <div class="text-lg font-bold mb-1">HyperX QuadCast S</div>
+                    <div class="text-xs text-theme-secondary mb-4 flex-1">Four pickup patterns, built-in shock mount, tap-to-mute, pop filter. RGB LED looks great on video — strong all-rounder for narrators who also stream.</div>
+                    <div class="text-xs text-gray-500 mb-3"><i class="fas fa-dollar-sign text-yellow-400 mr-1"></i>Affiliate: Amazon Associates (3–4%)</div>
+                    <a href="https://www.amazon.com/dp/B08H9VHBHT?tag=YOUR_AMAZON_TAG" target="_blank" rel="noopener noreferrer sponsored"
+                        class="btn-primary py-2 rounded-lg text-sm font-bold text-center block">
+                        <i class="fab fa-amazon mr-2"></i>View on Amazon
+                    </a>
+                </div>
+            </div>
+
+            <!-- Pro ($200–$400+) -->
+            <div id="gearContentHigh" class="gear-content hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-5xl mx-auto">
+                <!-- RØDE PodMic USB -->
+                <div class="bg-theme-secondary rounded-2xl border-2 border-yellow-400/30 p-5 flex flex-col">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-xs font-bold uppercase tracking-wide text-yellow-400 bg-yellow-400/10 px-2 py-1 rounded-full">Top Pick + 15%</span>
+                        <span class="text-xl font-black text-cyan-400">~$229</span>
+                    </div>
+                    <div class="text-lg font-bold mb-1">RØDE PodMic USB</div>
+                    <div class="text-xs text-theme-secondary mb-4 flex-1">Broadcast-grade dynamic USB/XLR. Built-in DSP with APHEX processing — aural exciter, compressor, noise gate. Sounds like a professional studio out of the box.</div>
+                    <div class="text-xs text-gray-500 mb-3"><i class="fas fa-dollar-sign text-yellow-400 mr-1"></i>Affiliate: RØDE Direct (15%)</div>
+                    <a href="https://rode.com/en/microphones/usb-audio-interface/podmic-usb" target="_blank" rel="noopener noreferrer sponsored"
+                        class="btn-primary py-2 rounded-lg text-sm font-bold text-center block">
+                        <i class="fas fa-external-link-alt mr-2"></i>View at RØDE
+                    </a>
+                </div>
+                <!-- RØDE NT-USB+ -->
+                <div class="bg-theme-secondary rounded-2xl border-2 border-yellow-400/30 p-5 flex flex-col">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-xs font-bold uppercase tracking-wide text-yellow-400 bg-yellow-400/10 px-2 py-1 rounded-full">Studio Grade + 15%</span>
+                        <span class="text-xl font-black text-cyan-400">~$229</span>
+                    </div>
+                    <div class="text-lg font-bold mb-1">RØDE NT-USB+</div>
+                    <div class="text-xs text-theme-secondary mb-4 flex-1">Large-diaphragm condenser + APHEX DSP processing. Revolution preamp delivers studio-quality warmth and detail. The go-to for serious audiobook narrators.</div>
+                    <div class="text-xs text-gray-500 mb-3"><i class="fas fa-dollar-sign text-yellow-400 mr-1"></i>Affiliate: RØDE Direct (15%)</div>
+                    <a href="https://rode.com/en/microphones/usb-audio-interface/nt-usb-plus" target="_blank" rel="noopener noreferrer sponsored"
+                        class="btn-primary py-2 rounded-lg text-sm font-bold text-center block">
+                        <i class="fas fa-external-link-alt mr-2"></i>View at RØDE
+                    </a>
+                </div>
+                <!-- Shure MV7+ -->
+                <div class="bg-theme-secondary rounded-2xl border border-theme p-5 flex flex-col">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-xs font-bold uppercase tracking-wide text-cyan-400 bg-cyan-400/10 px-2 py-1 rounded-full">Broadcast</span>
+                        <span class="text-xl font-black text-cyan-400">~$249</span>
+                    </div>
+                    <div class="text-lg font-bold mb-1">Shure MV7+</div>
+                    <div class="text-xs text-theme-secondary mb-4 flex-1">Dynamic USB/XLR with built-in denoiser and dual-band EQ. Broadcast-grade build, rejects room noise. Trusted by professional voice actors and podcasters worldwide.</div>
+                    <div class="text-xs text-gray-500 mb-3"><i class="fas fa-dollar-sign text-yellow-400 mr-1"></i>Affiliate: Shure via Impact</div>
+                    <a href="https://www.shure.com/en-US/products/microphones/mv/mv7-plus" target="_blank" rel="noopener noreferrer sponsored"
+                        class="btn-primary py-2 rounded-lg text-sm font-bold text-center block">
+                        <i class="fas fa-external-link-alt mr-2"></i>View at Shure
+                    </a>
+                </div>
+                <!-- Shure SM7dB -->
+                <div class="bg-theme-secondary rounded-2xl border border-theme p-5 flex flex-col">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-xs font-bold uppercase tracking-wide text-purple-400 bg-purple-400/10 px-2 py-1 rounded-full">Top of Line</span>
+                        <span class="text-xl font-black text-cyan-400">~$399</span>
+                    </div>
+                    <div class="text-lg font-bold mb-1">Shure SM7dB</div>
+                    <div class="text-xs text-theme-secondary mb-4 flex-1">The SM7B with a built-in preamp. Used on countless platinum records and Joe Rogan's podcast. If you want the absolute best USB-compatible mic for narration, this is it.</div>
+                    <div class="text-xs text-gray-500 mb-3"><i class="fas fa-dollar-sign text-yellow-400 mr-1"></i>Affiliate: Shure via Impact</div>
+                    <a href="https://www.shure.com/en-US/products/microphones/sm/sm7db" target="_blank" rel="noopener noreferrer sponsored"
+                        class="btn-primary py-2 rounded-lg text-sm font-bold text-center block">
+                        <i class="fas fa-external-link-alt mr-2"></i>View at Shure
+                    </a>
+                </div>
+            </div>
+
+            <p class="text-center text-xs text-gray-500 mt-8 max-w-lg mx-auto">Links above may be affiliate links — we earn a small commission at no extra cost to you. All recommendations are based on actual audio performance for narration.</p>
+
+            <script>
+            function switchGearTab(tier) {
+                document.querySelectorAll('.gear-content').forEach(el => el.classList.add('hidden'));
+                document.getElementById('gearContent' + tier.charAt(0).toUpperCase() + tier.slice(1)).classList.remove('hidden');
+                document.querySelectorAll('.gear-tab').forEach(btn => {
+                    btn.classList.remove('bg-cyan-400', 'text-black');
+                    btn.classList.add('bg-transparent', 'text-gray-400');
+                });
+                const active = document.getElementById('gearTab' + tier.charAt(0).toUpperCase() + tier.slice(1));
+                if (active) { active.classList.add('bg-cyan-400', 'text-black'); active.classList.remove('bg-transparent', 'text-gray-400'); }
+            }
+            </script>
+        </section>
+
+        <!-- ═══════════════════════════════════════════════
              FINAL CTA BANNER
         ═══════════════════════════════════════════════ -->
         <section style="background:linear-gradient(135deg,#0e4f5c 0%,#0a3040 50%,#062030 100%)" class="py-24 relative overflow-hidden">
