@@ -1035,7 +1035,9 @@
                     <a id="adminNavLink" onclick="showPage('admin')" class="hidden cursor-pointer text-xs border border-yellow-500 text-yellow-400 hover:bg-yellow-900 px-3 py-1 rounded-lg font-semibold transition-all">
                         <i class="fas fa-shield-alt mr-1"></i>Admin
                     </a>
-                    <span id="logoutBtn" class="hidden"></span>
+                    <button id="logoutBtn" onclick="signOutUser()" class="hidden text-xs border border-gray-600 text-gray-400 hover:bg-gray-800 px-3 py-1 rounded-lg font-semibold transition-all">
+                        <i class="fas fa-sign-out-alt mr-1"></i>Sign Out
+                    </button>
                     <!-- UI Language Switcher -->
                     <div class="relative ml-2" id="uiLangSwitcher">
                         <button onclick="toggleUILangMenu()" class="text-cyan-400 hover:text-cyan-300 text-sm flex items-center gap-1 border border-cyan-800 hover:border-cyan-400 px-2 py-1 rounded-lg transition-all" title="Change interface language">
@@ -3606,7 +3608,7 @@
                                 <i class="fas fa-plus-circle mr-1"></i>Buy More Credits
                             </button>
                         </div>
-                        <button onclick="handleLogout()" class="btn-secondary w-full py-2 rounded-lg font-semibold">
+                        <button onclick="signOutUser()" class="btn-secondary w-full py-2 rounded-lg font-semibold">
                             <i class="fas fa-sign-out-alt mr-2"></i>Sign Out
                         </button>
                     </div>
