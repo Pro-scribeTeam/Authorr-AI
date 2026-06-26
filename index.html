@@ -1023,26 +1023,19 @@
                         <i class="fas fa-download mr-2"></i><span data-i18n="nav_export">Export</span>
                     </button>
                     <button data-page="config" onclick="showPage('config')" class="nav-item px-4 py-2 rounded-lg font-semibold">
-                        <i class="fas fa-cog mr-2"></i><span data-i18n="nav_config">Config</span>
+                        <i class="fas fa-user-circle mr-2"></i><span data-i18n="nav_config">Account</span>
                     </button>
                 </div>
                 <!-- Auth Status -->
                 <div class="flex items-center gap-3">
-                    <div id="authStatus" class="hidden items-center gap-2">
-                        <span id="authUserEmail" class="text-cyan-400 text-sm font-semibold max-w-[80px] md:max-w-[140px] truncate hidden sm:block"></span>
-                        <button onclick="signOutUser()" class="text-xs border border-cyan-400 text-cyan-400 hover:bg-cyan-400 hover:text-black px-3 py-1 rounded-lg font-semibold transition-all">
-                            Sign Out
-                        </button>
-                    </div>
+                    <div id="authStatus" class="hidden items-center gap-2"></div>
                     <button id="authLoginBtn" onclick="showAuthModal('signin')" class="text-xs border border-cyan-400 text-cyan-400 hover:bg-cyan-400 hover:text-black px-3 py-1 rounded-lg font-semibold transition-all">
                         <i class="fas fa-user mr-1"></i>Sign In
                     </button>
                     <a id="adminNavLink" onclick="showPage('admin')" class="hidden cursor-pointer text-xs border border-yellow-500 text-yellow-400 hover:bg-yellow-900 px-3 py-1 rounded-lg font-semibold transition-all">
                         <i class="fas fa-shield-alt mr-1"></i>Admin
                     </a>
-                    <button id="logoutBtn" onclick="signOutUser()" class="hidden text-xs border border-gray-600 text-gray-400 hover:bg-gray-800 px-3 py-1 rounded-lg font-semibold transition-all">
-                        <i class="fas fa-sign-out-alt mr-1"></i>Sign Out
-                    </button>
+                    <span id="logoutBtn" class="hidden"></span>
                     <!-- UI Language Switcher -->
                     <div class="relative ml-2" id="uiLangSwitcher">
                         <button onclick="toggleUILangMenu()" class="text-cyan-400 hover:text-cyan-300 text-sm flex items-center gap-1 border border-cyan-800 hover:border-cyan-400 px-2 py-1 rounded-lg transition-all" title="Change interface language">
@@ -1099,7 +1092,7 @@
                 <i class="fas fa-download mr-2"></i><span data-i18n="nav_export">Export</span>
             </button>
             <button data-page="config" onclick="showPage('config')" class="nav-item px-4 py-3 rounded-lg font-semibold text-left">
-                <i class="fas fa-cog mr-2"></i><span data-i18n="nav_config">Config</span>
+                <i class="fas fa-user-circle mr-2"></i><span data-i18n="nav_config">Account</span>
             </button>
         </div>
     </div>
@@ -3558,8 +3551,8 @@
     <div id="config" class="page hidden">
         <div class="container mx-auto px-4 py-8">
             <h1 class="text-3xl font-bold mb-8">
-                <i class="fas fa-cog text-cyan-400 mr-3"></i>
-                <span data-i18n="cfg_title">Configuration & Settings</span>
+                <i class="fas fa-user-circle text-cyan-400 mr-3"></i>
+                <span data-i18n="cfg_title">Account</span>
             </h1>
 
             <!-- Account & Subscription Info -->
@@ -18933,7 +18926,7 @@ const UI_FLAGS = {
 const UI_TRANSLATIONS = {
   en: {
     nav_dashboard:'Dashboard', nav_workspace:'Workspace', nav_narration:'Narration',
-    nav_covers:'Covers', nav_export:'Export', nav_config:'Config',
+    nav_covers:'Covers', nav_export:'Export', nav_config:'Account',
     hero_subtitle:'Transform your stories into professional audiobooks with AI-powered writing, chapter generation, and high-quality text-to-speech narration. Create, edit, and publish audiobooks in minutes.',
     btn_start_creating:'Start Creating Your Audiobook',
     feat_ai_writing:'AI-Powered Writing', feat_narration:'Professional Narration', feat_covers:'AI Book Covers',
@@ -19007,7 +19000,7 @@ const UI_TRANSLATIONS = {
     exp_download_btn:'Download', exp_prepare_audible:'Prepare for Audible',
     exp_gen_podcast:'Generate Podcast', exp_create_video:'Create Video Series',
     // Config
-    cfg_title:'Configuration & Settings', cfg_api:'API Configuration',
+    cfg_title:'Account', cfg_api:'API Configuration',
     cfg_writing_ai:'✍️ Writing AI Provider', cfg_ollama_model:'Ollama Model',
     cfg_openrouter_key:'OpenRouter API Key', cfg_openrouter_model:'OpenRouter Model',
     cfg_image_provider:'🎨 Image Generation Provider', cfg_openai_model:'OpenAI Model (if using OpenAI)',
@@ -19139,7 +19132,7 @@ const UI_TRANSLATIONS = {
   },
   es: {
     nav_dashboard:'Inicio', nav_workspace:'Espacio de trabajo', nav_narration:'Narración',
-    nav_covers:'Portadas', nav_export:'Exportar', nav_config:'Configuración',
+    nav_covers:'Portadas', nav_export:'Exportar', nav_config:'Cuenta',
     hero_subtitle:'Transforma tus historias en audiolibros profesionales con escritura impulsada por IA, generación de capítulos y narración de texto a voz de alta calidad. Crea, edita y publica audiolibros en minutos.',
     btn_start_creating:'Empieza a Crear tu Audiolibro',
     feat_ai_writing:'Escritura Potenciada por IA', feat_narration:'Narración Profesional', feat_covers:'Portadas con IA',
@@ -19207,7 +19200,7 @@ const UI_TRANSLATIONS = {
     exp_chapters:'Capítulos', exp_total_words:'Total de Palabras', exp_duration:'Duración de Audio',
     exp_download_btn:'Descargar', exp_prepare_audible:'Preparar para Audible',
     exp_gen_podcast:'Generar Podcast', exp_create_video:'Crear Serie de Video',
-    cfg_title:'Configuración y Ajustes', cfg_api:'Configuración de API',
+    cfg_title:'Account', cfg_api:'Configuración de API',
     cfg_writing_ai:'✍️ Proveedor de IA para Escritura', cfg_ollama_model:'Modelo Ollama',
     cfg_openrouter_key:'Clave API de OpenRouter', cfg_openrouter_model:'Modelo OpenRouter',
     cfg_image_provider:'🎨 Proveedor de Generación de Imágenes', cfg_openai_model:'Modelo OpenAI (si usas OpenAI)',
@@ -19329,7 +19322,7 @@ const UI_TRANSLATIONS = {
   },
   fr: {
     nav_dashboard:'Tableau de bord', nav_workspace:'Espace de travail', nav_narration:'Narration',
-    nav_covers:'Couvertures', nav_export:'Exporter', nav_config:'Configuration',
+    nav_covers:'Couvertures', nav_export:'Exporter', nav_config:'Compte',
     hero_subtitle:'Transformez vos histoires en livres audio professionnels grâce à l\'écriture assistée par IA, la génération de chapitres et la narration texte-parole de haute qualité. Créez, modifiez et publiez des livres audio en quelques minutes.',
     btn_start_creating:'Commencer à Créer votre Livre Audio',
     feat_ai_writing:'Écriture Assistée par IA', feat_narration:'Narration Professionnelle', feat_covers:'Couvertures IA',
@@ -19397,7 +19390,7 @@ const UI_TRANSLATIONS = {
     exp_chapters:'Chapitres', exp_total_words:'Total de Mots', exp_duration:'Durée Audio',
     exp_download_btn:'Télécharger', exp_prepare_audible:'Préparer pour Audible',
     exp_gen_podcast:'Générer Podcast', exp_create_video:'Créer une Série Vidéo',
-    cfg_title:'Configuration et Paramètres', cfg_api:'Configuration API',
+    cfg_title:'Account', cfg_api:'Configuration API',
     cfg_writing_ai:'✍️ Fournisseur IA d\'Écriture', cfg_ollama_model:'Modèle Ollama',
     cfg_openrouter_key:'Clé API OpenRouter', cfg_openrouter_model:'Modèle OpenRouter',
     cfg_image_provider:'🎨 Fournisseur de Génération d\'Images', cfg_openai_model:'Modèle OpenAI (si vous utilisez OpenAI)',
@@ -19517,7 +19510,7 @@ const UI_TRANSLATIONS = {
   },
   de: {
     nav_dashboard:'Dashboard', nav_workspace:'Arbeitsbereich', nav_narration:'Erzählung',
-    nav_covers:'Titelbilder', nav_export:'Exportieren', nav_config:'Einstellungen',
+    nav_covers:'Titelbilder', nav_export:'Exportieren', nav_config:'Konto',
     hero_subtitle:'Verwandle deine Geschichten in professionelle Hörbücher mit KI-gesteuertem Schreiben, Kapitelgenerierung und hochwertiger Text-zu-Sprache-Narration. Erstelle, bearbeite und veröffentliche Hörbücher in Minuten.',
     btn_start_creating:'Hörbuch Erstellen',
     feat_ai_writing:'KI-gesteuertes Schreiben', feat_narration:'Professionelle Erzählung', feat_covers:'KI-Buchcover',
@@ -19585,7 +19578,7 @@ const UI_TRANSLATIONS = {
     exp_chapters:'Kapitel', exp_total_words:'Gesamtwörter', exp_duration:'Audiodauer',
     exp_download_btn:'Herunterladen', exp_prepare_audible:'Für Audible Vorbereiten',
     exp_gen_podcast:'Podcast Erstellen', exp_create_video:'Videoserie Erstellen',
-    cfg_title:'Konfiguration & Einstellungen', cfg_api:'API-Konfiguration',
+    cfg_title:'Account', cfg_api:'API-Konfiguration',
     cfg_writing_ai:'✍️ Schreib-KI-Anbieter', cfg_ollama_model:'Ollama-Modell',
     cfg_openrouter_key:'OpenRouter-API-Schlüssel', cfg_openrouter_model:'OpenRouter-Modell',
     cfg_image_provider:'🎨 Bildgenerierungs-Anbieter', cfg_openai_model:'OpenAI-Modell (bei Verwendung von OpenAI)',
@@ -19705,7 +19698,7 @@ const UI_TRANSLATIONS = {
   },
   pt: {
     nav_dashboard:'Painel', nav_workspace:'Área de trabalho', nav_narration:'Narração',
-    nav_covers:'Capas', nav_export:'Exportar', nav_config:'Configurações',
+    nav_covers:'Capas', nav_export:'Exportar', nav_config:'Conta',
     hero_subtitle:'Transforme suas histórias em audiobooks profissionais com escrita alimentada por IA, geração de capítulos e narração de texto para fala de alta qualidade. Crie, edite e publique audiobooks em minutos.',
     btn_start_creating:'Comece a Criar seu Audiobook',
     feat_ai_writing:'Escrita Potencializada por IA', feat_narration:'Narração Profissional', feat_covers:'Capas com IA',
@@ -19773,7 +19766,7 @@ const UI_TRANSLATIONS = {
     exp_chapters:'Capítulos', exp_total_words:'Total de Palavras', exp_duration:'Duração do Áudio',
     exp_download_btn:'Baixar', exp_prepare_audible:'Preparar para Audible',
     exp_gen_podcast:'Gerar Podcast', exp_create_video:'Criar Série de Vídeo',
-    cfg_title:'Configuração e Ajustes', cfg_api:'Configuração de API',
+    cfg_title:'Account', cfg_api:'Configuração de API',
     cfg_writing_ai:'✍️ Provedor de IA de Escrita', cfg_ollama_model:'Modelo Ollama',
     cfg_openrouter_key:'Chave API OpenRouter', cfg_openrouter_model:'Modelo OpenRouter',
     cfg_image_provider:'🎨 Provedor de Geração de Imagens', cfg_openai_model:'Modelo OpenAI (se usar OpenAI)',
@@ -19893,7 +19886,7 @@ const UI_TRANSLATIONS = {
   },
   it: {
     nav_dashboard:'Pannello', nav_workspace:'Area di lavoro', nav_narration:'Narrazione',
-    nav_covers:'Copertine', nav_export:'Esporta', nav_config:'Impostazioni',
+    nav_covers:'Copertine', nav_export:'Esporta', nav_config:'Account',
     hero_subtitle:'Trasforma le tue storie in audiolibri professionali con scrittura potenziata dall\'IA, generazione di capitoli e narrazione text-to-speech di alta qualità. Crea, modifica e pubblica audiolibri in pochi minuti.',
     btn_start_creating:'Inizia a Creare il tuo Audiolibro',
     feat_ai_writing:'Scrittura Potenziata dall\'IA', feat_narration:'Narrazione Professionale', feat_covers:'Copertine IA',
@@ -19961,7 +19954,7 @@ const UI_TRANSLATIONS = {
     exp_chapters:'Capitoli', exp_total_words:'Parole Totali', exp_duration:'Durata Audio',
     exp_download_btn:'Scarica', exp_prepare_audible:'Prepara per Audible',
     exp_gen_podcast:'Genera Podcast', exp_create_video:'Crea Serie Video',
-    cfg_title:'Configurazione e Impostazioni', cfg_api:'Configurazione API',
+    cfg_title:'Account', cfg_api:'Configurazione API',
     cfg_writing_ai:'✍️ Provider IA per la Scrittura', cfg_ollama_model:'Modello Ollama',
     cfg_openrouter_key:'Chiave API OpenRouter', cfg_openrouter_model:'Modello OpenRouter',
     cfg_image_provider:'🎨 Provider di Generazione Immagini', cfg_openai_model:'Modello OpenAI (se si usa OpenAI)',
@@ -20081,7 +20074,7 @@ const UI_TRANSLATIONS = {
   },
   hi: {
     nav_dashboard:'डैशबोर्ड', nav_workspace:'कार्यक्षेत्र', nav_narration:'कथन',
-    nav_covers:'कवर', nav_export:'निर्यात', nav_config:'सेटिंग्स',
+    nav_covers:'कवर', nav_export:'निर्यात', nav_config:'खाता',
     hero_subtitle:'AI-संचालित लेखन, अध्याय निर्माण और उच्च-गुणवत्ता वाले टेक्स्ट-टू-स्पीच नैरेशन के साथ अपनी कहानियों को पेशेवर ऑडियोबुक में बदलें। मिनटों में ऑडियोबुक बनाएं, संपादित करें और प्रकाशित करें।',
     btn_start_creating:'अपनी ऑडियोबुक बनाना शुरू करें',
     feat_ai_writing:'AI-संचालित लेखन', feat_narration:'पेशेवर नैरेशन', feat_covers:'AI बुक कवर',
@@ -20149,7 +20142,7 @@ const UI_TRANSLATIONS = {
     exp_chapters:'अध्याय', exp_total_words:'कुल शब्द', exp_duration:'ऑडियो अवधि',
     exp_download_btn:'डाउनलोड', exp_prepare_audible:'Audible के लिए तैयार करें',
     exp_gen_podcast:'पॉडकास्ट बनाएं', exp_create_video:'वीडियो श्रृंखला बनाएं',
-    cfg_title:'कॉन्फ़िगरेशन और सेटिंग्स', cfg_api:'API कॉन्फ़िगरेशन',
+    cfg_title:'Account', cfg_api:'API कॉन्फ़िगरेशन',
     cfg_writing_ai:'✍️ लेखन AI प्रदाता', cfg_ollama_model:'Ollama मॉडल',
     cfg_openrouter_key:'OpenRouter API कुंजी', cfg_openrouter_model:'OpenRouter मॉडल',
     cfg_image_provider:'🎨 छवि निर्माण प्रदाता', cfg_openai_model:'OpenAI मॉडल (यदि OpenAI का उपयोग कर रहे हैं)',
@@ -20269,7 +20262,7 @@ const UI_TRANSLATIONS = {
   },
   ar: {
     nav_dashboard:'لوحة التحكم', nav_workspace:'مساحة العمل', nav_narration:'السرد',
-    nav_covers:'الأغلفة', nav_export:'تصدير', nav_config:'الإعدادات',
+    nav_covers:'الأغلفة', nav_export:'تصدير', nav_config:'الحساب',
     hero_subtitle:'حوّل قصصك إلى كتب صوتية احترافية باستخدام الكتابة المدعومة بالذكاء الاصطناعي، وتوليد الفصول، والسرد عالي الجودة. أنشئ وعدّل وانشر الكتب الصوتية في دقائق.',
     btn_start_creating:'ابدأ في إنشاء كتابك الصوتي',
     feat_ai_writing:'الكتابة بالذكاء الاصطناعي', feat_narration:'السرد الاحترافي', feat_covers:'أغلفة الكتب بالذكاء الاصطناعي',
@@ -20337,7 +20330,7 @@ const UI_TRANSLATIONS = {
     exp_chapters:'الفصول', exp_total_words:'إجمالي الكلمات', exp_duration:'مدة الصوت',
     exp_download_btn:'تنزيل', exp_prepare_audible:'تحضير لـ Audible',
     exp_gen_podcast:'إنشاء بودكاست', exp_create_video:'إنشاء سلسلة فيديو',
-    cfg_title:'الإعداد والضبط', cfg_api:'إعداد API',
+    cfg_title:'Account', cfg_api:'إعداد API',
     cfg_writing_ai:'✍️ مزوّد ذكاء اصطناعي للكتابة', cfg_ollama_model:'نموذج Ollama',
     cfg_openrouter_key:'مفتاح API لـ OpenRouter', cfg_openrouter_model:'نموذج OpenRouter',
     cfg_image_provider:'🎨 مزوّد توليد الصور', cfg_openai_model:'نموذج OpenAI (عند استخدام OpenAI)',
@@ -20457,7 +20450,7 @@ const UI_TRANSLATIONS = {
   },
   zh: {
     nav_dashboard:'仪表板', nav_workspace:'工作区', nav_narration:'朗读',
-    nav_covers:'封面', nav_export:'导出', nav_config:'设置',
+    nav_covers:'封面', nav_export:'导出', nav_config:'账户',
     hero_subtitle:'利用AI驱动的写作、章节生成和高质量文字转语音配音，将您的故事转变为专业有声书。在几分钟内创建、编辑和发布有声书。',
     btn_start_creating:'开始创作您的有声书',
     feat_ai_writing:'AI驱动写作', feat_narration:'专业配音', feat_covers:'AI书籍封面',
@@ -20525,7 +20518,7 @@ const UI_TRANSLATIONS = {
     exp_chapters:'章节', exp_total_words:'总字数', exp_duration:'音频时长',
     exp_download_btn:'下载', exp_prepare_audible:'为Audible准备',
     exp_gen_podcast:'生成播客', exp_create_video:'创建视频系列',
-    cfg_title:'配置与设置', cfg_api:'API配置',
+    cfg_title:'Account', cfg_api:'API配置',
     cfg_writing_ai:'✍️ 写作AI提供商', cfg_ollama_model:'Ollama模型',
     cfg_openrouter_key:'OpenRouter API密钥', cfg_openrouter_model:'OpenRouter模型',
     cfg_image_provider:'🎨 图像生成提供商', cfg_openai_model:'OpenAI模型（使用OpenAI时）',
@@ -20645,7 +20638,7 @@ const UI_TRANSLATIONS = {
   },
   ja: {
     nav_dashboard:'ダッシュボード', nav_workspace:'ワークスペース', nav_narration:'ナレーション',
-    nav_covers:'表紙', nav_export:'エクスポート', nav_config:'設定',
+    nav_covers:'表紙', nav_export:'エクスポート', nav_config:'アカウント',
     hero_subtitle:'AIを活用した執筆、チャプター生成、高品質なテキスト読み上げナレーションで、あなたの物語をプロのオーディオブックに変えましょう。数分でオーディオブックを作成、編集、公開できます。',
     btn_start_creating:'オーディオブックの作成を開始',
     feat_ai_writing:'AI執筆支援', feat_narration:'プロのナレーション', feat_covers:'AI本の表紙',
@@ -20713,7 +20706,7 @@ const UI_TRANSLATIONS = {
     exp_chapters:'章', exp_total_words:'総単語数', exp_duration:'音声時間',
     exp_download_btn:'ダウンロード', exp_prepare_audible:'Audible向けに準備',
     exp_gen_podcast:'ポッドキャストを生成', exp_create_video:'動画シリーズを作成',
-    cfg_title:'設定と構成', cfg_api:'API設定',
+    cfg_title:'Account', cfg_api:'API設定',
     cfg_writing_ai:'✍️ 執筆AIプロバイダー', cfg_ollama_model:'Ollamaモデル',
     cfg_openrouter_key:'OpenRouter APIキー', cfg_openrouter_model:'OpenRouterモデル',
     cfg_image_provider:'🎨 画像生成プロバイダー', cfg_openai_model:'OpenAIモデル（OpenAI使用時）',
@@ -20833,7 +20826,7 @@ const UI_TRANSLATIONS = {
   },
   ko: {
     nav_dashboard:'대시보드', nav_workspace:'작업 공간', nav_narration:'나레이션',
-    nav_covers:'표지', nav_export:'내보내기', nav_config:'설정',
+    nav_covers:'표지', nav_export:'내보내기', nav_config:'계정',
     hero_subtitle:'AI 기반 작성, 챕터 생성 및 고품질 텍스트 음성 변환 나레이션으로 이야기를 전문 오디오북으로 변환하세요. 몇 분 안에 오디오북을 만들고, 편집하고, 출판하세요.',
     btn_start_creating:'오디오북 만들기 시작',
     feat_ai_writing:'AI 기반 작성', feat_narration:'전문 나레이션', feat_covers:'AI 책 표지',
@@ -20901,7 +20894,7 @@ const UI_TRANSLATIONS = {
     exp_chapters:'챕터', exp_total_words:'총 단어 수', exp_duration:'오디오 길이',
     exp_download_btn:'다운로드', exp_prepare_audible:'Audible 준비',
     exp_gen_podcast:'팟캐스트 생성', exp_create_video:'비디오 시리즈 만들기',
-    cfg_title:'구성 및 설정', cfg_api:'API 구성',
+    cfg_title:'Account', cfg_api:'API 구성',
     cfg_writing_ai:'✍️ 작성 AI 제공업체', cfg_ollama_model:'Ollama 모델',
     cfg_openrouter_key:'OpenRouter API 키', cfg_openrouter_model:'OpenRouter 모델',
     cfg_image_provider:'🎨 이미지 생성 제공업체', cfg_openai_model:'OpenAI 모델（OpenAI 사용 시）',
@@ -21021,7 +21014,7 @@ const UI_TRANSLATIONS = {
   },
   ru: {
     nav_dashboard:'Главная', nav_workspace:'Рабочая область', nav_narration:'Озвучка',
-    nav_covers:'Обложки', nav_export:'Экспорт', nav_config:'Настройки',
+    nav_covers:'Обложки', nav_export:'Экспорт', nav_config:'Аккаунт',
     hero_subtitle:'Превратите свои истории в профессиональные аудиокниги с помощью письма на базе ИИ, генерации глав и высококачественного озвучивания. Создавайте, редактируйте и публикуйте аудиокниги за минуты.',
     btn_start_creating:'Начать Создание Аудиокниги',
     feat_ai_writing:'Написание с ИИ', feat_narration:'Профессиональная Озвучка', feat_covers:'Обложки с ИИ',
@@ -21089,7 +21082,7 @@ const UI_TRANSLATIONS = {
     exp_chapters:'Глав', exp_total_words:'Всего Слов', exp_duration:'Длительность Аудио',
     exp_download_btn:'Скачать', exp_prepare_audible:'Подготовить для Audible',
     exp_gen_podcast:'Создать Подкаст', exp_create_video:'Создать Видеосерию',
-    cfg_title:'Конфигурация и Настройки', cfg_api:'Настройки API',
+    cfg_title:'Account', cfg_api:'Настройки API',
     cfg_writing_ai:'✍️ ИИ-провайдер для Написания', cfg_ollama_model:'Модель Ollama',
     cfg_openrouter_key:'API-ключ OpenRouter', cfg_openrouter_model:'Модель OpenRouter',
     cfg_image_provider:'🎨 Провайдер Генерации Изображений', cfg_openai_model:'Модель OpenAI (при использовании OpenAI)',
@@ -21209,7 +21202,7 @@ const UI_TRANSLATIONS = {
   },
   nl: {
     nav_dashboard:'Dashboard', nav_workspace:'Werkruimte', nav_narration:'Vertelling',
-    nav_covers:'Omslagen', nav_export:'Exporteren', nav_config:'Instellingen',
+    nav_covers:'Omslagen', nav_export:'Exporteren', nav_config:'Account',
     hero_subtitle:'Transformeer uw verhalen in professionele luisterboeken met AI-aangedreven schrijven, hoofdstukgeneratie en hoogwaardige tekst-naar-spraak-naratie. Maak, bewerk en publiceer luisterboeken in minuten.',
     btn_start_creating:'Begin met het Maken van uw Luisterboek',
     feat_ai_writing:'AI-aangedreven Schrijven', feat_narration:'Professionele Vertelling', feat_covers:'AI Boekcovers',
@@ -21277,7 +21270,7 @@ const UI_TRANSLATIONS = {
     exp_chapters:'Hoofdstukken', exp_total_words:'Totaal Woorden', exp_duration:'Audioduur',
     exp_download_btn:'Downloaden', exp_prepare_audible:'Voorbereiden voor Audible',
     exp_gen_podcast:'Podcast Genereren', exp_create_video:'Videoserie Maken',
-    cfg_title:'Configuratie en Instellingen', cfg_api:'API Configuratie',
+    cfg_title:'Account', cfg_api:'API Configuratie',
     cfg_writing_ai:'✍️ Schrijf-AI Aanbieder', cfg_ollama_model:'Ollama Model',
     cfg_openrouter_key:'OpenRouter API-sleutel', cfg_openrouter_model:'OpenRouter Model',
     cfg_image_provider:'🎨 Beeldgeneratie Aanbieder', cfg_openai_model:'OpenAI Model (bij gebruik van OpenAI)',
@@ -21397,7 +21390,7 @@ const UI_TRANSLATIONS = {
   },
   pl: {
     nav_dashboard:'Panel', nav_workspace:'Obszar roboczy', nav_narration:'Narracja',
-    nav_covers:'Okładki', nav_export:'Eksportuj', nav_config:'Ustawienia',
+    nav_covers:'Okładki', nav_export:'Eksportuj', nav_config:'Konto',
     hero_subtitle:'Przekształć swoje historie w profesjonalne audiobooki dzięki pisaniu wspomaganemu AI, generowaniu rozdziałów i wysokiej jakości narracji text-to-speech. Twórz, edytuj i publikuj audiobooki w kilka minut.',
     btn_start_creating:'Zacznij Tworzyć Audiobooka',
     feat_ai_writing:'Pisanie Wspomagane AI', feat_narration:'Profesjonalna Narracja', feat_covers:'Okładki AI',
@@ -21465,7 +21458,7 @@ const UI_TRANSLATIONS = {
     exp_chapters:'Rozdziały', exp_total_words:'Łączna Liczba Słów', exp_duration:'Czas Trwania Audio',
     exp_download_btn:'Pobierz', exp_prepare_audible:'Przygotuj dla Audible',
     exp_gen_podcast:'Generuj Podcast', exp_create_video:'Utwórz Serię Wideo',
-    cfg_title:'Konfiguracja i Ustawienia', cfg_api:'Konfiguracja API',
+    cfg_title:'Account', cfg_api:'Konfiguracja API',
     cfg_writing_ai:'✍️ Dostawca AI do Pisania', cfg_ollama_model:'Model Ollama',
     cfg_openrouter_key:'Klucz API OpenRouter', cfg_openrouter_model:'Model OpenRouter',
     cfg_image_provider:'🎨 Dostawca Generowania Obrazów', cfg_openai_model:'Model OpenAI (przy użyciu OpenAI)',
@@ -21585,7 +21578,7 @@ const UI_TRANSLATIONS = {
   },
   sv: {
     nav_dashboard:'Instrumentpanel', nav_workspace:'Arbetsyta', nav_narration:'Berättarröst',
-    nav_covers:'Omslag', nav_export:'Exportera', nav_config:'Inställningar',
+    nav_covers:'Omslag', nav_export:'Exportera', nav_config:'Konto',
     hero_subtitle:'Omvandla dina berättelser till professionella ljudböcker med AI-driven skrivning, kapitelgenerering och högkvalitativ text-till-tal-berättarröst. Skapa, redigera och publicera ljudböcker på några minuter.',
     btn_start_creating:'Börja Skapa din Ljudbok',
     feat_ai_writing:'AI-driven Skrivning', feat_narration:'Professionell Berättarröst', feat_covers:'AI Bokomslag',
@@ -21653,7 +21646,7 @@ const UI_TRANSLATIONS = {
     exp_chapters:'Kapitel', exp_total_words:'Totalt Antal Ord', exp_duration:'Ljudets Varaktighet',
     exp_download_btn:'Ladda ned', exp_prepare_audible:'Förbered för Audible',
     exp_gen_podcast:'Generera Podcast', exp_create_video:'Skapa Videoserie',
-    cfg_title:'Konfiguration och Inställningar', cfg_api:'API Konfiguration',
+    cfg_title:'Account', cfg_api:'API Konfiguration',
     cfg_writing_ai:'✍️ Skriv-AI Leverantör', cfg_ollama_model:'Ollama Modell',
     cfg_openrouter_key:'OpenRouter API-nyckel', cfg_openrouter_model:'OpenRouter Modell',
     cfg_image_provider:'🎨 Bildgenererings Leverantör', cfg_openai_model:'OpenAI Modell (vid användning av OpenAI)',
@@ -21773,7 +21766,7 @@ const UI_TRANSLATIONS = {
   },
   tr: {
     nav_dashboard:'Gösterge Paneli', nav_workspace:'Çalışma Alanı', nav_narration:'Anlatım',
-    nav_covers:'Kapaklar', nav_export:'Dışa Aktar', nav_config:'Ayarlar',
+    nav_covers:'Kapaklar', nav_export:'Dışa Aktar', nav_config:'Hesap',
     hero_subtitle:'Yapay zeka destekli yazım, bölüm oluşturma ve yüksek kaliteli metin okuma anlatımıyla hikayelerinizi profesyonel sesli kitaplara dönüştürün. Dakikalar içinde sesli kitap oluşturun, düzenleyin ve yayınlayın.',
     btn_start_creating:'Sesli Kitabınızı Oluşturmaya Başlayın',
     feat_ai_writing:'Yapay Zeka Destekli Yazım', feat_narration:'Profesyonel Anlatım', feat_covers:'Yapay Zeka Kitap Kapakları',
@@ -21842,7 +21835,7 @@ const UI_TRANSLATIONS = {
     exp_chapters:'Bölümler', exp_total_words:'Toplam Kelime', exp_duration:'Ses Süresi',
     exp_download_btn:'İndir', exp_prepare_audible:'Audible için Hazırla',
     exp_gen_podcast:'Podcast Oluştur', exp_create_video:'Video Serisi Oluştur',
-    cfg_title:'Yapılandırma ve Ayarlar', cfg_api:'API Yapılandırması',
+    cfg_title:'Account', cfg_api:'API Yapılandırması',
     cfg_writing_ai:'✍️ Yazma Yapay Zekası Sağlayıcısı', cfg_ollama_model:'Ollama Modeli',
     cfg_openrouter_key:'OpenRouter API Anahtarı', cfg_openrouter_model:'OpenRouter Modeli',
     cfg_image_provider:'🎨 Görüntü Oluşturma Sağlayıcısı', cfg_openai_model:'OpenAI Modeli (OpenAI kullanılıyorsa)',
