@@ -1766,6 +1766,7 @@
                         <li><i class="fas fa-check text-cyan-400 mr-2"></i><span data-i18n="dash_plan_f9">Priority generation</span></li>
                         <li><i class="fas fa-check text-cyan-400 mr-2"></i><span data-i18n="dash_plan_f10">Cover image AI</span></li>
                         <li><i class="fas fa-check text-cyan-400 mr-2"></i><span data-i18n="dash_plan_f11">SFX & music AI</span></li>
+                        <li><i class="fas fa-check text-purple-400 mr-2"></i><span data-i18n="dash_plan_f11b">Multi-voice character cast</span></li>
                     </ul>
                     <button onclick="showUpgradeModal('author')" class="bg-cyan-400 text-black w-full py-2 rounded-lg text-sm font-bold hover:bg-cyan-300 transition-colors" data-i18n="dash_plan_upgrade">Upgrade</button>
                 </div>
@@ -2865,8 +2866,35 @@
                             <i class="fas fa-microphone mr-2"></i><span data-i18n="nar_scan">Scan to Narration</span>
                         </button>
                         
-                        <!-- Dialogue Assignment Results -->
-                        <!-- Character Voice Assignments removed - all dialogue now uses narrator voice -->
+                        <!-- Multi-Voice Character Assignment -->
+                        <div id="multiVoiceSection" class="hidden">
+                            <!-- Locked state for Free / Starter -->
+                            <div id="multiVoiceLock" class="hidden bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4 text-center">
+                                <i class="fas fa-lock text-yellow-400 text-xl mb-2 block"></i>
+                                <p class="text-sm text-yellow-200/80 font-semibold">Multi-Voice Character Narration</p>
+                                <p class="text-xs text-gray-400 mt-1">Assign a unique AI voice to each character so your audiobook sounds like a full cast. Available on the <strong class="text-cyan-400">Author plan</strong> and above.</p>
+                                <button onclick="showUpgradeModal('author')" class="mt-3 px-4 py-1.5 bg-cyan-400 text-black text-xs font-bold rounded-lg hover:bg-cyan-300 transition-colors">Upgrade to Author</button>
+                            </div>
+                            <!-- Active state for Author+ -->
+                            <div id="multiVoiceAssign" class="hidden bg-theme-primary rounded-xl border border-purple-500/30 p-4">
+                                <div class="flex items-center justify-between mb-2">
+                                    <h5 class="font-medium text-purple-400 text-sm flex items-center gap-2">
+                                        <i class="fas fa-users"></i> Character Voice Assignment
+                                    </h5>
+                                    <span class="text-xs bg-purple-500/20 text-purple-300 px-2 py-0.5 rounded-full">Author+</span>
+                                </div>
+                                <p class="text-xs text-theme-secondary mb-3">Each detected character gets their own AI voice. Scan your story first, then assign voices below.</p>
+                                <div id="characterVoiceList" class="space-y-2">
+                                    <p class="text-xs text-gray-500 italic">Scan your story to detect characters...</p>
+                                </div>
+                            </div>
+                            <!-- Toggle -->
+                            <label id="multiVoiceToggleRow" class="hidden flex items-center gap-2 cursor-pointer mt-3 p-2 rounded-lg hover:bg-white/5 transition-colors">
+                                <input type="checkbox" id="multiVoiceToggle" class="w-4 h-4 accent-purple-400" onchange="toggleMultiVoiceMode()">
+                                <span class="text-sm text-theme-secondary">Use multi-voice character narration</span>
+                                <span class="text-xs bg-purple-500/20 text-purple-300 px-2 py-0.5 rounded-full ml-auto">Author+</span>
+                            </label>
+                        </div>
 
                         <!-- Narration Preview -->
                         <div id="narrationPreview" class="hidden">
@@ -10370,14 +10398,126 @@ Format as clean, readable text ready for narration.`;
             
             // Show the narration preview section
             narrationPreview.classList.remove('hidden');
-            
+
             // Enable the generate narration button
             const generateNarrationBtn = document.getElementById('generateNarrationBtn');
             if (generateNarrationBtn) {
                 generateNarrationBtn.disabled = false;
             }
-            
+
+            // Show multi-voice section and detect characters
+            showMultiVoiceSection(content);
+
             console.log('✅ Narration preview displayed successfully');
+        }
+
+        async function showMultiVoiceSection(content) {
+            const section = document.getElementById('multiVoiceSection');
+            const lockEl  = document.getElementById('multiVoiceLock');
+            const assignEl = document.getElementById('multiVoiceAssign');
+            const toggleRow = document.getElementById('multiVoiceToggleRow');
+            if (!section) return;
+
+            section.classList.remove('hidden');
+
+            if (!hasMultiVoicePlan()) {
+                lockEl?.classList.remove('hidden');
+                assignEl?.classList.add('hidden');
+                toggleRow?.classList.add('hidden');
+                return;
+            }
+
+            lockEl?.classList.add('hidden');
+            assignEl?.classList.remove('hidden');
+            toggleRow?.classList.remove('hidden');
+
+            // Detect characters with AI
+            const listEl = document.getElementById('characterVoiceList');
+            if (listEl) listEl.innerHTML = '<p class="text-xs text-gray-400 italic">Detecting characters...</p>';
+            const chars = await detectCharacters(content);
+            dialogueData.characters = chars;
+            populateCharacterVoiceList(chars);
+        }
+
+        function populateCharacterVoiceList(characters) {
+            const listEl = document.getElementById('characterVoiceList');
+            if (!listEl) return;
+
+            // Get voice options from the hidden voice selector
+            const mainVoiceSel = document.getElementById('voiceSelection');
+            const voiceOptions = mainVoiceSel ? Array.from(mainVoiceSel.querySelectorAll('option')).filter(o => o.value) : [];
+
+            if (!characters || characters.length === 0) {
+                listEl.innerHTML = '<p class="text-xs text-gray-400 italic">No named characters detected. Your story will use the narrator voice throughout.</p>';
+                return;
+            }
+
+            listEl.innerHTML = '';
+            characters.forEach((name, idx) => {
+                const row = document.createElement('div');
+                row.className = 'flex items-center gap-2 bg-theme-secondary rounded-lg px-3 py-2';
+                const label = document.createElement('span');
+                label.className = 'text-sm font-medium text-purple-300 w-28 shrink-0 truncate';
+                label.textContent = name;
+                const sel = document.createElement('select');
+                sel.id = `charVoice_${idx}`;
+                sel.dataset.character = name;
+                sel.className = 'flex-1 px-2 py-1 rounded bg-theme-primary border border-theme text-xs';
+                sel.innerHTML = '<option value="">-- Use Narrator --</option>';
+                voiceOptions.forEach(o => {
+                    const opt = document.createElement('option');
+                    opt.value = o.value;
+                    opt.textContent = o.textContent;
+                    opt.dataset.provider = o.dataset.provider;
+                    opt.dataset.voice = o.dataset.voice;
+                    sel.appendChild(opt);
+                });
+                sel.onchange = () => {
+                    dialogueData.voiceAssignments[name] = sel.value || null;
+                };
+                row.appendChild(label);
+                row.appendChild(sel);
+                listEl.appendChild(row);
+            });
+        }
+
+        function toggleMultiVoiceMode() {
+            const toggle = document.getElementById('multiVoiceToggle');
+            const assignEl = document.getElementById('multiVoiceAssign');
+            if (toggle?.checked && !hasMultiVoicePlan()) {
+                toggle.checked = false;
+                showUpgradeModal('author');
+                return;
+            }
+            if (assignEl) assignEl.classList.toggle('hidden', !toggle?.checked);
+        }
+
+        // Parse story text into narrator + character dialogue segments
+        function parseStoryIntoSegments(content, voiceAssignments, narratorVoice) {
+            const segments = [];
+            // Match: "dialogue" said/replied/asked/etc CharacterName  OR  CharacterName said/replied "dialogue"
+            const re = /"([^"]{1,600})"\s*[,.]?\s*(?:said|replied|asked|whispered|shouted|answered|exclaimed|cried|muttered|called|yelled|added|continued|began|snapped|urged|pleaded|insisted)\s+([A-Z][a-zA-Z]+)/g;
+            let lastIndex = 0;
+            let match;
+            while ((match = re.exec(content)) !== null) {
+                if (match.index > lastIndex) {
+                    const narText = content.slice(lastIndex, match.index).trim();
+                    if (narText) segments.push({ text: narText, voice: narratorVoice, character: 'Narrator' });
+                }
+                const charName = match[2];
+                const assignedVoice = (voiceAssignments && voiceAssignments[charName]) || narratorVoice;
+                segments.push({ text: `"${match[1]}"`, voice: assignedVoice, character: charName });
+                lastIndex = match.index + match[0].length;
+            }
+            if (lastIndex < content.length) {
+                const rem = content.slice(lastIndex).trim();
+                if (rem) segments.push({ text: rem, voice: narratorVoice, character: 'Narrator' });
+            }
+            // If nothing was parsed (no matched dialogue), fall back to single narrator segment
+            if (segments.length === 0) {
+                segments.push({ text: content, voice: narratorVoice, character: 'Narrator' });
+            }
+            return segments;
         }
         
         function populateNarratorVoices() {
@@ -10554,8 +10694,9 @@ Format as clean, readable text ready for narration.`;
                 return;
             }
             
-            console.log('✅ Using narrator voice for ALL content (dialogue and narrative)');
-            
+            const useMultiVoice = document.getElementById('multiVoiceToggle')?.checked && hasMultiVoicePlan();
+            console.log(useMultiVoice ? '✅ MULTI-VOICE mode — assigning character voices' : '✅ Using narrator voice for ALL content (dialogue and narrative)');
+
             // Check if API key is available (not needed for Chatterbox/Ollama)
             const apiKey = getOpenAIApiKey();
             if (!apiKey && getAIProvider() !== 'ollama' && getAIProvider() !== 'openrouter') {
@@ -10564,54 +10705,70 @@ Format as clean, readable text ready for narration.`;
                 return;
             }
             console.log('✅ API provider ready');
-            
+
             showLoading("Relax while I Generate Your Best Seller's Narration");
-            
+
             try {
                 // ENSURE FULL CONTENT - use the dedicated function that guarantees full content
                 let content = getFullStoryContent();
-                
+
                 if (!content.trim()) {
                     throw new Error('No story content to narrate');
                 }
-                
-                console.log('🎙️ NARRATOR-ONLY GENERATION - Using FULL content:', content.length, 'characters');
-
-                // Client-side chunking: split into ~800-char chunks and send each as its own
-                // fal.ai job so generation runs concurrently and no single chunk is too large.
-                let audioBlobs = [];
 
                 // Ensure content ends with punctuation
                 if (!/[.!?,;:]$/.test(content.trim())) content = content.trim() + '.';
 
-                const chunks = splitTextIntoChunks(content, 800);
-                console.log(`📝 Split into ${chunks.length} chunks — processing sequentially (Cartesia concurrency limit)`);
+                let audioBlobs = [];
 
-                // Process sequentially to stay within Cartesia's concurrency limit (2 req/s on free plan)
-                const chunkBlobs = [];
-                for (let i = 0; i < chunks.length; i++) {
-                    showLoading(`Generating narration… chunk ${i + 1} of ${chunks.length}`);
-                    for (let attempt = 1; attempt <= 3; attempt++) {
-                        try {
-                            const blob = await generateSegmentAudio({
-                                type: 'all_content',
-                                text: chunks[i],
-                                voice: narratorVoice,
-                                character: 'Narrator'
-                            });
-                            chunkBlobs.push(blob);
-                            break;
-                        } catch (err) {
-                            console.warn(`⚠️ Chunk ${i + 1} attempt ${attempt} failed: ${err.message}`);
-                            if (attempt === 3) throw new Error(`Chunk ${i + 1} failed after 3 attempts: ${err.message}`);
-                            await new Promise(r => setTimeout(r, 1500 * attempt)); // back-off before retry
+                if (useMultiVoice) {
+                    // Multi-voice: parse story into narrator + character dialogue segments
+                    const segments = parseStoryIntoSegments(content, dialogueData.voiceAssignments, narratorVoice);
+                    console.log(`🎭 MULTI-VOICE — ${segments.length} segments across ${new Set(segments.map(s => s.character)).size} speakers`);
+                    const segmentBlobs = [];
+                    for (let i = 0; i < segments.length; i++) {
+                        const seg = segments[i];
+                        // Each segment may need to be further chunked if long
+                        const subChunks = splitTextIntoChunks(seg.text, 800);
+                        for (let j = 0; j < subChunks.length; j++) {
+                            showLoading(`Generating narration… segment ${i + 1}/${segments.length} (${seg.character}), chunk ${j + 1}/${subChunks.length}`);
+                            for (let attempt = 1; attempt <= 3; attempt++) {
+                                try {
+                                    const blob = await generateSegmentAudio({ type: 'all_content', text: subChunks[j], voice: seg.voice, character: seg.character });
+                                    segmentBlobs.push({ blob, segment: { ...seg, text: subChunks[j] } });
+                                    break;
+                                } catch (err) {
+                                    if (attempt === 3) throw new Error(`Segment ${i + 1} chunk ${j + 1} failed: ${err.message}`);
+                                    await new Promise(r => setTimeout(r, 1500 * attempt));
+                                }
+                            }
                         }
                     }
+                    audioBlobs = segmentBlobs;
+                } else {
+                    // Single narrator voice — original chunking logic
+                    console.log('🎙️ NARRATOR-ONLY GENERATION - Using FULL content:', content.length, 'characters');
+                    const chunks = splitTextIntoChunks(content, 800);
+                    console.log(`📝 Split into ${chunks.length} chunks — processing sequentially (Cartesia concurrency limit)`);
+                    const chunkBlobs = [];
+                    for (let i = 0; i < chunks.length; i++) {
+                        showLoading(`Generating narration… chunk ${i + 1} of ${chunks.length}`);
+                        for (let attempt = 1; attempt <= 3; attempt++) {
+                            try {
+                                const blob = await generateSegmentAudio({ type: 'all_content', text: chunks[i], voice: narratorVoice, character: 'Narrator' });
+                                chunkBlobs.push(blob);
+                                break;
+                            } catch (err) {
+                                if (attempt === 3) throw new Error(`Chunk ${i + 1} failed after 3 attempts: ${err.message}`);
+                                await new Promise(r => setTimeout(r, 1500 * attempt));
+                            }
+                        }
+                    }
+                    audioBlobs = chunkBlobs.map((blob, i) => ({
+                        blob,
+                        segment: { type: 'all_content', text: chunks[i], voice: narratorVoice, character: 'Narrator' }
+                    }));
                 }
-                audioBlobs = chunkBlobs.map((blob, i) => ({
-                    blob,
-                    segment: { type: 'all_content', text: chunks[i], voice: narratorVoice, character: 'Narrator' }
-                }));
                 
                 // Merge all chunks into a single clip
                 if (audioBlobs.length > 1) {
@@ -18320,6 +18477,12 @@ Format as clean, readable text ready for narration.`;
             studio:    { credits: 3000000,  label: 'Studio',    price: 249 }
         };
 
+        function getPlanTier() {
+            const plan = window._userSubscription?.plan || 'free';
+            return { free: 0, starter: 1, author: 2, publisher: 3, studio: 4 }[plan] ?? 0;
+        }
+        function hasMultiVoicePlan() { return getPlanTier() >= 2; } // Author+
+
         async function loadUserSubscription(userId) {
             const client = ensureSupabase();
             if (!client || !userId) return;
@@ -18939,7 +19102,7 @@ const UI_TRANSLATIONS = {
     dash_plan_story1:'~1 short story', dash_plan_story3:'~3 short books', dash_plan_books9:'~9 full books', dash_plan_books25:'~25 full books', dash_plan_books65:'~65 full books',
     dash_plan_f1:'AI writing', dash_plan_f2:'1 Cartesia voice', dash_plan_f3:'Basic export', dash_plan_f4:'Voice cloning',
     dash_plan_f5:'Everything in Free', dash_plan_f6:'All Cartesia voices', dash_plan_f7:'All export formats',
-    dash_plan_f8:'Everything in Starter', dash_plan_f9:'Priority generation', dash_plan_f10:'Cover image AI', dash_plan_f11:'SFX & music AI',
+    dash_plan_f8:'Everything in Starter', dash_plan_f9:'Priority generation', dash_plan_f10:'Cover image AI', dash_plan_f11:'SFX & music AI', dash_plan_f11b:'Multi-voice character cast',
     dash_plan_f12:'Everything in Author', dash_plan_f13:'Team seats (3)', dash_plan_f14:'Bulk export', dash_plan_f15:'API access',
     dash_plan_f16:'Everything in Publisher', dash_plan_f17:'Unlimited team seats', dash_plan_f18:'White-label exports', dash_plan_f19:'Dedicated support',
     dash_plan_get_started:'Get Started', dash_plan_upgrade:'Upgrade', dash_plan_popular:'MOST POPULAR',
@@ -19132,7 +19295,7 @@ const UI_TRANSLATIONS = {
     dash_plan_story1:'~1 historia corta', dash_plan_story3:'~3 libros cortos', dash_plan_books9:'~9 libros completos', dash_plan_books25:'~25 libros completos', dash_plan_books65:'~65 libros completos',
     dash_plan_f1:'Escritura con IA', dash_plan_f2:'1 voz Cartesia', dash_plan_f3:'Exportación básica', dash_plan_f4:'Clonación de voz',
     dash_plan_f5:'Todo en Gratis', dash_plan_f6:'Todas las voces', dash_plan_f7:'Todos los formatos',
-    dash_plan_f8:'Todo en Inicial', dash_plan_f9:'Generación prioritaria', dash_plan_f10:'Portadas con IA', dash_plan_f11:'SFX y música IA',
+    dash_plan_f8:'Todo en Inicial', dash_plan_f9:'Generación prioritaria', dash_plan_f10:'Portadas con IA', dash_plan_f11:'SFX y música IA', dash_plan_f11b:'Reparto multi-voz de personajes',
     dash_plan_f12:'Todo en Autor', dash_plan_f13:'Puestos de equipo (3)', dash_plan_f14:'Exportación masiva', dash_plan_f15:'Acceso API',
     dash_plan_f16:'Todo en Editor', dash_plan_f17:'Puestos ilimitados', dash_plan_f18:'Exportaciones con marca blanca', dash_plan_f19:'Soporte dedicado',
     dash_plan_get_started:'Comenzar', dash_plan_upgrade:'Mejorar', dash_plan_popular:'MÁS POPULAR',
@@ -19320,7 +19483,7 @@ const UI_TRANSLATIONS = {
     dash_plan_story1:'~1 nouvelle', dash_plan_story3:'~3 courts livres', dash_plan_books9:'~9 livres complets', dash_plan_books25:'~25 livres complets', dash_plan_books65:'~65 livres complets',
     dash_plan_f1:'Écriture IA', dash_plan_f2:'1 voix Cartesia', dash_plan_f3:'Export basique', dash_plan_f4:'Clonage vocal',
     dash_plan_f5:'Tout dans Gratuit', dash_plan_f6:'Toutes les voix', dash_plan_f7:'Tous les formats',
-    dash_plan_f8:'Tout dans Débutant', dash_plan_f9:'Génération prioritaire', dash_plan_f10:'Couverture IA', dash_plan_f11:'SFX et musique IA',
+    dash_plan_f8:'Tout dans Débutant', dash_plan_f9:'Génération prioritaire', dash_plan_f10:'Couverture IA', dash_plan_f11:'SFX et musique IA', dash_plan_f11b:'Distribution personnages multi-voix',
     dash_plan_f12:'Tout dans Auteur', dash_plan_f13:'Sièges d\'équipe (3)', dash_plan_f14:'Export en masse', dash_plan_f15:'Accès API',
     dash_plan_f16:'Tout dans Éditeur', dash_plan_f17:'Sièges illimités', dash_plan_f18:'Exports marque blanche', dash_plan_f19:'Support dédié',
     dash_plan_get_started:'Commencer', dash_plan_upgrade:'Améliorer', dash_plan_popular:'PLUS POPULAIRE',
@@ -19508,7 +19671,7 @@ const UI_TRANSLATIONS = {
     dash_plan_story1:'~1 Kurzgeschichte', dash_plan_story3:'~3 kurze Bücher', dash_plan_books9:'~9 vollständige Bücher', dash_plan_books25:'~25 vollständige Bücher', dash_plan_books65:'~65 vollständige Bücher',
     dash_plan_f1:'KI-Schreiben', dash_plan_f2:'1 Cartesia-Stimme', dash_plan_f3:'Basisexport', dash_plan_f4:'Stimmenklonen',
     dash_plan_f5:'Alles aus Kostenlos', dash_plan_f6:'Alle Stimmen', dash_plan_f7:'Alle Formate',
-    dash_plan_f8:'Alles aus Einsteiger', dash_plan_f9:'Priorisierte Generierung', dash_plan_f10:'KI-Titelbild', dash_plan_f11:'SFX und Musik KI',
+    dash_plan_f8:'Alles aus Einsteiger', dash_plan_f9:'Priorisierte Generierung', dash_plan_f10:'KI-Titelbild', dash_plan_f11:'SFX und Musik KI', dash_plan_f11b:'Mehrsprachige Figurenbesetzung',
     dash_plan_f12:'Alles aus Autor', dash_plan_f13:'Teamplätze (3)', dash_plan_f14:'Massenexport', dash_plan_f15:'API-Zugang',
     dash_plan_f16:'Alles aus Verlag', dash_plan_f17:'Unbegrenzte Teamplätze', dash_plan_f18:'White-Label-Exporte', dash_plan_f19:'Dedizierter Support',
     dash_plan_get_started:'Loslegen', dash_plan_upgrade:'Upgraden', dash_plan_popular:'AM BELIEBTESTEN',
@@ -19696,7 +19859,7 @@ const UI_TRANSLATIONS = {
     dash_plan_story1:'~1 conto', dash_plan_story3:'~3 livros curtos', dash_plan_books9:'~9 livros completos', dash_plan_books25:'~25 livros completos', dash_plan_books65:'~65 livros completos',
     dash_plan_f1:'Escrita com IA', dash_plan_f2:'1 voz Cartesia', dash_plan_f3:'Exportação básica', dash_plan_f4:'Clonagem de voz',
     dash_plan_f5:'Tudo do Grátis', dash_plan_f6:'Todas as vozes', dash_plan_f7:'Todos os formatos',
-    dash_plan_f8:'Tudo do Iniciante', dash_plan_f9:'Geração prioritária', dash_plan_f10:'Capa com IA', dash_plan_f11:'SFX e música IA',
+    dash_plan_f8:'Tudo do Iniciante', dash_plan_f9:'Geração prioritária', dash_plan_f10:'Capa com IA', dash_plan_f11:'SFX e música IA', dash_plan_f11b:'Elenco multi-voz de personagens',
     dash_plan_f12:'Tudo do Autor', dash_plan_f13:'Vagas de equipe (3)', dash_plan_f14:'Exportação em massa', dash_plan_f15:'Acesso à API',
     dash_plan_f16:'Tudo da Editora', dash_plan_f17:'Vagas ilimitadas', dash_plan_f18:'Exportações white-label', dash_plan_f19:'Suporte dedicado',
     dash_plan_get_started:'Comece Agora', dash_plan_upgrade:'Fazer Upgrade', dash_plan_popular:'MAIS POPULAR',
@@ -19884,7 +20047,7 @@ const UI_TRANSLATIONS = {
     dash_plan_story1:'~1 racconto breve', dash_plan_story3:'~3 libri brevi', dash_plan_books9:'~9 libri completi', dash_plan_books25:'~25 libri completi', dash_plan_books65:'~65 libri completi',
     dash_plan_f1:'Scrittura AI', dash_plan_f2:'1 voce Cartesia', dash_plan_f3:'Esportazione base', dash_plan_f4:'Clonazione vocale',
     dash_plan_f5:'Tutto di Gratuito', dash_plan_f6:'Tutte le voci', dash_plan_f7:'Tutti i formati',
-    dash_plan_f8:'Tutto di Base', dash_plan_f9:'Generazione prioritaria', dash_plan_f10:'Copertina AI', dash_plan_f11:'SFX e musica AI',
+    dash_plan_f8:'Tutto di Base', dash_plan_f9:'Generazione prioritaria', dash_plan_f10:'Copertina AI', dash_plan_f11:'SFX e musica AI', dash_plan_f11b:'Cast personaggi multi-voce',
     dash_plan_f12:'Tutto di Autore', dash_plan_f13:'Posti team (3)', dash_plan_f14:'Esportazione massiva', dash_plan_f15:'Accesso API',
     dash_plan_f16:'Tutto di Editore', dash_plan_f17:'Posti illimitati', dash_plan_f18:'Esportazioni white-label', dash_plan_f19:'Supporto dedicato',
     dash_plan_get_started:'Inizia', dash_plan_upgrade:'Migliora', dash_plan_popular:'PIÙ POPOLARE',
@@ -20072,7 +20235,7 @@ const UI_TRANSLATIONS = {
     dash_plan_story1:'~1 लघु कहानी', dash_plan_story3:'~3 छोटी पुस्तकें', dash_plan_books9:'~9 पूरी पुस्तकें', dash_plan_books25:'~25 पूरी पुस्तकें', dash_plan_books65:'~65 पूरी पुस्तकें',
     dash_plan_f1:'AI लेखन', dash_plan_f2:'1 Cartesia आवाज़', dash_plan_f3:'बेसिक एक्सपोर्ट', dash_plan_f4:'वॉयस क्लोनिंग',
     dash_plan_f5:'मुफ़्त का सब कुछ', dash_plan_f6:'सभी आवाज़ें', dash_plan_f7:'सभी फॉर्मेट',
-    dash_plan_f8:'स्टार्टर का सब कुछ', dash_plan_f9:'प्राथमिकता जनरेशन', dash_plan_f10:'AI कवर इमेज', dash_plan_f11:'SFX और संगीत AI',
+    dash_plan_f8:'स्टार्टर का सब कुछ', dash_plan_f9:'प्राथमिकता जनरेशन', dash_plan_f10:'AI कवर इमेज', dash_plan_f11:'SFX और संगीत AI', dash_plan_f11b:'बहु-आवाज़ पात्र कास्ट',
     dash_plan_f12:'लेखक का सब कुछ', dash_plan_f13:'टीम सीटें (3)', dash_plan_f14:'बल्क एक्सपोर्ट', dash_plan_f15:'API एक्सेस',
     dash_plan_f16:'प्रकाशक का सब कुछ', dash_plan_f17:'असीमित टीम सीटें', dash_plan_f18:'व्हाइट-लेबल एक्सपोर्ट', dash_plan_f19:'समर्पित सहायता',
     dash_plan_get_started:'शुरू करें', dash_plan_upgrade:'अपग्रेड करें', dash_plan_popular:'सबसे लोकप्रिय',
@@ -20260,7 +20423,7 @@ const UI_TRANSLATIONS = {
     dash_plan_story1:'~قصة قصيرة واحدة', dash_plan_story3:'~3 كتب قصيرة', dash_plan_books9:'~9 كتب كاملة', dash_plan_books25:'~25 كتاباً كاملاً', dash_plan_books65:'~65 كتاباً كاملاً',
     dash_plan_f1:'كتابة ذكاء اصطناعي', dash_plan_f2:'صوت Cartesia واحد', dash_plan_f3:'تصدير أساسي', dash_plan_f4:'استنساخ الصوت',
     dash_plan_f5:'كل شيء في المجاني', dash_plan_f6:'جميع الأصوات', dash_plan_f7:'جميع الصيغ',
-    dash_plan_f8:'كل شيء في المبتدئ', dash_plan_f9:'توليد ذو أولوية', dash_plan_f10:'صورة غلاف بالذكاء الاصطناعي', dash_plan_f11:'مؤثرات ذكاء اصطناعي',
+    dash_plan_f8:'كل شيء في المبتدئ', dash_plan_f9:'توليد ذو أولوية', dash_plan_f10:'صورة غلاف بالذكاء الاصطناعي', dash_plan_f11:'مؤثرات ذكاء اصطناعي', dash_plan_f11b:'توزيع الشخصيات بأصوات متعددة',
     dash_plan_f12:'كل شيء في المؤلف', dash_plan_f13:'مقاعد الفريق (3)', dash_plan_f14:'تصدير مجمّع', dash_plan_f15:'وصول API',
     dash_plan_f16:'كل شيء في الناشر', dash_plan_f17:'مقاعد فريق غير محدودة', dash_plan_f18:'تصدير بعلامة بيضاء', dash_plan_f19:'دعم مخصص',
     dash_plan_get_started:'ابدأ', dash_plan_upgrade:'ترقية', dash_plan_popular:'الأكثر شعبية',
@@ -20448,7 +20611,7 @@ const UI_TRANSLATIONS = {
     dash_plan_story1:'~1篇短故事', dash_plan_story3:'~3本短书', dash_plan_books9:'~9本完整书籍', dash_plan_books25:'~25本完整书籍', dash_plan_books65:'~65本完整书籍',
     dash_plan_f1:'AI写作', dash_plan_f2:'1个Cartesia声音', dash_plan_f3:'基础导出', dash_plan_f4:'声音克隆',
     dash_plan_f5:'免费版全部功能', dash_plan_f6:'所有声音', dash_plan_f7:'所有格式',
-    dash_plan_f8:'入门版全部功能', dash_plan_f9:'优先生成', dash_plan_f10:'AI封面图', dash_plan_f11:'音效和音乐AI',
+    dash_plan_f8:'入门版全部功能', dash_plan_f9:'优先生成', dash_plan_f10:'AI封面图', dash_plan_f11:'音效和音乐AI', dash_plan_f11b:'多声部角色配音',
     dash_plan_f12:'作者版全部功能', dash_plan_f13:'团队席位 (3)', dash_plan_f14:'批量导出', dash_plan_f15:'API访问',
     dash_plan_f16:'出版商版全部功能', dash_plan_f17:'无限团队席位', dash_plan_f18:'白标导出', dash_plan_f19:'专属支持',
     dash_plan_get_started:'立即开始', dash_plan_upgrade:'升级', dash_plan_popular:'最受欢迎',
@@ -20636,7 +20799,7 @@ const UI_TRANSLATIONS = {
     dash_plan_story1:'~1短編', dash_plan_story3:'~3短編本', dash_plan_books9:'~9冊', dash_plan_books25:'~25冊', dash_plan_books65:'~65冊',
     dash_plan_f1:'AI執筆', dash_plan_f2:'Cartesiaボイス1つ', dash_plan_f3:'基本エクスポート', dash_plan_f4:'ボイスクローン',
     dash_plan_f5:'無料プランの全て', dash_plan_f6:'全ボイス', dash_plan_f7:'全フォーマット',
-    dash_plan_f8:'スタータープランの全て', dash_plan_f9:'優先生成', dash_plan_f10:'AIカバー画像', dash_plan_f11:'SFXと音楽AI',
+    dash_plan_f8:'スタータープランの全て', dash_plan_f9:'優先生成', dash_plan_f10:'AIカバー画像', dash_plan_f11:'SFXと音楽AI', dash_plan_f11b:'マルチボイスキャラクターキャスト',
     dash_plan_f12:'著者プランの全て', dash_plan_f13:'チーム席 (3)', dash_plan_f14:'一括エクスポート', dash_plan_f15:'APIアクセス',
     dash_plan_f16:'出版社プランの全て', dash_plan_f17:'無制限チーム席', dash_plan_f18:'ホワイトラベルエクスポート', dash_plan_f19:'専任サポート',
     dash_plan_get_started:'始める', dash_plan_upgrade:'アップグレード', dash_plan_popular:'最も人気',
@@ -20824,7 +20987,7 @@ const UI_TRANSLATIONS = {
     dash_plan_story1:'~1편 단편', dash_plan_story3:'~3권 단행본', dash_plan_books9:'~9권 완성본', dash_plan_books25:'~25권 완성본', dash_plan_books65:'~65권 완성본',
     dash_plan_f1:'AI 글쓰기', dash_plan_f2:'Cartesia 음성 1개', dash_plan_f3:'기본 내보내기', dash_plan_f4:'음성 복제',
     dash_plan_f5:'무료의 모든 것', dash_plan_f6:'모든 음성', dash_plan_f7:'모든 형식',
-    dash_plan_f8:'스타터의 모든 것', dash_plan_f9:'우선 생성', dash_plan_f10:'AI 표지 이미지', dash_plan_f11:'SFX 및 음악 AI',
+    dash_plan_f8:'스타터의 모든 것', dash_plan_f9:'우선 생성', dash_plan_f10:'AI 표지 이미지', dash_plan_f11:'SFX 및 음악 AI', dash_plan_f11b:'다중 음성 캐릭터 캐스트',
     dash_plan_f12:'저자의 모든 것', dash_plan_f13:'팀 석 (3)', dash_plan_f14:'일괄 내보내기', dash_plan_f15:'API 액세스',
     dash_plan_f16:'출판사의 모든 것', dash_plan_f17:'무제한 팀 석', dash_plan_f18:'화이트라벨 내보내기', dash_plan_f19:'전용 지원',
     dash_plan_get_started:'시작하기', dash_plan_upgrade:'업그레이드', dash_plan_popular:'가장 인기',
@@ -21012,7 +21175,7 @@ const UI_TRANSLATIONS = {
     dash_plan_story1:'~1 короткий рассказ', dash_plan_story3:'~3 короткие книги', dash_plan_books9:'~9 полных книг', dash_plan_books25:'~25 полных книг', dash_plan_books65:'~65 полных книг',
     dash_plan_f1:'ИИ-написание', dash_plan_f2:'1 голос Cartesia', dash_plan_f3:'Базовый экспорт', dash_plan_f4:'Клонирование голоса',
     dash_plan_f5:'Всё из Бесплатно', dash_plan_f6:'Все голоса', dash_plan_f7:'Все форматы',
-    dash_plan_f8:'Всё из Стартер', dash_plan_f9:'Приоритетная генерация', dash_plan_f10:'ИИ обложка', dash_plan_f11:'SFX и музыка ИИ',
+    dash_plan_f8:'Всё из Стартер', dash_plan_f9:'Приоритетная генерация', dash_plan_f10:'ИИ обложка', dash_plan_f11:'SFX и музыка ИИ', dash_plan_f11b:'Многоголосый актёрский состав',
     dash_plan_f12:'Всё из Автор', dash_plan_f13:'Места в команде (3)', dash_plan_f14:'Массовый экспорт', dash_plan_f15:'Доступ к API',
     dash_plan_f16:'Всё из Издатель', dash_plan_f17:'Неограниченные места', dash_plan_f18:'White-label экспорт', dash_plan_f19:'Выделенная поддержка',
     dash_plan_get_started:'Начать', dash_plan_upgrade:'Улучшить', dash_plan_popular:'САМЫЙ ПОПУЛЯРНЫЙ',
@@ -21200,7 +21363,7 @@ const UI_TRANSLATIONS = {
     dash_plan_story1:'~1 kort verhaal', dash_plan_story3:'~3 korte boeken', dash_plan_books9:'~9 volledige boeken', dash_plan_books25:'~25 volledige boeken', dash_plan_books65:'~65 volledige boeken',
     dash_plan_f1:'AI-schrijven', dash_plan_f2:'1 Cartesia-stem', dash_plan_f3:'Basisexport', dash_plan_f4:'Stemklonen',
     dash_plan_f5:'Alles in Gratis', dash_plan_f6:'Alle stemmen', dash_plan_f7:'Alle exportformaten',
-    dash_plan_f8:'Alles in Starter', dash_plan_f9:'Prioriteitsgeneratie', dash_plan_f10:'AI omslagafbeelding', dash_plan_f11:'SFX en muziek AI',
+    dash_plan_f8:'Alles in Starter', dash_plan_f9:'Prioriteitsgeneratie', dash_plan_f10:'AI omslagafbeelding', dash_plan_f11:'SFX en muziek AI', dash_plan_f11b:'Multi-stem karakterbezetting',
     dash_plan_f12:'Alles in Auteur', dash_plan_f13:'Teamplaatsen (3)', dash_plan_f14:'Bulkexport', dash_plan_f15:'API-toegang',
     dash_plan_f16:'Alles in Uitgever', dash_plan_f17:'Onbeperkte teamplaatsen', dash_plan_f18:'White-label exports', dash_plan_f19:'Toegewijde ondersteuning',
     dash_plan_get_started:'Aan de slag', dash_plan_upgrade:'Upgraden', dash_plan_popular:'MEEST POPULAIR',
@@ -21388,7 +21551,7 @@ const UI_TRANSLATIONS = {
     dash_plan_story1:'~1 opowiadanie', dash_plan_story3:'~3 krótkie książki', dash_plan_books9:'~9 pełnych książek', dash_plan_books25:'~25 pełnych książek', dash_plan_books65:'~65 pełnych książek',
     dash_plan_f1:'Pisanie AI', dash_plan_f2:'1 głos Cartesia', dash_plan_f3:'Podstawowy eksport', dash_plan_f4:'Klonowanie głosu',
     dash_plan_f5:'Wszystko z Bezpłatny', dash_plan_f6:'Wszystkie głosy', dash_plan_f7:'Wszystkie formaty',
-    dash_plan_f8:'Wszystko ze Startowy', dash_plan_f9:'Priorytetowe generowanie', dash_plan_f10:'Okładka AI', dash_plan_f11:'SFX i muzyka AI',
+    dash_plan_f8:'Wszystko ze Startowy', dash_plan_f9:'Priorytetowe generowanie', dash_plan_f10:'Okładka AI', dash_plan_f11:'SFX i muzyka AI', dash_plan_f11b:'Obsada postaci z wieloma głosami',
     dash_plan_f12:'Wszystko z Autor', dash_plan_f13:'Miejsca zespołu (3)', dash_plan_f14:'Eksport masowy', dash_plan_f15:'Dostęp API',
     dash_plan_f16:'Wszystko z Wydawca', dash_plan_f17:'Nieograniczone miejsca', dash_plan_f18:'Eksporty white-label', dash_plan_f19:'Dedykowane wsparcie',
     dash_plan_get_started:'Zacznij', dash_plan_upgrade:'Ulepsz', dash_plan_popular:'NAJPOPULARNIEJSZY',
@@ -21576,7 +21739,7 @@ const UI_TRANSLATIONS = {
     dash_plan_story1:'~1 korthistoria', dash_plan_story3:'~3 korta böcker', dash_plan_books9:'~9 hela böcker', dash_plan_books25:'~25 hela böcker', dash_plan_books65:'~65 hela böcker',
     dash_plan_f1:'AI-skrivning', dash_plan_f2:'1 Cartesia-röst', dash_plan_f3:'Grundexport', dash_plan_f4:'Röstkloning',
     dash_plan_f5:'Allt i Gratis', dash_plan_f6:'Alla röster', dash_plan_f7:'Alla format',
-    dash_plan_f8:'Allt i Nybörjare', dash_plan_f9:'Prioriterad generering', dash_plan_f10:'AI omslagsbild', dash_plan_f11:'SFX och musik AI',
+    dash_plan_f8:'Allt i Nybörjare', dash_plan_f9:'Prioriterad generering', dash_plan_f10:'AI omslagsbild', dash_plan_f11:'SFX och musik AI', dash_plan_f11b:'Flerstämmig karaktärsrollsättning',
     dash_plan_f12:'Allt i Författare', dash_plan_f13:'Teamplatser (3)', dash_plan_f14:'Massexport', dash_plan_f15:'API-åtkomst',
     dash_plan_f16:'Allt i Förlag', dash_plan_f17:'Obegränsade teamplatser', dash_plan_f18:'White-label exporter', dash_plan_f19:'Dedikerat stöd',
     dash_plan_get_started:'Kom igång', dash_plan_upgrade:'Uppgradera', dash_plan_popular:'MEST POPULÄR',
@@ -21765,7 +21928,7 @@ const UI_TRANSLATIONS = {
     dash_plan_story1:'~1 kısa hikaye', dash_plan_story3:'~3 kısa kitap', dash_plan_books9:'~9 tam kitap', dash_plan_books25:'~25 tam kitap', dash_plan_books65:'~65 tam kitap',
     dash_plan_f1:'AI yazma', dash_plan_f2:'1 Cartesia sesi', dash_plan_f3:'Temel dışa aktarma', dash_plan_f4:'Ses klonlama',
     dash_plan_f5:'Ücretsiz\'teki her şey', dash_plan_f6:'Tüm sesler', dash_plan_f7:'Tüm formatlar',
-    dash_plan_f8:'Başlangıç\'taki her şey', dash_plan_f9:'Öncelikli üretim', dash_plan_f10:'AI kapak görseli', dash_plan_f11:'SFX ve müzik AI',
+    dash_plan_f8:'Başlangıç\'taki her şey', dash_plan_f9:'Öncelikli üretim', dash_plan_f10:'AI kapak görseli', dash_plan_f11:'SFX ve müzik AI', dash_plan_f11b:'Çok sesli karakter kadrosu',
     dash_plan_f12:'Yazar\'daki her şey', dash_plan_f13:'Ekip yerleri (3)', dash_plan_f14:'Toplu dışa aktarma', dash_plan_f15:'API erişimi',
     dash_plan_f16:'Yayıncı\'daki her şey', dash_plan_f17:'Sınırsız ekip yerleri', dash_plan_f18:'Beyaz etiket dışa aktarma', dash_plan_f19:'Özel destek',
     dash_plan_get_started:'Başlayın', dash_plan_upgrade:'Yükseltin', dash_plan_popular:'EN POPÜLER',
