@@ -979,23 +979,50 @@
             white-space: nowrap;
         }
 
-        /* ── View toggle buttons ─────────────────────────────────── */
-        .view-btn {
-            padding: 10px 20px;
-            border-radius: 8px;
-            border: 1px solid var(--daw-border);
-            background: var(--daw-bg-secondary);
-            color: var(--daw-text-primary);
+        /* ── View toggle buttons + action buttons — match dashboard nav-item style ── */
+        .view-btn, .action-btn {
+            padding: 6px 14px;
+            border-radius: 7px;
+            border: 1px solid rgba(255,255,255,0.10);
+            background: linear-gradient(180deg, rgba(255,255,255,0.13) 0%, rgba(255,255,255,0.04) 45%, rgba(0,0,0,0.30) 100%), #0a0a0a;
+            color: #c8c8c8;
             cursor: pointer;
-            font-size: 14px;
+            font-size: 12px;
             font-weight: 700;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.05em;
             transition: all 0.2s;
             display: flex;
             align-items: center;
+            gap: 6px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.12);
         }
-        .view-btn:hover { background: var(--daw-bg-tertiary); border-color: var(--daw-accent); }
-        .view-btn.active { background: var(--daw-accent); color: #000; border-color: var(--daw-accent); }
+        .view-btn::after, .action-btn::after {
+            content: '';
+            position: absolute;
+            top: 0; left: -80%;
+            width: 55%; height: 100%;
+            background: linear-gradient(120deg, transparent 0%, rgba(255,255,255,0.18) 50%, transparent 100%);
+            transform: skewX(-18deg);
+            transition: left 0.45s ease;
+            pointer-events: none;
+        }
+        .view-btn:hover::after, .action-btn:hover::after { left: 140%; }
+        .view-btn:hover, .action-btn:hover {
+            color: #fff;
+            border-color: rgba(120,227,254,0.45);
+            background: linear-gradient(180deg, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0.05) 45%, rgba(0,0,0,0.22) 100%), #111113;
+            box-shadow: 0 0 7px rgba(120,227,254,0.20), 0 2px 4px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.14);
+        }
+        .view-btn.active {
+            color: #78e3fe;
+            border-color: rgba(120,227,254,0.65);
+            background: linear-gradient(180deg, rgba(120,227,254,0.16) 0%, rgba(120,227,254,0.04) 50%, rgba(0,0,0,0.25) 100%), #060e10;
+            box-shadow: 0 0 10px rgba(120,227,254,0.25), 0 2px 4px rgba(0,0,0,0.6), inset 0 1px 0 rgba(120,227,254,0.20);
+        }
+        #saveBtn { border-color: rgba(34,197,94,0.4) !important; color: #4ade80 !important; }
+        #exitDawBtn { border-color: rgba(239,68,68,0.4) !important; color: #f87171 !important; }
 
         /* ── Jamendo sub-bar (below main header) ────────────────── */
         .jamendo-subbar {
@@ -1159,9 +1186,13 @@
                 <button class="theme-toggle" id="themeToggle" title="Toggle Dark/Light Mode">
                     <i class="fas fa-sun"></i>
                 </button>
-                <button class="action-btn" id="saveBtn" style="background:#16a34a;border-color:#16a34a;color:#fff;">
+                <button class="action-btn" id="saveBtn">
                     <i class="fas fa-save"></i>
                     Save
+                </button>
+                <button class="action-btn" id="exitDawBtn" title="Exit DAW and return to app">
+                    <i class="fas fa-times"></i>
+                    Exit DAW
                 </button>
             </div>
         </div>
@@ -1293,10 +1324,22 @@
                     <i class="fas fa-sliders-h"></i>
                     Mixer
                 </div>
-                <button class="add-track-btn" id="addTrackBtn">
-                    <i class="fas fa-plus"></i>
-                    Add Track
-                </button>
+                <div style="position:relative;">
+                    <button class="add-track-btn" id="addTrackBtn">
+                        <i class="fas fa-plus"></i>
+                        Add Track
+                        <i class="fas fa-chevron-down" style="font-size:10px;margin-left:4px;"></i>
+                    </button>
+                    <div id="addTrackDropdown" style="display:none;position:absolute;right:0;top:calc(100% + 4px);background:#1A1A1A;border:1px solid #374151;border-radius:8px;z-index:500;min-width:170px;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,0.6);">
+                        <button onclick="addTrackOfType('music')" style="width:100%;text-align:left;padding:10px 16px;background:none;border:none;color:#c8c8c8;cursor:pointer;display:flex;align-items:center;gap:10px;font-size:13px;" onmouseover="this.style.background='#2A2A2A'" onmouseout="this.style.background='none'">
+                            <i class="fas fa-music" style="color:#8B5CF6;width:14px;"></i> Music Track
+                        </button>
+                        <div style="height:1px;background:#374151;margin:0 8px;"></div>
+                        <button onclick="addTrackOfType('sfx')" style="width:100%;text-align:left;padding:10px 16px;background:none;border:none;color:#c8c8c8;cursor:pointer;display:flex;align-items:center;gap:10px;font-size:13px;" onmouseover="this.style.background='#2A2A2A'" onmouseout="this.style.background='none'">
+                            <i class="fas fa-volume-up" style="color:#F59E0B;width:14px;"></i> SFX Track
+                        </button>
+                    </div>
+                </div>
             </div>
             
             <div class="mixer-channels" id="mixerChannels">
@@ -1723,9 +1766,16 @@
             }
             
             strip.innerHTML = `
-                <div class="channel-label master">🎛️ MASTER</div>
-                <div class="led-meter" data-track-id="master">
-                    ${ledSegmentsHTML}
+                <div class="channel-label master" style="text-align:center;line-height:1.2;">🎛️ MASTER<br><span style="font-size:9px;color:#78e3fe;letter-spacing:2px;font-weight:700;">STEREO</span></div>
+                <div style="display:flex;gap:3px;justify-content:center;">
+                    <div style="display:flex;flex-direction:column;align-items:center;gap:2px;">
+                        <span style="font-size:8px;color:#6B7280;letter-spacing:1px;">L</span>
+                        <div class="led-meter" data-track-id="master" style="width:18px;">${ledSegmentsHTML}</div>
+                    </div>
+                    <div style="display:flex;flex-direction:column;align-items:center;gap:2px;">
+                        <span style="font-size:8px;color:#6B7280;letter-spacing:1px;">R</span>
+                        <div class="led-meter" data-track-id="master-r" style="width:18px;">${ledSegmentsHTML}</div>
+                    </div>
                 </div>
                 <div class="fader-container">
                     <div class="fader-track">
@@ -1792,6 +1842,23 @@
             document.getElementById('exportBtn').addEventListener('click', exportAudio);
             document.getElementById('sendToCoverBtn').addEventListener('click', sendToCover);
             document.getElementById('saveBtn').addEventListener('click', saveDawProject);
+            document.getElementById('exitDawBtn').addEventListener('click', () => {
+                if (window.parent && window.parent !== window) {
+                    window.parent.postMessage({ type: 'CLOSE_DAW' }, '*');
+                } else {
+                    window.close();
+                }
+            });
+            // Add Track dropdown toggle
+            document.getElementById('addTrackBtn').addEventListener('click', (e) => {
+                e.stopPropagation();
+                const dd = document.getElementById('addTrackDropdown');
+                dd.style.display = dd.style.display === 'none' ? 'block' : 'none';
+            });
+            document.addEventListener('click', () => {
+                const dd = document.getElementById('addTrackDropdown');
+                if (dd) dd.style.display = 'none';
+            });
             
             // Toolbar tools
             document.getElementById('selectTool').addEventListener('click', () => setTool('select'));
@@ -2264,7 +2331,7 @@
                 const trackId = meter.dataset.trackId;
                 
                 // Handle master track specially - combine all track signals
-                if (trackId === 'master') {
+                if (trackId === 'master' || trackId === 'master-r') {
                     // Calculate combined level from all tracks
                     let combinedLevel = 0;
                     let trackCount = 0;
@@ -2289,10 +2356,14 @@
                         const avgLevel = combinedLevel / trackCount;
                         masterLevel = Math.min(14, Math.floor(avgLevel * dawState.masterVolume * 2.0));
                     }
-                    
+                    // Slight stereo variation for R channel
+                    const displayLevel = trackId === 'master-r'
+                        ? Math.max(0, masterLevel + Math.round((Math.random() - 0.5) * 2))
+                        : masterLevel;
+
                     const segments = meter.querySelectorAll('.led-segment');
                     segments.forEach((segment, index) => {
-                        if (index <= masterLevel) {
+                        if (index <= displayLevel) {
                             segment.classList.add('active');
                         } else {
                             segment.classList.remove('active');
@@ -2480,27 +2551,36 @@
             input.select();
         }
         
-        function addTrack() {
-            const trackCount = dawState.tracks.length;
+        function addTrack() { addTrackOfType('music'); } // legacy shim
+
+        function addTrackOfType(type) {
+            document.getElementById('addTrackDropdown').style.display = 'none';
+            const icon = type === 'music' ? '🎵' : '🔊';
+            const color = type === 'music' ? 'music' : 'sfx';
+            const existingOfType = dawState.tracks.filter(t => t.type === type).length;
             const newTrack = {
                 id: `track_${Date.now()}`,
-                name: `Track ${trackCount + 1}`,
-                type: 'audio',
-                icon: '🎵',
-                color: 'music',
+                name: `${type === 'music' ? 'Music' : 'SFX'} ${existingOfType + 1}`,
+                type,
+                icon,
+                color,
                 clips: [],
                 muted: false,
                 solo: false,
                 volume: 1.0,
                 effects: {}
             };
-            
-            dawState.tracks.push(newTrack);
+            // Keep tracks grouped: narration → music → sfx
+            const narrationTracks = dawState.tracks.filter(t => t.type === 'narration');
+            const musicTracks = dawState.tracks.filter(t => t.type === 'music');
+            const sfxTracks = dawState.tracks.filter(t => t.type === 'sfx');
+            if (type === 'music') musicTracks.push(newTrack);
+            else sfxTracks.push(newTrack);
+            dawState.tracks = [...narrationTracks, ...musicTracks, ...sfxTracks];
             renderTracks();
             renderMixerChannels();
             setupEventListeners();
-            
-            console.log('➕ Added new track:', newTrack.name);
+            console.log('➕ Added', type, 'track:', newTrack.name);
         }
         
         // ========================================
@@ -2681,9 +2761,24 @@
         // ========================================
         
         function startLEDMeterAnimation() {
-            // LED meters are now updated by updateLEDMetersWithRealAudio() during playback
-            // This function kept for compatibility but does nothing
-            console.log('💡 LED meters will use real audio data during playback');
+            console.log('💡 LED meters: idle pulse active, real audio during playback');
+            let _idleFrame;
+            let _idleT = 0;
+            function idlePulse() {
+                if (dawState.isPlaying) { _idleFrame = requestAnimationFrame(idlePulse); return; }
+                _idleT += 0.04;
+                // Gentle breathing pulse: 1–3 segments
+                const baseLevel = Math.round(1 + Math.sin(_idleT) * 1.2 + Math.sin(_idleT * 2.3) * 0.5);
+                document.querySelectorAll('.led-meter').forEach(meter => {
+                    const segments = meter.querySelectorAll('.led-segment');
+                    segments.forEach((seg, i) => {
+                        if (i <= baseLevel) seg.classList.add('active');
+                        else seg.classList.remove('active');
+                    });
+                });
+                _idleFrame = requestAnimationFrame(idlePulse);
+            }
+            idlePulse();
         }
         
         // ========================================

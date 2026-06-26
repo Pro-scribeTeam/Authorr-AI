@@ -13392,6 +13392,11 @@ Format as clean, readable text ready for narration.`;
             window._dawMessageHandler = function(event) {
                 if (!event.data || !event.data.type) return;
 
+                if (event.data.type === 'CLOSE_DAW') {
+                    closeAudioDAW();
+                    return;
+                }
+
                 if (event.data.type === 'SEND_TO_COVER') {
                     const { audioBlob, duration, title } = event.data;
                     try {
