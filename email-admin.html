@@ -855,6 +855,7 @@ async function syncUsers() {
   if (error) { res.innerHTML = `<div class="text-red-400 text-sm">${error.message}</div>`; return; }
   res.innerHTML = `<div class="text-green-400 text-sm font-semibold"><i class="fas fa-check-circle mr-1"></i>${data} users synced successfully</div>`;
   notify(`${data} Authorr users synced to subscribers`);
+  setTimeout(() => closeModal('syncModal'), 1200);
   loadSubscribers();
 }
 
