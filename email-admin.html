@@ -647,7 +647,7 @@
 // ══════════════════════════════════════════════════════════
 const SUPABASE_URL = 'https://svyjvvogjkhszijlaxig.supabase.co';
 const SUPABASE_ANON_KEY = ['eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9','eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN2eWp2dm9namt5c3ppamxheGlnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDUyOTM0MzUsImV4cCI6MjA2MDg2OTQzNX0','D4PVbW3jlnwuM6DTT9Y7JFk01RRyiZP2zIQZ0rO4KuA'].join('.');
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 let authToken = null;
 let currentCampaignId = null;
 let subPage = 1;
@@ -662,12 +662,12 @@ async function adminLogin() {
   const pass  = document.getElementById('loginPass').value;
   const errEl = document.getElementById('loginError');
   errEl.classList.add('hidden');
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password: pass });
+  const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
   if (error) { errEl.textContent = error.message; errEl.classList.remove('hidden'); return; }
   // Check admin role
-  const { data: sub } = await supabase.from('subscriptions').select('role').eq('user_id', data.user.id).maybeSingle();
+  const { data: sub } = await sb.from('subscriptions').select('role').eq('user_id', data.user.id).maybeSingle();
   if (sub?.role !== 'admin') {
-    await supabase.auth.signOut();
+    await sb.auth.signOut();
     errEl.textContent = 'Admin access required';
     errEl.classList.remove('hidden');
     return;
@@ -679,14 +679,14 @@ async function adminLogin() {
 }
 
 async function signOut() {
-  await supabase.auth.signOut();
+  await sb.auth.signOut();
   location.reload();
 }
 
 async function checkAuth() {
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { session } } = await sb.auth.getSession();
   if (session) {
-    const { data: sub } = await supabase.from('subscriptions').select('role').eq('user_id', session.user.id).maybeSingle();
+    const { data: sub } = await sb.from('subscriptions').select('role').eq('user_id', session.user.id).maybeSingle();
     if (sub?.role === 'admin') {
       authToken = session.access_token;
       document.getElementById('authGate').style.display = 'none';
@@ -751,8 +751,8 @@ function statusBadge(s) {
 async function loadDashboard() {
   // Stats
   const [subRes, campRes] = await Promise.all([
-    supabase.from('email_subscribers').select('id', { count: 'exact', head: true }).eq('status', 'subscribed'),
-    supabase.from('email_campaigns').select('stats, status')
+    sb.from('email_subscribers').select('id', { count: 'exact', head: true }).eq('status', 'subscribed'),
+    sb.from('email_campaigns').select('stats, status')
   ]);
   const subs = subRes.count || 0;
   const camps = (campRes.data || []);
@@ -766,7 +766,7 @@ async function loadDashboard() {
   document.getElementById('statClickRate').textContent = totalSent ? ((totalClicks/totalSent)*100).toFixed(1)+'%' : '—';
 
   // Recent campaigns
-  const { data: recent } = await supabase.from('email_campaigns').select('id,name,subject,status,stats,sent_at,created_at').order('created_at', { ascending: false }).limit(5);
+  const { data: recent } = await sb.from('email_campaigns').select('id,name,subject,status,stats,sent_at,created_at').order('created_at', { ascending: false }).limit(5);
   const el = document.getElementById('dashCampaigns');
   if (!recent?.length) { el.innerHTML = '<div class="text-gray-500 text-sm py-4">No campaigns yet. <a onclick="openNewCampaign()" class="text-cyan-400 cursor-pointer">Create your first campaign.</a></div>'; return; }
   el.innerHTML = `<table><thead><tr><th>Name</th><th>Status</th><th>Sent</th><th>Opens</th><th>Clicks</th><th>Date</th></tr></thead><tbody>
@@ -790,7 +790,7 @@ async function loadSubscribers() {
   const tag    = document.getElementById('subTagFilter')?.value || '';
   const offset = (subPage - 1) * SUB_LIMIT;
 
-  let q = supabase.from('email_subscribers').select('*', { count: 'exact' })
+  let q = sb.from('email_subscribers').select('*', { count: 'exact' })
     .order('created_at', { ascending: false }).range(offset, offset + SUB_LIMIT - 1);
   if (status) q = q.eq('status', status);
   if (tag)    q = q.contains('tags', [tag]);
@@ -847,7 +847,7 @@ async function syncUsers() {
   const btn = document.getElementById('syncBtn');
   btn.innerHTML = '<span class="spinner"></span> Syncing...';
   btn.disabled = true;
-  const { data, error } = await supabase.rpc('sync_authorr_users_to_subscribers');
+  const { data, error } = await sb.rpc('sync_authorr_users_to_subscribers');
   btn.innerHTML = '<i class="fas fa-sync mr-2"></i>Sync Now';
   btn.disabled = false;
   const res = document.getElementById('syncResult');
@@ -885,7 +885,7 @@ async function bulkTag() {
   const tag = prompt('Enter tag to add:');
   if (!tag) return;
   for (const id of selectedSubs) {
-    const { data: s } = await supabase.from('email_subscribers').select('tags').eq('id', id).single();
+    const { data: s } = await sb.from('email_subscribers').select('tags').eq('id', id).single();
     const tags = [...new Set([...(s?.tags||[]), tag.trim()])];
     await api('/api/email-subscribers', 'PUT', { id, tags });
   }
@@ -897,7 +897,7 @@ async function bulkTag() {
 // CAMPAIGNS
 // ══════════════════════════════════════════════════════════
 async function loadCampaigns() {
-  const { data } = await supabase.from('email_campaigns').select('*').order('created_at', { ascending: false });
+  const { data } = await sb.from('email_campaigns').select('*').order('created_at', { ascending: false });
   const tbody = document.getElementById('campaignTable');
   if (!data?.length) { tbody.innerHTML = '<tr><td colspan="8" class="text-center text-gray-500 py-8">No campaigns yet.</td></tr>'; return; }
   tbody.innerHTML = data.map(c => `<tr>
@@ -928,7 +928,7 @@ function openNewCampaign() {
   document.getElementById('campHtml').value = '';
   document.getElementById('campAudience').value = 'all';
   // Load defaults from settings
-  supabase.from('email_settings').select('from_name,from_email,reply_to').eq('id',1).single().then(({data}) => {
+  sb.from('email_settings').select('from_name,from_email,reply_to').eq('id',1).single().then(({data}) => {
     if (data) { document.getElementById('campFromName').value = data.from_name||''; document.getElementById('campFromEmail').value = data.from_email||''; document.getElementById('campReplyTo').value = data.reply_to||''; }
   });
   switchCampTab('details');
@@ -936,7 +936,7 @@ function openNewCampaign() {
 }
 
 async function editCampaign(id) {
-  const { data } = await supabase.from('email_campaigns').select('*').eq('id', id).single();
+  const { data } = await sb.from('email_campaigns').select('*').eq('id', id).single();
   if (!data) return;
   currentCampaignId = id;
   document.getElementById('campaignModalTitle').textContent = 'Edit Campaign';
@@ -1266,7 +1266,7 @@ function saveComposedEmail() {
 // SETTINGS
 // ══════════════════════════════════════════════════════════
 async function loadSettings() {
-  const { data } = await supabase.from('email_settings').select('*').eq('id', 1).single();
+  const { data } = await sb.from('email_settings').select('*').eq('id', 1).single();
   if (!data) return;
   document.getElementById('setFromName').value   = data.from_name || '';
   document.getElementById('setFromEmail').value  = data.from_email || '';
