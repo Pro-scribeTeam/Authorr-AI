@@ -1,8 +1,12 @@
-const { requireAuth, sendError } = require('./_auth');
+const { requireAuth, sendError, applySecurityHeaders } = require('./_auth');
+const rateLimit = require('./_ratelimit');
 
 module.exports = async function handler(req, res) {
+  if (!applySecurityHeaders(req, res)) return;
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
-  try { await requireAuth(req); } catch (err) { return sendError(res, err); }
+  let authData;
+  try { authData = await requireAuth(req); } catch (err) { return sendError(res, err); }
+  if (!rateLimit.ai(req, res, authData.user.id)) return;
 
   const { input, voice, model = 'tts-1-hd', speed = 1.0 } = req.body;
   try {

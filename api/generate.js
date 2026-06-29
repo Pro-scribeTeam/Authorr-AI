@@ -1,4 +1,5 @@
-const { requireAuth, sendError } = require('./_auth');
+const { requireAuth, sendError, applySecurityHeaders } = require('./_auth');
+const rateLimit = require('./_ratelimit');
 
 // Non-Venice models first (Google/NVIDIA infra), then Venice as fallback.
 // Venice hosts Llama/Hermes/Qwen free models and rate-limits them all together.
@@ -17,10 +18,19 @@ function stripThinking(text) {
 }
 
 module.exports = async function handler(req, res) {
+  if (!applySecurityHeaders(req, res)) return;
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
-  try { await requireAuth(req); } catch (err) { return sendError(res, err); }
+  let authData;
+  try { authData = await requireAuth(req); } catch (err) { return sendError(res, err); }
+  if (!rateLimit.ai(req, res, authData.user.id)) return;
 
   const { provider = 'openrouter', model, messages, temperature, max_tokens } = req.body;
+
+  // Input validation — prevent abuse
+  if (!Array.isArray(messages) || messages.length === 0) return res.status(400).json({ error: 'messages required' });
+  if (messages.length > 50) return res.status(400).json({ error: 'Too many messages' });
+  const totalChars = messages.reduce((n, m) => n + (m.content?.length || 0), 0);
+  if (totalChars > 200_000) return res.status(400).json({ error: 'Request too large' });
 
   if (provider !== 'openrouter') {
     // Non-OpenRouter path (OpenAI direct)
