@@ -1,10 +1,14 @@
-const { requireAuth, sendError } = require('./_auth');
+const { requireAuth, sendError, applySecurityHeaders } = require('./_auth');
+const rateLimit = require('./_ratelimit');
 
 module.exports = async function handler(req, res) {
+  if (!applySecurityHeaders(req, res)) return;
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
-  try { await requireAuth(req); } catch (err) {
+  let user;
+  try { ({ user } = await requireAuth(req)); } catch (err) {
     return res.status(err.status || 500).json({ error: err.message, step: 'auth' });
   }
+  if (!rateLimit.strict(req, res, user.id)) return;
 
   const { action, model, request_id, payload } = req.body;
   const headers = { 'Authorization': `Key ${process.env.FAL_API_KEY}`, 'Content-Type': 'application/json' };
