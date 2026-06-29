@@ -20,6 +20,7 @@
     { "src": "/api/elevenlabs-voices(.*)", "dest": "/api/elevenlabs-tts$1" },
     { "src": "/api/(.*)", "dest": "/api/$1" },
     { "src": "/(.*\\.json)", "dest": "/$1" },
+    { "src": "/(.*\\.(png|jpg|jpeg|gif|svg|ico|webp))", "dest": "/$1" },
     { "src": "/(.*\\.html)", "dest": "/$1", "headers": {
         "X-Frame-Options": "DENY",
         "X-Content-Type-Options": "nosniff",
