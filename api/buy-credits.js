@@ -1,4 +1,5 @@
-const { requireAuth, sendError } = require('./_auth');
+const { requireAuth, sendError, applySecurityHeaders } = require('./_auth');
+const ALLOWED_ORIGINS = ['https://authorr-ai.vercel.app'];
 const { createClient } = require('@supabase/supabase-js');
 const Stripe = require('stripe');
 
@@ -64,7 +65,9 @@ module.exports = async function handler(req, res) {
   if (!stripeKey) return res.status(500).json({ error: 'Stripe not configured. Add STRIPE_SECRET_KEY to environment.' });
 
   const stripe = new Stripe(stripeKey);
-  const origin = req.headers.origin || 'https://authorr-ai.vercel.app';
+  // Validate origin to prevent open redirect in success/cancel URLs
+  const rawOrigin = req.headers.origin || '';
+  const origin = ALLOWED_ORIGINS.includes(rawOrigin) ? rawOrigin : 'https://authorr-ai.vercel.app';
 
   try {
     const session = await stripe.checkout.sessions.create({

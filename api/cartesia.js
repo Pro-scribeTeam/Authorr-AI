@@ -1,4 +1,5 @@
-const { requireAuth, sendError } = require('./_auth');
+const { requireAuth, sendError, applySecurityHeaders } = require('./_auth');
+const rateLimit = require('./_ratelimit');
 const { createClient } = require('@supabase/supabase-js');
 
 const supabase = createClient(
@@ -28,11 +29,24 @@ function preprocessText(text) {
 }
 
 module.exports = async function handler(req, res) {
+  if (!applySecurityHeaders(req, res)) return;
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
   let user;
   try { ({ user } = await requireAuth(req)); } catch (err) { return sendError(res, err); }
 
   const { action } = req.body;
+
+  // Voice cloning is expensive — strict limit (3/min per user)
+  if (action === 'clone') {
+    if (!rateLimit.strict(req, res, user.id)) return;
+  } else {
+    if (!rateLimit.ai(req, res, user.id)) return;
+  }
+
+  // Validate text length for TTS
+  if (action === 'tts' && req.body.text && req.body.text.length > 100_000) {
+    return res.status(400).json({ error: 'Text too long (max 100,000 characters)' });
+  }
   const apiKey = process.env.CARTESIA_API_KEY;
   if (!apiKey) return res.status(500).json({ error: 'Cartesia API key not configured. Add CARTESIA_API_KEY to environment.' });
 
