@@ -978,6 +978,9 @@
 
           /* iOS safe area for nav and bottom */
           nav { padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); }
+
+          /* Video watermark logo: smaller on mobile */
+          #heroVideoLogo { width: 65px !important; height: 65px !important; }
         }
 
         /* iOS touch scroll for scrollable areas */
@@ -1111,19 +1114,137 @@
             <!-- Background glow -->
             <div class="absolute inset-0 pointer-events-none" style="background:radial-gradient(ellipse 80% 60% at 50% -10%, rgba(6,182,212,0.18) 0%, transparent 70%);"></div>
 
-            <div class="container mx-auto px-4 pt-20 pb-16 text-center relative z-10">
+            <!-- Hero Video Box -->
+            <div id="heroVideoBox" style="position:relative; width:100%; height:clamp(180px, calc(100vh - 72px), 30vw);">
+
+                <!-- Video layer -->
+                <div style="position:absolute; inset:0; overflow:hidden; will-change:transform; transform:translateZ(0);">
+                    <video id="heroVideo"
+                        src="https://svyjvvogjkhszijlaxig.supabase.co/storage/v1/object/public/media/videos/authorr-ad1.mp4"
+                        autoplay loop muted playsinline preload="auto"
+                        disablepictureinpicture
+                        style="width:100%; height:100%; object-fit:cover; display:block; transform:translateZ(0); will-change:transform;">
+                    </video>
+                    <img
+                        id="heroVideoLogo"
+                        src="https://svyjvvogjkhszijlaxig.supabase.co/storage/v1/object/public/media/images/authorr-logo.png"
+                        alt="Authorr AI"
+                        style="position:absolute; bottom:4px; right:2px; width:130px; height:130px; object-fit:contain; pointer-events:none; z-index:10;">
+                </div>
+
+                <!-- Text overlay -->
+                <div id="heroTextOverlay" style="position:absolute; inset:0; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; padding:0 6%; pointer-events:none; z-index:20; background:linear-gradient(to bottom,rgba(0,0,0,0.15) 0%,rgba(0,0,0,0.30) 100%); transition:opacity 1.5s ease;">
+                    <div id="heroLine1" style="font-size:clamp(1.6rem,5vw,3.8rem); font-weight:900; color:#fff; line-height:1.1; margin-bottom:0.12em; text-shadow:0 2px 20px rgba(0,0,0,0.9); opacity:0; transform:translateY(25px); transition:opacity 0.45s ease, transform 0.45s ease;"></div>
+                    <div id="heroLine2" style="font-size:clamp(1.6rem,5vw,3.8rem); font-weight:900; color:#fff; line-height:1.1; margin-bottom:0.12em; text-shadow:0 2px 20px rgba(0,0,0,0.9); opacity:0; transform:translateY(25px); transition:opacity 0.45s ease, transform 0.45s ease;"></div>
+                    <div id="heroLine3" style="font-size:clamp(1.2rem,3.8vw,2.9rem); font-weight:900; color:#22d3ee; line-height:1.2; margin-bottom:0.5em; text-shadow:0 2px 20px rgba(0,0,0,0.9); opacity:0; transform:translateY(25px); transition:opacity 0.45s ease, transform 0.45s ease;"></div>
+                    <div id="heroSub" style="font-size:clamp(0.65rem,1.5vw,0.95rem); font-weight:700; letter-spacing:0.35em; color:rgba(255,255,255,0.9); text-transform:uppercase; text-shadow:0 1px 10px rgba(0,0,0,0.9); opacity:0; transition:opacity 0.8s ease;"></div>
+                </div>
+            </div>
+
+            <script>
+            (function() {
+                var _animStarted = false;
+
+                function forceSlideIn(el) {
+                    el.getBoundingClientRect(); // forces browser to paint initial opacity:0 state
+                    el.style.opacity = '1';
+                    el.style.transform = 'translateY(0)';
+                }
+
+                function typeText(el, text, speed, done) {
+                    var i = 0;
+                    el.textContent = '';
+                    (function tick() {
+                        if (i < text.length) {
+                            el.textContent += text[i++];
+                            setTimeout(tick, speed);
+                        } else if (done) {
+                            setTimeout(done, 250);
+                        }
+                    })();
+                }
+
+                function runHeroAnim() {
+                    if (_animStarted) return;
+                    _animStarted = true;
+
+                    var l1 = document.getElementById('heroLine1');
+                    var l2 = document.getElementById('heroLine2');
+                    var l3 = document.getElementById('heroLine3');
+                    var ls = document.getElementById('heroSub');
+                    var vid = document.getElementById('heroVideo');
+                    var overlay = document.getElementById('heroTextOverlay');
+
+                    if (!l1) return;
+
+                    function resetLines() {
+                        [l1, l2, l3, ls].forEach(function(el) {
+                            el.style.transition = 'none';
+                            el.style.opacity = '0';
+                            el.style.transform = el === ls ? '' : 'translateY(25px)';
+                            el.textContent = '';
+                        });
+                    }
+
+                    function playSequence() {
+                        overlay.style.transition = 'opacity 1.5s ease';
+                        overlay.style.opacity = '1';
+                        // Re-enable transitions after reset
+                        setTimeout(function() {
+                            [l1, l2, l3].forEach(function(el) {
+                                el.style.transition = 'opacity 0.45s ease, transform 0.45s ease';
+                            });
+                            ls.style.transition = 'opacity 0.8s ease';
+                            forceSlideIn(l1);
+                            typeText(l1, 'Write!', 70, function() {
+                                forceSlideIn(l2);
+                                typeText(l2, 'Narrate!', 70, function() {
+                                    forceSlideIn(l3);
+                                    typeText(l3, 'Publish Your Audiobook \u2014 Today!', 48, function() {
+                                        ls.getBoundingClientRect();
+                                        ls.style.opacity = '1';
+                                        typeText(ls, 'WITH AUTHORR AI', 80, null);
+                                    });
+                                });
+                            });
+                        }, 50);
+                    }
+
+                    setTimeout(playSequence, 600);
+
+                    // Fade text at 28s, loop animation with video
+                    if (vid && overlay) {
+                        var faded = false;
+                        var prevTime = 0;
+                        vid.addEventListener('timeupdate', function() {
+                            var t = vid.currentTime;
+                            if (!faded && t >= 28) {
+                                faded = true;
+                                overlay.style.opacity = '0';
+                            }
+                            // Detect video loop (time jumped back)
+                            if (faded && t < 2 && prevTime > 20) {
+                                faded = false;
+                                resetLines();
+                                setTimeout(playSequence, 800);
+                            }
+                            prevTime = t;
+                        });
+                    }
+                }
+
+                // Run after load; fallback timeout catches slow connections
+                window.addEventListener('load', function() { setTimeout(runHeroAnim, 300); });
+                setTimeout(runHeroAnim, 3000);
+            })();
+            </script>
+
+            <div class="container mx-auto px-4 pt-10 pb-16 text-center relative z-10">
                 <!-- Logo + brand -->
                 <div class="flex justify-center items-center gap-3 mb-6">
                     <img src="/logo.png" alt="AUTHORR AI Logo" class="w-28 h-28 sm:w-36 sm:h-36 logo-image">
                     <span class="text-3xl sm:text-5xl font-bold authorr-brand-text tracking-tight">AUTHORR AI</span>
                 </div>
-
-                <!-- Headline -->
-                <h1 class="text-2xl sm:text-4xl md:text-6xl font-extrabold leading-tight mb-3 max-w-4xl mx-auto">
-                    <span data-i18n="dash_hero_h1">Write, Narrate &amp; Publish Your Audiobook</span>
-                    <span class="text-cyan-400" data-i18n="dash_today"> — Today</span>
-                </h1>
-                <p class="text-sm md:text-base font-semibold tracking-[0.25em] text-gray-400 uppercase mb-6" data-i18n="dash_with_ai">WITH AUTHORR AI</p>
 
                 <!-- Sub-headline (pain) -->
                 <p class="text-xl md:text-2xl text-theme-secondary mb-4 max-w-2xl mx-auto leading-relaxed">
@@ -13582,10 +13703,11 @@ Format as clean, readable text ready for narration.`;
 
                             <!-- Canvas Timeline -->
                             <div class="flex-1 relative bg-gray-900 min-h-96">
-                                <canvas id="audioTimeline" class="w-full h-full cursor-default" 
-                                        onmousedown="handleTimelineMouseDown(event)" 
-                                        onmousemove="handleTimelineMouseMove(event)" 
+                                <canvas id="audioTimeline" class="w-full h-full cursor-default"
+                                        onmousedown="handleTimelineMouseDown(event)"
+                                        onmousemove="handleTimelineMouseMove(event)"
                                         onmouseup="handleTimelineMouseUp(event)"
+                                        onmouseleave="handleTimelineMouseLeave()"
                                         onwheel="handleTimelineZoom(event)">
                                 </canvas>
                                 <!-- Playhead -->
@@ -13600,6 +13722,7 @@ Format as clean, readable text ready for narration.`;
                                      onmousedown="handleDropZoneMouseDown(event)"
                                      onmousemove="handleDropZoneMouseMove(event)"
                                      onmouseup="handleDropZoneMouseUp(event)"
+                                     onmouseleave="handleTimelineMouseLeave()"
                                      style="pointer-events: auto; background: transparent;">
                                     <!-- Visual drop indicator -->
                                     <div id="dropIndicator" class="absolute hidden w-1 bg-green-400 opacity-75 pointer-events-none" 
@@ -15717,7 +15840,16 @@ Format as clean, readable text ready for narration.`;
             }
         }
 
+        function handleTimelineMouseLeave() {
+            if (audioTools.currentTool === 'cut') hideCutLine();
+        }
+
         function handleTimelineMouseMove(event) {
+            // Show cut line at playhead on hover even without mouse pressed
+            if (audioTools.currentTool === 'cut') {
+                showCutLine(getPlayheadX());
+            }
+
             if (!audioTools.mouseDown) return;
             
             const rect = audioDAW.canvas.getBoundingClientRect();
@@ -15824,26 +15956,32 @@ Format as clean, readable text ready for narration.`;
             // Handle trim completion (highest priority)
             if (audioTools.trimState) {
                 finishTrimDrag();
+                audioTools.mouseDown = false;
+                audioDAW.isDragging = false;
                 return;
             }
 
             // Handle clip drag completion
             if (audioTools.draggedClip) {
                 finishClipDrag();
+                audioTools.mouseDown = false;
+                audioDAW.isDragging = false;
                 return;
             }
-            
+
             // Handle selection box completion
             if (audioTools.selectionBox) {
                 finishSelectionBox();
+                audioTools.mouseDown = false;
+                audioDAW.isDragging = false;
                 return;
             }
-            
+
             // Handle cut tool
             if (audioTools.currentTool === 'cut') {
                 handleCutMouseUp(event, x, y);
             }
-            
+
             // Clean up states
             audioTools.mouseDown = false;
             audioDAW.isDragging = false;
@@ -15867,6 +16005,23 @@ Format as clean, readable text ready for narration.`;
                 origTrimEnd: track.trimEnd || track.buffer.duration
             };
             audioDAW.canvas.style.cursor = 'ew-resize';
+
+            // Track mouse globally so dragging outside canvas still works
+            function onGlobalMove(e) {
+                const rect = audioDAW.canvas.getBoundingClientRect();
+                handleTrimDrag(e.clientX - rect.left);
+            }
+            function onGlobalUp() {
+                document.removeEventListener('mousemove', onGlobalMove);
+                document.removeEventListener('mouseup', onGlobalUp);
+                if (audioTools.trimState) {
+                    finishTrimDrag();
+                    audioTools.mouseDown = false;
+                    audioDAW.isDragging = false;
+                }
+            }
+            document.addEventListener('mousemove', onGlobalMove);
+            document.addEventListener('mouseup', onGlobalUp);
         }
 
         function handleTrimDrag(x) {
@@ -16073,18 +16228,22 @@ Format as clean, readable text ready for narration.`;
 
 
         // CUT TOOL HANDLERS
+        function getPlayheadX() {
+            const totalDuration = Math.max(getMaxTrackDuration(), 60);
+            const canvasWidth = audioDAW.canvas.offsetWidth;
+            const pixelsPerSecond = (canvasWidth * (audioDAW.zoomLevel || 1)) / totalDuration;
+            return (audioDAW.currentTime - (audioDAW.viewStart || 0)) * pixelsPerSecond;
+        }
+
         function handleCutMouseDown(event, x, y) {
-            // Show cut line preview
-            showCutLine(x);
+            showCutLine(getPlayheadX());
         }
 
         function handleCutMouseMove(event, x, y) {
-            // Update cut line position
-            showCutLine(x);
+            showCutLine(getPlayheadX());
         }
 
         function handleCutMouseUp(event, x, y) {
-            // Perform the cut
             performCut(x, y);
             hideCutLine();
         }
@@ -16440,9 +16599,8 @@ Format as clean, readable text ready for narration.`;
         }
 
         function performCut(x, y) {
-            // Calculate cut time position
-            const totalDuration = getMaxTrackDuration();
-            const cutTime = (x / audioDAW.canvas.offsetWidth) * totalDuration;
+            // Cut at the playhead position
+            const cutTime = audioDAW.currentTime;
             
             // Find which track was cut
             const trackHeight = (audioDAW.canvas.offsetHeight - 40) / 5;
@@ -18464,8 +18622,8 @@ Format as clean, readable text ready for narration.`;
                 if (nlEmail && !nlEmail.value) nlEmail.value = currentUser.email;
                 if (myProjectsSection) myProjectsSection.classList.remove('hidden');
                 if (signInPrompt) signInPrompt.classList.add('hidden');
-                // Show nav buttons when logged in
-                if (desktopNav) { desktopNav.classList.remove('hidden'); desktopNav.classList.add('md:flex'); }
+                // Show nav buttons when logged in (keep 'hidden' so mobile stays hidden; md:flex overrides it on desktop)
+                if (desktopNav) { desktopNav.classList.add('md:flex'); }
                 if (mobileNavBtns) mobileNavBtns.classList.remove('hidden');
                 if (mobileMenuBtn) mobileMenuBtn.classList.remove('hidden');
             } else {
