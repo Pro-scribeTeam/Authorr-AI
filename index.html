@@ -998,6 +998,67 @@
           /* Very small phones: hide nav brand text, just show logo */
           .nav-brand-title { display: none !important; }
         }
+
+        /* ── Mobile Responsive Fixes ── */
+        @media (max-width: 768px) {
+          /* Page headers: wrap title + action button to separate rows */
+          #wsPageHeader, #narPageHeader {
+            flex-wrap: wrap;
+            gap: 0.5rem;
+          }
+          #wsPageHeader h1, #narPageHeader h1 {
+            font-size: 1.5rem;
+          }
+
+          /* Story Editor toolbar: wrap buttons to next row */
+          #storyEditorHeader {
+            flex-wrap: wrap;
+            gap: 0.5rem;
+          }
+          #storyEditorBtns {
+            width: 100%;
+            flex-wrap: wrap;
+            gap: 0.35rem;
+          }
+
+          /* Export package items: wrap label + button on narrow screens */
+          .border.border-theme.p-4.rounded-lg > .flex.items-center.justify-between {
+            flex-wrap: wrap;
+            gap: 0.5rem;
+          }
+
+          /* Narration guidance banner: stack on mobile */
+          #genreNarrationGuidance .flex.items-center.justify-between {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.5rem;
+          }
+
+          /* Cover platform templates: 2-col grid on mobile instead of 5 */
+          #covers .grid.md\:grid-cols-3.lg\:grid-cols-5 {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+          }
+
+          /* Reduce h1 size on workspace/narration/covers/export pages */
+          #workspace h1.text-3xl,
+          #narration h1.text-3xl,
+          #covers h1.text-3xl,
+          #export h1.text-3xl,
+          #config h1.text-3xl {
+            font-size: 1.4rem;
+          }
+        }
+
+        @media (max-width: 480px) {
+          /* Very small phones: condense story editor buttons to icon-only */
+          #storyEditorBtns button span[data-i18n],
+          #storyEditorBtns button span:not([class]) {
+            display: none;
+          }
+          #wsPageHeader h1, #narPageHeader h1 {
+            font-size: 1.25rem;
+          }
+        }
     </style>
 </head>
 <body class="theme-dark">
@@ -2279,7 +2340,7 @@
     <!-- Workspace Page -->
     <div id="workspace" class="page hidden">
         <div class="container mx-auto px-4 py-8">
-            <div class="flex justify-between items-center mb-8">
+            <div id="wsPageHeader" class="flex justify-between items-center mb-8">
                 <h1 class="text-3xl font-bold">
                     <i class="fas fa-edit text-cyan-400 mr-3"></i>
                     <span data-i18n="ws_title">Audiobook Workspace</span>
@@ -2478,12 +2539,12 @@
             
             <!-- Text Editor Section -->
             <div class="bg-theme-secondary p-6 rounded-xl border-2 border-theme">
-                <div class="flex justify-between items-center mb-4">
+                <div id="storyEditorHeader" class="flex justify-between items-center mb-4">
                     <h2 class="text-xl font-bold">
                         <i class="fas fa-pen-fancy text-cyan-400 mr-2"></i>
                         <span data-i18n="ws_story_editor">Story Editor</span>
                     </h2>
-                    <div class="flex items-center space-x-3">
+                    <div id="storyEditorBtns" class="flex items-center space-x-3">
                         <div class="word-count" id="wordCount">0 words</div>
                         <button onclick="undoEdit()" id="undoBtn" class="btn-secondary px-3 py-1 rounded text-sm" disabled>
                             <i class="fas fa-undo"></i> <span data-i18n="ws_undo">Undo</span>
@@ -2771,7 +2832,7 @@
     <!-- Narration Page -->
     <div id="narration" class="page hidden">
         <div class="container mx-auto px-4 py-8">
-            <div class="flex justify-between items-center mb-8">
+            <div id="narPageHeader" class="flex justify-between items-center mb-8">
                 <h1 class="text-3xl font-bold">
                     <i class="fas fa-microphone text-cyan-400 mr-3"></i>
                     <span data-i18n="nar_title">Audio Narration</span>
