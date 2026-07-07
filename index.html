@@ -980,7 +980,7 @@
           nav { padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); }
 
           /* Video watermark logo: smaller on mobile */
-          #heroVideoLogo { width: 65px !important; height: 65px !important; }
+          #heroVideoLogo { width: 45px !important; height: 45px !important; }
         }
 
         /* iOS touch scroll for scrollable areas */
@@ -1190,7 +1190,7 @@
                         id="heroVideoLogo"
                         src="https://svyjvvogjkhszijlaxig.supabase.co/storage/v1/object/public/media/images/authorr-logo.png"
                         alt="Authorr AI"
-                        style="position:absolute; bottom:4px; right:2px; width:130px; height:130px; object-fit:contain; pointer-events:none; z-index:10;">
+                        style="position:absolute; bottom:4px; right:2px; width:80px; height:80px; object-fit:contain; pointer-events:none; z-index:10; opacity:0.75;">
                 </div>
 
                 <!-- Text overlay -->
@@ -1238,6 +1238,8 @@
 
                     if (!l1) return;
 
+                    var playCount = 0;
+
                     function resetLines() {
                         [l1, l2, l3, ls].forEach(function(el) {
                             el.style.transition = 'none';
@@ -1248,6 +1250,7 @@
                     }
 
                     function playSequence() {
+                        playCount++;
                         overlay.style.transition = 'opacity 1.5s ease';
                         overlay.style.opacity = '1';
                         // Re-enable transitions after reset
@@ -1264,7 +1267,13 @@
                                     typeText(l3, 'Publish Your Audiobook \u2014 Today!', 48, function() {
                                         ls.getBoundingClientRect();
                                         ls.style.opacity = '1';
-                                        typeText(ls, 'WITH AUTHORR AI', 80, null);
+                                        // After first play, reset and repeat once before fading
+                                        typeText(ls, 'WITH AUTHORR AI', 80, playCount < 2 ? function() {
+                                            setTimeout(function() {
+                                                resetLines();
+                                                playSequence();
+                                            }, 2500);
+                                        } : null);
                                     });
                                 });
                             });
@@ -1286,6 +1295,7 @@
                             // Detect video loop (time jumped back)
                             if (faded && t < 2 && prevTime > 20) {
                                 faded = false;
+                                playCount = 0;
                                 resetLines();
                                 setTimeout(playSequence, 800);
                             }
