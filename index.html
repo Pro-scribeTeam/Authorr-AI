@@ -4193,6 +4193,11 @@
             if (pageId === 'export') {
                 updateExportSummary();
             }
+
+            // Sync tier preview label when admin panel opens
+            if (pageId === 'admin' && typeof adminSyncTierLabel === 'function') {
+                adminSyncTierLabel();
+            }
         }
         
         // Theme Management
@@ -22568,6 +22573,35 @@ function setUILanguage(lang) {
                 <i class="fas fa-shield-alt text-yellow-400 mr-3"></i>Admin Panel
             </h1>
 
+            <!-- ── Tier Preview (admin test mode) ── -->
+            <div class="bg-gray-900 border-2 border-yellow-600 rounded-xl p-5 mb-8">
+                <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <i class="fas fa-flask text-yellow-400"></i>
+                            <span class="font-bold text-yellow-300">Tier Preview</span>
+                            <span class="text-xs text-gray-400 ml-1">— simulates a plan locally, no DB change</span>
+                        </div>
+                        <div id="tierPreviewStatus" class="text-xs mt-1 text-gray-400">
+                            Currently viewing as: <span id="tierPreviewCurrent" class="font-bold text-yellow-300">Studio (real)</span>
+                        </div>
+                    </div>
+                    <button onclick="adminRestoreTier()" id="tierRestoreBtn" class="hidden text-xs border border-yellow-500 text-yellow-400 hover:bg-yellow-900/40 px-3 py-1.5 rounded-lg font-semibold transition-colors">
+                        <i class="fas fa-undo mr-1"></i>Restore My Real Plan
+                    </button>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                    <button onclick="adminPreviewTier('free')"    class="tier-preview-btn text-xs px-4 py-2 rounded-lg font-semibold border border-gray-600 text-gray-300 hover:border-gray-400 transition-colors">Free</button>
+                    <button onclick="adminPreviewTier('starter')" class="tier-preview-btn text-xs px-4 py-2 rounded-lg font-semibold border border-blue-700 text-blue-300 hover:border-blue-400 transition-colors">Starter</button>
+                    <button onclick="adminPreviewTier('author')"  class="tier-preview-btn text-xs px-4 py-2 rounded-lg font-semibold border border-purple-700 text-purple-300 hover:border-purple-400 transition-colors">Author</button>
+                    <button onclick="adminPreviewTier('publisher')" class="tier-preview-btn text-xs px-4 py-2 rounded-lg font-semibold border border-cyan-700 text-cyan-300 hover:border-cyan-400 transition-colors">Publisher</button>
+                    <button onclick="adminPreviewTier('studio')"  class="tier-preview-btn text-xs px-4 py-2 rounded-lg font-semibold border border-yellow-600 text-yellow-300 hover:border-yellow-400 transition-colors">Studio</button>
+                </div>
+                <div class="mt-3 text-xs text-gray-500">
+                    After switching, navigate to any page to see that tier's experience. Credits display, export buttons, generation limits, and plan tier box all reflect the preview.
+                </div>
+            </div>
+
             <!-- Stats bar -->
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
                 <div class="bg-gray-900 border border-yellow-700 rounded-xl p-4 text-center">
@@ -22628,6 +22662,80 @@ function setUILanguage(lang) {
     </div>
 
     <script>
+    var _adminRealSubscription = null;
+
+    function adminPreviewTier(plan) {
+        // Stash real subscription once
+        if (!_adminRealSubscription) {
+            _adminRealSubscription = window._userSubscription ? JSON.parse(JSON.stringify(window._userSubscription)) : { plan: 'studio', status: 'active' };
+        }
+
+        // Override subscription globally
+        window._userSubscription = Object.assign({}, _adminRealSubscription, { plan: plan, status: 'active' });
+
+        // Update plan tier UI in workspace
+        if (typeof updatePlanTierUI === 'function') updatePlanTierUI();
+
+        // Update credits display if function exists
+        if (typeof updateCreditsDisplay === 'function') updateCreditsDisplay();
+
+        // Highlight active tier button
+        document.querySelectorAll('.tier-preview-btn').forEach(function(btn) {
+            btn.classList.remove('ring-2', 'ring-offset-1', 'ring-offset-gray-900', 'ring-yellow-400');
+        });
+        event.currentTarget.classList.add('ring-2', 'ring-offset-1', 'ring-offset-gray-900', 'ring-yellow-400');
+
+        // Update status label
+        const labels = { free:'Free', starter:'Starter', author:'Author', publisher:'Publisher', studio:'Studio' };
+        const current = document.getElementById('tierPreviewCurrent');
+        if (current) current.textContent = (labels[plan] || plan) + ' (preview)';
+        const statusEl = document.getElementById('tierPreviewStatus');
+        if (statusEl) statusEl.style.color = '#fbbf24';
+
+        // Show restore button
+        const restoreBtn = document.getElementById('tierRestoreBtn');
+        if (restoreBtn) restoreBtn.classList.remove('hidden');
+
+        showNotification('Previewing as ' + (labels[plan] || plan) + ' tier. Navigate the app to test.', 'info');
+    }
+
+    function adminRestoreTier() {
+        if (_adminRealSubscription) {
+            window._userSubscription = JSON.parse(JSON.stringify(_adminRealSubscription));
+            _adminRealSubscription = null;
+        }
+
+        if (typeof updatePlanTierUI === 'function') updatePlanTierUI();
+        if (typeof updateCreditsDisplay === 'function') updateCreditsDisplay();
+
+        document.querySelectorAll('.tier-preview-btn').forEach(function(btn) {
+            btn.classList.remove('ring-2', 'ring-offset-1', 'ring-offset-gray-900', 'ring-yellow-400');
+        });
+
+        const plan = (window._userSubscription && window._userSubscription.plan) || 'studio';
+        const labels = { free:'Free', starter:'Starter', author:'Author', publisher:'Publisher', studio:'Studio' };
+        const current = document.getElementById('tierPreviewCurrent');
+        if (current) current.textContent = (labels[plan] || plan) + ' (real)';
+        const statusEl = document.getElementById('tierPreviewStatus');
+        if (statusEl) statusEl.style.color = '';
+
+        const restoreBtn = document.getElementById('tierRestoreBtn');
+        if (restoreBtn) restoreBtn.classList.add('hidden');
+
+        showNotification('Restored to your real plan: ' + (labels[plan] || plan), 'success');
+    }
+
+    // Keep tier preview label in sync when admin panel is opened
+    function adminSyncTierLabel() {
+        const plan = (window._userSubscription && window._userSubscription.plan) || 'studio';
+        const labels = { free:'Free', starter:'Starter', author:'Author', publisher:'Publisher', studio:'Studio' };
+        const current = document.getElementById('tierPreviewCurrent');
+        const isPreview = !!_adminRealSubscription;
+        if (current) current.textContent = (labels[plan] || plan) + (isPreview ? ' (preview)' : ' (real)');
+        const restoreBtn = document.getElementById('tierRestoreBtn');
+        if (restoreBtn) restoreBtn.classList.toggle('hidden', !isPreview);
+    }
+
     async function adminLoadUsers() {
         const token = await getAuthToken();
         if (!token) return;
