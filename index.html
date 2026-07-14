@@ -23252,7 +23252,7 @@ async function generateOutline() {
         'Genre: ' + pack.label + ' | Tone: ' + (TONE_MODIFIERS[tone] || {label:tone}).label + ' | Length: ' + targetWords.toLocaleString() + ' words (' + lengthTier + ')\n' +
         'Narration: ' + narrationMode + (audioFirst ? ' + Audio-First' : '') + '\n\n' +
         'Story Concept: ' + outline + '\n\n' +
-        'Generate a chapter-by-chapter OUTLINE applying the genre beat sheet exactly — map each beat to specific chapters. Include for each chapter: number, title, 2-3 sentence summary, beat being fulfilled, word count target (~' + chapterWordTarget + ' words each, total ~' + targetWords.toLocaleString() + ').\n\n' +
+        'Generate a chapter-by-chapter OUTLINE of EXACTLY ' + chapterCount + ' chapters — no more, no fewer. Apply the genre beat sheet, mapping each beat to specific chapters. Include for each chapter: number, title, 2-3 sentence summary, beat being fulfilled, word count target (~' + chapterWordTarget + ' words each, total ~' + (chapterCount * chapterWordTarget).toLocaleString() + ' words).\n\n' +
         'Also generate a STORY BIBLE: main characters (name, pronounce if non-obvious, genderAge, role), key settings, any world/magic/technology rules.\n\n' +
         'Respond with ONLY valid JSON:\n' +
         '{"chapters":[{"number":1,"title":"...","summary":"...","beat":"...","wordTarget":' + chapterWordTarget + ',"keyPoints":[]}],' +
@@ -23273,6 +23273,11 @@ async function generateOutline() {
 
         var parsed = JSON.parse(content);
         if (!parsed.chapters || !parsed.chapters.length) throw new Error('No chapters in outline response.');
+
+        // Hard-cap chapters regardless of what the AI returned
+        if (freeTier && parsed.chapters.length > FREE_MAX_CHAPTERS) {
+            parsed.chapters = parsed.chapters.slice(0, FREE_MAX_CHAPTERS);
+        }
 
         hideLoading();
         gmOutlineData = { parsed: parsed, genre: genre, ageBand: ageBand, tone: tone, audioFirst: audioFirst, narrationMode: narrationMode, targetWords: targetWords, systemPrompt: systemPrompt };
