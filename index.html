@@ -23217,7 +23217,8 @@ async function generateOutline() {
 
     syncCompatFields(genre, tone);
 
-    var FREE_MAX_CHAPTERS = 3;
+    var FREE_MAX_CHAPTERS = 3;  // suggested target
+    var FREE_HARD_CAP = 5;       // allow up to 5 to complete the story arc
     var FREE_MAX_WORDS = 500;
     var freeTier = isFreeTier();
 
@@ -23237,7 +23238,7 @@ async function generateOutline() {
         chapterCount = Math.min(chapterCount, FREE_MAX_CHAPTERS);
         chapterWordTarget = Math.min(chapterWordTarget, FREE_MAX_WORDS);
         if (chapterCount < 12 || chapterWordTarget < Math.round(targetWords / 12)) {
-            showNotification('Free tier: limited to ' + FREE_MAX_CHAPTERS + ' chapters & ' + FREE_MAX_WORDS + ' words/chapter. Upgrade for full length.', 'warning');
+            showNotification('Free tier: ~' + FREE_MAX_CHAPTERS + ' chapters (up to ' + FREE_HARD_CAP + ' to complete the story) & ' + FREE_MAX_WORDS + ' words/chapter. Upgrade for full length.', 'warning');
         }
     }
 
@@ -23252,7 +23253,7 @@ async function generateOutline() {
         'Genre: ' + pack.label + ' | Tone: ' + (TONE_MODIFIERS[tone] || {label:tone}).label + ' | Length: ' + targetWords.toLocaleString() + ' words (' + lengthTier + ')\n' +
         'Narration: ' + narrationMode + (audioFirst ? ' + Audio-First' : '') + '\n\n' +
         'Story Concept: ' + outline + '\n\n' +
-        'Generate a chapter-by-chapter OUTLINE of EXACTLY ' + chapterCount + ' chapters — no more, no fewer. Apply the genre beat sheet, mapping each beat to specific chapters. Include for each chapter: number, title, 2-3 sentence summary, beat being fulfilled, word count target (~' + chapterWordTarget + ' words each, total ~' + (chapterCount * chapterWordTarget).toLocaleString() + ' words).\n\n' +
+        'Generate a chapter-by-chapter OUTLINE targeting ' + chapterCount + ' chapters. Complete the full story arc — if the genre beat sheet requires one or two extra chapters to land the ending properly, include them (max ' + FREE_HARD_CAP + ' chapters total). Apply the genre beat sheet, mapping each beat to specific chapters. Include for each chapter: number, title, 2-3 sentence summary, beat being fulfilled, word count target (~' + chapterWordTarget + ' words each).\n\n' +
         'Also generate a STORY BIBLE: main characters (name, pronounce if non-obvious, genderAge, role), key settings, any world/magic/technology rules.\n\n' +
         'Respond with ONLY valid JSON:\n' +
         '{"chapters":[{"number":1,"title":"...","summary":"...","beat":"...","wordTarget":' + chapterWordTarget + ',"keyPoints":[]}],' +
@@ -23274,9 +23275,9 @@ async function generateOutline() {
         var parsed = JSON.parse(content);
         if (!parsed.chapters || !parsed.chapters.length) throw new Error('No chapters in outline response.');
 
-        // Hard-cap chapters regardless of what the AI returned
-        if (freeTier && parsed.chapters.length > FREE_MAX_CHAPTERS) {
-            parsed.chapters = parsed.chapters.slice(0, FREE_MAX_CHAPTERS);
+        // Allow slight overflow to complete the story arc, but cap at FREE_HARD_CAP
+        if (freeTier && parsed.chapters.length > FREE_HARD_CAP) {
+            parsed.chapters = parsed.chapters.slice(0, FREE_HARD_CAP);
         }
 
         hideLoading();
