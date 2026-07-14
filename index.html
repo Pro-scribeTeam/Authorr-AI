@@ -2497,16 +2497,24 @@
                             </div>
                         </div>
 
-                        <!-- Human Touch Score -->
-                        <div class="bg-theme-primary p-4 rounded-lg border border-theme">
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center space-x-2">
-                                    <i class="fas fa-heart text-red-400"></i>
-                                    <span class="text-sm font-semibold">Human Touch Score:</span>
+                        <!-- Plan Tier -->
+                        <div id="planTierBox" class="rounded-lg border p-3">
+                            <div class="flex items-center justify-between mb-1">
+                                <div class="flex items-center gap-2">
+                                    <i class="fas fa-layer-group text-cyan-400 text-sm"></i>
+                                    <span class="text-sm font-semibold">Plan</span>
                                 </div>
-                                <span class="human-touch-score text-lg font-bold">0%</span>
+                                <select id="planTierDisplay" class="text-xs font-bold px-2 py-1 rounded bg-theme-primary form-field cursor-default" disabled>
+                                    <option id="planTierOption">Free</option>
+                                </select>
                             </div>
-                            <div class="text-xs text-theme-secondary mt-1">Based on personal edits, notes, and voice choices</div>
+                            <div id="freeTierLimitsRow" class="text-xs text-yellow-300 mt-1">
+                                All genres available &mdash; limited to <strong>3 chapters</strong> &amp; <strong>500 words/chapter</strong>.
+                                <button onclick="showPage('config')" class="underline text-cyan-400 ml-1 hover:text-cyan-300">Upgrade</button>
+                            </div>
+                            <div id="paidTierLimitsRow" class="text-xs text-green-400 mt-1 hidden">
+                                Full access &mdash; all genres, lengths, and export formats.
+                            </div>
                         </div>
 
                         <!-- Story Concept -->
@@ -22817,6 +22825,36 @@ function getStoryBibleContext() {
     return lines.join('\n');
 }
 
+// Plan tier helpers
+function isFreeTier() {
+    var plan = (window._userSubscription && window._userSubscription.plan) || 'free';
+    return plan === 'free';
+}
+
+function updatePlanTierUI() {
+    var plan = (window._userSubscription && window._userSubscription.plan) || 'free';
+    var box = document.getElementById('planTierBox');
+    var opt = document.getElementById('planTierOption');
+    var freeRow = document.getElementById('freeTierLimitsRow');
+    var paidRow = document.getElementById('paidTierLimitsRow');
+    if (!box) return;
+    var labels = { free: 'Free', starter: 'Starter', author: 'Author', publisher: 'Publisher', studio: 'Studio' };
+    if (opt) opt.textContent = labels[plan] || plan;
+    if (plan === 'free') {
+        box.style.borderColor = '#ca8a04';
+        box.style.background = 'rgba(202,138,4,0.08)';
+        if (freeRow) freeRow.classList.remove('hidden');
+        if (paidRow) paidRow.classList.add('hidden');
+    } else {
+        box.style.borderColor = '#22c55e';
+        box.style.background = 'rgba(34,197,94,0.06)';
+        if (freeRow) freeRow.classList.add('hidden');
+        if (paidRow) paidRow.classList.remove('hidden');
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() { setTimeout(updatePlanTierUI, 1200); });
+
 // Generate Outline
 var gmOutlineData = null;
 
@@ -22841,6 +22879,10 @@ async function generateOutline() {
 
     syncCompatFields(genre, tone);
 
+    var FREE_MAX_CHAPTERS = 3;
+    var FREE_MAX_WORDS = 500;
+    var freeTier = isFreeTier();
+
     var pack = GENRE_PACKS[genre] || GENRE_PACKS['literary'];
     var targetWords = pack.wordCounts[lengthTier] || pack.wordCounts['standard'];
     var chapterWordTarget, chapterCount;
@@ -22850,6 +22892,15 @@ async function generateOutline() {
     } else {
         chapterWordTarget = Math.round(targetWords / 12);
         chapterCount = 12;
+    }
+
+    // Free-tier caps: all genres allowed, max 3 chapters, max 500 words/chapter
+    if (freeTier) {
+        chapterCount = Math.min(chapterCount, FREE_MAX_CHAPTERS);
+        chapterWordTarget = Math.min(chapterWordTarget, FREE_MAX_WORDS);
+        if (chapterCount < 12 || chapterWordTarget < Math.round(targetWords / 12)) {
+            showNotification('Free tier: limited to ' + FREE_MAX_CHAPTERS + ' chapters & ' + FREE_MAX_WORDS + ' words/chapter. Upgrade for full length.', 'warning');
+        }
     }
 
     var ccEl = document.getElementById('chapterCount');
