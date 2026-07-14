@@ -15,6 +15,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
     <!-- Supabase Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+    <!-- DOCX Generation (Shunn manuscript export) -->
+    <script src="https://unpkg.com/docx@8/build/index.umd.js" defer></script>
     <script>
         // Supabase Configuration — Authorr AI project
         window.SUPABASE_CONFIG = {
@@ -2366,41 +2368,77 @@
                 <div class="bg-theme-secondary p-6 rounded-xl border-2 border-theme">
                     <h2 class="text-xl font-bold mb-4">
                         <i class="fas fa-cogs text-cyan-400 mr-2"></i>
-                        <span data-i18n="ws_story_params">Story Parameters</span>
+                        Story Parameters
                     </h2>
-                    
+
                     <div class="space-y-4">
+                        <!-- Book Title -->
                         <div>
-                            <label class="block text-sm font-semibold mb-2" data-i18n="ws_book_title">Book Title</label>
+                            <label class="block text-sm font-semibold mb-2">Book Title</label>
                             <input type="text" id="bookTitle" placeholder="Enter your book title"
                                    class="w-full px-4 py-2 rounded-lg form-field bg-theme-primary text-theme-primary">
                         </div>
-                        
+
+                        <!-- Genre Master (14 genres) -->
                         <div>
-                            <label class="block text-sm font-semibold mb-2">
-                                <i class="fas fa-palette mr-1"></i><span data-i18n="ws_story_genre">Story Genre</span>
-                                <span id="genreTooltip" class="ml-2 text-xs text-cyan-400 cursor-help"></span>
-                            </label>
-                            <select id="storyGenre" onchange="updateGenreSettings()" class="w-full px-4 py-2 rounded-lg form-field bg-theme-primary text-theme-primary">
-                                <option value="General">General (No Specific Genre)</option>
-                                <option value="Thriller">Thriller</option>
-                                <option value="Romance">Romance</option>
-                                <option value="Fantasy">Fantasy</option>
-                                <option value="Horror">Horror</option>
-                                <option value="Comedy">Comedy</option>
-                                <option value="Drama">Drama</option>
-                                <option value="YoungAdult">Young Adult</option>
-                                <option value="Children">Children's Story</option>
-                                <option value="Memoir">Memoir/Non-Fiction</option>
+                            <label class="block text-sm font-semibold mb-2"><i class="fas fa-palette mr-1"></i>Genre</label>
+                            <select id="genreMaster" onchange="onGenreChange()" class="w-full px-4 py-2 rounded-lg form-field bg-theme-primary text-theme-primary">
+                                <option value="children">Children's</option>
+                                <option value="middlegrade">Middle Grade (ages 8-12)</option>
+                                <option value="youngadult">Young Adult (ages 13-18)</option>
+                                <option value="romance">Romance</option>
+                                <option value="mystery">Mystery / Crime</option>
+                                <option value="thriller">Thriller</option>
+                                <option value="horror">Horror</option>
+                                <option value="fantasy">Fantasy</option>
+                                <option value="scifi">Science Fiction</option>
+                                <option value="historical">Historical Fiction</option>
+                                <option value="literary" selected>Literary / Drama</option>
+                                <option value="memoir">Memoir</option>
+                                <option value="selfhelp">Self-Help / Business</option>
+                                <option value="truecrime">True Crime</option>
                             </select>
                         </div>
-                        
+
+                        <!-- Age Band (Children's only) -->
+                        <div id="ageBandRow" class="hidden">
+                            <label class="block text-sm font-semibold mb-2">Age Band</label>
+                            <select id="ageBand" class="w-full px-4 py-2 rounded-lg form-field bg-theme-primary text-theme-primary">
+                                <option value="picturebook">Picture Book (ages 3-5, 300-800 words)</option>
+                                <option value="earlyreader">Early Reader (ages 5-7, ~2,000 words)</option>
+                                <option value="chapterbook">Chapter Book (ages 7-9, ~8,000 words)</option>
+                            </select>
+                        </div>
+
+                        <!-- Tone Modifier -->
                         <div>
-                            <label class="block text-sm font-semibold mb-2">
-                                <i class="fas fa-globe mr-1"></i><span data-i18n="ws_story_language">Story Language</span>
-                            </label>
+                            <label class="block text-sm font-semibold mb-2"><i class="fas fa-sliders-h mr-1"></i>Tone</label>
+                            <select id="toneModifier" class="w-full px-4 py-2 rounded-lg form-field bg-theme-primary text-theme-primary">
+                                <option value="dramatic" selected>Dramatic (default)</option>
+                                <option value="comedic">Comedic</option>
+                                <option value="dark">Dark</option>
+                                <option value="cozy">Cozy</option>
+                                <option value="steamy">Steamy</option>
+                                <option value="clean">Clean / Inspirational</option>
+                            </select>
+                        </div>
+
+                        <!-- Length Tier -->
+                        <div>
+                            <label class="block text-sm font-semibold mb-2"><i class="fas fa-ruler mr-1"></i>Length</label>
+                            <select id="lengthTier" onchange="onLengthChange()" class="w-full px-4 py-2 rounded-lg form-field bg-theme-primary text-theme-primary">
+                                <option value="novella">Novella (shorter end)</option>
+                                <option value="standard" selected>Standard (genre midpoint)</option>
+                                <option value="epic">Epic (upper end)</option>
+                            </select>
+                            <p id="lengthHint" class="text-xs text-cyan-400 mt-1"></p>
+                        </div>
+
+                        <!-- Story Language -->
+                        <div>
+                            <label class="block text-sm font-semibold mb-2"><i class="fas fa-globe mr-1"></i>Story Language</label>
                             <select id="storyLanguage" onchange="saveStoryLanguage()" class="w-full px-4 py-2 rounded-lg form-field bg-theme-primary text-theme-primary">
-                                <option value="english" selected>🇺🇸 English (Default)</option>
+                                <option value="english" selected>🇺🇸 English</option>
                                 <option value="spanish">🇪🇸 Spanish</option>
                                 <option value="french">🇫🇷 French</option>
                                 <option value="german">🇩🇪 German</option>
@@ -2419,7 +2457,44 @@
                                 <option value="danish">🇩🇰 Danish</option>
                                 <option value="turkish">🇹🇷 Turkish</option>
                             </select>
-                            <p class="text-xs text-theme-secondary mt-1" data-i18n="ws_lang_hint">AI will write the story in this language. Narration will automatically use the matching voice.</p>
+                        </div>
+
+                        <!-- Audio-First Toggle -->
+                        <div class="bg-theme-primary p-4 rounded-lg border border-theme">
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="flex items-center gap-2">
+                                    <i class="fas fa-headphones text-cyan-400"></i>
+                                    <span class="text-sm font-semibold">Audio-First Mode</span>
+                                    <span class="text-xs text-cyan-400">default ON</span>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" id="audioFirstToggle" checked class="sr-only peer">
+                                    <div class="w-11 h-6 bg-gray-600 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[\'\'] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-cyan-500"></div>
+                                </label>
+                            </div>
+                            <p class="text-xs text-theme-secondary">Optimizes prose for ears: sentence rhythm, pronounceable names, performable action beats.</p>
+                        </div>
+
+                        <!-- Narration Mode -->
+                        <div>
+                            <label class="block text-sm font-semibold mb-2"><i class="fas fa-microphone mr-1"></i>Narration Mode</label>
+                            <div class="grid grid-cols-3 gap-2" id="narrationModeGrid">
+                                <label class="gm-nm-opt flex flex-col items-center p-3 rounded-lg border-2 cursor-pointer transition-all border-cyan-500 bg-cyan-900/20" data-mode="single">
+                                    <input type="radio" name="narrationMode" value="single" checked class="sr-only">
+                                    <i class="fas fa-user text-cyan-400 text-lg mb-1"></i>
+                                    <span class="text-xs font-semibold text-center">Single<br>Narrator</span>
+                                </label>
+                                <label class="gm-nm-opt flex flex-col items-center p-3 rounded-lg border-2 cursor-pointer transition-all border-theme" data-mode="duet">
+                                    <input type="radio" name="narrationMode" value="duet" class="sr-only">
+                                    <i class="fas fa-user-friends text-purple-400 text-lg mb-1"></i>
+                                    <span class="text-xs font-semibold text-center">Duet</span>
+                                </label>
+                                <label class="gm-nm-opt flex flex-col items-center p-3 rounded-lg border-2 cursor-pointer transition-all border-theme" data-mode="fullcast">
+                                    <input type="radio" name="narrationMode" value="fullcast" class="sr-only">
+                                    <i class="fas fa-users text-green-400 text-lg mb-1"></i>
+                                    <span class="text-xs font-semibold text-center">Full<br>Cast</span>
+                                </label>
+                            </div>
                         </div>
 
                         <!-- Human Touch Score -->
@@ -2427,96 +2502,37 @@
                             <div class="flex items-center justify-between">
                                 <div class="flex items-center space-x-2">
                                     <i class="fas fa-heart text-red-400"></i>
-                                    <span class="text-sm font-semibold" data-i18n="ws_human_touch">Human Touch Score:</span>
+                                    <span class="text-sm font-semibold">Human Touch Score:</span>
                                 </div>
                                 <span class="human-touch-score text-lg font-bold">0%</span>
                             </div>
-                            <div class="text-xs text-theme-secondary mt-1" data-i18n="ws_human_touch_hint">
-                                Based on personal edits, notes, and voice choices
-                            </div>
+                            <div class="text-xs text-theme-secondary mt-1">Based on personal edits, notes, and voice choices</div>
                         </div>
-                        
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm font-semibold mb-2" data-i18n="ws_chapter_selection">Chapter Selection</label>
-                                <select id="chapterCount" class="w-full px-4 py-2 rounded-lg form-field bg-theme-primary text-theme-primary">
-                                    <option value="3">3 Chapters</option>
-                                    <option value="5">5 Chapters</option>
-                                    <option value="7">7 Chapters</option>
-                                    <option value="10" selected>10 Chapters</option>
-                                    <option value="15">15 Chapters</option>
-                                    <option value="20">20 Chapters</option>
-                                    <option value="25">25 Chapters</option>
-                                </select>
-                            </div>
-                            
-                            <div>
-                                <label class="block text-sm font-semibold mb-2" data-i18n="ws_words_per_chapter">Words per Chapter</label>
-                                <select id="wordsPerChapter" class="w-full px-4 py-2 rounded-lg form-field bg-theme-primary text-theme-primary">
-                                    <option value="250">250 words (~1 min audio)</option>
-                                    <option value="500">500 words (~2 min audio)</option>
-                                    <option value="750">750 words (~3 min audio)</option>
-                                    <option value="1000" selected>1000 words (~4 min audio)</option>
-                                    <option value="1250">1250 words (~5 min audio)</option>
-                                    <option value="1500">1500 words (~6 min audio)</option>
-                                    <option value="2000">2000 words (~8 min audio)</option>
-                                    <option value="2500">2500 words (~10 min audio)</option>
-                                    <option value="3000">3000 words (~12 min audio)</option>
-                                </select>
-                            </div>
-                        </div>
-                        
+
+                        <!-- Story Concept -->
                         <div>
-                            <label class="block text-sm font-semibold mb-2" data-i18n="ws_genre_subgenre">Genre & Subgenre</label>
-                            <select id="genre" class="w-full px-4 py-2 rounded-lg form-field bg-theme-primary text-theme-primary">
-                                <option value="fiction-literary">Fiction - Literary</option>
-                                <option value="fiction-mystery">Fiction - Mystery/Thriller</option>
-                                <option value="fiction-romance">Fiction - Romance</option>
-                                <option value="fiction-scifi">Fiction - Science Fiction</option>
-                                <option value="fiction-fantasy">Fiction - Fantasy</option>
-                                <option value="fiction-horror">Fiction - Horror</option>
-                                <option value="fiction-historical">Fiction - Historical</option>
-                                <option value="nonfiction-biography">Non-Fiction - Biography</option>
-                                <option value="nonfiction-selfhelp">Non-Fiction - Self-Help</option>
-                                <option value="nonfiction-business">Non-Fiction - Business</option>
-                                <option value="nonfiction-history">Non-Fiction - History</option>
-                                <option value="children-adventure">Children's - Adventure</option>
-                                <option value="children-educational">Children's - Educational</option>
-                            </select>
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-semibold mb-2" data-i18n="ws_tone_voice">Tone & Voice</label>
-                            <select id="tone" class="w-full px-4 py-2 rounded-lg form-field bg-theme-primary text-theme-primary">
-                                <option value="professional">Professional</option>
-                                <option value="casual">Casual & Conversational</option>
-                                <option value="dramatic">Dramatic & Intense</option>
-                                <option value="humorous">Humorous & Light</option>
-                                <option value="inspiring">Inspiring & Motivational</option>
-                                <option value="mysterious">Mysterious & Suspenseful</option>
-                                <option value="romantic">Romantic & Emotional</option>
-                                <option value="educational">Educational & Informative</option>
-                                <option value="adventurous">Adventurous & Exciting</option>
-                            </select>
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-semibold mb-2" data-i18n="ws_story_outline">Story Outline</label>
+                            <label class="block text-sm font-semibold mb-2">Story Concept</label>
                             <div class="relative">
-                                <textarea id="storyOutline" placeholder="Describe your story concept, main characters, and plot outline..." 
+                                <textarea id="storyOutline" placeholder="Describe your story concept, main characters, and key ideas..."
                                           class="w-full px-4 py-2 rounded-lg form-field bg-theme-primary text-theme-primary h-24 resize-none"></textarea>
                                 <div class="absolute bottom-2 right-3 text-xs text-cyan-400 bg-black bg-opacity-50 px-2 py-1 rounded">
                                     <span id="outlineWordCount">0 words</span>
                                 </div>
                             </div>
                         </div>
-                        
-                        <button onclick="generateChapterPlan()" class="btn-primary w-full py-3 rounded-lg font-semibold">
-                            <i class="fas fa-magic mr-2"></i><span data-i18n="ws_generate_plan">Generate Chapter Plan</span>
+
+                        <!-- Hidden backward-compat fields (referenced by existing generation code) -->
+                        <select id="storyGenre" class="hidden"><option value="General" selected>General</option></select>
+                        <select id="genre" class="hidden"><option value="fiction-literary" selected>Fiction - Literary</option></select>
+                        <select id="tone" class="hidden"><option value="dramatic" selected>Dramatic</option></select>
+                        <select id="chapterCount" class="hidden"><option value="10" selected>10 Chapters</option></select>
+                        <select id="wordsPerChapter" class="hidden"><option value="1000" selected>1000</option></select>
+
+                        <button onclick="generateOutline()" class="btn-primary w-full py-3 rounded-lg font-semibold">
+                            <i class="fas fa-sitemap mr-2"></i>Generate Outline
                         </button>
                     </div>
                 </div>
-                
                 <!-- Right Column: Chapter Plan -->
                 <div class="bg-theme-secondary p-6 rounded-xl border-2 border-theme">
                     <div class="flex justify-between items-center mb-4">
@@ -3635,6 +3651,39 @@
                                 <button onclick="exportManuscript()" class="btn-secondary px-4 py-1 rounded text-sm" data-i18n="exp_download_btn">Download</button>
                             </div>
                             <p class="text-sm text-theme-secondary" data-i18n="exp_manuscript_desc">Complete story text as .txt file</p>
+                        </div>
+
+                        <!-- Shunn Manuscript .docx -->
+                        <div class="border border-cyan-700 p-4 rounded-lg" style="background:rgba(8,145,178,0.08)">
+                            <div class="flex items-center justify-between mb-1">
+                                <div>
+                                    <h3 class="font-semibold text-cyan-300"><i class="fas fa-file-word mr-1"></i>Manuscript (.docx &mdash; Shunn)</h3>
+                                    <p class="text-xs text-theme-secondary mt-1">Industry-standard Shunn format. 12pt TNR, double-spaced, 1&quot; margins, chapter page-breaks, running header.</p>
+                                </div>
+                                <button onclick="openShunnExportModal()" class="btn-primary px-4 py-1 rounded text-sm ml-3 whitespace-nowrap">Export .docx</button>
+                            </div>
+                        </div>
+
+                        <!-- Narration Script .pdf -->
+                        <div class="border border-purple-700 p-4 rounded-lg" style="background:rgba(126,34,206,0.08)">
+                            <div class="flex items-center justify-between mb-1">
+                                <div>
+                                    <h3 class="font-semibold text-purple-300"><i class="fas fa-scroll mr-1"></i>Narration Script (.pdf)</h3>
+                                    <p class="text-xs text-theme-secondary mt-1">Single Narrator: numbered paragraphs + pacing notes. Multi-Voice: CHARACTER: prefixes, stage cues, full cast list.</p>
+                                </div>
+                                <button onclick="exportNarrationScriptPdf()" class="px-4 py-1 rounded text-sm ml-3 whitespace-nowrap border font-semibold" style="border-color:#a855f7;color:#a855f7">Export .pdf</button>
+                            </div>
+                        </div>
+
+                        <!-- TTS Routing Manifest .json -->
+                        <div class="border border-green-700 p-4 rounded-lg" style="background:rgba(21,128,61,0.08)">
+                            <div class="flex items-center justify-between mb-1">
+                                <div>
+                                    <h3 class="font-semibold text-green-300"><i class="fas fa-code mr-1"></i>TTS Routing Manifest (.json)</h3>
+                                    <p class="text-xs text-theme-secondary mt-1">Machine-readable segments: {order, speaker_id, voice_id, text, emotion, chapter, scene} for automated multi-voice audio pipelines.</p>
+                                </div>
+                                <button onclick="exportTTSManifest()" class="px-4 py-1 rounded text-sm ml-3 whitespace-nowrap border font-semibold" style="border-color:#22c55e;color:#22c55e">Export .json</button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -22550,6 +22599,806 @@ function setUILanguage(lang) {
             </tr>
         `).join('');
     }
+
+
+// ═══════════════════════════════════════════════════════════════
+// GENRE-MASTER WRITING ENGINE
+// ═══════════════════════════════════════════════════════════════
+
+// Layer A: Master Craft System Prompt (always active)
+var LAYER_A = 'You are a master novelist. Follow at all times:\n' +
+    '- Show, don\'t tell. No filter words ("she saw," "he felt," "he noticed").\n' +
+    '- Deep POV, single viewpoint per scene. Never head-hop.\n' +
+    '- Every scene has a goal, conflict, and outcome that changes the story state.\n' +
+    '- Vary sentence rhythm. No clichés.\n' +
+    '- Each character\'s voice must be distinct enough to identify without dialogue tags.\n' +
+    '- Chapters end on hooks (question, reversal, threat, or emotional turn).\n' +
+    '- Output in structured markdown: # Chapter N: Title, scene breaks as a line containing only #, emphasis as *italics*. No other formatting.\n' +
+    '- STRUCTURAL DIALOGUE MARKUP: every line of dialogue uses: <line speaker="name" emotion="adjective">"Spoken words."</line>. ' +
+    'Prose narration is plain text. This enables multi-voice TTS routing.';
+
+// Layer B: Genre Skill Packs (14 genres)
+var GENRE_PACKS = {
+    children: {
+        label: "Children's",
+        beats: 'Simple problem → three escalating tries → child solves it themselves → warm resolution.',
+        promises: 'Child protagonist solves the problem (never an adult). Safe, reassuring ending. Age-appropriate vocabulary. Gentle repetition and rhythm for read-aloud. No adult themes.',
+        prose: 'Simple sentences. Concrete nouns. Heavy on sensory delight, sound, and playful rhythm. Repetition welcome.',
+        pacing: 'Short chapters or none. Every scene vivid and fun. Read-aloud cadence is the primary test.',
+        wordCounts: { novella: 500, standard: 2000, epic: 10000 }
+    },
+    middlegrade: {
+        label: 'Middle Grade',
+        beats: 'Ordinary world → call to adventure/problem → friendship and identity trials → protagonist agency at climax → hopeful ending.',
+        promises: 'Protagonist aged 10–13. No graphic violence, no romance beyond crushes, no profanity. Humor welcome. Themes: belonging, friendship, first independence.',
+        prose: 'First person or close third. Brisk pacing, humor, emotional honesty. Voice-forward.',
+        pacing: 'Chapters 1,500–2,500 words. Hook every chapter.',
+        wordCounts: { novella: 25000, standard: 40000, epic: 55000 }
+    },
+    youngadult: {
+        label: 'Young Adult',
+        beats: 'Inciting disruption by 10% → identity vs. world pressure → midpoint self-redefinition → dark moment at 75% → protagonist-driven climax → earned ending.',
+        promises: 'Teen protagonist (15–18). Fast pacing. Emotional immediacy. Romance subplot common. Voice is everything.',
+        prose: 'First person or close third. Present or past tense. Short punchy sentences mixed with emotional interior monologue.',
+        pacing: 'Chapters 2,000–3,000 words. Emotional turns every chapter.',
+        wordCounts: { novella: 50000, standard: 65000, epic: 90000 }
+    },
+    romance: {
+        label: 'Romance',
+        beats: 'Meet by 10% → attraction + conflict engine → first kiss ~35% → commitment shift at 50% → black moment 75–80% → grand gesture 90% → HEA or HFN ending (MANDATORY, never violate).',
+        promises: 'Central love story IS the plot. Dual POV (alternating hero/heroine chapters) standard. Emotional interiority heavy. Heat level set by tone modifier.',
+        prose: 'Deep third or first person, alternating. Sensory and emotional.',
+        pacing: 'Chapters 2,500–3,500 words. Romantic tension in every scene.',
+        wordCounts: { novella: 50000, standard: 70000, epic: 90000 }
+    },
+    mystery: {
+        label: 'Mystery / Crime',
+        beats: 'Crime/body by 10% → detective takes case → suspect web + fair-play clues planted throughout → midpoint false solution or second crime → all-is-lost at 75% → reveal and explanation → justice restored.',
+        promises: 'FAIR PLAY: every clue needed for solution must appear before the reveal. Culprit must be on-page character. Red herrings resolved. Track planted clues in story bible.',
+        prose: 'Single detective POV. Observational, precise.',
+        pacing: 'Clue or revelation every chapter. Red herring beats between.',
+        wordCounts: { novella: 55000, standard: 75000, epic: 90000 }
+    },
+    thriller: {
+        label: 'Thriller',
+        beats: 'Threat established by 5% → stakes personal by 25% → ticking clock introduced → escalating reversals every 2–3 chapters → midpoint betrayal/twist → protagonist loses everything at 75% → confrontation climax.',
+        promises: 'Relentless forward momentum. The danger is known — suspense from stakes, not puzzle.',
+        prose: 'Short chapters (1,500–2,500). Lean sentences. Action verbs.',
+        pacing: 'Cliffhanger EVERY chapter. Ticking clock felt after midpoint.',
+        wordCounts: { novella: 70000, standard: 85000, epic: 100000 }
+    },
+    horror: {
+        label: 'Horror',
+        beats: 'Wrongness seeded in chapter 1 → escalating dread with calm valleys → rules of threat established implicitly → midpoint: denial impossible → isolation → climax confrontation → survival at cost, ambiguity, or doom.',
+        promises: 'Scares obey established rules. Dread > gore (gore level set by tone). Sound-rich descriptions for audio. Atmosphere heavy.',
+        prose: 'Close third or first. Slow burn. Sensory immersion.',
+        pacing: 'Quiet scenes between horrors essential — contrast amplifies dread.',
+        wordCounts: { novella: 40000, standard: 65000, epic: 90000 }
+    },
+    fantasy: {
+        label: 'Fantasy',
+        beats: 'Ordinary world → inciting break → threshold into larger world → mentor/allies → trials → midpoint true stakes revealed → dark night at 75% → climax using established magic/skills → return transformed.',
+        promises: 'Magic system internally consistent — never solve a problem with an ability not established (track in story bible). Names phonetically distinct and pronounceable (audio-critical).',
+        prose: 'Third person, past tense standard. Rich but not purple.',
+        pacing: 'Chapters 3,000–4,000. World-reveal paced with plot beats.',
+        wordCounts: { novella: 90000, standard: 110000, epic: 150000 }
+    },
+    scifi: {
+        label: 'Science Fiction',
+        beats: 'World + novum established by 10% → idea\'s consequences drive plot → midpoint: dark implication revealed → human cost escalates → climax where theme and technology collide → resolution answers thematic question.',
+        promises: 'Technology/science internally consistent. One big idea explored honestly. Exposition through conflict, never lectures.',
+        prose: 'Third or first person. Precise vocabulary. Unfamiliar made viscerally real.',
+        pacing: 'Idea implications front-loaded; human consequences rear-loaded.',
+        wordCounts: { novella: 80000, standard: 95000, epic: 110000 }
+    },
+    historical: {
+        label: 'Historical Fiction',
+        beats: 'Standard three-act with historical event as pressure on personal story → personal and historical climaxes converge.',
+        promises: 'Zero anachronisms in object, speech, or attitude. Period texture in sensory detail. Real figures handled respectfully.',
+        prose: 'Third person, past tense. Period-appropriate register without archaic difficulty.',
+        pacing: 'Chapters 3,000–4,000. Historical context woven naturally — no info-dump chapters.',
+        wordCounts: { novella: 90000, standard: 105000, epic: 120000 }
+    },
+    literary: {
+        label: 'Literary / Drama',
+        beats: 'Character interiority and thematic movement over plot mechanics. Quiet inciting wound → relational pressure → epiphany or anti-epiphany → resonant open ending.',
+        promises: 'Prose quality is the product: imagery, subtext, restraint. Theme explored, not stated. Ambiguity allowed.',
+        prose: 'Any POV that serves character. Sentence-level artistry. Interior thought prominent.',
+        pacing: 'Chapters 3,000–5,000. Emotional and thematic rhythm governs.',
+        wordCounts: { novella: 70000, standard: 85000, epic: 100000 }
+    },
+    memoir: {
+        label: 'Memoir',
+        beats: 'Framed around transformation arc: the wound/before → inciting disruption → descent and reckoning → turning point → the after and its meaning.',
+        promises: 'First person, past tense. Scene-based (show memories as scenes, not summary). Emotional honesty.',
+        prose: 'First person, past tense. Reflective intimacy. Truth over flattery.',
+        pacing: 'Chapters 3,000–4,000. Scenes > summary. Each chapter advances transformation arc.',
+        wordCounts: { novella: 60000, standard: 70000, epic: 80000 }
+    },
+    selfhelp: {
+        label: 'Self-Help / Business',
+        beats: 'Hook problem + promise in intro → framework overview → one principle per chapter: story/case → principle → evidence → application steps → chapter takeaway → final chapter: integration + call to action.',
+        promises: 'Actionable over abstract. Every chapter answers "what do I do with this?" Stories carry concepts (audio retention).',
+        prose: 'Second person "you" or inclusive "we". Direct, energetic. Short paragraphs.',
+        pacing: 'Chapters 3,000–5,000. Each chapter self-contained with clear takeaway.',
+        wordCounts: { novella: 40000, standard: 50000, epic: 60000 }
+    },
+    truecrime: {
+        label: 'True Crime',
+        beats: 'The crime (cold open, restrained) → victim as a person → investigation timeline → suspects and evidence → arrest/trial → aftermath and meaning.',
+        promises: 'Nothing invented — clearly distinguish fact, reasonable inference, and speculation. Victims treated with dignity. No gratuitous gore.',
+        prose: 'Third person narrative nonfiction. Journalistic precision. Clear sourcing language.',
+        pacing: 'Chapters 3,000–5,000. Evidence and timeline chapters alternate with character-focused chapters.',
+        wordCounts: { novella: 70000, standard: 80000, epic: 90000 }
+    }
+};
+
+// Layer C: Tone Modifiers
+var TONE_MODIFIERS = {
+    dramatic: { label: 'Dramatic', block: 'Default tone. Emotional weight taken seriously. Stakes felt on every page. No winking at the reader.' },
+    comedic: { label: 'Comedic', block: 'Humor density high. Banter-forward. Wordplay and comic reversals active. Jokes must land in audio — rhythm and timing carry the comedy, not visual puns.' },
+    dark: { label: 'Dark', block: 'Bleak or morally ambiguous ending permitted. Violence ceiling elevated (purposeful). Profanity allowed when character-appropriate. Dread, not shock, is the goal.' },
+    cozy: { label: 'Cozy', block: 'No on-page violence or graphic content. Amateur sleuth or warm community setting. Humor welcome. Death handled off-page or briefly. Safe, satisfying resolution.' },
+    steamy: { label: 'Steamy', block: 'Explicit romantic/sexual content permitted. Heat level high. Scenes explicit but purposeful — they advance character intimacy, not just physical description.' },
+    clean: { label: 'Clean / Inspirational', block: 'No profanity, no sexual content, no graphic violence. Faith arc optional. Ending warm and hopeful. Conflict emotional and relational, not physical.' }
+};
+
+// Layer D: Audio-First rules
+function getLayerD(audioFirst, narrationMode) {
+    if (!audioFirst) return '';
+    var shared = '\nAUDIO-FIRST RULES (all modes):\n' +
+        '- Never use adverb tags ("said angrily") — the performance conveys emotion.\n' +
+        '- Average sentence under 25 words. One idea per sentence.\n' +
+        '- No tongue-twisters or alliterative sound-alike phrases.\n' +
+        '- Character names must be phonetically distinct — no sound-alike pairs.\n' +
+        '- Re-anchor identities naturally in long scenes ("Ragnar, Gunnar\'s foster-brother").\n' +
+        '- Give performers rises and falls to play in every paragraph.';
+    if (narrationMode === 'single') {
+        return shared + '\nSINGLE NARRATOR MODE:\n' +
+            '- Front-load attribution: Maya said, "..." rather than "..." Maya said.\n' +
+            '- Limit speakers per scene to 3–4.\n' +
+            '- Prefer action beats as attribution over bare dialogue.';
+    }
+    return shared + '\nMULTI-VOICE MODE (' + (narrationMode === 'duet' ? 'Duet' : 'Full Cast') + '):\n' +
+        '- Dialogue tags near zero — each character has a distinct voice, attribution is redundant.\n' +
+        '- Replace any needed tag with a brief performable action beat.\n' +
+        '- Emotion captured in the emotion attribute of <line> markup — becomes stage direction.\n' +
+        '- No more than 2 speakers trading rapid unattributed lines at once.' +
+        (narrationMode === 'duet' ? '\n- Alternating-POV chapters map one narrator per POV. Interior narration voiced by that chapter\'s POV narrator.' : '');
+}
+
+// Compose Layers A+B+C+D
+function composeSystemPrompt(genre, ageBand, tone, audioFirst, narrationMode) {
+    var pack = GENRE_PACKS[genre] || GENRE_PACKS['literary'];
+    var toneObj = TONE_MODIFIERS[tone] || TONE_MODIFIERS['dramatic'];
+    var layerD = getLayerD(audioFirst, narrationMode);
+    var ageBandNote = '';
+    if (genre === 'children' && ageBand) {
+        var bands = {
+            picturebook: 'Picture Book (ages 3–5): 300–800 words total. Maximum sensory delight. Repetition essential. Every sentence must read aloud beautifully.',
+            earlyreader: 'Early Reader (ages 5–7): 1,000–2,500 words total. Short chapters. High-frequency words with a few new vocabulary words per chapter.',
+            chapterbook: 'Chapter Book (ages 7–9): 5,000–12,000 words total. Short chapters 500–800 words. More complex plot.'
+        };
+        ageBandNote = '\nAGE BAND: ' + (bands[ageBand] || '');
+    }
+    return [
+        LAYER_A,
+        '\n\nGENRE: ' + pack.label + ageBandNote,
+        'BEAT SHEET: ' + pack.beats,
+        'READER PROMISES: ' + pack.promises,
+        'PROSE REGISTER: ' + pack.prose,
+        'PACING: ' + pack.pacing,
+        '\nTONE — ' + toneObj.label + ': ' + toneObj.block,
+        layerD
+    ].join('\n');
+}
+
+// Story Bible
+var storyBible = {
+    characters: [], timeline: [], plantedClues: [], magicRules: [],
+    abilities: [], openLoops: [], settings: [], castingLayer: {}
+};
+
+function resetStoryBible() {
+    storyBible = { characters: [], timeline: [], plantedClues: [], magicRules: [], abilities: [], openLoops: [], settings: [], castingLayer: {} };
+}
+
+function getStoryBibleContext() {
+    var lines = ['STORY BIBLE (maintain continuity):'];
+    if (storyBible.characters.length) lines.push('Characters: ' + storyBible.characters.map(function(c) {
+        return c.name + (c.pronounce && c.pronounce !== c.name ? ' (pron: ' + c.pronounce + ')' : '') + ', ' + (c.genderAge || '');
+    }).join('; '));
+    if (storyBible.timeline.length) lines.push('Timeline: ' + storyBible.timeline.slice(-8).map(function(e) { return 'Ch' + e.chapter + ': ' + e.event; }).join('; '));
+    if (storyBible.plantedClues.length) lines.push('Planted clues: ' + storyBible.plantedClues.map(function(c) { return '"' + c.clue + '" (Ch' + c.chapter + ')'; }).join('; '));
+    if (storyBible.magicRules.length) lines.push('Magic/tech rules: ' + storyBible.magicRules.map(function(r) { return r.rule; }).join('; '));
+    if (storyBible.abilities.length) lines.push('Established abilities: ' + storyBible.abilities.map(function(a) { return a.character + ': ' + a.ability; }).join('; '));
+    var openLoops = storyBible.openLoops.filter(function(l) { return !l.closedChapter; });
+    if (openLoops.length) lines.push('Open loops: ' + openLoops.map(function(l) { return l.loop; }).join('; '));
+    return lines.join('\n');
+}
+
+// Generate Outline
+var gmOutlineData = null;
+
+async function generateOutline() {
+    var title = (document.getElementById('bookTitle') || {}).value || '';
+    title = title.trim();
+    var outline = (document.getElementById('storyOutline') || {}).value || '';
+    outline = outline.trim();
+
+    if (!title || !outline) {
+        showNotification('Please fill in the book title and story concept.', 'error');
+        return;
+    }
+
+    var genre = (document.getElementById('genreMaster') || {}).value || 'literary';
+    var ageBand = (document.getElementById('ageBand') || {}).value || '';
+    var tone = (document.getElementById('toneModifier') || {}).value || 'dramatic';
+    var lengthTier = (document.getElementById('lengthTier') || {}).value || 'standard';
+    var audioFirst = document.getElementById('audioFirstToggle') ? document.getElementById('audioFirstToggle').checked : true;
+    var nmRadio = document.querySelector('input[name="narrationMode"]:checked');
+    var narrationMode = nmRadio ? nmRadio.value : 'single';
+
+    syncCompatFields(genre, tone);
+
+    var pack = GENRE_PACKS[genre] || GENRE_PACKS['literary'];
+    var targetWords = pack.wordCounts[lengthTier] || pack.wordCounts['standard'];
+    var chapterWordTarget, chapterCount;
+    if (genre === 'children') {
+        chapterWordTarget = targetWords;
+        chapterCount = ageBand === 'picturebook' ? 1 : ageBand === 'earlyreader' ? 6 : 12;
+    } else {
+        chapterWordTarget = Math.round(targetWords / 12);
+        chapterCount = 12;
+    }
+
+    var ccEl = document.getElementById('chapterCount');
+    if (ccEl) ccEl.innerHTML = '<option value="' + chapterCount + '" selected>' + chapterCount + ' Chapters</option>';
+    var wpEl = document.getElementById('wordsPerChapter');
+    if (wpEl) wpEl.innerHTML = '<option value="' + chapterWordTarget + '" selected>' + chapterWordTarget + '</option>';
+
+    var systemPrompt = composeSystemPrompt(genre, ageBand, tone, audioFirst, narrationMode);
+
+    var userPrompt = 'Title: "' + title + '"\n' +
+        'Genre: ' + pack.label + ' | Tone: ' + (TONE_MODIFIERS[tone] || {label:tone}).label + ' | Length: ' + targetWords.toLocaleString() + ' words (' + lengthTier + ')\n' +
+        'Narration: ' + narrationMode + (audioFirst ? ' + Audio-First' : '') + '\n\n' +
+        'Story Concept: ' + outline + '\n\n' +
+        'Generate a chapter-by-chapter OUTLINE applying the genre beat sheet exactly — map each beat to specific chapters. Include for each chapter: number, title, 2-3 sentence summary, beat being fulfilled, word count target (~' + chapterWordTarget + ' words each, total ~' + targetWords.toLocaleString() + ').\n\n' +
+        'Also generate a STORY BIBLE: main characters (name, pronounce if non-obvious, genderAge, role), key settings, any world/magic/technology rules.\n\n' +
+        'Respond with ONLY valid JSON:\n' +
+        '{"chapters":[{"number":1,"title":"...","summary":"...","beat":"...","wordTarget":' + chapterWordTarget + ',"keyPoints":[]}],' +
+        '"storyBible":{"characters":[{"name":"...","pronounce":"...","genderAge":"...","role":"..."}],"settings":[{"name":"...","description":"..."}],"rules":[]}}';
+
+    showLoading('Composing outline with genre beat sheet...');
+
+    try {
+        var content = await callOpenAI([
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userPrompt }
+        ]);
+
+        content = content.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+        content = content.replace(/```json\s*/gi, '').replace(/```\s*/gi, '').trim();
+        var j0 = content.indexOf('{'), j1 = content.lastIndexOf('}');
+        if (j0 !== -1 && j1 !== -1) content = content.substring(j0, j1 + 1);
+
+        var parsed = JSON.parse(content);
+        if (!parsed.chapters || !parsed.chapters.length) throw new Error('No chapters in outline response.');
+
+        hideLoading();
+        gmOutlineData = { parsed: parsed, genre: genre, ageBand: ageBand, tone: tone, audioFirst: audioFirst, narrationMode: narrationMode, targetWords: targetWords, systemPrompt: systemPrompt };
+        resetStoryBible();
+
+        if (parsed.storyBible) {
+            (parsed.storyBible.characters || []).forEach(function(c) {
+                storyBible.characters.push({ name: c.name, pronounce: c.pronounce || c.name, genderAge: c.genderAge || '', role: c.role || '', povNarrator: false });
+            });
+            (parsed.storyBible.settings || []).forEach(function(s) {
+                storyBible.settings.push({ name: s.name, description: s.description, chapter: 0 });
+            });
+            (parsed.storyBible.rules || []).forEach(function(r) {
+                storyBible.magicRules.push({ rule: (typeof r === 'string') ? r : r.rule, establishedChapter: 0 });
+            });
+        }
+
+        displayChapterPlan(parsed);
+        var writeAllCTA = document.getElementById('writeAllCTA');
+        if (writeAllCTA) writeAllCTA.classList.remove('hidden');
+
+        if (narrationMode !== 'single' && storyBible.characters.length) showCastingBanner();
+
+        if (!storyData.settings) storyData.settings = {};
+        Object.assign(storyData.settings, { genreMaster: genre, ageBand: ageBand, toneModifier: tone, lengthTier: lengthTier, audioFirst: audioFirst, narrationMode: narrationMode });
+        saveProjectState();
+        showNotification('Outline generated! Review, then click Write All Chapters.', 'success');
+
+    } catch (err) {
+        hideLoading();
+        console.error('Outline error:', err);
+        showNotification('Failed to generate outline: ' + err.message, 'error');
+    }
+}
+
+function syncCompatFields(genre, tone) {
+    var genreMap = { children:'children-adventure', middlegrade:'children-adventure', youngadult:'YoungAdult', romance:'fiction-romance', mystery:'fiction-mystery', thriller:'fiction-mystery', horror:'fiction-horror', fantasy:'fiction-fantasy', scifi:'fiction-scifi', historical:'fiction-historical', literary:'fiction-literary', memoir:'nonfiction-biography', selfhelp:'nonfiction-selfhelp', truecrime:'nonfiction-biography' };
+    var storyGenreMap = { children:'Children', middlegrade:'Children', youngadult:'YoungAdult', romance:'Romance', mystery:'Thriller', thriller:'Thriller', horror:'Horror', fantasy:'Fantasy', scifi:'General', historical:'Drama', literary:'Drama', memoir:'Memoir', selfhelp:'Memoir', truecrime:'Memoir' };
+    var toneMap = { dramatic:'dramatic', comedic:'humorous', dark:'mysterious', cozy:'casual', steamy:'romantic', clean:'inspiring' };
+    var genreEl = document.getElementById('genre');
+    var sgEl = document.getElementById('storyGenre');
+    var toneEl = document.getElementById('tone');
+    if (genreEl) genreEl.innerHTML = '<option value="' + (genreMap[genre]||'fiction-literary') + '" selected>' + (genreMap[genre]||'fiction-literary') + '</option>';
+    if (sgEl) sgEl.innerHTML = '<option value="' + (storyGenreMap[genre]||'General') + '" selected>' + (storyGenreMap[genre]||'General') + '</option>';
+    if (toneEl) toneEl.innerHTML = '<option value="' + (toneMap[tone]||'dramatic') + '" selected>' + (toneMap[tone]||'dramatic') + '</option>';
+}
+
+function onGenreChange() {
+    var genre = (document.getElementById('genreMaster') || {}).value;
+    var ageBandRow = document.getElementById('ageBandRow');
+    if (ageBandRow) ageBandRow.classList.toggle('hidden', genre !== 'children');
+    onLengthChange();
+}
+
+function onLengthChange() {
+    var genre = (document.getElementById('genreMaster') || {}).value || 'literary';
+    var tier = (document.getElementById('lengthTier') || {}).value || 'standard';
+    var pack = GENRE_PACKS[genre];
+    var hint = document.getElementById('lengthHint');
+    if (pack && hint) {
+        var wc = pack.wordCounts[tier];
+        hint.textContent = wc ? '~' + wc.toLocaleString() + ' words for this genre' : '';
+    }
+}
+
+// Narration mode radio button styling
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.gm-nm-opt input[type=radio]').forEach(function(radio) {
+        radio.addEventListener('change', function() {
+            document.querySelectorAll('.gm-nm-opt').forEach(function(el) {
+                el.classList.remove('border-cyan-500', 'bg-cyan-900/20');
+                el.classList.add('border-theme');
+            });
+            if (this.checked) {
+                var parent = this.closest('.gm-nm-opt');
+                if (parent) { parent.classList.remove('border-theme'); parent.classList.add('border-cyan-500', 'bg-cyan-900/20'); }
+            }
+        });
+    });
+    onLengthChange();
+});
+
+// Casting banner
+function showCastingBanner() {
+    var existing = document.getElementById('castingBanner');
+    if (existing) existing.remove();
+    var banner = document.createElement('div');
+    banner.id = 'castingBanner';
+    banner.className = 'mt-4 p-4 rounded-xl border-2 border-purple-500';
+    banner.style.background = 'rgba(126,34,206,0.1)';
+    banner.innerHTML = '<div class="flex items-center justify-between">' +
+        '<div class="flex items-center gap-3"><i class="fas fa-users text-purple-400 text-xl"></i>' +
+        '<div><div class="font-bold text-purple-300">Casting Screen &mdash; ' + storyBible.characters.length + ' Characters Detected</div>' +
+        '<div class="text-xs text-theme-secondary">Assign a voice to each character for automated multi-voice routing</div></div></div>' +
+        '<button onclick="openCastingScreen()" class="px-4 py-2 rounded-lg font-semibold text-sm text-white" style="background:linear-gradient(135deg,#a855f7,#7c3aed)">Open Casting</button>' +
+        '</div>';
+    var writeAllCTA = document.getElementById('writeAllCTA');
+    if (writeAllCTA) writeAllCTA.insertAdjacentElement('afterend', banner);
+}
+
+// Casting screen modal
+function openCastingScreen() {
+    var narrationMode = (document.querySelector('input[name="narrationMode"]:checked') || {}).value || 'single';
+    var voiceOptions = ['alloy','echo','fable','onyx','nova','shimmer','ash','ballad','coral','sage','verse'];
+
+    var rows = storyBible.characters.map(function(c, i) {
+        var casting = storyBible.castingLayer[c.name] || {};
+        return '<tr class="border-b border-theme">' +
+            '<td class="py-2 pr-4 font-semibold">' + c.name + '</td>' +
+            '<td class="py-2 pr-4 text-sm text-theme-secondary">' + (c.genderAge || '—') + '</td>' +
+            '<td class="py-2 pr-4"><input value="' + (c.pronounce || c.name) + '" ' +
+                'onchange="storyBible.characters[' + i + '].pronounce=this.value" ' +
+                'class="px-2 py-1 rounded bg-theme-primary text-theme-primary text-sm w-full form-field"></td>' +
+            '<td class="py-2"><select onchange="assignCharacterVoice(' + i + ',this.value)" ' +
+                'class="px-2 py-1 rounded bg-theme-primary text-theme-primary text-sm form-field">' +
+                '<option value="">— assign voice —</option>' +
+                voiceOptions.map(function(v) { return '<option value="' + v + '"' + (casting.voiceId === v ? ' selected' : '') + '>' + v + '</option>'; }).join('') +
+                '</select></td>' +
+            '</tr>';
+    }).join('');
+
+    var modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4';
+    modal.id = 'castingModal';
+    modal.innerHTML = '<div class="bg-theme-secondary p-6 rounded-xl border-2 border-purple-500 max-w-3xl w-full max-h-screen-90 overflow-y-auto">' +
+        '<div class="flex justify-between items-center mb-4"><h2 class="text-xl font-bold text-purple-300"><i class="fas fa-users mr-2"></i>Casting — ' +
+        (narrationMode === 'duet' ? 'Duet' : 'Full Cast') + '</h2>' +
+        '<button onclick="document.getElementById(\'castingModal\').remove()" class="text-gray-400 hover:text-white"><i class="fas fa-times text-xl"></i></button></div>' +
+        '<p class="text-sm text-theme-secondary mb-4">Assign a voice to each character. Assignments drive automatic line-to-voice routing in TTS generation and Narration Script export.</p>' +
+        '<div class="overflow-x-auto"><table class="w-full text-sm mb-4"><thead><tr class="text-left text-xs text-theme-secondary uppercase">' +
+        '<th class="pb-2 pr-4">Character</th><th class="pb-2 pr-4">Gender/Age</th><th class="pb-2 pr-4">Pronunciation</th><th class="pb-2">Voice</th>' +
+        '</tr></thead><tbody>' + rows + '</tbody></table></div>' +
+        '<div class="flex justify-end gap-3 mt-4">' +
+        '<button onclick="document.getElementById(\'castingModal\').remove()" class="btn-secondary px-4 py-2 rounded-lg">Cancel</button>' +
+        '<button onclick="saveCasting()" class="btn-primary px-4 py-2 rounded-lg">Save Casting</button>' +
+        '</div></div>';
+    document.body.appendChild(modal);
+}
+
+function assignCharacterVoice(charIndex, voiceId) {
+    var c = storyBible.characters[charIndex];
+    if (!c) return;
+    storyBible.castingLayer[c.name] = { voiceId: voiceId, displayName: c.name, pronounce: c.pronounce || c.name, descriptor: c.genderAge || '' };
+}
+
+function saveCasting() {
+    document.getElementById('castingModal') && document.getElementById('castingModal').remove();
+    var assigned = Object.keys(storyBible.castingLayer).length;
+    showNotification('Casting saved — ' + assigned + ' character' + (assigned !== 1 ? 's' : '') + ' assigned.', 'success');
+}
+
+// ─── SHUNN MANUSCRIPT EXPORT (.docx) ────────────────────────────
+function openShunnExportModal() {
+    var existing = document.getElementById('shunnModal');
+    if (existing) existing.remove();
+    var modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4';
+    modal.id = 'shunnModal';
+    modal.innerHTML =
+        '<div class="bg-theme-secondary p-6 rounded-xl border-2 border-cyan-700 max-w-md w-full">' +
+        '<div class="flex justify-between items-center mb-4">' +
+        '<h2 class="text-xl font-bold text-cyan-300"><i class="fas fa-file-word mr-2"></i>Export Shunn Manuscript</h2>' +
+        '<button onclick="document.getElementById(\'shunnModal\').remove()" class="text-gray-400 hover:text-white"><i class="fas fa-times"></i></button>' +
+        '</div><div class="space-y-3">' +
+        '<div><label class="block text-sm font-semibold mb-1">Legal Name</label><input id="shunnLegal" class="w-full px-3 py-2 rounded form-field bg-theme-primary text-theme-primary" placeholder="Your legal name"></div>' +
+        '<div><label class="block text-sm font-semibold mb-1">Pen Name / Byline</label><input id="shunnByline" class="w-full px-3 py-2 rounded form-field bg-theme-primary text-theme-primary" placeholder="Pen name (or same as legal)"></div>' +
+        '<div><label class="block text-sm font-semibold mb-1">Address</label><input id="shunnAddress" class="w-full px-3 py-2 rounded form-field bg-theme-primary text-theme-primary" placeholder="123 Main St, City, State ZIP"></div>' +
+        '<div><label class="block text-sm font-semibold mb-1">Email</label><input id="shunnEmail" class="w-full px-3 py-2 rounded form-field bg-theme-primary text-theme-primary" placeholder="email@example.com"></div>' +
+        '<div><label class="block text-sm font-semibold mb-1">Font</label><select id="shunnFont" class="w-full px-3 py-2 rounded form-field bg-theme-primary text-theme-primary">' +
+        '<option value="Times New Roman">Times New Roman (standard)</option><option value="Courier New">Courier New</option></select></div>' +
+        '<label class="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" id="shunnEndMark"> Add centered END after final line</label>' +
+        '</div><div class="flex justify-end gap-3 mt-5">' +
+        '<button onclick="document.getElementById(\'shunnModal\').remove()" class="btn-secondary px-4 py-2 rounded">Cancel</button>' +
+        '<button onclick="exportShunnDocx()" class="btn-primary px-4 py-2 rounded"><i class="fas fa-download mr-1"></i>Generate .docx</button>' +
+        '</div></div>';
+    document.body.appendChild(modal);
+}
+
+async function exportShunnDocx() {
+    if (!window.docx) {
+        showNotification('DOCX library not loaded yet. Please wait a moment and try again.', 'error');
+        return;
+    }
+    var legal = (document.getElementById('shunnLegal') || {}).value || 'Author Name';
+    var byline = (document.getElementById('shunnByline') || {}).value || legal;
+    var address = (document.getElementById('shunnAddress') || {}).value || '';
+    var email = (document.getElementById('shunnEmail') || {}).value || '';
+    var fontName = (document.getElementById('shunnFont') || {}).value || 'Times New Roman';
+    var addEnd = document.getElementById('shunnEndMark') ? document.getElementById('shunnEndMark').checked : false;
+    var title = (storyData && storyData.title) || (document.getElementById('bookTitle') || {}).value || 'Untitled';
+    var rawText = (document.getElementById('storyEditor') || {}).value || '';
+
+    if (!rawText.trim()) {
+        showNotification('No story content found. Write your story in Workspace first.', 'error');
+        return;
+    }
+    var modal = document.getElementById('shunnModal');
+    if (modal) modal.remove();
+    showLoading('Building Shunn manuscript .docx...');
+
+    try {
+        var D = window.docx;
+        var Document = D.Document, Packer = D.Packer, Paragraph = D.Paragraph, TextRun = D.TextRun;
+        var AlignmentType = D.AlignmentType, PageBreak = D.PageBreak, Header = D.Header, PageNumber = D.PageNumber;
+
+        var surname = (legal.split(' ').pop() || 'Author').toUpperCase();
+        var keyword = title.split(/\s+/).slice(0, 2).join(' ').toUpperCase();
+        var parsed = parseStoryMarkdown(rawText);
+        var chapters = parsed.chapters;
+        var children = [];
+
+        // Contact block — page 1
+        [legal, address, email].filter(Boolean).forEach(function(line) {
+            children.push(new Paragraph({ children: [new TextRun({ text: line, font: fontName, size: 24 })], spacing: { line: 276 } }));
+        });
+        // Push title ~1/3 down
+        for (var s = 0; s < 8; s++) children.push(new Paragraph({ children: [new TextRun({ text: '', font: fontName, size: 24 })], spacing: { line: 276 } }));
+
+        children.push(new Paragraph({ children: [new TextRun({ text: title.toUpperCase(), font: fontName, size: 24, bold: true })], alignment: AlignmentType.CENTER, spacing: { line: 276 } }));
+        children.push(new Paragraph({ children: [new TextRun({ text: '', font: fontName, size: 24 })], alignment: AlignmentType.CENTER, spacing: { line: 276 } }));
+        children.push(new Paragraph({ children: [new TextRun({ text: 'by ' + byline, font: fontName, size: 24 })], alignment: AlignmentType.CENTER, spacing: { line: 276 } }));
+
+        // Chapters
+        for (var ci = 0; ci < chapters.length; ci++) {
+            var ch = chapters[ci];
+            children.push(new Paragraph({ children: [new PageBreak()] }));
+            for (var sp = 0; sp < 8; sp++) children.push(new Paragraph({ children: [new TextRun({ text: '', font: fontName, size: 24 })], spacing: { line: 276 } }));
+            children.push(new Paragraph({ children: [new TextRun({ text: ch.title.toUpperCase(), font: fontName, size: 24, bold: true })], alignment: AlignmentType.CENTER, spacing: { line: 276 } }));
+            children.push(new Paragraph({ children: [new TextRun({ text: '', font: fontName, size: 24 })], spacing: { line: 276 } }));
+
+            for (var si = 0; si < ch.scenes.length; si++) {
+                var scene = ch.scenes[si];
+                for (var pi = 0; pi < scene.paragraphs.length; pi++) {
+                    var para = scene.paragraphs[pi];
+                    if (para === '#SCENE_BREAK#') {
+                        children.push(new Paragraph({ children: [new TextRun({ text: '#', font: fontName, size: 24 })], alignment: AlignmentType.CENTER, spacing: { line: 480, before: 240, after: 240 } }));
+                    } else {
+                        children.push(new Paragraph({ children: [new TextRun({ text: renderDialogueMarkup(para), font: fontName, size: 24 })], indent: { firstLine: 720 }, spacing: { line: 480 } }));
+                    }
+                }
+            }
+        }
+
+        if (addEnd) {
+            children.push(new Paragraph({ children: [new TextRun({ text: 'END', font: fontName, size: 24 })], alignment: AlignmentType.CENTER, spacing: { line: 480, before: 480 } }));
+        }
+
+        var doc = new Document({
+            sections: [{
+                properties: {
+                    page: {
+                        margin: { top: 1440, right: 1440, bottom: 1440, left: 1440 },
+                        size: { width: 12240, height: 15840 }
+                    }
+                },
+                headers: {
+                    default: new Header({
+                        children: [new Paragraph({
+                            children: [
+                                new TextRun({ text: surname + ' / ' + keyword + ' / ', font: fontName, size: 24 }),
+                                new TextRun({ children: [PageNumber.CURRENT], font: fontName, size: 24 })
+                            ],
+                            alignment: AlignmentType.RIGHT
+                        })]
+                    })
+                },
+                children: children
+            }]
+        });
+
+        var blob = await Packer.toBlob(doc);
+        var safe = title.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url; a.download = safe + '_shunn.docx'; a.click();
+        URL.revokeObjectURL(url);
+        hideLoading();
+        showNotification('Shunn manuscript downloaded!', 'success');
+
+    } catch (err) {
+        hideLoading();
+        console.error('Shunn export error:', err);
+        showNotification('Export failed: ' + err.message, 'error');
+    }
+}
+
+function shunnRoundWordCount(wc) {
+    if (wc < 1500) return Math.round(wc / 100) * 100;
+    if (wc <= 10000) return Math.round(wc / 500) * 500;
+    if (wc <= 25000) return Math.round(wc / 1000) * 1000;
+    return Math.round(wc / 5000) * 5000;
+}
+
+function parseStoryMarkdown(text) {
+    var lines = text.split('\n');
+    var chapters = [];
+    var currentChapter = null;
+    var currentScene = { paragraphs: [] };
+    var paraBuf = '';
+
+    function flushPara() {
+        if (paraBuf.trim()) { currentScene.paragraphs.push(paraBuf.trim()); paraBuf = ''; }
+    }
+    function flushScene() {
+        flushPara();
+        if (currentChapter && currentScene.paragraphs.length) { currentChapter.scenes.push(currentScene); }
+        currentScene = { paragraphs: [] };
+    }
+
+    for (var i = 0; i < lines.length; i++) {
+        var trimmed = lines[i].trim();
+        if (/^#\s+Chapter\s+\d+/i.test(trimmed)) {
+            flushScene();
+            if (currentChapter) chapters.push(currentChapter);
+            currentChapter = { title: trimmed.replace(/^#+\s*/, ''), scenes: [] };
+        } else if (trimmed === '#') {
+            flushScene();
+        } else if (trimmed === '') {
+            flushPara();
+        } else {
+            paraBuf += (paraBuf ? ' ' : '') + trimmed;
+        }
+    }
+    flushScene();
+    if (currentChapter) chapters.push(currentChapter);
+    if (!chapters.length) {
+        chapters.push({ title: (storyData && storyData.title) || 'Story', scenes: [currentScene] });
+    }
+    return { chapters: chapters };
+}
+
+function renderDialogueMarkup(text) {
+    return text
+        .replace(/<line[^>]*>/gi, '')
+        .replace(/<\/line>/gi, '')
+        .replace(/\*([^*]+)\*/g, '$1')
+        .trim();
+}
+
+function parseDialogueSegments(para) {
+    var segments = [];
+    var lineRegex = /<line\s+speaker="([^"]+)"\s+emotion="([^"]*)">([\s\S]*?)<\/line>/gi;
+    var lastIndex = 0;
+    var match;
+    while ((match = lineRegex.exec(para)) !== null) {
+        if (match.index > lastIndex) {
+            var narr = para.substring(lastIndex, match.index).trim();
+            if (narr) segments.push({ type: 'narration', text: narr });
+        }
+        segments.push({ type: 'dialogue', speaker: match[1], emotion: match[2], text: match[3].trim() });
+        lastIndex = match.index + match[0].length;
+    }
+    if (lastIndex < para.length) {
+        var tail = para.substring(lastIndex).trim();
+        if (tail) segments.push({ type: 'narration', text: tail });
+    }
+    if (!segments.length) segments.push({ type: 'narration', text: para });
+    return segments;
+}
+
+// ─── NARRATION SCRIPT PDF ───────────────────────────────────────
+function exportNarrationScriptPdf() {
+    var rawText = (document.getElementById('storyEditor') || {}).value || '';
+    if (!rawText.trim()) { showNotification('No story content found. Write your story first.', 'error'); return; }
+
+    var jsPDFLib = window.jspdf;
+    if (!jsPDFLib || !jsPDFLib.jsPDF) { showNotification('PDF library not loaded.', 'error'); return; }
+
+    var title = (storyData && storyData.title) || (document.getElementById('bookTitle') || {}).value || 'Untitled';
+    var nmRadio = document.querySelector('input[name="narrationMode"]:checked');
+    var narrationMode = nmRadio ? nmRadio.value : 'single';
+    var parsed = parseStoryMarkdown(rawText);
+    var chapters = parsed.chapters;
+
+    var doc = new jsPDFLib.jsPDF({ unit: 'pt', format: 'letter', orientation: 'portrait' });
+    var pageW = doc.internal.pageSize.getWidth();
+    var pageH = doc.internal.pageSize.getHeight();
+    var margin = 72;
+    var textW = pageW - margin * 2;
+    var y = margin;
+    var pageNum = 1;
+
+    function checkPage(needed) {
+        if (y + (needed || 20) > pageH - margin) { doc.addPage(); doc.setFillColor(15,15,20); doc.rect(0,0,pageW,pageH,'F'); pageNum++; y = margin; }
+    }
+    function writeLine(text, opts) {
+        opts = opts || {};
+        var size = opts.size || 14, bold = opts.bold || false, indent = opts.indent || 0, color = opts.color || [220,220,220], leading = opts.leading || 20;
+        doc.setFontSize(size); doc.setFont('helvetica', bold ? 'bold' : 'normal'); doc.setTextColor.apply(doc, color);
+        var lns = doc.splitTextToSize(text, textW - indent);
+        checkPage(lns.length * leading + 6);
+        doc.text(lns, margin + indent, y); y += lns.length * leading + 6;
+    }
+
+    // Dark bg
+    doc.setFillColor(15,15,20); doc.rect(0,0,pageW,pageH,'F');
+
+    // Title
+    doc.setFontSize(22); doc.setFont('helvetica','bold'); doc.setTextColor(120,227,254);
+    doc.text(title.toUpperCase(), pageW/2, margin+40, {align:'center'});
+    doc.setFontSize(13); doc.setFont('helvetica','normal'); doc.setTextColor(160,160,160);
+    doc.text('Narration Script \u2014 ' + (narrationMode==='single'?'Single Narrator':narrationMode==='duet'?'Duet':'Full Cast'), pageW/2, margin+65, {align:'center'});
+
+    y = margin + 100;
+
+    // Cast list for multi-voice
+    if (narrationMode !== 'single' && storyBible.characters.length) {
+        writeLine('CAST LIST', { bold: true, size: 12, color: [120,227,254] }); y += 4;
+        storyBible.characters.forEach(function(c) {
+            var casting = storyBible.castingLayer[c.name] || {};
+            var line = c.name + (c.pronounce && c.pronounce !== c.name ? ' (pron: ' + c.pronounce + ')' : '') + (c.genderAge ? '  ' + c.genderAge : '') + (casting.voiceId ? ' \u2014 Voice: ' + casting.voiceId : '');
+            writeLine(line, { size: 12, color: [200,200,200] });
+        });
+        y += 8;
+    }
+
+    // Pronunciation guide
+    var needsPronounce = storyBible.characters.filter(function(c) { return c.pronounce && c.pronounce !== c.name; });
+    if (needsPronounce.length) {
+        writeLine('PRONUNCIATION GUIDE', { bold: true, size: 11, color: [120,227,254] });
+        needsPronounce.forEach(function(c) { writeLine(c.name + ' = "' + c.pronounce + '"', { size: 11, indent: 16, color: [180,180,180] }); });
+        y += 8;
+    }
+
+    // Chapters
+    var paraCounter = 0;
+    chapters.forEach(function(ch) {
+        doc.addPage(); doc.setFillColor(15,15,20); doc.rect(0,0,pageW,pageH,'F'); pageNum++; y = margin;
+        // Header
+        doc.setFontSize(9); doc.setFont('helvetica','normal'); doc.setTextColor(100,100,100);
+        doc.text(title + ' \u2014 ' + ch.title + ' \u2014 p.' + pageNum, pageW - margin, 36, {align:'right'});
+        writeLine(ch.title.toUpperCase(), { bold: true, size: 16, color: [120,227,254] }); y += 8;
+
+        ch.scenes.forEach(function(scene) {
+            scene.paragraphs.forEach(function(para) {
+                paraCounter++;
+                if (para === '#SCENE_BREAK#') {
+                    checkPage(30); doc.setTextColor(120,227,254); doc.setFontSize(16);
+                    doc.text('#', pageW/2, y, {align:'center'}); y += 28; return;
+                }
+                if (narrationMode === 'single') {
+                    checkPage(20);
+                    doc.setFontSize(9); doc.setFont('helvetica','normal'); doc.setTextColor(100,100,100);
+                    doc.text(paraCounter + '.', margin - 20, y);
+                    writeLine(para.replace(/<line[^>]*>|<\/line>/gi,''), { size: 14, color: [230,230,230] });
+                } else {
+                    parseDialogueSegments(para).forEach(function(seg) {
+                        checkPage(22);
+                        if (seg.type === 'narration') {
+                            writeLine('NARRATOR: ' + seg.text, { size: 13, color: [200,200,200] });
+                        } else {
+                            var upper = seg.speaker.toUpperCase();
+                            var emotionCue = seg.emotion ? ' (' + seg.emotion + ')' : '';
+                            var label = upper + emotionCue + ': ';
+                            doc.setFontSize(12); doc.setFont('helvetica','bold'); doc.setTextColor(120,227,254);
+                            doc.text(label, margin, y);
+                            var labelW = doc.getTextWidth(label);
+                            var dlns = doc.splitTextToSize(seg.text, textW - labelW);
+                            doc.setFont('helvetica','normal'); doc.setTextColor(255,255,255);
+                            doc.text(dlns, margin + labelW, y); y += dlns.length * 18 + 4;
+                        }
+                    });
+                }
+                y += 4;
+            });
+        });
+    });
+
+    var safe = title.replace(/[^a-z0-9]/gi,'_').toLowerCase();
+    doc.save(safe + '_narration_script.pdf');
+    showNotification('Narration Script PDF downloaded!', 'success');
+}
+
+// ─── TTS ROUTING MANIFEST ───────────────────────────────────────
+function exportTTSManifest() {
+    var rawText = (document.getElementById('storyEditor') || {}).value || '';
+    if (!rawText.trim()) { showNotification('No story content found.', 'error'); return; }
+
+    var chapters = parseStoryMarkdown(rawText).chapters;
+    var manifest = [];
+    var order = 0;
+
+    chapters.forEach(function(ch) {
+        var sceneIndex = 0;
+        ch.scenes.forEach(function(scene) {
+            sceneIndex++;
+            scene.paragraphs.forEach(function(para) {
+                if (para === '#SCENE_BREAK#') return;
+                parseDialogueSegments(para).forEach(function(seg) {
+                    order++;
+                    var speakerId = seg.type === 'narration' ? 'narrator' : seg.speaker.toLowerCase().replace(/\s+/g,'_');
+                    var casting = storyBible.castingLayer[seg.speaker] || {};
+                    manifest.push({
+                        order: order,
+                        chapter: ch.title,
+                        scene: sceneIndex,
+                        type: seg.type,
+                        speaker_id: speakerId,
+                        voice_id: casting.voiceId || (seg.type === 'narration' ? 'narrator' : ''),
+                        text: seg.text,
+                        emotion: seg.emotion || ''
+                    });
+                });
+            });
+        });
+    });
+
+    var title = (storyData && storyData.title) || 'story';
+    var safe = title.replace(/[^a-z0-9]/gi,'_').toLowerCase();
+    var blob = new Blob([JSON.stringify({ title: title, generated: new Date().toISOString(), segmentCount: manifest.length, segments: manifest }, null, 2)], { type: 'application/json' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a'); a.href = url; a.download = safe + '_tts_manifest.json'; a.click();
+    URL.revokeObjectURL(url);
+    showNotification('TTS Manifest exported \u2014 ' + manifest.length + ' segments.', 'success');
+}
 
     async function adminUpdatePlan(userId, plan) {
         if (!plan) return;
