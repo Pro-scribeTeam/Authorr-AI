@@ -10869,25 +10869,55 @@ Format as clean, readable text ready for narration.`;
         // Parse story text into narrator + character dialogue segments
         function parseStoryIntoSegments(content, voiceAssignments, narratorVoice) {
             const segments = [];
-            // Match: "dialogue" said/replied/asked/etc CharacterName  OR  CharacterName said/replied "dialogue"
-            const re = /"([^"]{1,600})"\s*[,.]?\s*(?:said|replied|asked|whispered|shouted|answered|exclaimed|cried|muttered|called|yelled|added|continued|began|snapped|urged|pleaded|insisted)\s+([A-Z][a-zA-Z]+)/g;
+
+            // Build case-insensitive voice lookup
+            const voiceMap = {};
+            if (voiceAssignments) {
+                Object.entries(voiceAssignments).forEach(([name, voice]) => {
+                    if (voice) voiceMap[name.toLowerCase()] = voice;
+                });
+            }
+            function lookupVoice(charName) {
+                return voiceMap[charName.toLowerCase()] || narratorVoice;
+            }
+
+            const verbPat = '(?:said|replied|asked|whispered|shouted|answered|exclaimed|cried|muttered|called|yelled|added|continued|began|snapped|urged|pleaded|insisted|growled|laughed|sighed|breathed)';
+
+            // After-attribution:  "dialogue"[,.] said Character
+            const reAfter  = new RegExp(`"([^"]{1,600})"[,.]?\\s*${verbPat}\\s+([A-Z][a-zA-Z]+)`, 'g');
+            // Before-attribution: Character said[,] "dialogue"
+            const reBefore = new RegExp(`([A-Z][a-zA-Z]+)\\s+${verbPat}[,.]?\\s+"([^"]{1,600})"`, 'g');
+
+            // Collect all matches with their position
+            const allMatches = [];
+            let m;
+            while ((m = reAfter.exec(content))  !== null) allMatches.push({ index: m.index, end: m.index + m[0].length, text: `"${m[1]}"`, charName: m[2] });
+            while ((m = reBefore.exec(content)) !== null) allMatches.push({ index: m.index, end: m.index + m[0].length, text: `"${m[2]}"`, charName: m[1] });
+
+            // Sort by position; discard overlapping matches
+            allMatches.sort((a, b) => a.index - b.index);
+            const deduped = [];
+            let lastEnd = 0;
+            for (const hit of allMatches) {
+                if (hit.index >= lastEnd) { deduped.push(hit); lastEnd = hit.end; }
+            }
+
+            // Build segments: narrator prose between dialogue hits, then the dialogue line
             let lastIndex = 0;
-            let match;
-            while ((match = re.exec(content)) !== null) {
-                if (match.index > lastIndex) {
-                    const narText = content.slice(lastIndex, match.index).trim();
+            for (const hit of deduped) {
+                if (hit.index > lastIndex) {
+                    const narText = content.slice(lastIndex, hit.index).trim();
                     if (narText) segments.push({ text: narText, voice: narratorVoice, character: 'Narrator' });
                 }
-                const charName = match[2];
-                const assignedVoice = (voiceAssignments && voiceAssignments[charName]) || narratorVoice;
-                segments.push({ text: `"${match[1]}"`, voice: assignedVoice, character: charName });
-                lastIndex = match.index + match[0].length;
+                segments.push({ text: hit.text, voice: lookupVoice(hit.charName), character: hit.charName });
+                lastIndex = hit.end;
             }
             if (lastIndex < content.length) {
                 const rem = content.slice(lastIndex).trim();
                 if (rem) segments.push({ text: rem, voice: narratorVoice, character: 'Narrator' });
             }
-            // If nothing was parsed (no matched dialogue), fall back to single narrator segment
+
+            // Fall back to single narrator segment if nothing matched
             if (segments.length === 0) {
                 segments.push({ text: content, voice: narratorVoice, character: 'Narrator' });
             }
