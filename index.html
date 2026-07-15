@@ -10627,8 +10627,7 @@ Format as clean, readable text ready for narration.`;
                 const characters = JSON.parse(cleanedResponse);
                 return Array.isArray(characters) ? characters : [];
             } catch (error) {
-                console.error('Character detection error:', error);
-                console.error('Failed to parse AI response as JSON. Raw response was:', analysis);
+                console.error('Character detection error:', error.message || error);
                 
                 // Try to extract character names manually as fallback
                 try {
