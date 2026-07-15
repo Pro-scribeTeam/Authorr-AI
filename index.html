@@ -10893,6 +10893,36 @@ Format as clean, readable text ready for narration.`;
             }
             return segments;
         }
+
+        // Parses <line speaker="Name" emotion="...">text</line> markup produced by the Genre Engine.
+        // Routes each speaker to their assigned voice from storyBible.castingLayer.
+        function parseLineMarkupSegments(content, castingLayer, narratorVoice) {
+            const segments = [];
+            const re = /<line\s+speaker="([^"]*)"(?:\s+emotion="([^"]*)")?[^>]*>([\s\S]*?)<\/line>/gi;
+            let lastIndex = 0;
+            let match;
+            while ((match = re.exec(content)) !== null) {
+                if (match.index > lastIndex) {
+                    const narText = content.slice(lastIndex, match.index).replace(/<[^>]+>/g, '').trim();
+                    if (narText) segments.push({ text: narText, voice: narratorVoice, character: 'Narrator' });
+                }
+                const speaker = match[1].trim();
+                const text = match[3].replace(/<[^>]+>/g, '').trim();
+                const casting = castingLayer && castingLayer[speaker];
+                const voice = (casting && casting.voiceId) || narratorVoice;
+                if (text) segments.push({ text, voice, character: speaker });
+                lastIndex = match.index + match[0].length;
+            }
+            if (lastIndex < content.length) {
+                const rem = content.slice(lastIndex).replace(/<[^>]+>/g, '').trim();
+                if (rem) segments.push({ text: rem, voice: narratorVoice, character: 'Narrator' });
+            }
+            if (segments.length === 0) {
+                segments.push({ text: content.replace(/<[^>]+>/g, ''), voice: narratorVoice, character: 'Narrator' });
+            }
+            return segments;
+        }
+
         
         function populateNarratorVoices() {
             const narratorVoiceSelect = document.getElementById('narratorVoiceSelect');
@@ -11093,12 +11123,26 @@ Format as clean, readable text ready for narration.`;
                 // Ensure content ends with punctuation
                 if (!/[.!?,;:]$/.test(content.trim())) content = content.trim() + '.';
 
+                // Detect Genre Engine <line speaker> markup and casting assignments
+                const hasLineMarkup = /<line\s+speaker=/i.test(content);
+                const hasCasting = typeof storyBible !== 'undefined' && Object.keys(storyBible.castingLayer || {}).length > 0;
+                const gmNarrationMode = (document.querySelector('input[name="narrationMode"]:checked') || {}).value || 'single';
+                const useLineMarkupMultiVoice = hasLineMarkup && hasCasting && gmNarrationMode !== 'single';
+
                 let audioBlobs = [];
 
-                if (useMultiVoice) {
-                    // Multi-voice: parse story into narrator + character dialogue segments
-                    const segments = parseStoryIntoSegments(content, dialogueData.voiceAssignments, narratorVoice);
-                    console.log(`🎭 MULTI-VOICE — ${segments.length} segments across ${new Set(segments.map(s => s.character)).size} speakers`);
+                if (useMultiVoice || useLineMarkupMultiVoice) {
+                    // Multi-voice: route narrator prose and character dialogue to different voices
+                    let segments;
+                    if (useLineMarkupMultiVoice) {
+                        // Genre Engine <line speaker> format — use casting layer voices
+                        segments = parseLineMarkupSegments(content, storyBible.castingLayer, narratorVoice);
+                        console.log(`🎭 GENRE ENGINE MULTI-VOICE — ${segments.length} segments, narrationMode=${gmNarrationMode}`);
+                    } else {
+                        // Legacy "quote" said CharacterName format
+                        segments = parseStoryIntoSegments(content, dialogueData.voiceAssignments, narratorVoice);
+                        console.log(`🎭 MULTI-VOICE — ${segments.length} segments across ${new Set(segments.map(s => s.character)).size} speakers`);
+                    }
                     const segmentBlobs = [];
                     for (let i = 0; i < segments.length; i++) {
                         const seg = segments[i];
@@ -11120,7 +11164,9 @@ Format as clean, readable text ready for narration.`;
                     }
                     audioBlobs = segmentBlobs;
                 } else {
-                    // Single narrator voice — original chunking logic
+                    // Single narrator voice — strip any <line> markup tags, keep inner text
+                    content = content.replace(/<line\b[^>]*>([\s\S]*?)<\/line>/gi, '$1');
+                    content = content.replace(/<[^>]+>/g, ''); // strip any other stray tags
                     console.log('🎙️ NARRATOR-ONLY GENERATION - Using FULL content:', content.length, 'characters');
                     const chunks = splitTextIntoChunks(content, 800);
                     console.log(`📝 Split into ${chunks.length} chunks — processing sequentially (Cartesia concurrency limit)`);
