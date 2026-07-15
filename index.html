@@ -11153,20 +11153,26 @@ Format as clean, readable text ready for narration.`;
                 // Ensure content ends with punctuation
                 if (!/[.!?,;:]$/.test(content.trim())) content = content.trim() + '.';
 
-                // Detect Genre Engine <line speaker> markup and casting assignments
+                // Detect Genre Engine <line speaker> markup
                 const hasLineMarkup = /<line\s+speaker=/i.test(content);
-                const hasCasting = typeof storyBible !== 'undefined' && Object.keys(storyBible.castingLayer || {}).length > 0;
                 const gmNarrationMode = (document.querySelector('input[name="narrationMode"]:checked') || {}).value || 'single';
-                const useLineMarkupMultiVoice = hasLineMarkup && hasCasting && gmNarrationMode !== 'single';
+
+                // Build casting layer from user's voice assignment dropdowns, merged with any storyBible entries
+                const castingFromAssignments = {};
+                Object.entries(dialogueData.voiceAssignments || {}).forEach(([name, voiceId]) => {
+                    if (voiceId) castingFromAssignments[name] = { voiceId };
+                });
+                const mergedCasting = Object.assign({}, castingFromAssignments,
+                    (typeof storyBible !== 'undefined' ? storyBible.castingLayer : null) || {});
 
                 let audioBlobs = [];
 
-                if (useMultiVoice || useLineMarkupMultiVoice) {
+                if (useMultiVoice || (hasLineMarkup && gmNarrationMode !== 'single')) {
                     // Multi-voice: route narrator prose and character dialogue to different voices
                     let segments;
-                    if (useLineMarkupMultiVoice) {
-                        // Genre Engine <line speaker> format — use casting layer voices
-                        segments = parseLineMarkupSegments(content, storyBible.castingLayer, narratorVoice);
+                    if (hasLineMarkup) {
+                        // Genre Engine <line speaker> format — use merged casting layer
+                        segments = parseLineMarkupSegments(content, mergedCasting, narratorVoice);
                         console.log(`🎭 GENRE ENGINE MULTI-VOICE — ${segments.length} segments, narrationMode=${gmNarrationMode}`);
                     } else {
                         // Legacy "quote" said CharacterName format
