@@ -11614,13 +11614,27 @@ Format as clean, readable text ready for narration.`;
             if (!imageUrl) throw new Error('Flux Pro: no image URL in result');
             console.log('Flux Pro image URL:', imageUrl);
 
-            // Fetch image blob (proxy through server to avoid CORS)
+            // Try direct fetch first — Fal.ai CDN URLs are pre-signed public URLs with CORS headers.
+            // The proxy path sends an Authorization header which S3 rejects when the URL is
+            // already signed ("only one auth mechanism allowed").
+            try {
+                const directResp = await fetch(imageUrl);
+                if (directResp.ok) {
+                    const blob = await directResp.blob();
+                    console.log('Flux Pro image fetched directly (' + blob.size + ' bytes)');
+                    return URL.createObjectURL(blob);
+                }
+            } catch (directErr) {
+                console.warn('Flux Pro direct fetch failed, trying proxy:', directErr.message);
+            }
+
+            // Proxy fallback — fetch without Authorization header so the pre-signed URL works
             const imgResp = await fetch('/api/fal', {
                 method: 'POST', headers,
-                body: JSON.stringify({ action: 'fetch_audio', url: imageUrl })
+                body: JSON.stringify({ action: 'fetch_image_noauth', url: imageUrl })
             });
             if (!imgResp.ok) throw new Error('Flux Pro: image proxy failed');
-            const { audio: base64, contentType } = await imgResp.json();
+            const { image: base64, contentType } = await imgResp.json();
             const binary = atob(base64);
             const bytes = new Uint8Array(binary.length);
             for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);

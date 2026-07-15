@@ -34,6 +34,15 @@ module.exports = async function handler(req, res) {
       const audioBuffer = await audioResp.arrayBuffer();
       const contentType = audioResp.headers.get('content-type') || 'audio/wav';
       return res.json({ audio: Buffer.from(audioBuffer).toString('base64'), contentType });
+    } else if (action === 'fetch_image_noauth') {
+      // Fetch a pre-signed CDN image URL — NO Authorization header (S3 rejects dual-auth)
+      const { url: imgUrl } = req.body;
+      if (!imgUrl) return res.status(400).json({ error: 'Missing url' });
+      const imgResp = await fetch(imgUrl);
+      if (!imgResp.ok) return res.status(imgResp.status).json({ error: `Image CDN fetch failed: ${imgResp.status}` });
+      const imgBuffer = await imgResp.arrayBuffer();
+      const contentType = imgResp.headers.get('content-type') || 'image/jpeg';
+      return res.json({ image: Buffer.from(imgBuffer).toString('base64'), contentType });
     } else if (action === 'upload_audio') {
       const { audio_b64, filename = 'voice.wav', content_type = 'audio/wav' } = req.body;
       if (!audio_b64) return res.status(400).json({ error: 'Missing audio_b64' });
