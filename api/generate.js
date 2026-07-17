@@ -59,6 +59,12 @@ module.exports = async function handler(req, res) {
     ? [model, ...FALLBACK_MODELS]
     : [model || FALLBACK_MODELS[0], ...FALLBACK_MODELS.filter(m => m !== (model || FALLBACK_MODELS[0]))];
 
+  // Optional paid last-resort model (e.g. "google/gemini-2.5-flash-lite") so generation
+  // keeps working when the shared free-tier pool is exhausted. Off unless the env var is set.
+  if (process.env.OPENROUTER_PAID_FALLBACK) {
+    modelsToTry.push(process.env.OPENROUTER_PAID_FALLBACK);
+  }
+
   const attempts = [];
   for (const tryModel of modelsToTry) {
     try {
@@ -88,10 +94,27 @@ module.exports = async function handler(req, res) {
     return secs && secs < min ? secs : min;
   }, Infinity);
 
-  return res.status(429).json({
+  // Log the real per-model failures so Vercel logs show the true cause,
+  // and report an accurate message instead of always claiming rate limits.
+  const summary = attempts.map(a => `${a.model}: ${a.status}${a.error ? ' ' + (a.error.message || JSON.stringify(a.error)).slice(0, 120) : ''}`);
+  console.error('AI generation failed on all models:', summary);
+
+  const statuses = attempts.map(a => a.status);
+  let message = 'All AI models temporarily rate-limited. Please wait a moment.';
+  let status = 429;
+  if (statuses.includes(401) || statuses.includes(403)) {
+    message = 'AI provider authentication failed — server API key is invalid or expired.';
+    status = 502;
+  } else if (statuses.every(s => s === 404 || s === 400)) {
+    message = 'AI models unavailable — configured model IDs were rejected by the provider.';
+    status = 502;
+  }
+
+  return res.status(status).json({
     error: {
-      message: 'All AI models temporarily rate-limited. Please wait a moment.',
-      retry_after: retryAfter < Infinity ? Math.ceil(retryAfter) + 2 : 30
+      message,
+      retry_after: retryAfter < Infinity ? Math.ceil(retryAfter) + 2 : 30,
+      attempts: summary
     }
   });
 };

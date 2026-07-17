@@ -6232,7 +6232,7 @@ Return the COMPLETE text, dramatically rewritten with visible personality and hu
             return data.message.content;
         }
 
-        // Call OpenRouter via Authorr AI backend — auto-retries once if rate limited
+        // Call OpenRouter via Authorr AI backend — auto-retries if rate limited
         async function callOpenRouter(messages, _retryCount = 0) {
             const token = await getAuthToken();
             if (!token) throw new Error('Please log in to use Authorr AI.');
@@ -6244,8 +6244,9 @@ Return the COMPLETE text, dramatically rewritten with visible personality and hu
             });
             if (!response.ok) {
                 const err = await response.json().catch(() => ({}));
-                // If rate limited and haven't retried yet, wait and retry once
-                if (response.status === 429 && _retryCount === 0) {
+                if (err?.error?.attempts) console.warn('AI model attempts:', err.error.attempts);
+                // If rate limited, wait and retry (up to 2 times)
+                if (response.status === 429 && _retryCount < 2) {
                     const waitSecs = err?.error?.retry_after || 30;
                     await new Promise(resolve => {
                         let remaining = waitSecs;
@@ -6256,7 +6257,7 @@ Return the COMPLETE text, dramatically rewritten with visible personality and hu
                             else showNotification(`AI busy — retrying in ${remaining}s...`, 'warning');
                         }, 1000);
                     });
-                    return callOpenRouter(messages, 1);
+                    return callOpenRouter(messages, _retryCount + 1);
                 }
                 throw new Error(`Generation error: ${err?.error?.message || `HTTP ${response.status}`}`);
             }
