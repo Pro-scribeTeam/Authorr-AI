@@ -11268,46 +11268,55 @@ Format as clean prose with tags woven in, ready for narration.`;
                         segments = parseStoryIntoSegments(content, dialogueData.voiceAssignments, narratorVoice);
                         console.log(`🎭 MULTI-VOICE — ${segments.length} segments across ${new Set(segments.map(s => s.character)).size} speakers`);
                     }
-                    const segmentBlobs = [];
-                    for (let i = 0; i < segments.length; i++) {
-                        const seg = segments[i];
-                        // Each segment may need to be further chunked if long
-                        const subChunks = splitTextIntoChunks(seg.text, 800);
-                        for (let j = 0; j < subChunks.length; j++) {
-                            showLoading(`Generating narration… segment ${i + 1}/${segments.length} (${seg.character}), chunk ${j + 1}/${subChunks.length}`);
+                    // Flatten all segment sub-chunks into an ordered array for parallel processing
+                    const allSubChunks = [];
+                    for (let si = 0; si < segments.length; si++) {
+                        const seg = segments[si];
+                        const subChunks = splitTextIntoChunks(seg.text, 3000);
+                        subChunks.forEach((chunk, j) => allSubChunks.push({ chunk, seg, si, j, subTotal: subChunks.length }));
+                    }
+                    const MULTI_CONCURRENCY = 4;
+                    const flatBlobs = new Array(allSubChunks.length);
+                    for (let b = 0; b < allSubChunks.length; b += MULTI_CONCURRENCY) {
+                        const batch = allSubChunks.slice(b, b + MULTI_CONCURRENCY);
+                        const first = batch[0];
+                        showLoading(`Generating narration… segment ${first.si + 1}/${segments.length} (${first.seg.character}), chunk ${first.j + 1}/${first.subTotal}`);
+                        await Promise.all(batch.map(async ({ chunk, seg, si, j }, idx) => {
                             for (let attempt = 1; attempt <= 3; attempt++) {
                                 try {
-                                    const blob = await generateSegmentAudio({ type: 'all_content', text: subChunks[j], voice: seg.voice, character: seg.character });
-                                    segmentBlobs.push({ blob, segment: { ...seg, text: subChunks[j] } });
-                                    break;
+                                    flatBlobs[b + idx] = { blob: await generateSegmentAudio({ type: 'all_content', text: chunk, voice: seg.voice, character: seg.character }), segment: { ...seg, text: chunk } };
+                                    return;
                                 } catch (err) {
-                                    if (attempt === 3) throw new Error(`Segment ${i + 1} chunk ${j + 1} failed: ${err.message}`);
+                                    if (attempt === 3) throw new Error(`Segment ${si + 1} chunk ${j + 1} failed: ${err.message}`);
                                     await new Promise(r => setTimeout(r, 1500 * attempt));
                                 }
                             }
-                        }
+                        }));
                     }
-                    audioBlobs = segmentBlobs;
+                    audioBlobs = flatBlobs;
                 } else {
                     // Single narrator voice — strip any <line> markup tags, keep inner text
                     content = content.replace(/<line\b[^>]*>([\s\S]*?)<\/line>/gi, '$1');
                     content = content.replace(/<[^>]+>/g, ''); // strip any other stray tags
                     console.log('🎙️ NARRATOR-ONLY GENERATION - Using FULL content:', content.length, 'characters');
-                    const chunks = splitTextIntoChunks(content, 800);
-                    console.log(`📝 Split into ${chunks.length} chunks — processing sequentially`);
-                    const chunkBlobs = [];
-                    for (let i = 0; i < chunks.length; i++) {
-                        showLoading(`Generating narration… chunk ${i + 1} of ${chunks.length}`);
-                        for (let attempt = 1; attempt <= 3; attempt++) {
-                            try {
-                                const blob = await generateSegmentAudio({ type: 'all_content', text: chunks[i], voice: narratorVoice, character: 'Narrator' });
-                                chunkBlobs.push(blob);
-                                break;
-                            } catch (err) {
-                                if (attempt === 3) throw new Error(`Chunk ${i + 1} failed after 3 attempts: ${err.message}`);
-                                await new Promise(r => setTimeout(r, 1500 * attempt));
+                    const chunks = splitTextIntoChunks(content, 3000);
+                    console.log(`📝 Split into ${chunks.length} chunks — processing in parallel batches`);
+                    const CONCURRENCY = 4;
+                    const chunkBlobs = new Array(chunks.length);
+                    for (let i = 0; i < chunks.length; i += CONCURRENCY) {
+                        const batch = chunks.slice(i, i + CONCURRENCY);
+                        showLoading(`Generating narration… chunks ${i + 1}–${Math.min(i + CONCURRENCY, chunks.length)} of ${chunks.length}`);
+                        await Promise.all(batch.map(async (chunk, j) => {
+                            for (let attempt = 1; attempt <= 3; attempt++) {
+                                try {
+                                    chunkBlobs[i + j] = await generateSegmentAudio({ type: 'all_content', text: chunk, voice: narratorVoice, character: 'Narrator' });
+                                    return;
+                                } catch (err) {
+                                    if (attempt === 3) throw new Error(`Chunk ${i + j + 1} failed after 3 attempts: ${err.message}`);
+                                    await new Promise(r => setTimeout(r, 1500 * attempt));
+                                }
                             }
-                        }
+                        }));
                     }
                     audioBlobs = chunkBlobs.map((blob, i) => ({
                         blob,
