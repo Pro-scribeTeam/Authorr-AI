@@ -10978,17 +10978,20 @@ Format as clean prose with tags woven in, ready for narration.`;
             const dClose = '[\\u201D\\u0022]';  // " or "
             const dInner = '[^\\u201C\\u201D\\u0022]{1,600}';
 
-            // After-attribution:  "dialogue"[,.] said Character
+            // Pattern A: "dialogue"[,.] said Character  →  "Hello," said John
             const reAfter  = new RegExp(`${dOpen}(${dInner})${dClose}[,.]?\\s*${verbPat}\\s+([A-Z][a-zA-Z]+)`, 'g');
-            // Before-attribution: Character said[,] "dialogue"
+            // Pattern B: Character said[,] "dialogue"  →  John said, "Hello"
             const reBefore = new RegExp(`([A-Z][a-zA-Z]+)\\s+${verbPat}[,.]?\\s+${dOpen}(${dInner})${dClose}`, 'g');
+            // Pattern C: "dialogue"[,.] Character verb  →  "Hello," John said  (most common in AI output)
+            const reMid    = new RegExp(`${dOpen}(${dInner})${dClose}[,.]?\\s+([A-Z][a-zA-Z]+)\\s+${verbPat}`, 'g');
 
             // Collect all matches with their position
             const allMatches = [];
             let m;
             while ((m = reAfter.exec(content))  !== null) allMatches.push({ index: m.index, end: m.index + m[0].length, text: `"${m[1]}"`, charName: m[2] });
             while ((m = reBefore.exec(content)) !== null) allMatches.push({ index: m.index, end: m.index + m[0].length, text: `"${m[2]}"`, charName: m[1] });
-            console.log(`🎭 parseStoryIntoSegments: found ${allMatches.length} attributed dialogue matches`);
+            while ((m = reMid.exec(content))    !== null) allMatches.push({ index: m.index, end: m.index + m[0].length, text: `"${m[1]}"`, charName: m[2] });
+            console.log(`🎭 parseStoryIntoSegments: found ${allMatches.length} attributed dialogue matches (A/B/C patterns)`);
 
             // Sort by position; discard overlapping matches
             allMatches.sort((a, b) => a.index - b.index);
