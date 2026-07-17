@@ -10972,16 +10972,23 @@ Format as clean prose with tags woven in, ready for narration.`;
 
             const verbPat = '(?:said|replied|asked|whispered|shouted|answered|exclaimed|cried|muttered|called|yelled|added|continued|began|snapped|urged|pleaded|insisted|growled|laughed|sighed|breathed)';
 
+            // Match ASCII " as well as Unicode curly/smart quotes \u201C \u201D
+            // AI-generated text almost always uses curly quotes, so both must be supported.
+            const dOpen  = '[\\u201C\\u0022]';  // " or "
+            const dClose = '[\\u201D\\u0022]';  // " or "
+            const dInner = '[^\\u201C\\u201D\\u0022]{1,600}';
+
             // After-attribution:  "dialogue"[,.] said Character
-            const reAfter  = new RegExp(`"([^"]{1,600})"[,.]?\\s*${verbPat}\\s+([A-Z][a-zA-Z]+)`, 'g');
+            const reAfter  = new RegExp(`${dOpen}(${dInner})${dClose}[,.]?\\s*${verbPat}\\s+([A-Z][a-zA-Z]+)`, 'g');
             // Before-attribution: Character said[,] "dialogue"
-            const reBefore = new RegExp(`([A-Z][a-zA-Z]+)\\s+${verbPat}[,.]?\\s+"([^"]{1,600})"`, 'g');
+            const reBefore = new RegExp(`([A-Z][a-zA-Z]+)\\s+${verbPat}[,.]?\\s+${dOpen}(${dInner})${dClose}`, 'g');
 
             // Collect all matches with their position
             const allMatches = [];
             let m;
             while ((m = reAfter.exec(content))  !== null) allMatches.push({ index: m.index, end: m.index + m[0].length, text: `"${m[1]}"`, charName: m[2] });
             while ((m = reBefore.exec(content)) !== null) allMatches.push({ index: m.index, end: m.index + m[0].length, text: `"${m[2]}"`, charName: m[1] });
+            console.log(`🎭 parseStoryIntoSegments: found ${allMatches.length} attributed dialogue matches`);
 
             // Sort by position; discard overlapping matches
             allMatches.sort((a, b) => a.index - b.index);
@@ -11256,7 +11263,9 @@ Format as clean prose with tags woven in, ready for narration.`;
 
                 let audioBlobs = [];
 
-                if (useMultiVoice || (hasLineMarkup && gmNarrationMode !== 'single')) {
+                // Also activate multi-voice for Genre Engine markup when voices are assigned in the casting layer
+                const hasCastingAssignments = Object.keys(mergedCasting).length > 0;
+                if (useMultiVoice || (hasLineMarkup && (gmNarrationMode !== 'single' || hasCastingAssignments))) {
                     // Multi-voice: route narrator prose and character dialogue to different voices
                     let segments;
                     if (hasLineMarkup) {
@@ -11325,7 +11334,7 @@ Format as clean prose with tags woven in, ready for narration.`;
                 }
                 
                 // Normalize volumes across blobs when multi-voice is active (different voices = different levels)
-                if (useMultiVoice && audioBlobs.length > 1) {
+                if ((useMultiVoice || hasCastingAssignments) && audioBlobs.length > 1) {
                     showLoading('Normalizing voice volumes…');
                     audioBlobs = await Promise.all(audioBlobs.map(async a => ({
                         ...a,
