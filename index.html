@@ -1921,7 +1921,7 @@
                     <div class="text-xs text-theme-secondary mb-6"><span data-i18n="dash_plan_credits_mo">credits / month</span><br><span class="text-gray-500" data-i18n="dash_plan_story1">~1 short story</span></div>
                     <ul class="text-sm space-y-2 text-theme-secondary mb-6 flex-1">
                         <li><i class="fas fa-check text-cyan-400 mr-2"></i><span data-i18n="dash_plan_f1">AI writing</span></li>
-                        <li><i class="fas fa-check text-cyan-400 mr-2"></i><span data-i18n="dash_plan_f2">1 Cartesia voice</span></li>
+                        <li><i class="fas fa-check text-cyan-400 mr-2"></i><span data-i18n="dash_plan_f2">1 Grok voice</span></li>
                         <li><i class="fas fa-check text-cyan-400 mr-2"></i><span data-i18n="dash_plan_f3">Basic export</span></li>
                         <li><i class="fas fa-times text-gray-600 mr-2"></i><span data-i18n="dash_plan_f4">Voice cloning</span></li>
                     </ul>
@@ -1937,7 +1937,7 @@
                     <div class="text-xs text-theme-secondary mb-6"><span data-i18n="dash_plan_credits_mo">credits / month</span><br><span class="text-gray-500" data-i18n="dash_plan_story3">~3 short books</span></div>
                     <ul class="text-sm space-y-2 text-theme-secondary mb-6 flex-1">
                         <li><i class="fas fa-check text-cyan-400 mr-2"></i><span data-i18n="dash_plan_f5">Everything in Free</span></li>
-                        <li><i class="fas fa-check text-cyan-400 mr-2"></i><span data-i18n="dash_plan_f6">All Cartesia voices</span></li>
+                        <li><i class="fas fa-check text-cyan-400 mr-2"></i><span data-i18n="dash_plan_f6">All Grok voices</span></li>
                         <li><i class="fas fa-check text-cyan-400 mr-2"></i><span data-i18n="dash_plan_f4">Voice cloning</span></li>
                         <li><i class="fas fa-check text-cyan-400 mr-2"></i><span data-i18n="dash_plan_f7">All export formats</span></li>
                     </ul>
@@ -2013,7 +2013,7 @@
                         <span data-i18n="dash_faq_q1">Do I need any audio recording equipment?</span>
                         <i class="fas fa-chevron-down text-cyan-400 transition-transform faq-icon"></i>
                     </button>
-                    <div class="faq-body hidden px-6 pb-5 text-theme-secondary text-sm leading-relaxed" data-i18n="dash_faq_a1">No equipment needed at all. Authorr AI generates narration entirely with AI voices — Cartesia's professional text-to-speech. If you want to use your own voice, the Voice Clone feature only needs a 30-second audio sample from any microphone, even your phone.</div>
+                    <div class="faq-body hidden px-6 pb-5 text-theme-secondary text-sm leading-relaxed" data-i18n="dash_faq_a1">No equipment needed at all. Authorr AI generates narration entirely with AI voices — Grok's professional text-to-speech. If you want to use your own voice, the Voice Clone feature only needs a 30-second audio sample from any microphone, even your phone.</div>
                 </div>
 
                 <div class="bg-theme-secondary rounded-xl border border-theme overflow-hidden">
@@ -2955,6 +2955,12 @@
                                 <span class="text-sm font-semibold text-cyan-400" data-i18n="nar_neural_matrix">Neural Voice Matrix</span>
                             </div>
                             <p class="text-xs text-theme-secondary mb-3" data-i18n="nar_upload_hint">Upload voice samples to create custom AI narrator profiles</p>
+                            <div class="flex items-start gap-2 bg-cyan-500/10 border border-cyan-500/30 rounded-lg px-3 py-2">
+                                <i class="fas fa-lightbulb text-cyan-400 text-xs mt-0.5 shrink-0"></i>
+                                <p class="text-xs text-cyan-300 leading-relaxed">
+                                    <strong class="text-cyan-200">Accent tip:</strong> Grok voices don't have a built-in accent selector, but voice cloning solves this. Upload ~60 seconds of <em>anyone</em> speaking English with the accent you want — French, Spanish, Indian, Australian, etc. — and their accent carries over into all narration automatically.
+                                </p>
+                            </div>
                         </div>
 
                         <!-- Audio Upload Section -->
@@ -3194,6 +3200,33 @@
                                         <button onclick="previewNarratorVoice()" id="narratorPreviewBtn" class="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 rounded text-white text-sm font-medium" disabled data-i18n="nar_preview_voice">
                                             Preview Voice
                                         </button>
+                                    </div>
+                                    <!-- TTS Audio Language -->
+                                    <div class="mt-2 flex items-center gap-2">
+                                        <label class="text-xs text-gray-400 whitespace-nowrap">Audio language:</label>
+                                        <select id="grokLanguageSelect" class="flex-1 px-2 py-1.5 rounded bg-theme-primary border border-theme text-sm">
+                                            <option value="auto">Auto-detect</option>
+                                            <option value="en" selected>🇺🇸 English</option>
+                                            <option value="es-ES">🇪🇸 Spanish (Spain)</option>
+                                            <option value="es-MX">🇲🇽 Spanish (Mexico)</option>
+                                            <option value="fr">🇫🇷 French</option>
+                                            <option value="de">🇩🇪 German</option>
+                                            <option value="it">🇮🇹 Italian</option>
+                                            <option value="pt-BR">🇧🇷 Portuguese (Brazil)</option>
+                                            <option value="pt-PT">🇵🇹 Portuguese (Portugal)</option>
+                                            <option value="zh">🇨🇳 Chinese</option>
+                                            <option value="ja">🇯🇵 Japanese</option>
+                                            <option value="ko">🇰🇷 Korean</option>
+                                            <option value="hi">🇮🇳 Hindi</option>
+                                            <option value="ar-SA">🇸🇦 Arabic (Saudi)</option>
+                                            <option value="ar-EG">🇪🇬 Arabic (Egypt)</option>
+                                            <option value="ar-AE">🇦🇪 Arabic (UAE)</option>
+                                            <option value="ru">🇷🇺 Russian</option>
+                                            <option value="tr">🇹🇷 Turkish</option>
+                                            <option value="vi">🇻🇳 Vietnamese</option>
+                                            <option value="id">🇮🇩 Indonesian</option>
+                                            <option value="bn">🇧🇩 Bengali</option>
+                                        </select>
                                     </div>
                                 </div>
                                 <!-- Full-width audio player for narrator voice preview -->
@@ -7464,9 +7497,9 @@ Return the COMPLETE text, dramatically rewritten with visible personality and hu
                 progressBar.style.width = '50%';
                 progressPercent.textContent = '50%';
 
-                // Clone voice via Cartesia
+                // Clone voice via Grok
                 const token = await getAuthToken();
-                const resp = await fetch('/api/cartesia', {
+                const resp = await fetch('/api/grok', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                     body: JSON.stringify({ action: 'clone', audio_b64, name: cloneName, language: 'en', content_type: contentType })
@@ -7480,14 +7513,14 @@ Return the COMPLETE text, dramatically rewritten with visible personality and hu
                     throw new Error(err.error || `Cloning failed (${resp.status})`);
                 }
 
-                const { id: cartesiaId } = await resp.json();
-                if (!cartesiaId) throw new Error('No voice ID returned from Cartesia');
+                const { id: grokVoiceId } = await resp.json();
+                if (!grokVoiceId) throw new Error('No voice ID returned from Grok');
 
-                // Save to localStorage with Cartesia voice ID
+                // Save to localStorage with Grok voice ID
                 const saved = JSON.parse(localStorage.getItem('clonedVoices') || '[]');
                 const idx = saved.findIndex(v => v.name === cloneName);
-                if (idx >= 0) saved[idx] = { name: cloneName, cartesiaId };
-                else saved.push({ name: cloneName, cartesiaId });
+                if (idx >= 0) saved[idx] = { name: cloneName, grokVoiceId };
+                else saved.push({ name: cloneName, grokVoiceId });
                 localStorage.setItem('clonedVoices', JSON.stringify(saved));
                 localStorage.setItem('clonedActiveVoice', cloneName);
 
@@ -9042,13 +9075,35 @@ Write engaging, well-structured prose that:
 4. Meets the target word count
 5. Ends with a natural transition to the next chapter
 
-Format as clean, readable text ready for narration.`;
+IMPORTANT — This text will be read aloud by the Grok TTS voice engine. Embed the following speech tags naturally where they enhance the listening experience:
+
+Inline tags (drop into the text at the exact moment):
+  [pause]       — short beat, e.g. after a tense sentence or before a reveal
+  [long-pause]  — longer silence, e.g. between major scene shifts
+  [laugh]       — audible laugh, e.g. when a character finds something funny
+  [sigh]        — audible sigh, e.g. relief, exhaustion, resignation
+  [breath]      — audible breath, e.g. after running, before a difficult confession
+
+Wrapping tags (wrap a phrase or sentence to change delivery):
+  <whisper>text</whisper>  — secrets, scared moments, intimate confessions
+  <slow>text</slow>        — dramatic reveals, weight of a moment, grief
+  <soft>text</soft>        — tender moments, lullabies, gentle narration
+
+Usage rules:
+- Use tags sparingly — 3 to 6 per chapter feels natural, more feels forced
+- Only use [laugh] and [sigh] inside dialogue or direct character reaction moments
+- Use <whisper> for secrets or fear, never for ordinary sentences
+- Use <slow> for the single most dramatic sentence in a scene
+- Never stack multiple tags on the same phrase
+- Do not explain the tags — just embed them in the prose naturally
+
+Format as clean prose with tags woven in, ready for narration.`;
 
             try {
                 chapter.content = await callOpenAI([
                     {
                         role: "system",
-                        content: "You are a professional author and storyteller. Write compelling, well-crafted chapter content that engages readers and flows naturally."
+                        content: "You are a professional author and audiobook scriptwriter. Write compelling, well-crafted chapter content that engages listeners when read aloud. Embed Grok TTS speech tags ([pause], [long-pause], [laugh], [sigh], [breath], <whisper>, <slow>, <soft>) naturally and sparingly to enhance the narration experience — only where they genuinely add dramatic or emotional value."
                     },
                     {
                         role: "user",
@@ -9092,7 +9147,7 @@ Format as clean, readable text ready for narration.`;
             // Keep translate-from in sync with story language
             const fromEl = document.getElementById('translateFromLang');
             if (fromEl) fromEl.value = lang;
-            // Auto-switch narration voice to matching Cartesia language voice
+            // Auto-switch narration voice to matching Grok language voice
             const langCodeMap = {
                 spanish:'es', french:'fr', german:'de', portuguese:'pt', italian:'it',
                 hindi:'hi', arabic:'ar', japanese:'ja', korean:'ko', chinese:'zh',
@@ -9100,11 +9155,11 @@ Format as clean, readable text ready for narration.`;
                 danish:'da', finnish:'fi', greek:'el', hebrew:'he', turkish:'tr',
                 malay:'ms', thai:'th', vietnamese:'vi'
             };
-            const cartesiaLang = langCodeMap[lang];
-            if (cartesiaLang) {
+            const grokLang = langCodeMap[lang];
+            if (grokLang) {
                 const voiceSelect = document.getElementById('voiceSelection');
                 if (voiceSelect) {
-                    const target = voiceSelect.querySelector(`option[data-language="${cartesiaLang}"]`);
+                    const target = voiceSelect.querySelector(`option[data-language="${grokLang}"]`);
                     if (target) {
                         voiceSelect.value = target.value;
                         showNotification(`Story language set to ${lang.charAt(0).toUpperCase() + lang.slice(1)} — narration voice updated automatically.`, 'info');
@@ -9353,8 +9408,8 @@ Format as clean, readable text ready for narration.`;
             showNotification(`Generating voice preview with "${cloneVoice.name}"...`, 'info');
 
             try {
-                if (!cloneVoice.cartesiaId) throw new Error('Clone was created with old system — please delete it and re-initialize.');
-                const audioBlob = await generateCartesiaAudio(text, cloneVoice.cartesiaId);
+                if (!cloneVoice.grokVoiceId) throw new Error('Clone was created with old system — please delete it and re-initialize.');
+                const audioBlob = await generateGrokAudio(text, cloneVoice.grokVoiceId);
                 _clonePreviewUrl = URL.createObjectURL(audioBlob);
 
                 // Change button to "▶ Play Audio" — clicking it is a fresh user gesture Chrome allows
@@ -9410,9 +9465,9 @@ Format as clean, readable text ready for narration.`;
                         return;
                     }
                     audioBlob = await generateElevenLabsAudio(previewText, voiceId, apiKey);
-                } else if (provider === 'cartesia') {
-                    const cartesiaVoiceId = selectedOption.dataset.voiceId;
-                    audioBlob = await generateCartesiaAudio(previewText, cartesiaVoiceId);
+                } else if (provider === 'grok') {
+                    const grokVoiceId = selectedOption.dataset.voiceId;
+                    audioBlob = await generateGrokAudio(previewText, grokVoiceId);
                 } else {
                     showNotification('Unknown voice provider', 'error');
                     return;
@@ -9931,35 +9986,25 @@ Format as clean, readable text ready for narration.`;
                 hr: '🇭🇷 Croatian', sk: '🇸🇰 Slovak',
             };
 
-            // ── Cartesia English Voices ──
-            const cartesiaOptgroup = document.createElement('optgroup');
-            cartesiaOptgroup.label = '⚡ Cartesia — English';
-            voiceSelect.appendChild(cartesiaOptgroup);
+            // ── Grok English Voices ──
+            const grokOptgroup = document.createElement('optgroup');
+            grokOptgroup.label = '⚡ Grok — English';
+            voiceSelect.appendChild(grokOptgroup);
 
-            const cartesiaFallbackVoices = [
-                { id: '7cf0e2b1-8daf-4fe4-89ad-f6039398f359', label: 'Benedict - Royal Narrator — Male' },
-                { id: '98a34ef2-2140-4c28-9c71-663dc4dd7022', label: 'Clyde - Calm Narrator — Male' },
-                { id: '23112795-d54e-4560-9568-791a87c30201', label: 'Darius - Engaging Narrator — Male' },
-                { id: '083de431-6b5c-4b18-a2dc-264eafa205f2', label: 'Diana - Animated Narrator — Female' },
-                { id: '7edf9efb-58fc-46ba-a648-3a00a86b111b', label: 'Elliott - Reflective Storyteller — Male' },
-                { id: 'd1d9c946-7cfc-4378-85a4-07d09827cb7e', label: 'Jolene - Warm Storyteller — Female' },
-                { id: 'a33f7a4c-100f-41cf-a1fd-5822e8fc253f', label: 'Lauren - Lively Narrator — Female' },
-                { id: 'd2c66146-c1c8-4c3a-9870-38e5a6b72442', label: 'Lawson - Suave Storyteller — Male' },
-                { id: '26403c37-80c1-4a1a-8692-540551ca2ae5', label: 'Marian - Poised Narrator — Female' },
-                { id: '8985388c-1332-4ce7-8d55-789628aa3df4', label: 'Robyn - Storycrafter — Female' },
-                { id: 'f688c0a6-dddd-48ba-8246-c099d494a162', label: 'Romeo - Calm Narrator — Male' },
-                { id: '7e19344f-9f17-47d7-a13a-4366ad06ebf3', label: 'Silas - Nighttime Narrator — Male' },
-                { id: '79f8b5fb-2cc8-479a-80df-29f7a7cf1a3e', label: 'Theo - Modern Narrator — Male' },
-                { id: 'ca31ce53-ebf6-4e51-b87d-2f65d5d1f7f8', label: 'Vivian - Fierce Narrator — Female' },
-                { id: '39d518b7-fd0b-4676-9b8b-29d64ff31e12', label: 'Aarav - Old Time Storyteller — Male' },
+            const grokFallbackVoices = [
+                { id: 'eve',  label: 'Eve — Female' },
+                { id: 'ara',  label: 'Ara — Female' },
+                { id: 'leo',  label: 'Leo — Male' },
+                { id: 'rex',  label: 'Rex — Male' },
+                { id: 'sal',  label: 'Sal — Male' },
             ];
 
-            // ── Cartesia Multilingual optgroups (built after fetch) ──
+            // ── Grok Multilingual optgroups (built after fetch) ──
             const multiOptgroups = {};
 
             try {
                 const token = await getAuthToken();
-                const resp = await fetch('/api/cartesia', {
+                const resp = await fetch('/api/grok', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                     body: JSON.stringify({ action: 'voices' })
@@ -9972,14 +10017,14 @@ Format as clean, readable text ready for narration.`;
                         if (englishPublic.length > 0) {
                             englishPublic.forEach(v => {
                                 const opt = document.createElement('option');
-                                opt.value = 'cartesia_' + v.id;
+                                opt.value = 'grok_' + v.id;
                                 opt.textContent = v.name + (v.gender ? ` — ${v.gender}` : '');
-                                opt.dataset.provider = 'cartesia';
+                                opt.dataset.provider = 'grok';
                                 opt.dataset.voiceId = v.id;
-                                cartesiaOptgroup.appendChild(opt);
+                                grokOptgroup.appendChild(opt);
                             });
                         } else {
-                            cartesiaFallbackVoices.forEach(v => addCartesiaFallback(cartesiaOptgroup, v));
+                            grokFallbackVoices.forEach(v => addGrokFallback(grokOptgroup, v));
                         }
 
                         // Multilingual voices — grouped by language
@@ -9991,34 +10036,34 @@ Format as clean, readable text ready for narration.`;
                         });
                         Object.keys(byLang).sort((a, b) => (langNames[a] || a).localeCompare(langNames[b] || b)).forEach(lang => {
                             const grp = document.createElement('optgroup');
-                            grp.label = '🌍 Cartesia — ' + (langNames[lang] || lang.toUpperCase());
+                            grp.label = '🌍 Grok — ' + (langNames[lang] || lang.toUpperCase());
                             voiceSelect.appendChild(grp);
                             byLang[lang].forEach(v => {
                                 const opt = document.createElement('option');
-                                opt.value = 'cartesia_' + v.id;
+                                opt.value = 'grok_' + v.id;
                                 opt.textContent = v.name + (v.gender ? ` — ${v.gender}` : '');
-                                opt.dataset.provider = 'cartesia';
+                                opt.dataset.provider = 'grok';
                                 opt.dataset.voiceId = v.id;
                                 opt.dataset.language = v.language;
                                 grp.appendChild(opt);
                             });
                         });
                     } else {
-                        cartesiaFallbackVoices.forEach(v => addCartesiaFallback(cartesiaOptgroup, v));
+                        grokFallbackVoices.forEach(v => addGrokFallback(grokOptgroup, v));
                     }
                 } else {
-                    cartesiaFallbackVoices.forEach(v => addCartesiaFallback(cartesiaOptgroup, v));
+                    grokFallbackVoices.forEach(v => addGrokFallback(grokOptgroup, v));
                 }
             } catch (e) {
-                console.warn('Cartesia voices fetch failed, using fallback list:', e.message);
-                cartesiaFallbackVoices.forEach(v => addCartesiaFallback(cartesiaOptgroup, v));
+                console.warn('Grok voices fetch failed, using fallback list:', e.message);
+                grokFallbackVoices.forEach(v => addGrokFallback(grokOptgroup, v));
             }
 
-            // ── My Cloned Voices (Fal.ai Chatterbox) — inserted at top ──
+            // ── My Cloned Voices (Grok) — inserted at top ──
             const clonedVoices = JSON.parse(localStorage.getItem('clonedVoices') || '[]');
             if (clonedVoices.length > 0) {
                 const cloneGrp = document.createElement('optgroup');
-                cloneGrp.label = '🎙️ My Cloned Voices (Cartesia)';
+                cloneGrp.label = '🎙️ My Cloned Voices (Grok)';
                 clonedVoices.forEach(v => {
                     const opt = document.createElement('option');
                     opt.value = 'clone_' + v.name;
@@ -10029,9 +10074,9 @@ Format as clean, readable text ready for narration.`;
                 voiceSelect.insertBefore(cloneGrp, voiceSelect.firstChild);
             }
 
-            // Default to first Cartesia voice
-            const firstCartesia = voiceSelect.querySelector('option[value^="cartesia_"]');
-            if (firstCartesia) firstCartesia.selected = true;
+            // Default to first Grok voice
+            const firstGrok = voiceSelect.querySelector('option[value^="grok_"]');
+            if (firstGrok) firstGrok.selected = true;
             else if (voiceSelect.options.length > 0) voiceSelect.selectedIndex = 0;
         }
 
@@ -10804,6 +10849,14 @@ Format as clean, readable text ready for narration.`;
             assignEl?.classList.remove('hidden');
             toggleRow?.classList.remove('hidden');
 
+            // Restore multi-voice toggle state
+            const toggle = document.getElementById('multiVoiceToggle');
+            if (toggle) {
+                toggle.checked = localStorage.getItem('multiVoiceEnabled') === '1';
+                const assignElInner = document.getElementById('multiVoiceAssign');
+                if (assignElInner) assignElInner.classList.toggle('hidden', !toggle.checked);
+            }
+
             // Detect characters with AI
             const listEl = document.getElementById('characterVoiceList');
             if (listEl) listEl.innerHTML = '<p class="text-xs text-gray-400 italic">Detecting characters...</p>';
@@ -10819,6 +10872,12 @@ Format as clean, readable text ready for narration.`;
             // Get voice options from the hidden voice selector
             const mainVoiceSel = document.getElementById('voiceSelection');
             const voiceOptions = mainVoiceSel ? Array.from(mainVoiceSel.querySelectorAll('option')).filter(o => o.value) : [];
+
+            // Restore saved voice assignments from localStorage
+            const savedData = JSON.parse(localStorage.getItem('grokCharacterVoices') || 'null');
+            if (savedData?.assignments) {
+                Object.assign(dialogueData.voiceAssignments, savedData.assignments);
+            }
 
             if (!characters || characters.length === 0) {
                 listEl.innerHTML = '<p class="text-xs text-gray-400 italic">No named characters detected. Your story will use the narrator voice throughout.</p>';
@@ -10845,8 +10904,16 @@ Format as clean, readable text ready for narration.`;
                     opt.dataset.voice = o.dataset.voice;
                     sel.appendChild(opt);
                 });
+                // Restore saved selection for this character
+                if (dialogueData.voiceAssignments[name]) {
+                    sel.value = dialogueData.voiceAssignments[name];
+                }
                 sel.onchange = () => {
                     dialogueData.voiceAssignments[name] = sel.value || null;
+                    localStorage.setItem('grokCharacterVoices', JSON.stringify({
+                        characters: dialogueData.characters,
+                        assignments: dialogueData.voiceAssignments
+                    }));
                 };
                 row.appendChild(label);
                 row.appendChild(sel);
@@ -10863,6 +10930,7 @@ Format as clean, readable text ready for narration.`;
                 return;
             }
             if (assignEl) assignEl.classList.toggle('hidden', !toggle?.checked);
+            localStorage.setItem('multiVoiceEnabled', toggle?.checked ? '1' : '0');
         }
 
         // Parse story text into narrator + character dialogue segments
@@ -11053,10 +11121,10 @@ Format as clean, readable text ready for narration.`;
                 const provider = voiceInfo[0];
                 const voiceId = voiceInfo[1];
 
-                if (provider === 'cartesia') {
-                    // Cartesia: single API call, 40-90ms — no queue, no polling
-                    const fullVoiceId = voice.replace('cartesia_', '');
-                    return await generateCartesiaAudio(text, fullVoiceId);
+                if (provider === 'grok') {
+                    // Grok: single API call, low latency — no queue, no polling
+                    const fullVoiceId = voice.replace('grok_', '');
+                    return await generateGrokAudio(text, fullVoiceId);
                 } else if (provider === 'openai') {
                     return await generateOpenAIAudio(text, voiceId);
                 } else if (provider === 'elevenlabs') {
@@ -11204,7 +11272,7 @@ Format as clean, readable text ready for narration.`;
                     content = content.replace(/<[^>]+>/g, ''); // strip any other stray tags
                     console.log('🎙️ NARRATOR-ONLY GENERATION - Using FULL content:', content.length, 'characters');
                     const chunks = splitTextIntoChunks(content, 800);
-                    console.log(`📝 Split into ${chunks.length} chunks — processing sequentially (Cartesia concurrency limit)`);
+                    console.log(`📝 Split into ${chunks.length} chunks — processing sequentially`);
                     const chunkBlobs = [];
                     for (let i = 0; i < chunks.length; i++) {
                         showLoading(`Generating narration… chunk ${i + 1} of ${chunks.length}`);
@@ -11225,6 +11293,15 @@ Format as clean, readable text ready for narration.`;
                     }));
                 }
                 
+                // Normalize volumes across blobs when multi-voice is active (different voices = different levels)
+                if (useMultiVoice && audioBlobs.length > 1) {
+                    showLoading('Normalizing voice volumes…');
+                    audioBlobs = await Promise.all(audioBlobs.map(async a => ({
+                        ...a,
+                        blob: await normalizeWavBlob(a.blob)
+                    })));
+                }
+
                 // Merge all chunks into a single clip
                 if (audioBlobs.length > 1) {
                     showLoading('Merging audio chunks into one clip…');
@@ -11734,24 +11811,25 @@ Format as clean, readable text ready for narration.`;
             return new Blob([bytes], { type: contentType || 'audio/wav' });
         }
 
-        // ── Cartesia helpers ──────────────────────────────────────────────────────
-        function addCartesiaFallback(optgroup, v) {
+        // ── Grok TTS helpers ──────────────────────────────────────────────────────
+        function addGrokFallback(optgroup, v) {
             const opt = document.createElement('option');
-            opt.value = 'cartesia_' + v.id;
+            opt.value = 'grok_' + v.id;
             opt.textContent = v.label;
-            opt.dataset.provider = 'cartesia';
+            opt.dataset.provider = 'grok';
             opt.dataset.voiceId = v.id;
             optgroup.appendChild(opt);
         }
 
-        async function generateCartesiaAudio(text, voiceId) {
-            console.log('Generating Cartesia audio, voice:', voiceId);
+        async function generateGrokAudio(text, voiceId) {
+            console.log('Generating Grok audio, voice:', voiceId);
             const token = await getAuthToken();
             if (!token) throw new Error('Please log in to use Authorr AI.');
-            const resp = await fetch('/api/cartesia', {
+            const grokLang = document.getElementById('grokLanguageSelect')?.value || 'en';
+            const resp = await fetch('/api/grok', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                body: JSON.stringify({ action: 'tts', text, voice_id: voiceId })
+                body: JSON.stringify({ action: 'tts', text, voice_id: voiceId, language: grokLang })
             });
             if (!resp.ok) {
                 const err = await resp.json().catch(() => ({ error: resp.status }));
@@ -11759,13 +11837,13 @@ Format as clean, readable text ready for narration.`;
                     showUpgradeModal();
                     throw new Error(err.error || 'Insufficient credits — please upgrade your plan.');
                 }
-                throw new Error(`Cartesia TTS error: ${err.error || resp.status}`);
+                throw new Error(`Grok TTS error: ${err.error || resp.status}`);
             }
             const { audio: base64, contentType } = await resp.json();
             const binary = atob(base64);
             const bytes = new Uint8Array(binary.length);
             for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-            console.log(`Cartesia done. size=${bytes.length} type=${contentType}`);
+            console.log(`Grok TTS done. size=${bytes.length} type=${contentType}`);
             // Refresh credit display in background
             loadCreditStatus().catch(() => {});
             return new Blob([bytes], { type: contentType || 'audio/wav' });
@@ -11873,6 +11951,68 @@ Format as clean, readable text ready for narration.`;
         }
 
         // ── WAV blob concatenation for multi-chunk audio ──
+        // Normalize a WAV blob to a consistent peak level using OfflineAudioContext
+        async function normalizeWavBlob(blob, targetPeak = 0.92) {
+            try {
+                const arrayBuffer = await blob.arrayBuffer();
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const decoded = await audioCtx.decodeAudioData(arrayBuffer);
+                audioCtx.close();
+
+                // Find peak across all channels
+                let peak = 0;
+                for (let ch = 0; ch < decoded.numberOfChannels; ch++) {
+                    const data = decoded.getChannelData(ch);
+                    for (let i = 0; i < data.length; i++) {
+                        const abs = Math.abs(data[i]);
+                        if (abs > peak) peak = abs;
+                    }
+                }
+                if (peak < 0.001) return blob; // silence — return as-is
+
+                const gain = targetPeak / peak;
+                // Re-render with gain applied via OfflineAudioContext
+                const offline = new OfflineAudioContext(decoded.numberOfChannels, decoded.length, decoded.sampleRate);
+                const src = offline.createBufferSource();
+                src.buffer = decoded;
+                const gainNode = offline.createGain();
+                gainNode.gain.value = gain;
+                src.connect(gainNode);
+                gainNode.connect(offline.destination);
+                src.start(0);
+                const rendered = await offline.startRendering();
+
+                // Encode back to 16-bit PCM WAV
+                const numCh = rendered.numberOfChannels;
+                const numSamples = rendered.length;
+                const dataBytes = numSamples * numCh * 2;
+                const out = new ArrayBuffer(44 + dataBytes);
+                const view = new DataView(out);
+                const ws = (o, s) => { for (let i = 0; i < s.length; i++) view.setUint8(o + i, s.charCodeAt(i)); };
+                ws(0, 'RIFF'); view.setUint32(4, 36 + dataBytes, true);
+                ws(8, 'WAVE'); ws(12, 'fmt '); view.setUint32(16, 16, true);
+                view.setUint16(20, 1, true); // PCM
+                view.setUint16(22, numCh, true);
+                view.setUint32(24, rendered.sampleRate, true);
+                view.setUint32(28, rendered.sampleRate * numCh * 2, true);
+                view.setUint16(32, numCh * 2, true);
+                view.setUint16(34, 16, true);
+                ws(36, 'data'); view.setUint32(40, dataBytes, true);
+                let offset = 44;
+                for (let i = 0; i < numSamples; i++) {
+                    for (let ch = 0; ch < numCh; ch++) {
+                        const sample = Math.max(-1, Math.min(1, rendered.getChannelData(ch)[i]));
+                        view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7FFF, true);
+                        offset += 2;
+                    }
+                }
+                return new Blob([out], { type: 'audio/wav' });
+            } catch (e) {
+                console.warn('normalizeWavBlob failed, using original:', e.message);
+                return blob;
+            }
+        }
+
         async function concatenateWavBlobs(blobs) {
             if (blobs.length === 1) return blobs[0];
             const arrays = await Promise.all(blobs.map(b => b.arrayBuffer()));
@@ -11957,19 +12097,19 @@ Format as clean, readable text ready for narration.`;
         async function generateSegmentAudio(segment) {
             const voice = segment.voice || '';
 
-            // Cloned voices (Cartesia)
+            // Cloned voices (Grok)
             if (voice.startsWith('clone_')) {
                 const name = voice.replace('clone_', '');
                 const saved = JSON.parse(localStorage.getItem('clonedVoices') || '[]');
                 const cv = saved.find(v => v.name === name);
                 if (!cv) throw new Error(`Cloned voice "${name}" not found. Re-initialize in Clone Station.`);
-                if (!cv.cartesiaId) throw new Error(`Clone "${name}" was created with old system — please delete and re-initialize.`);
-                return await generateCartesiaAudio(segment.text, cv.cartesiaId);
+                if (!cv.grokVoiceId) throw new Error(`Clone "${name}" was created with old system — please delete and re-initialize.`);
+                return await generateGrokAudio(segment.text, cv.grokVoiceId);
             }
 
-            // All other voices are Cartesia — extract voiceId regardless of prefix format
-            const voiceId = voice.replace('cartesia_', '');
-            const blob = await generateCartesiaAudio(segment.text, voiceId);
+            // All other voices are Grok — extract voiceId regardless of prefix format
+            const voiceId = voice.replace('grok_', '');
+            const blob = await generateGrokAudio(segment.text, voiceId);
             return blob;
         }
 
@@ -12745,7 +12885,7 @@ Format as clean, readable text ready for narration.`;
                 `Generated: ${new Date().toLocaleDateString()}`,
                 ``,
                 `ACX Requirements Checklist:`,
-                `- Sample rate: 44100 Hz ✓ (Cartesia output)`,
+                `- Sample rate: 44100 Hz ✓ (Grok TTS output)`,
                 `- Bit depth: 32-bit float → convert to 16-bit before upload`,
                 `- Format: WAV or MP3 (192kbps+)`,
                 `- Noise floor: < -60dB RMS`,
@@ -13233,9 +13373,9 @@ Format as clean, readable text ready for narration.`;
                 showLoading(`Previewing ${characterName}'s voice...`);
                 
                 let audioBlob;
-                if (provider === 'cartesia') {
-                    const fullVoiceId = voiceValue.replace('cartesia_', '');
-                    audioBlob = await generateCartesiaAudio(previewText, fullVoiceId);
+                if (provider === 'grok') {
+                    const fullVoiceId = voiceValue.replace('grok_', '');
+                    audioBlob = await generateGrokAudio(previewText, fullVoiceId);
                 } else if (provider === 'openai') {
                     audioBlob = await generateOpenAIAudio(previewText, voiceId);
                 } else if (provider === 'elevenlabs') {
@@ -19339,7 +19479,7 @@ Format as clean, readable text ready for narration.`;
                         <div class="w-6 h-6 rounded-full bg-cyan-400/10 border border-cyan-400/40 flex items-center justify-center shrink-0 text-xs text-cyan-400 font-bold mt-0.5">1</div>
                         <div>
                             <p class="font-semibold text-white text-xs mb-1">What is collected</p>
-                            <p class="text-xs text-gray-400 leading-relaxed">An audio recording (~30 seconds) you upload or record. This is transmitted to <strong class="text-gray-300">Cartesia, Inc.</strong> to generate a synthetic voice model. Authorr AI does not store the raw audio on its servers.</p>
+                            <p class="text-xs text-gray-400 leading-relaxed">An audio recording (~30 seconds) you upload or record. This is transmitted to <strong class="text-gray-300">xAI, Inc.</strong> to generate a synthetic voice model. Authorr AI does not store the raw audio on its servers.</p>
                         </div>
                     </div>
                     <div class="flex gap-3">
@@ -19353,7 +19493,7 @@ Format as clean, readable text ready for narration.`;
                         <div class="w-6 h-6 rounded-full bg-cyan-400/10 border border-cyan-400/40 flex items-center justify-center shrink-0 text-xs text-cyan-400 font-bold mt-0.5">3</div>
                         <div>
                             <p class="font-semibold text-white text-xs mb-1">Retention &amp; deletion</p>
-                            <p class="text-xs text-gray-400 leading-relaxed">The voice model ID is stored only in your browser. You may delete your Voice Clone at any time — we will instruct Cartesia to delete the model.</p>
+                            <p class="text-xs text-gray-400 leading-relaxed">The voice model ID is stored only in your browser. You may delete your Voice Clone at any time — we will instruct xAI to delete the model.</p>
                         </div>
                     </div>
                     <div class="flex gap-3">
@@ -19724,8 +19864,8 @@ const UI_TRANSLATIONS = {
     dash_plan_free:'Free', dash_plan_starter:'Starter', dash_plan_author:'Author', dash_plan_publisher:'Publisher', dash_plan_studio:'Studio',
     dash_plan_forever:'forever', dash_plan_per_mo:'/ month', dash_plan_credits_mo:'credits / month',
     dash_plan_story1:'~1 short story', dash_plan_story3:'~3 short books', dash_plan_books9:'~9 full books', dash_plan_books25:'~25 full books', dash_plan_books65:'~65 full books',
-    dash_plan_f1:'AI writing', dash_plan_f2:'1 Cartesia voice', dash_plan_f3:'Basic export', dash_plan_f4:'Voice cloning',
-    dash_plan_f5:'Everything in Free', dash_plan_f6:'All Cartesia voices', dash_plan_f7:'All export formats',
+    dash_plan_f1:'AI writing', dash_plan_f2:'1 Grok voice', dash_plan_f3:'Basic export', dash_plan_f4:'Voice cloning',
+    dash_plan_f5:'Everything in Free', dash_plan_f6:'All Grok voices', dash_plan_f7:'All export formats',
     dash_plan_f8:'Everything in Starter', dash_plan_f9:'Priority generation', dash_plan_f10:'Cover image AI', dash_plan_f11:'SFX & music AI', dash_plan_f11b:'Multi-voice character cast',
     dash_plan_f12:'Everything in Author', dash_plan_f13:'Team seats (3)', dash_plan_f14:'Bulk export', dash_plan_f15:'API access',
     dash_plan_f16:'Everything in Publisher', dash_plan_f17:'Unlimited team seats', dash_plan_f18:'White-label exports', dash_plan_f19:'Dedicated support',
@@ -19736,7 +19876,7 @@ const UI_TRANSLATIONS = {
     dash_test2_quote:'"The cover AI actually gets my genre right. My romance novel cover looks like it was made by a professional designer. Readers keep commenting on it."',
     dash_test3_quote:'"I used voice cloning to narrate in my own voice. My listeners couldn\'t tell the difference from a studio recording. Mind-blowing technology."',
     // FAQ answers
-    dash_faq_a1:'No equipment needed at all. Authorr AI generates narration entirely with AI voices — Cartesia\'s professional text-to-speech. If you want to use your own voice, the Voice Clone feature only needs a 30-second audio sample from any microphone, even your phone.',
+    dash_faq_a1:'No equipment needed at all. Authorr AI generates narration entirely with AI voices — Grok\'s professional text-to-speech. If you want to use your own voice, the Voice Clone feature only needs a 30-second audio sample from any microphone, even your phone.',
     dash_faq_a2:'The Export page\'s "Audible / ACX" package downloads your audio with the correct filename format and includes a full ACX checklist (44.1kHz, noise floor, peak levels). We recommend running a quick normalize in free Audacity software before uploading, which takes under 2 minutes.',
     dash_faq_a3:'A short book (10,000–20,000 words) can be written, narrated, and exported in under an hour. Longer novels take longer to narrate since TTS runs in real time, but you can walk away while it processes. AI-generated chapters take about 30 seconds each.',
     dash_faq_a4:'Yes — 100%. You own your story, your narration, and your cover art. Authorr AI is a tool, not a rights holder. You can publish, sell, and monetize everything you create here freely on any platform.',
@@ -19917,7 +20057,7 @@ const UI_TRANSLATIONS = {
     dash_plan_free:'Gratis', dash_plan_starter:'Inicial', dash_plan_author:'Autor', dash_plan_publisher:'Editor', dash_plan_studio:'Estudio',
     dash_plan_forever:'siempre gratis', dash_plan_per_mo:'/ mes', dash_plan_credits_mo:'créditos / mes',
     dash_plan_story1:'~1 historia corta', dash_plan_story3:'~3 libros cortos', dash_plan_books9:'~9 libros completos', dash_plan_books25:'~25 libros completos', dash_plan_books65:'~65 libros completos',
-    dash_plan_f1:'Escritura con IA', dash_plan_f2:'1 voz Cartesia', dash_plan_f3:'Exportación básica', dash_plan_f4:'Clonación de voz',
+    dash_plan_f1:'Escritura con IA', dash_plan_f2:'1 voz Grok', dash_plan_f3:'Exportación básica', dash_plan_f4:'Clonación de voz',
     dash_plan_f5:'Todo en Gratis', dash_plan_f6:'Todas las voces', dash_plan_f7:'Todos los formatos',
     dash_plan_f8:'Todo en Inicial', dash_plan_f9:'Generación prioritaria', dash_plan_f10:'Portadas con IA', dash_plan_f11:'SFX y música IA', dash_plan_f11b:'Reparto multi-voz de personajes',
     dash_plan_f12:'Todo en Autor', dash_plan_f13:'Puestos de equipo (3)', dash_plan_f14:'Exportación masiva', dash_plan_f15:'Acceso API',
@@ -19927,7 +20067,7 @@ const UI_TRANSLATIONS = {
     dash_test1_quote:'"Tuve mi primer audiolibro en ACX en un día. La narración con múltiples voces hace que mis escenas de diálogo cobren vida."',
     dash_test2_quote:'"La IA de portadas acertó mi género. La portada de mi novela romántica parece hecha por un diseñador profesional."',
     dash_test3_quote:'"Usé la clonación de voz para narrar con mi propia voz. Mis oyentes no pudieron distinguirla de una grabación de estudio."',
-    dash_faq_a1:'No se necesita ningún equipo. Authorr AI genera narración con voces de IA de Cartesia. Si quieres usar tu propia voz, la función de clonación solo necesita 30 segundos de muestra de audio.',
+    dash_faq_a1:'No se necesita ningún equipo. Authorr AI genera narración con voces de IA de Grok. Si quieres usar tu propia voz, la función de clonación solo necesita 30 segundos de muestra de audio.',
     dash_faq_a2:'El paquete "Audible / ACX" incluye el formato de archivo correcto y una lista de verificación ACX completa. Recomendamos una normalización rápida en Audacity antes de subir.',
     dash_faq_a3:'Un libro corto puede escribirse, narrarse y exportarse en menos de una hora. Las novelas más largas tardan más en narrarse ya que el TTS corre en tiempo real.',
     dash_faq_a4:'Sí — 100%. Eres dueño de tu historia, narración y portada. Authorr AI es una herramienta, no un titular de derechos.',
@@ -20105,7 +20245,7 @@ const UI_TRANSLATIONS = {
     dash_plan_free:'Gratuit', dash_plan_starter:'Débutant', dash_plan_author:'Auteur', dash_plan_publisher:'Éditeur', dash_plan_studio:'Studio',
     dash_plan_forever:'pour toujours', dash_plan_per_mo:'/ mois', dash_plan_credits_mo:'crédits / mois',
     dash_plan_story1:'~1 nouvelle', dash_plan_story3:'~3 courts livres', dash_plan_books9:'~9 livres complets', dash_plan_books25:'~25 livres complets', dash_plan_books65:'~65 livres complets',
-    dash_plan_f1:'Écriture IA', dash_plan_f2:'1 voix Cartesia', dash_plan_f3:'Export basique', dash_plan_f4:'Clonage vocal',
+    dash_plan_f1:'Écriture IA', dash_plan_f2:'1 voix Grok', dash_plan_f3:'Export basique', dash_plan_f4:'Clonage vocal',
     dash_plan_f5:'Tout dans Gratuit', dash_plan_f6:'Toutes les voix', dash_plan_f7:'Tous les formats',
     dash_plan_f8:'Tout dans Débutant', dash_plan_f9:'Génération prioritaire', dash_plan_f10:'Couverture IA', dash_plan_f11:'SFX et musique IA', dash_plan_f11b:'Distribution personnages multi-voix',
     dash_plan_f12:'Tout dans Auteur', dash_plan_f13:'Sièges d\'équipe (3)', dash_plan_f14:'Export en masse', dash_plan_f15:'Accès API',
@@ -20115,7 +20255,7 @@ const UI_TRANSLATIONS = {
     dash_test1_quote:'"J\'avais mon premier livre audio sur ACX en un jour. La narration multi-voix donne vie à mes scènes de dialogue."',
     dash_test2_quote:'"L\'IA de couverture a trouvé mon genre. La couverture de mon roman romantique ressemble à du travail de designer professionnel."',
     dash_test3_quote:'"J\'ai utilisé le clonage vocal pour narrer dans ma propre voix. Mes auditeurs ne pouvaient pas le distinguer d\'un enregistrement studio."',
-    dash_faq_a1:'Aucun équipement nécessaire. Authorr AI génère la narration entièrement avec des voix IA de Cartesia. Pour votre propre voix, la fonction de clonage ne nécessite qu\'un échantillon de 30 secondes.',
+    dash_faq_a1:'Aucun équipement nécessaire. Authorr AI génère la narration entièrement avec des voix IA de Grok. Pour votre propre voix, la fonction de clonage ne nécessite qu\'un échantillon de 30 secondes.',
     dash_faq_a2:'Le paquet "Audible/ACX" télécharge votre audio au bon format avec une liste de contrôle ACX complète. Nous recommandons une normalisation rapide dans Audacity avant le téléversement.',
     dash_faq_a3:'Un court livre peut être écrit, narré et exporté en moins d\'une heure. Les romans plus longs prennent plus de temps car le TTS fonctionne en temps réel.',
     dash_faq_a4:'Oui — à 100 %. Vous possédez votre histoire, votre narration et votre couverture. Authorr AI est un outil, pas un détenteur de droits.',
@@ -20293,7 +20433,7 @@ const UI_TRANSLATIONS = {
     dash_plan_free:'Kostenlos', dash_plan_starter:'Einsteiger', dash_plan_author:'Autor', dash_plan_publisher:'Verlag', dash_plan_studio:'Studio',
     dash_plan_forever:'für immer', dash_plan_per_mo:'/ Monat', dash_plan_credits_mo:'Credits / Monat',
     dash_plan_story1:'~1 Kurzgeschichte', dash_plan_story3:'~3 kurze Bücher', dash_plan_books9:'~9 vollständige Bücher', dash_plan_books25:'~25 vollständige Bücher', dash_plan_books65:'~65 vollständige Bücher',
-    dash_plan_f1:'KI-Schreiben', dash_plan_f2:'1 Cartesia-Stimme', dash_plan_f3:'Basisexport', dash_plan_f4:'Stimmenklonen',
+    dash_plan_f1:'KI-Schreiben', dash_plan_f2:'1 Grok-Stimme', dash_plan_f3:'Basisexport', dash_plan_f4:'Stimmenklonen',
     dash_plan_f5:'Alles aus Kostenlos', dash_plan_f6:'Alle Stimmen', dash_plan_f7:'Alle Formate',
     dash_plan_f8:'Alles aus Einsteiger', dash_plan_f9:'Priorisierte Generierung', dash_plan_f10:'KI-Titelbild', dash_plan_f11:'SFX und Musik KI', dash_plan_f11b:'Mehrsprachige Figurenbesetzung',
     dash_plan_f12:'Alles aus Autor', dash_plan_f13:'Teamplätze (3)', dash_plan_f14:'Massenexport', dash_plan_f15:'API-Zugang',
@@ -20303,7 +20443,7 @@ const UI_TRANSLATIONS = {
     dash_test1_quote:'"Ich hatte mein erstes Hörbuch innerhalb eines Tages auf ACX. Die Mehrfach-Stimmen-Erzählung belebt meine Dialogszenen."',
     dash_test2_quote:'"Die Cover-KI hat mein Genre perfekt getroffen. Das Cover meines Liebesromans sieht aus wie Profi-Designerarbeit."',
     dash_test3_quote:'"Ich habe Voice-Cloning verwendet, um mit meiner eigenen Stimme zu erzählen. Meine Hörer konnten es nicht von einer Studioaufnahme unterscheiden."',
-    dash_faq_a1:'Keinerlei Ausrüstung erforderlich. Authorr AI generiert die Erzählung vollständig mit Cartesias KI-Stimmen. Für deine eigene Stimme benötigt die Clone-Funktion nur eine 30-Sekunden-Probe.',
+    dash_faq_a1:'Keinerlei Ausrüstung erforderlich. Authorr AI generiert die Erzählung vollständig mit Groks KI-Stimmen. Für deine eigene Stimme benötigt die Clone-Funktion nur eine 30-Sekunden-Probe.',
     dash_faq_a2:'Das "Audible/ACX"-Paket lädt dein Audio im richtigen Dateiformat herunter und enthält eine vollständige ACX-Checkliste. Wir empfehlen eine schnelle Normalisierung im kostenlosen Audacity vor dem Upload.',
     dash_faq_a3:'Ein kurzes Buch kann in unter einer Stunde geschrieben, erzählt und exportiert werden. Längere Romane dauern länger, da TTS in Echtzeit läuft.',
     dash_faq_a4:'Ja — zu 100 %. Du besitzt deine Geschichte, deine Erzählung und dein Cover. Authorr AI ist ein Werkzeug, kein Rechteinhaber.',
@@ -20481,7 +20621,7 @@ const UI_TRANSLATIONS = {
     dash_plan_free:'Grátis', dash_plan_starter:'Iniciante', dash_plan_author:'Autor', dash_plan_publisher:'Editora', dash_plan_studio:'Estúdio',
     dash_plan_forever:'para sempre', dash_plan_per_mo:'/ mês', dash_plan_credits_mo:'créditos / mês',
     dash_plan_story1:'~1 conto', dash_plan_story3:'~3 livros curtos', dash_plan_books9:'~9 livros completos', dash_plan_books25:'~25 livros completos', dash_plan_books65:'~65 livros completos',
-    dash_plan_f1:'Escrita com IA', dash_plan_f2:'1 voz Cartesia', dash_plan_f3:'Exportação básica', dash_plan_f4:'Clonagem de voz',
+    dash_plan_f1:'Escrita com IA', dash_plan_f2:'1 voz Grok', dash_plan_f3:'Exportação básica', dash_plan_f4:'Clonagem de voz',
     dash_plan_f5:'Tudo do Grátis', dash_plan_f6:'Todas as vozes', dash_plan_f7:'Todos os formatos',
     dash_plan_f8:'Tudo do Iniciante', dash_plan_f9:'Geração prioritária', dash_plan_f10:'Capa com IA', dash_plan_f11:'SFX e música IA', dash_plan_f11b:'Elenco multi-voz de personagens',
     dash_plan_f12:'Tudo do Autor', dash_plan_f13:'Vagas de equipe (3)', dash_plan_f14:'Exportação em massa', dash_plan_f15:'Acesso à API',
@@ -20491,7 +20631,7 @@ const UI_TRANSLATIONS = {
     dash_test1_quote:'"Tive meu primeiro audiolivro no ACX em um dia. A narração com múltiplas vozes dá vida às minhas cenas de diálogo."',
     dash_test2_quote:'"A IA de capas acertou meu gênero. A capa do meu romance parece feita por um designer profissional."',
     dash_test3_quote:'"Usei a clonagem de voz para narrar com minha própria voz. Meus ouvintes não conseguiram distinguir de uma gravação em estúdio."',
-    dash_faq_a1:'Não é necessário nenhum equipamento. O Authorr AI gera narração inteiramente com vozes de IA da Cartesia. Para usar sua própria voz, o recurso de clonagem precisa apenas de uma amostra de 30 segundos.',
+    dash_faq_a1:'Não é necessário nenhum equipamento. O Authorr AI gera narração inteiramente com vozes de IA da Grok. Para usar sua própria voz, o recurso de clonagem precisa apenas de uma amostra de 30 segundos.',
     dash_faq_a2:'O pacote "Audible/ACX" baixa seu áudio no formato correto com uma lista de verificação ACX completa. Recomendamos uma normalização rápida no Audacity gratuito antes do envio.',
     dash_faq_a3:'Um livro curto pode ser escrito, narrado e exportado em menos de uma hora. Romances mais longos demoram mais porque o TTS roda em tempo real.',
     dash_faq_a4:'Sim — 100%. Você possui sua história, narração e arte da capa. O Authorr AI é uma ferramenta, não um titular de direitos.',
@@ -20669,7 +20809,7 @@ const UI_TRANSLATIONS = {
     dash_plan_free:'Gratuito', dash_plan_starter:'Base', dash_plan_author:'Autore', dash_plan_publisher:'Editore', dash_plan_studio:'Studio',
     dash_plan_forever:'per sempre', dash_plan_per_mo:'/ mese', dash_plan_credits_mo:'crediti / mese',
     dash_plan_story1:'~1 racconto breve', dash_plan_story3:'~3 libri brevi', dash_plan_books9:'~9 libri completi', dash_plan_books25:'~25 libri completi', dash_plan_books65:'~65 libri completi',
-    dash_plan_f1:'Scrittura AI', dash_plan_f2:'1 voce Cartesia', dash_plan_f3:'Esportazione base', dash_plan_f4:'Clonazione vocale',
+    dash_plan_f1:'Scrittura AI', dash_plan_f2:'1 voce Grok', dash_plan_f3:'Esportazione base', dash_plan_f4:'Clonazione vocale',
     dash_plan_f5:'Tutto di Gratuito', dash_plan_f6:'Tutte le voci', dash_plan_f7:'Tutti i formati',
     dash_plan_f8:'Tutto di Base', dash_plan_f9:'Generazione prioritaria', dash_plan_f10:'Copertina AI', dash_plan_f11:'SFX e musica AI', dash_plan_f11b:'Cast personaggi multi-voce',
     dash_plan_f12:'Tutto di Autore', dash_plan_f13:'Posti team (3)', dash_plan_f14:'Esportazione massiva', dash_plan_f15:'Accesso API',
@@ -20679,7 +20819,7 @@ const UI_TRANSLATIONS = {
     dash_test1_quote:'"Ho avuto il mio primo audiolibro su ACX in un giorno. La narrazione multi-voce dà vita alle mie scene di dialogo."',
     dash_test2_quote:'"L\'AI per le copertine ha capito il mio genere. La copertina del mio romanzo sentimentale sembra fatta da un designer professionista."',
     dash_test3_quote:'"Ho usato la clonazione vocale per narrare con la mia voce. I miei ascoltatori non hanno saputo distinguerla da una registrazione in studio."',
-    dash_faq_a1:'Non è necessaria alcuna attrezzatura. Authorr AI genera la narrazione interamente con le voci AI di Cartesia. Per la tua voce, la funzione di clonazione richiede solo un campione da 30 secondi.',
+    dash_faq_a1:'Non è necessaria alcuna attrezzatura. Authorr AI genera la narrazione interamente con le voci AI di Grok. Per la tua voce, la funzione di clonazione richiede solo un campione da 30 secondi.',
     dash_faq_a2:'Il pacchetto "Audible/ACX" scarica l\'audio nel formato corretto con una lista di controllo ACX completa. Consigliamo una rapida normalizzazione in Audacity prima del caricamento.',
     dash_faq_a3:'Un libro breve può essere scritto, narrato ed esportato in meno di un\'ora. I romanzi più lunghi richiedono più tempo poiché il TTS funziona in tempo reale.',
     dash_faq_a4:'Sì — al 100%. Possiedi la tua storia, la narrazione e la copertina. Authorr AI è uno strumento, non un titolare di diritti.',
@@ -20857,7 +20997,7 @@ const UI_TRANSLATIONS = {
     dash_plan_free:'मुफ़्त', dash_plan_starter:'स्टार्टर', dash_plan_author:'लेखक', dash_plan_publisher:'प्रकाशक', dash_plan_studio:'स्टूडियो',
     dash_plan_forever:'हमेशा के लिए', dash_plan_per_mo:'/ माह', dash_plan_credits_mo:'क्रेडिट / माह',
     dash_plan_story1:'~1 लघु कहानी', dash_plan_story3:'~3 छोटी पुस्तकें', dash_plan_books9:'~9 पूरी पुस्तकें', dash_plan_books25:'~25 पूरी पुस्तकें', dash_plan_books65:'~65 पूरी पुस्तकें',
-    dash_plan_f1:'AI लेखन', dash_plan_f2:'1 Cartesia आवाज़', dash_plan_f3:'बेसिक एक्सपोर्ट', dash_plan_f4:'वॉयस क्लोनिंग',
+    dash_plan_f1:'AI लेखन', dash_plan_f2:'1 Grok आवाज़', dash_plan_f3:'बेसिक एक्सपोर्ट', dash_plan_f4:'वॉयस क्लोनिंग',
     dash_plan_f5:'मुफ़्त का सब कुछ', dash_plan_f6:'सभी आवाज़ें', dash_plan_f7:'सभी फॉर्मेट',
     dash_plan_f8:'स्टार्टर का सब कुछ', dash_plan_f9:'प्राथमिकता जनरेशन', dash_plan_f10:'AI कवर इमेज', dash_plan_f11:'SFX और संगीत AI', dash_plan_f11b:'बहु-आवाज़ पात्र कास्ट',
     dash_plan_f12:'लेखक का सब कुछ', dash_plan_f13:'टीम सीटें (3)', dash_plan_f14:'बल्क एक्सपोर्ट', dash_plan_f15:'API एक्सेस',
@@ -20867,7 +21007,7 @@ const UI_TRANSLATIONS = {
     dash_test1_quote:'"मेरी पहली ऑडियोबुक एक दिन में ACX पर थी। मल्टी-वॉयस नैरेशन मेरे डायलॉग सीन को जीवंत कर देती है।"',
     dash_test2_quote:'"कवर AI ने मेरी विधा को सही समझा। मेरे रोमांस उपन्यास का कवर किसी पेशेवर डिज़ाइनर का काम लगता है।"',
     dash_test3_quote:'"मैंने अपनी आवाज़ से नैरेट करने के लिए वॉयस क्लोनिंग का उपयोग किया। मेरे श्रोता स्टूडियो रिकॉर्डिंग से फर्क नहीं पहचान सके।"',
-    dash_faq_a1:'किसी उपकरण की ज़रूरत नहीं। Authorr AI पूरी तरह Cartesia की AI आवाज़ों से नैरेशन जेनरेट करता है। अपनी आवाज़ के लिए, क्लोनिंग फीचर को केवल 30 सेकंड का सैंपल चाहिए।',
+    dash_faq_a1:'किसी उपकरण की ज़रूरत नहीं। Authorr AI पूरी तरह Grok की AI आवाज़ों से नैरेशन जेनरेट करता है। अपनी आवाज़ के लिए, क्लोनिंग फीचर को केवल 30 सेकंड का सैंपल चाहिए।',
     dash_faq_a2:'"Audible/ACX" पैकेज सही फाइल फॉर्मेट में ऑडियो डाउनलोड करता है और पूरी ACX चेकलिस्ट शामिल है। अपलोड से पहले Audacity में त्वरित नॉर्मलाइज़ेशन की सलाह है।',
     dash_faq_a3:'एक छोटी किताब एक घंटे से कम में लिखी, नैरेट और एक्सपोर्ट की जा सकती है। लंबे उपन्यासों में अधिक समय लगता है क्योंकि TTS रियल-टाइम में चलता है।',
     dash_faq_a4:'हाँ — 100%। आपकी कहानी, नैरेशन और कवर आर्ट पर आपका अधिकार है। Authorr AI एक टूल है, अधिकार धारक नहीं।',
@@ -21045,7 +21185,7 @@ const UI_TRANSLATIONS = {
     dash_plan_free:'مجاني', dash_plan_starter:'مبتدئ', dash_plan_author:'مؤلف', dash_plan_publisher:'ناشر', dash_plan_studio:'استوديو',
     dash_plan_forever:'للأبد', dash_plan_per_mo:'/ شهر', dash_plan_credits_mo:'رصيد / شهر',
     dash_plan_story1:'~قصة قصيرة واحدة', dash_plan_story3:'~3 كتب قصيرة', dash_plan_books9:'~9 كتب كاملة', dash_plan_books25:'~25 كتاباً كاملاً', dash_plan_books65:'~65 كتاباً كاملاً',
-    dash_plan_f1:'كتابة ذكاء اصطناعي', dash_plan_f2:'صوت Cartesia واحد', dash_plan_f3:'تصدير أساسي', dash_plan_f4:'استنساخ الصوت',
+    dash_plan_f1:'كتابة ذكاء اصطناعي', dash_plan_f2:'صوت Grok واحد', dash_plan_f3:'تصدير أساسي', dash_plan_f4:'استنساخ الصوت',
     dash_plan_f5:'كل شيء في المجاني', dash_plan_f6:'جميع الأصوات', dash_plan_f7:'جميع الصيغ',
     dash_plan_f8:'كل شيء في المبتدئ', dash_plan_f9:'توليد ذو أولوية', dash_plan_f10:'صورة غلاف بالذكاء الاصطناعي', dash_plan_f11:'مؤثرات ذكاء اصطناعي', dash_plan_f11b:'توزيع الشخصيات بأصوات متعددة',
     dash_plan_f12:'كل شيء في المؤلف', dash_plan_f13:'مقاعد الفريق (3)', dash_plan_f14:'تصدير مجمّع', dash_plan_f15:'وصول API',
@@ -21055,7 +21195,7 @@ const UI_TRANSLATIONS = {
     dash_test1_quote:'"حصلت على كتابي الصوتي الأول على ACX في يوم واحد. الرواية متعددة الأصوات تجعل مشاهد الحوار تنبض بالحياة."',
     dash_test2_quote:'"فهم ذكاء اصطناعي الغلاف نوعي تماماً. غلاف روايتي الرومانسية يبدو وكأنه من صنع مصمم محترف."',
     dash_test3_quote:'"استخدمت استنساخ الصوت للرواية بصوتي الخاص. لم يستطع مستمعيّ التمييز بين ذلك وبين تسجيل استوديو."',
-    dash_faq_a1:'لا حاجة لأي معدات. يولّد Authorr AI السرد بالكامل باستخدام أصوات الذكاء الاصطناعي من Cartesia. إن أردت استخدام صوتك، تحتاج ميزة الاستنساخ فقط إلى عينة 30 ثانية.',
+    dash_faq_a1:'لا حاجة لأي معدات. يولّد Authorr AI السرد بالكامل باستخدام أصوات الذكاء الاصطناعي من Grok. إن أردت استخدام صوتك، تحتاج ميزة الاستنساخ فقط إلى عينة 30 ثانية.',
     dash_faq_a2:'حزمة "Audible/ACX" تنزّل صوتك بالتنسيق الصحيح مع قائمة تحقق ACX كاملة. ننصح بإجراء تطبيع سريع في Audacity قبل الرفع.',
     dash_faq_a3:'يمكن كتابة كتاب قصير وتسجيله وتصديره في أقل من ساعة. الروايات الأطول تستغرق وقتاً أكثر لأن TTS يعمل في الوقت الفعلي.',
     dash_faq_a4:'نعم — 100٪. أنت تملك قصتك وسردك وغلافك. Authorr AI أداة وليس مالكاً للحقوق.',
@@ -21233,7 +21373,7 @@ const UI_TRANSLATIONS = {
     dash_plan_free:'免费', dash_plan_starter:'入门', dash_plan_author:'作者', dash_plan_publisher:'出版商', dash_plan_studio:'工作室',
     dash_plan_forever:'永久免费', dash_plan_per_mo:'/ 月', dash_plan_credits_mo:'积分 / 月',
     dash_plan_story1:'~1篇短故事', dash_plan_story3:'~3本短书', dash_plan_books9:'~9本完整书籍', dash_plan_books25:'~25本完整书籍', dash_plan_books65:'~65本完整书籍',
-    dash_plan_f1:'AI写作', dash_plan_f2:'1个Cartesia声音', dash_plan_f3:'基础导出', dash_plan_f4:'声音克隆',
+    dash_plan_f1:'AI写作', dash_plan_f2:'1个Grok声音', dash_plan_f3:'基础导出', dash_plan_f4:'声音克隆',
     dash_plan_f5:'免费版全部功能', dash_plan_f6:'所有声音', dash_plan_f7:'所有格式',
     dash_plan_f8:'入门版全部功能', dash_plan_f9:'优先生成', dash_plan_f10:'AI封面图', dash_plan_f11:'音效和音乐AI', dash_plan_f11b:'多声部角色配音',
     dash_plan_f12:'作者版全部功能', dash_plan_f13:'团队席位 (3)', dash_plan_f14:'批量导出', dash_plan_f15:'API访问',
@@ -21243,7 +21383,7 @@ const UI_TRANSLATIONS = {
     dash_test1_quote:'"我在一天内就把第一本有声书上传到了ACX。多声道旁白让我的对话场景栩栩如生——听起来像全阵容制作。"',
     dash_test2_quote:'"封面AI完全理解了我的类型。我的言情小说封面看起来像专业设计师的作品，读者们不停地称赞。"',
     dash_test3_quote:'"我用声音克隆用自己的声音讲述。我的听众无法分辨和录音室录音的区别。令人叹为观止的技术。"',
-    dash_faq_a1:'完全不需要任何设备。Authorr AI完全使用Cartesia的AI声音生成旁白。如果您想使用自己的声音，声音克隆功能只需要30秒音频样本。',
+    dash_faq_a1:'完全不需要任何设备。Authorr AI完全使用Grok的AI声音生成旁白。如果您想使用自己的声音，声音克隆功能只需要30秒音频样本。',
     dash_faq_a2:'"Audible/ACX"包以正确的文件名格式下载音频，并包含完整的ACX检查清单。我们建议在上传前用免费的Audacity软件快速进行标准化处理。',
     dash_faq_a3:'一本短书（1-2万字）可以在一小时内完成写作、旁白和导出。较长的小说因为TTS实时运行会花更多时间，但您可以在处理期间离开。',
     dash_faq_a4:'是的——100%。您拥有您的故事、旁白和封面艺术。Authorr AI是一个工具，不是版权持有人。您可以在任何平台上自由出版、销售和变现。',
@@ -21421,7 +21561,7 @@ const UI_TRANSLATIONS = {
     dash_plan_free:'無料', dash_plan_starter:'スターター', dash_plan_author:'著者', dash_plan_publisher:'出版社', dash_plan_studio:'スタジオ',
     dash_plan_forever:'永久無料', dash_plan_per_mo:'/ 月', dash_plan_credits_mo:'クレジット / 月',
     dash_plan_story1:'~1短編', dash_plan_story3:'~3短編本', dash_plan_books9:'~9冊', dash_plan_books25:'~25冊', dash_plan_books65:'~65冊',
-    dash_plan_f1:'AI執筆', dash_plan_f2:'Cartesiaボイス1つ', dash_plan_f3:'基本エクスポート', dash_plan_f4:'ボイスクローン',
+    dash_plan_f1:'AI執筆', dash_plan_f2:'Grokボイス1つ', dash_plan_f3:'基本エクスポート', dash_plan_f4:'ボイスクローン',
     dash_plan_f5:'無料プランの全て', dash_plan_f6:'全ボイス', dash_plan_f7:'全フォーマット',
     dash_plan_f8:'スタータープランの全て', dash_plan_f9:'優先生成', dash_plan_f10:'AIカバー画像', dash_plan_f11:'SFXと音楽AI', dash_plan_f11b:'マルチボイスキャラクターキャスト',
     dash_plan_f12:'著者プランの全て', dash_plan_f13:'チーム席 (3)', dash_plan_f14:'一括エクスポート', dash_plan_f15:'APIアクセス',
@@ -21431,7 +21571,7 @@ const UI_TRANSLATIONS = {
     dash_test1_quote:'"1日でACXに初のオーディオブックを公開しました。マルチボイスのナレーションがダイアログシーンに命を吹き込みます。"',
     dash_test2_quote:'"カバーAIがジャンルを完璧に理解しました。ロマンス小説のカバーはプロのデザイナーが作ったように見えます。"',
     dash_test3_quote:'"自分の声でナレーションするためにボイスクローンを使いました。リスナーたちはスタジオ録音との違いに気づきませんでした。"',
-    dash_faq_a1:'機材は一切不要です。Authorr AIはCartesiaのAIボイスで完全自動ナレーションを生成します。自分の声を使いたい場合、ボイスクローン機能には30秒のサンプルだけ必要です。',
+    dash_faq_a1:'機材は一切不要です。Authorr AIはGrokのAIボイスで完全自動ナレーションを生成します。自分の声を使いたい場合、ボイスクローン機能には30秒のサンプルだけ必要です。',
     dash_faq_a2:'"Audible/ACX"パッケージは正しいファイル形式と完全なACXチェックリストをダウンロードします。アップロード前にAudacityで素早く正規化することをお勧めします。',
     dash_faq_a3:'短い本は1時間以内に執筆、ナレーション、エクスポートが可能です。長い小説はTTSがリアルタイムで動作するため時間がかかります。',
     dash_faq_a4:'はい — 100%。あなたの物語、ナレーション、カバーアートはすべてあなたのものです。Authorr AIはツールであり、権利保有者ではありません。',
@@ -21609,7 +21749,7 @@ const UI_TRANSLATIONS = {
     dash_plan_free:'무료', dash_plan_starter:'스타터', dash_plan_author:'저자', dash_plan_publisher:'출판사', dash_plan_studio:'스튜디오',
     dash_plan_forever:'영구 무료', dash_plan_per_mo:'/ 월', dash_plan_credits_mo:'크레딧 / 월',
     dash_plan_story1:'~1편 단편', dash_plan_story3:'~3권 단행본', dash_plan_books9:'~9권 완성본', dash_plan_books25:'~25권 완성본', dash_plan_books65:'~65권 완성본',
-    dash_plan_f1:'AI 글쓰기', dash_plan_f2:'Cartesia 음성 1개', dash_plan_f3:'기본 내보내기', dash_plan_f4:'음성 복제',
+    dash_plan_f1:'AI 글쓰기', dash_plan_f2:'Grok 음성 1개', dash_plan_f3:'기본 내보내기', dash_plan_f4:'음성 복제',
     dash_plan_f5:'무료의 모든 것', dash_plan_f6:'모든 음성', dash_plan_f7:'모든 형식',
     dash_plan_f8:'스타터의 모든 것', dash_plan_f9:'우선 생성', dash_plan_f10:'AI 표지 이미지', dash_plan_f11:'SFX 및 음악 AI', dash_plan_f11b:'다중 음성 캐릭터 캐스트',
     dash_plan_f12:'저자의 모든 것', dash_plan_f13:'팀 석 (3)', dash_plan_f14:'일괄 내보내기', dash_plan_f15:'API 액세스',
@@ -21619,7 +21759,7 @@ const UI_TRANSLATIONS = {
     dash_test1_quote:'"하루 만에 ACX에 첫 오디오북을 올렸습니다. 다중 음성 나레이션이 내 대화 장면에 생기를 불어넣습니다."',
     dash_test2_quote:'"커버 AI가 내 장르를 정확히 파악했습니다. 로맨스 소설 표지가 전문 디자이너 작품처럼 보입니다."',
     dash_test3_quote:'"내 목소리로 나레이션하기 위해 음성 복제를 사용했습니다. 청취자들이 스튜디오 녹음과 구분하지 못했습니다."',
-    dash_faq_a1:'녹음 장비가 전혀 필요 없습니다. Authorr AI는 Cartesia AI 음성으로 나레이션을 완전 자동 생성합니다. 직접 목소리를 사용하려면 30초 오디오 샘플만 필요합니다.',
+    dash_faq_a1:'녹음 장비가 전혀 필요 없습니다. Authorr AI는 Grok AI 음성으로 나레이션을 완전 자동 생성합니다. 직접 목소리를 사용하려면 30초 오디오 샘플만 필요합니다.',
     dash_faq_a2:'"Audible/ACX" 패키지는 올바른 파일 형식과 완전한 ACX 체크리스트를 포함합니다. 업로드 전 Audacity에서 빠른 정규화를 권장합니다.',
     dash_faq_a3:'짧은 책은 한 시간 이내에 작성, 나레이션, 내보내기가 가능합니다. 긴 소설은 TTS가 실시간으로 실행되므로 더 오래 걸립니다.',
     dash_faq_a4:'네 — 100%. 이야기, 나레이션, 표지의 권리는 모두 귀하의 것입니다. Authorr AI는 도구이지 권리 보유자가 아닙니다.',
@@ -21797,7 +21937,7 @@ const UI_TRANSLATIONS = {
     dash_plan_free:'Бесплатно', dash_plan_starter:'Стартер', dash_plan_author:'Автор', dash_plan_publisher:'Издатель', dash_plan_studio:'Студия',
     dash_plan_forever:'навсегда', dash_plan_per_mo:'/ месяц', dash_plan_credits_mo:'кредитов / месяц',
     dash_plan_story1:'~1 короткий рассказ', dash_plan_story3:'~3 короткие книги', dash_plan_books9:'~9 полных книг', dash_plan_books25:'~25 полных книг', dash_plan_books65:'~65 полных книг',
-    dash_plan_f1:'ИИ-написание', dash_plan_f2:'1 голос Cartesia', dash_plan_f3:'Базовый экспорт', dash_plan_f4:'Клонирование голоса',
+    dash_plan_f1:'ИИ-написание', dash_plan_f2:'1 голос Grok', dash_plan_f3:'Базовый экспорт', dash_plan_f4:'Клонирование голоса',
     dash_plan_f5:'Всё из Бесплатно', dash_plan_f6:'Все голоса', dash_plan_f7:'Все форматы',
     dash_plan_f8:'Всё из Стартер', dash_plan_f9:'Приоритетная генерация', dash_plan_f10:'ИИ обложка', dash_plan_f11:'SFX и музыка ИИ', dash_plan_f11b:'Многоголосый актёрский состав',
     dash_plan_f12:'Всё из Автор', dash_plan_f13:'Места в команде (3)', dash_plan_f14:'Массовый экспорт', dash_plan_f15:'Доступ к API',
@@ -21807,7 +21947,7 @@ const UI_TRANSLATIONS = {
     dash_test1_quote:'"Я разместил первую аудиокнигу на ACX за один день. Многоголосая начитка оживляет мои диалоговые сцены."',
     dash_test2_quote:'"ИИ для обложек угадал мой жанр. Обложка моего любовного романа выглядит как работа профессионального дизайнера."',
     dash_test3_quote:'"Я использовал клонирование голоса для начитки своим голосом. Слушатели не могли отличить от студийной записи."',
-    dash_faq_a1:'Никакое оборудование не нужно. Authorr AI генерирует начитку полностью с помощью голосов ИИ Cartesia. Для своего голоса функция клонирования требует лишь 30-секундного образца.',
+    dash_faq_a1:'Никакое оборудование не нужно. Authorr AI генерирует начитку полностью с помощью голосов ИИ Grok. Для своего голоса функция клонирования требует лишь 30-секундного образца.',
     dash_faq_a2:'Пакет "Audible/ACX" загружает аудио в правильном формате с полным чеклистом ACX. Рекомендуем быструю нормализацию в Audacity перед загрузкой.',
     dash_faq_a3:'Короткую книгу можно написать, озвучить и экспортировать менее чем за час. Длинные романы занимают больше времени, так как TTS работает в реальном времени.',
     dash_faq_a4:'Да — на 100%. Вы владеете своей историей, начиткой и обложкой. Authorr AI — инструмент, а не правообладатель.',
@@ -21985,7 +22125,7 @@ const UI_TRANSLATIONS = {
     dash_plan_free:'Gratis', dash_plan_starter:'Starter', dash_plan_author:'Auteur', dash_plan_publisher:'Uitgever', dash_plan_studio:'Studio',
     dash_plan_forever:'voor altijd', dash_plan_per_mo:'/ maand', dash_plan_credits_mo:'credits / maand',
     dash_plan_story1:'~1 kort verhaal', dash_plan_story3:'~3 korte boeken', dash_plan_books9:'~9 volledige boeken', dash_plan_books25:'~25 volledige boeken', dash_plan_books65:'~65 volledige boeken',
-    dash_plan_f1:'AI-schrijven', dash_plan_f2:'1 Cartesia-stem', dash_plan_f3:'Basisexport', dash_plan_f4:'Stemklonen',
+    dash_plan_f1:'AI-schrijven', dash_plan_f2:'1 Grok-stem', dash_plan_f3:'Basisexport', dash_plan_f4:'Stemklonen',
     dash_plan_f5:'Alles in Gratis', dash_plan_f6:'Alle stemmen', dash_plan_f7:'Alle exportformaten',
     dash_plan_f8:'Alles in Starter', dash_plan_f9:'Prioriteitsgeneratie', dash_plan_f10:'AI omslagafbeelding', dash_plan_f11:'SFX en muziek AI', dash_plan_f11b:'Multi-stem karakterbezetting',
     dash_plan_f12:'Alles in Auteur', dash_plan_f13:'Teamplaatsen (3)', dash_plan_f14:'Bulkexport', dash_plan_f15:'API-toegang',
@@ -21995,7 +22135,7 @@ const UI_TRANSLATIONS = {
     dash_test1_quote:'"Ik had mijn eerste luisterboek op ACX binnen een dag. De meerstemmige vertelling maakt mijn dialoogscènes tot leven."',
     dash_test2_quote:'"De cover-AI begreep mijn genre meteen. De omslag van mijn romantische roman ziet eruit als professioneel designwerk."',
     dash_test3_quote:'"Ik gebruikte stemklonen om te vertellen in mijn eigen stem. Mijn luisteraars konden het niet onderscheiden van een studio-opname."',
-    dash_faq_a1:'Geen apparatuur nodig. Authorr AI genereert vertelling volledig met Cartesia AI-stemmen. Voor je eigen stem heeft de kloonfunctie alleen een 30-seconden geluidsfragment nodig.',
+    dash_faq_a1:'Geen apparatuur nodig. Authorr AI genereert vertelling volledig met Grok AI-stemmen. Voor je eigen stem heeft de kloonfunctie alleen een 30-seconden geluidsfragment nodig.',
     dash_faq_a2:'Het "Audible/ACX"-pakket downloadt je audio in het juiste formaat met een volledige ACX-checklist. We raden een snelle normalisatie in Audacity aan voor het uploaden.',
     dash_faq_a3:'Een kort boek kan in minder dan een uur worden geschreven, verteld en geëxporteerd. Langere romans duren langer omdat TTS in real-time draait.',
     dash_faq_a4:'Ja — 100%. Jij bezit jouw verhaal, vertelling en omslag. Authorr AI is een hulpmiddel, geen rechthebbende.',
@@ -22173,7 +22313,7 @@ const UI_TRANSLATIONS = {
     dash_plan_free:'Bezpłatny', dash_plan_starter:'Startowy', dash_plan_author:'Autor', dash_plan_publisher:'Wydawca', dash_plan_studio:'Studio',
     dash_plan_forever:'na zawsze', dash_plan_per_mo:'/ miesiąc', dash_plan_credits_mo:'kredytów / miesiąc',
     dash_plan_story1:'~1 opowiadanie', dash_plan_story3:'~3 krótkie książki', dash_plan_books9:'~9 pełnych książek', dash_plan_books25:'~25 pełnych książek', dash_plan_books65:'~65 pełnych książek',
-    dash_plan_f1:'Pisanie AI', dash_plan_f2:'1 głos Cartesia', dash_plan_f3:'Podstawowy eksport', dash_plan_f4:'Klonowanie głosu',
+    dash_plan_f1:'Pisanie AI', dash_plan_f2:'1 głos Grok', dash_plan_f3:'Podstawowy eksport', dash_plan_f4:'Klonowanie głosu',
     dash_plan_f5:'Wszystko z Bezpłatny', dash_plan_f6:'Wszystkie głosy', dash_plan_f7:'Wszystkie formaty',
     dash_plan_f8:'Wszystko ze Startowy', dash_plan_f9:'Priorytetowe generowanie', dash_plan_f10:'Okładka AI', dash_plan_f11:'SFX i muzyka AI', dash_plan_f11b:'Obsada postaci z wieloma głosami',
     dash_plan_f12:'Wszystko z Autor', dash_plan_f13:'Miejsca zespołu (3)', dash_plan_f14:'Eksport masowy', dash_plan_f15:'Dostęp API',
@@ -22183,7 +22323,7 @@ const UI_TRANSLATIONS = {
     dash_test1_quote:'"Miałem pierwszy audiobook na ACX w ciągu jednego dnia. Narracja wielogłosowa ożywia moje sceny dialogowe."',
     dash_test2_quote:'"AI do okładek trafiła w mój gatunek. Okładka mojej powieści romantycznej wygląda jak praca profesjonalnego projektanta."',
     dash_test3_quote:'"Użyłem klonowania głosu do narracji własnym głosem. Moi słuchacze nie odróżnili od nagrania studyjnego."',
-    dash_faq_a1:'Żaden sprzęt nie jest potrzebny. Authorr AI generuje narrację całkowicie za pomocą głosów AI Cartesia. Jeśli chcesz użyć własnego głosu, funkcja klonowania potrzebuje tylko 30-sekundowej próbki.',
+    dash_faq_a1:'Żaden sprzęt nie jest potrzebny. Authorr AI generuje narrację całkowicie za pomocą głosów AI Grok. Jeśli chcesz użyć własnego głosu, funkcja klonowania potrzebuje tylko 30-sekundowej próbki.',
     dash_faq_a2:'Pakiet "Audible/ACX" pobiera audio we właściwym formacie z pełną listą kontrolną ACX. Zalecamy szybką normalizację w Audacity przed przesłaniem.',
     dash_faq_a3:'Krótka książka może być napisana, opowiedziana i wyeksportowana w niecałą godzinę. Dłuższe powieści zajmują więcej czasu, bo TTS działa w czasie rzeczywistym.',
     dash_faq_a4:'Tak — w 100%. Jesteś właścicielem swojej historii, narracji i okładki. Authorr AI jest narzędziem, nie właścicielem praw.',
@@ -22361,7 +22501,7 @@ const UI_TRANSLATIONS = {
     dash_plan_free:'Gratis', dash_plan_starter:'Nybörjare', dash_plan_author:'Författare', dash_plan_publisher:'Förlag', dash_plan_studio:'Studio',
     dash_plan_forever:'för alltid', dash_plan_per_mo:'/ månad', dash_plan_credits_mo:'krediter / månad',
     dash_plan_story1:'~1 korthistoria', dash_plan_story3:'~3 korta böcker', dash_plan_books9:'~9 hela böcker', dash_plan_books25:'~25 hela böcker', dash_plan_books65:'~65 hela böcker',
-    dash_plan_f1:'AI-skrivning', dash_plan_f2:'1 Cartesia-röst', dash_plan_f3:'Grundexport', dash_plan_f4:'Röstkloning',
+    dash_plan_f1:'AI-skrivning', dash_plan_f2:'1 Grok-röst', dash_plan_f3:'Grundexport', dash_plan_f4:'Röstkloning',
     dash_plan_f5:'Allt i Gratis', dash_plan_f6:'Alla röster', dash_plan_f7:'Alla format',
     dash_plan_f8:'Allt i Nybörjare', dash_plan_f9:'Prioriterad generering', dash_plan_f10:'AI omslagsbild', dash_plan_f11:'SFX och musik AI', dash_plan_f11b:'Flerstämmig karaktärsrollsättning',
     dash_plan_f12:'Allt i Författare', dash_plan_f13:'Teamplatser (3)', dash_plan_f14:'Massexport', dash_plan_f15:'API-åtkomst',
@@ -22371,7 +22511,7 @@ const UI_TRANSLATIONS = {
     dash_test1_quote:'"Jag hade min första ljudbok på ACX inom en dag. Flerröstberättelsen ger mina dialogscener liv."',
     dash_test2_quote:'"AI:n för omslag förstod mitt genre direkt. Omslaget till min romantiska roman ser professionellt designat ut."',
     dash_test3_quote:'"Jag använde röstkloning för att berätta med min egen röst. Mina lyssnare kunde inte skilja det från en studioinspelning."',
-    dash_faq_a1:'Ingen utrustning behövs. Authorr AI genererar berättelse helt med Cartesia AI-röster. Om du vill använda din egen röst behöver röstkloning bara ett 30-sekunders ljudprov.',
+    dash_faq_a1:'Ingen utrustning behövs. Authorr AI genererar berättelse helt med Grok AI-röster. Om du vill använda din egen röst behöver röstkloning bara ett 30-sekunders ljudprov.',
     dash_faq_a2:'"Audible/ACX"-paketet laddar ner ditt ljud i rätt format med en fullständig ACX-checklista. Vi rekommenderar en snabb normalisering i Audacity innan uppladdning.',
     dash_faq_a3:'En kort bok kan skrivas, berättas och exporteras på under en timme. Längre romaner tar längre tid eftersom TTS körs i realtid.',
     dash_faq_a4:'Ja — 100%. Du äger din berättelse, berättarröst och omslag. Authorr AI är ett verktyg, inte en rättighetsinnehavare.',
@@ -22550,7 +22690,7 @@ const UI_TRANSLATIONS = {
     dash_plan_free:'Ücretsiz', dash_plan_starter:'Başlangıç', dash_plan_author:'Yazar', dash_plan_publisher:'Yayıncı', dash_plan_studio:'Stüdyo',
     dash_plan_forever:'sonsuza kadar', dash_plan_per_mo:'/ ay', dash_plan_credits_mo:'kredi / ay',
     dash_plan_story1:'~1 kısa hikaye', dash_plan_story3:'~3 kısa kitap', dash_plan_books9:'~9 tam kitap', dash_plan_books25:'~25 tam kitap', dash_plan_books65:'~65 tam kitap',
-    dash_plan_f1:'AI yazma', dash_plan_f2:'1 Cartesia sesi', dash_plan_f3:'Temel dışa aktarma', dash_plan_f4:'Ses klonlama',
+    dash_plan_f1:'AI yazma', dash_plan_f2:'1 Grok sesi', dash_plan_f3:'Temel dışa aktarma', dash_plan_f4:'Ses klonlama',
     dash_plan_f5:'Ücretsiz\'teki her şey', dash_plan_f6:'Tüm sesler', dash_plan_f7:'Tüm formatlar',
     dash_plan_f8:'Başlangıç\'taki her şey', dash_plan_f9:'Öncelikli üretim', dash_plan_f10:'AI kapak görseli', dash_plan_f11:'SFX ve müzik AI', dash_plan_f11b:'Çok sesli karakter kadrosu',
     dash_plan_f12:'Yazar\'daki her şey', dash_plan_f13:'Ekip yerleri (3)', dash_plan_f14:'Toplu dışa aktarma', dash_plan_f15:'API erişimi',
@@ -22560,7 +22700,7 @@ const UI_TRANSLATIONS = {
     dash_test1_quote:'"İlk sesli kitabımı ACX\'e bir günde yükledim. Çok sesli anlatım diyalog sahnelerimi canlandırıyor."',
     dash_test2_quote:'"Kapak AI türümü doğru tahmin etti. Romantik romanımın kapağı profesyonel bir tasarımcı işi gibi görünüyor."',
     dash_test3_quote:'"Kendi sesimle anlatmak için ses klonlamayı kullandım. Dinleyicilerim stüdyo kaydından ayırt edemedi."',
-    dash_faq_a1:'Hiçbir ekipmana gerek yok. Authorr AI, Cartesia AI sesleriyle tamamen otomatik anlatım üretir. Kendi sesinizi kullanmak istiyorsanız Ses Klonlama özelliği yalnızca 30 saniyelik örnek ister.',
+    dash_faq_a1:'Hiçbir ekipmana gerek yok. Authorr AI, Grok AI sesleriyle tamamen otomatik anlatım üretir. Kendi sesinizi kullanmak istiyorsanız Ses Klonlama özelliği yalnızca 30 saniyelik örnek ister.',
     dash_faq_a2:'"Audible / ACX" paketi doğru dosya formatını ve tam bir ACX kontrol listesini içerir. Yüklemeden önce Audacity\'de hızlı bir normalleştirme önerilir.',
     dash_faq_a3:'Kısa bir kitap bir saatten kısa sürede yazılabilir, anlatılabilir ve dışa aktarılabilir. Uzun romanlar TTS gerçek zamanlı çalıştığından daha uzun sürer.',
     dash_faq_a4:'Evet — %100. Hikayenize, anlatımınıza ve kapağınıza sahipsiniz. Authorr AI bir araçtır, hak sahibi değil.',
