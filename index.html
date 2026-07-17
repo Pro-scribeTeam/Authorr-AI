@@ -19197,18 +19197,21 @@ Format as clean prose with tags woven in, ready for narration.`;
         }
 
         const PLAN_CONFIG = {
-            free:      { credits: 10000,    label: 'Free',      price: 0   },
-            starter:   { credits: 150000,   label: 'Starter',   price: 19  },
-            author:    { credits: 450000,   label: 'Author',    price: 49  },
-            publisher: { credits: 1200000,  label: 'Publisher', price: 99  },
-            studio:    { credits: 3000000,  label: 'Studio',    price: 249 }
+            free:       { credits: 10000,    label: 'Free',       price: 0   },
+            starter:    { credits: 150000,   label: 'Starter',    price: 19  },
+            author:     { credits: 450000,   label: 'Author',     price: 49  },
+            publisher:  { credits: 1200000,  label: 'Publisher',  price: 99  },
+            studio:     { credits: 3000000,  label: 'Studio',     price: 249 },
+            admin_test: { credits: 9999999,  label: 'Admin Test', price: 0   }  // admin-only, not public
         };
 
         function getPlanTier() {
             const plan = window._userSubscription?.plan || 'free';
-            return { free: 0, starter: 1, author: 2, publisher: 3, studio: 4 }[plan] ?? 0;
+            return { free: 0, starter: 1, author: 2, publisher: 3, studio: 4, admin_test: 5 }[plan] ?? 0;
         }
         function hasMultiVoicePlan() { return getPlanTier() >= 2; } // Author+
+        function isAdminTestTier() { return (window._userSubscription?.plan) === 'admin_test'; }
+        const ADMIN_TEST_CHAPTER_CAP = 2; // credit-saving limit for admin testing
 
         async function loadUserSubscription(userId) {
             const client = ensureSupabase();
@@ -22874,6 +22877,7 @@ function setUILanguage(lang) {
                     <button onclick="adminPreviewTier('author')"  class="tier-preview-btn text-xs px-4 py-2 rounded-lg font-semibold border border-purple-700 text-purple-300 hover:border-purple-400 transition-colors">Author</button>
                     <button onclick="adminPreviewTier('publisher')" class="tier-preview-btn text-xs px-4 py-2 rounded-lg font-semibold border border-cyan-700 text-cyan-300 hover:border-cyan-400 transition-colors">Publisher</button>
                     <button onclick="adminPreviewTier('studio')"  class="tier-preview-btn text-xs px-4 py-2 rounded-lg font-semibold border border-yellow-600 text-yellow-300 hover:border-yellow-400 transition-colors">Studio</button>
+                    <button onclick="adminPreviewTier('admin_test')" class="tier-preview-btn text-xs px-4 py-2 rounded-lg font-semibold border border-red-700 text-red-300 hover:border-red-400 transition-colors">Admin Test (2ch)</button>
                 </div>
                 <div class="mt-3 text-xs text-gray-500">
                     After switching, navigate to any page to see that tier's experience. Credits display, export buttons, generation limits, and plan tier box all reflect the preview.
@@ -22964,7 +22968,7 @@ function setUILanguage(lang) {
         event.currentTarget.classList.add('ring-2', 'ring-offset-1', 'ring-offset-gray-900', 'ring-yellow-400');
 
         // Update status label
-        const labels = { free:'Free', starter:'Starter', author:'Author', publisher:'Publisher', studio:'Studio' };
+        const labels = { free:'Free', starter:'Starter', author:'Author', publisher:'Publisher', studio:'Studio', admin_test:'Admin Test' };
         const current = document.getElementById('tierPreviewCurrent');
         if (current) current.textContent = (labels[plan] || plan) + ' (preview)';
         const statusEl = document.getElementById('tierPreviewStatus');
@@ -22991,7 +22995,7 @@ function setUILanguage(lang) {
         });
 
         const plan = (window._userSubscription && window._userSubscription.plan) || 'studio';
-        const labels = { free:'Free', starter:'Starter', author:'Author', publisher:'Publisher', studio:'Studio' };
+        const labels = { free:'Free', starter:'Starter', author:'Author', publisher:'Publisher', studio:'Studio', admin_test:'Admin Test' };
         const current = document.getElementById('tierPreviewCurrent');
         if (current) current.textContent = (labels[plan] || plan) + ' (real)';
         const statusEl = document.getElementById('tierPreviewStatus');
@@ -23006,7 +23010,7 @@ function setUILanguage(lang) {
     // Keep tier preview label in sync when admin panel is opened
     function adminSyncTierLabel() {
         const plan = (window._userSubscription && window._userSubscription.plan) || 'studio';
-        const labels = { free:'Free', starter:'Starter', author:'Author', publisher:'Publisher', studio:'Studio' };
+        const labels = { free:'Free', starter:'Starter', author:'Author', publisher:'Publisher', studio:'Studio', admin_test:'Admin Test' };
         const current = document.getElementById('tierPreviewCurrent');
         const isPreview = !!_adminRealSubscription;
         if (current) current.textContent = (labels[plan] || plan) + (isPreview ? ' (preview)' : ' (real)');
@@ -23454,7 +23458,7 @@ function updatePlanTierUI() {
     var freeRow = document.getElementById('freeTierLimitsRow');
     var paidRow = document.getElementById('paidTierLimitsRow');
     if (!box) return;
-    var labels = { free: 'Free', starter: 'Starter', author: 'Author', publisher: 'Publisher', studio: 'Studio' };
+    var labels = { free: 'Free', starter: 'Starter', author: 'Author', publisher: 'Publisher', studio: 'Studio', admin_test: 'Admin Test' };
     if (opt) opt.textContent = labels[plan] || plan;
     if (plan === 'free') {
         box.style.borderColor = '#ca8a04';
@@ -23518,6 +23522,12 @@ async function generateOutline() {
         if (chapterCount < 12 || chapterWordTarget < Math.round(targetWords / 12)) {
             showNotification('Free tier: ~' + FREE_MAX_CHAPTERS + ' chapters (up to ' + FREE_HARD_CAP + ' to complete the story) & ' + FREE_MAX_WORDS + ' words/chapter. Upgrade for full length.', 'warning');
         }
+    }
+
+    // Admin Test tier cap: full access but capped at 2 chapters to save credits
+    if (isAdminTestTier()) {
+        chapterCount = Math.min(chapterCount, ADMIN_TEST_CHAPTER_CAP);
+        showNotification('Admin Test tier: capped at ' + ADMIN_TEST_CHAPTER_CAP + ' chapters to conserve credits.', 'info');
     }
 
     var ccEl = document.getElementById('chapterCount');
