@@ -10895,7 +10895,14 @@ Format as clean prose with tags woven in, ready for narration.`;
             const mainVoiceSel = document.getElementById('voiceSelection');
             const voiceOptions = mainVoiceSel ? Array.from(mainVoiceSel.querySelectorAll('option')).filter(o => o.value) : [];
 
-            // Restore saved voice assignments from localStorage
+            // Seed from Casting Screen (storyBible.castingLayer) — so users don't have to re-pick
+            if (typeof storyBible !== 'undefined' && storyBible.castingLayer) {
+                Object.entries(storyBible.castingLayer).forEach(([name, cast]) => {
+                    if (cast && cast.voiceId) dialogueData.voiceAssignments[name] = cast.voiceId;
+                });
+            }
+
+            // Override with localStorage saved assignments (narration-page changes take precedence)
             const savedData = JSON.parse(localStorage.getItem('grokCharacterVoices') || 'null');
             if (savedData?.assignments) {
                 Object.assign(dialogueData.voiceAssignments, savedData.assignments);
