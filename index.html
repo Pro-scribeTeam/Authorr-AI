@@ -11273,9 +11273,9 @@ Format as clean prose with tags woven in, ready for narration.`;
 
                 let audioBlobs = [];
 
-                // Also activate multi-voice for Genre Engine markup when voices are assigned in the casting layer
+                // Activate multi-voice when: toggle on, OR voices assigned in casting/narration page, OR Genre Engine markup present
                 const hasCastingAssignments = Object.keys(mergedCasting).length > 0;
-                if (useMultiVoice || (hasLineMarkup && (gmNarrationMode !== 'single' || hasCastingAssignments))) {
+                if (useMultiVoice || hasCastingAssignments || (hasLineMarkup && gmNarrationMode !== 'single')) {
                     // Multi-voice: route narrator prose and character dialogue to different voices
                     let segments;
                     if (hasLineMarkup) {
@@ -11283,7 +11283,7 @@ Format as clean prose with tags woven in, ready for narration.`;
                         segments = parseLineMarkupSegments(content, mergedCasting, narratorVoice);
                         console.log(`🎭 GENRE ENGINE MULTI-VOICE — ${segments.length} segments, narrationMode=${gmNarrationMode}`);
                     } else {
-                        // Legacy "quote" said CharacterName format
+                        // Legacy "quote" said CharacterName format — activated by casting assignments or toggle
                         segments = parseStoryIntoSegments(content, dialogueData.voiceAssignments, narratorVoice);
                         console.log(`🎭 MULTI-VOICE — ${segments.length} segments across ${new Set(segments.map(s => s.character)).size} speakers`);
                     }
