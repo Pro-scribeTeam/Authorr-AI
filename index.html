@@ -9075,27 +9075,49 @@ Write engaging, well-structured prose that:
 4. Meets the target word count
 5. Ends with a natural transition to the next chapter
 
-IMPORTANT — This text will be read aloud by the Grok TTS voice engine. Embed the following speech tags naturally where they enhance the listening experience:
+IMPORTANT — This text will be read aloud by the Grok TTS voice engine. Embed the following speech tags naturally where they genuinely enhance the listening experience.
 
 Inline tags (drop into the text at the exact moment):
-  [pause]       — short beat, e.g. after a tense sentence or before a reveal
-  [long-pause]  — longer silence, e.g. between major scene shifts
-  [laugh]       — audible laugh, e.g. when a character finds something funny
-  [sigh]        — audible sigh, e.g. relief, exhaustion, resignation
-  [breath]      — audible breath, e.g. after running, before a difficult confession
+  [pause]        — short beat, after a tense sentence or before a reveal
+  [long-pause]   — longer silence, between major scene shifts or after shock
+  [breath]       — audible breath, after running or before a difficult confession
+  [inhale]       — sharp intake of breath, before something big or scary
+  [exhale]       — release of breath, relief or finishing something hard
+  [sigh]         — resignation, exhaustion, or quiet sadness
+  [laugh]        — full audible laugh in a funny or joyful moment
+  [chuckle]      — light, restrained laugh at something mildly amusing
+  [giggle]       — playful or nervous laugh, often in lighter scenes
+  [cry]          — emotional break, tears in voice during grief or overwhelm
+  [hum-tune]     — character humming a melody mid-action
+  [tsk]          — disapproval, impatience, or mild scolding
+  [tongue-click]  — thinking pause, mild frustration, or rhetorical beat
+  [lip-smack]    — character about to speak after a beat of silence
 
 Wrapping tags (wrap a phrase or sentence to change delivery):
-  <whisper>text</whisper>  — secrets, scared moments, intimate confessions
-  <slow>text</slow>        — dramatic reveals, weight of a moment, grief
-  <soft>text</soft>        — tender moments, lullabies, gentle narration
+  <soft>text</soft>              — tender moments, comfort, gentle narration
+  <whisper>text</whisper>        — secrets, fear, intimate confessions
+  <slow>text</slow>              — dramatic reveals, grief, weight of a moment
+  <loud>text</loud>              — outbursts, shock, exclamations
+  <fast>text</fast>              — urgency, panic, rapid instructions
+  <build-intensity>text</build-intensity>   — rising anger, excitement, or dread
+  <decrease-intensity>text</decrease-intensity> — calming down, trailing off
+  <higher-pitch>text</higher-pitch>  — surprise, nervous questions, excitement
+  <lower-pitch>text</lower-pitch>    — gravity, authority, serious warnings
+  <emphasis>text</emphasis>      — the single most important word or phrase in a line
+  <laugh-speak>text</laugh-speak>    — laughing while talking, can't hold it together
+  <sing-song>text</sing-song>    — playful, sarcastic, or childlike singsong delivery
+  <singing>text</singing>        — character actually singing words
 
 Usage rules:
-- Use tags sparingly — 3 to 6 per chapter feels natural, more feels forced
-- Only use [laugh] and [sigh] inside dialogue or direct character reaction moments
-- Use <whisper> for secrets or fear, never for ordinary sentences
-- Use <slow> for the single most dramatic sentence in a scene
-- Never stack multiple tags on the same phrase
-- Do not explain the tags — just embed them in the prose naturally
+- Use 4 to 8 tags per chapter — enough to feel alive, not so many it feels mechanical
+- Pick tags that match the emotional moment precisely — don't use <loud> for mild surprise
+- Never stack two wrapping tags on the same phrase
+- Inline tags go right after the word or sentence they modify, inside quotes for dialogue
+- <emphasis> wraps only a single key word or short phrase, not whole sentences
+- <singing> and <sing-song> only when a character is literally singing or being sing-songy
+- [cry], [laugh], [chuckle], [giggle] go inside or immediately after dialogue, not in pure narration
+- [tsk] and [tongue-click] appear at the start of a line of dialogue
+- Do not explain or comment on the tags — just weave them into the prose naturally
 
 Format as clean prose with tags woven in, ready for narration.`;
 
@@ -9103,7 +9125,7 @@ Format as clean prose with tags woven in, ready for narration.`;
                 chapter.content = await callOpenAI([
                     {
                         role: "system",
-                        content: "You are a professional author and audiobook scriptwriter. Write compelling, well-crafted chapter content that engages listeners when read aloud. Embed Grok TTS speech tags ([pause], [long-pause], [laugh], [sigh], [breath], <whisper>, <slow>, <soft>) naturally and sparingly to enhance the narration experience — only where they genuinely add dramatic or emotional value."
+                        content: "You are a professional author and audiobook scriptwriter. Write compelling, well-crafted chapter content that engages listeners when read aloud. Embed Grok TTS speech tags naturally to enhance the narration experience — only where they genuinely add dramatic or emotional value. Inline tags: [pause], [long-pause], [breath], [inhale], [exhale], [sigh], [laugh], [chuckle], [giggle], [cry], [hum-tune], [tsk], [tongue-click], [lip-smack]. Wrapping tags: <soft>, <whisper>, <slow>, <loud>, <fast>, <build-intensity>, <decrease-intensity>, <higher-pitch>, <lower-pitch>, <emphasis>, <laugh-speak>, <sing-song>, <singing>. Use 4–8 tags per chapter, never stack wrapping tags, and pick each tag to match the exact emotional moment."
                     },
                     {
                         role: "user",
