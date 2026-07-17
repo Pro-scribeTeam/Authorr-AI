@@ -21,6 +21,13 @@
     { "src": "/api/(.*)", "dest": "/api/$1" },
     { "src": "/(.*\\.json)", "dest": "/$1" },
     { "src": "/(.*\\.(png|jpg|jpeg|gif|svg|ico|webp))", "dest": "/$1" },
+    { "src": "/daw-redesigned.html", "dest": "/daw-redesigned.html", "headers": {
+        "X-Frame-Options": "SAMEORIGIN",
+        "X-Content-Type-Options": "nosniff",
+        "Referrer-Policy": "strict-origin-when-cross-origin",
+        "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
+        "X-XSS-Protection": "1; mode=block"
+    }},
     { "src": "/(.*\\.html)", "dest": "/$1", "headers": {
         "X-Frame-Options": "DENY",
         "X-Content-Type-Options": "nosniff",

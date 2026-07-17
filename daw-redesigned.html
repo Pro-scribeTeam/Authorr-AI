@@ -2029,6 +2029,7 @@
         let analyserNodes = {};
         let gainNodes = {};
         let masterGainNode = null;
+        let masterAnalyser = null;
 
         // Clip data/buffer/waveform caches — keyed by clip.id
         // Stored outside undo history so JSON snapshots stay small and fast
@@ -2042,8 +2043,12 @@
                 audioContext = new (window.AudioContext || window.webkitAudioContext)();
                 masterGainNode = audioContext.createGain();
                 masterGainNode.gain.value = 1.5; // 1.5x boost for master output
-                masterGainNode.connect(audioContext.destination);
-                console.log('🎧 AudioContext initialized with boosted gain');
+                masterAnalyser = audioContext.createAnalyser();
+                masterAnalyser.fftSize = 256;
+                masterAnalyser.smoothingTimeConstant = 0.8;
+                masterGainNode.connect(masterAnalyser);
+                masterAnalyser.connect(audioContext.destination);
+                console.log('🎧 AudioContext initialized with master analyser');
             }
             return audioContext;
         }
@@ -2330,44 +2335,30 @@
             document.querySelectorAll('.led-meter').forEach(meter => {
                 const trackId = meter.dataset.trackId;
                 
-                // Handle master track specially - combine all track signals
+                // Handle master track — read directly from master analyser for true output level
                 if (trackId === 'master' || trackId === 'master-r') {
-                    // Calculate combined level from all tracks
-                    let combinedLevel = 0;
-                    let trackCount = 0;
-                    
-                    dawState.tracks.forEach(track => {
-                        const analyser = analyserNodes[track.id];
-                        if (analyser && !track.muted) {
-                            const dataArray = new Uint8Array(analyser.frequencyBinCount);
-                            analyser.getByteFrequencyData(dataArray);
-                            
-                            const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
-                            const rawLevel = (average / 255) * 15 * 6.0;
-                            const scaledLevel = rawLevel * track.volume;
-                            
-                            combinedLevel += scaledLevel;
-                            trackCount++;
+                    let displayLevel = 0;
+                    if (masterAnalyser) {
+                        const dataArray = new Uint8Array(masterAnalyser.frequencyBinCount);
+                        masterAnalyser.getByteTimeDomainData(dataArray);
+                        // RMS of the waveform → true signal amplitude
+                        let sum = 0;
+                        for (let i = 0; i < dataArray.length; i++) {
+                            const v = (dataArray[i] / 128.0) - 1.0;
+                            sum += v * v;
                         }
-                    });
-                    
-                    // Average the combined levels and apply master volume with 2x boost
-                    if (trackCount > 0) {
-                        const avgLevel = combinedLevel / trackCount;
-                        masterLevel = Math.min(14, Math.floor(avgLevel * dawState.masterVolume * 2.0));
+                        const rms = Math.sqrt(sum / dataArray.length);
+                        // Scale: rms 0–1 maps to 0–14 segments; multiply for visibility
+                        displayLevel = Math.min(14, Math.floor(rms * 14 * 6));
                     }
                     // Slight stereo variation for R channel
-                    const displayLevel = trackId === 'master-r'
-                        ? Math.max(0, masterLevel + Math.round((Math.random() - 0.5) * 2))
-                        : masterLevel;
-
+                    if (trackId === 'master-r') {
+                        displayLevel = Math.max(0, Math.min(14, displayLevel + Math.round((Math.random() - 0.5) * 2)));
+                    }
+                    masterLevel = displayLevel;
                     const segments = meter.querySelectorAll('.led-segment');
                     segments.forEach((segment, index) => {
-                        if (index <= displayLevel) {
-                            segment.classList.add('active');
-                        } else {
-                            segment.classList.remove('active');
-                        }
+                        segment.classList.toggle('active', index <= displayLevel);
                     });
                 } else {
                     // Regular track meters
@@ -2651,36 +2642,16 @@
                 // Update track volume
                 if (trackId === 'master') {
                     dawState.masterVolume = volume;
-                    const boostedMasterVolume = volume * 2.0; // Allow 0-2x range for master
-                    console.log(`🎛️ Master volume: ${(volume * 100).toFixed(0)}% (${(boostedMasterVolume * 100).toFixed(0)}% actual)`);
-                    // Update master gain node
-                    if (masterGainNode) {
-                        masterGainNode.gain.value = boostedMasterVolume;
-                    }
-                    
-                    // Update master LED meter to reflect fader position
-                    const masterMeter = document.querySelector('.led-meter[data-track-id="master"]');
-                    if (masterMeter) {
-                        const segments = masterMeter.querySelectorAll('.led-segment');
-                        // Map volume (0-1) to LED segments (0-14, total 15 segments)
-                        // When volume is 100%, all 15 segments should light (indices 0-14)
-                        const targetLevel = Math.min(14, Math.floor(volume * 15));
-                        console.log(`💡 LED Level: ${targetLevel + 1}/15 segments (volume=${(volume * 100).toFixed(0)}%)`);
-                        segments.forEach((segment, index) => {
-                            if (index <= targetLevel) {
-                                segment.classList.add('active');
-                            } else {
-                                segment.classList.remove('active');
-                            }
-                        });
+                    const boostedMasterVolume = volume * 2.0;
+                    if (masterGainNode && audioContext) {
+                        // Smooth ramp to avoid clicks
+                        masterGainNode.gain.setTargetAtTime(boostedMasterVolume, audioContext.currentTime, 0.01);
                     }
                 } else {
                     const track = dawState.tracks.find(t => t.id === trackId);
                     if (track) {
                         track.volume = volume;
-                        console.log(`🎛️ ${track.name} volume: ${(volume * 100).toFixed(0)}%`);
-                        
-                        // Update gain node in real-time
+                        // Update gain node in real-time with smooth ramp
                         updateTrackGain(trackId);
                     }
                 }
@@ -2753,7 +2724,11 @@
                 return;
             }
             
-            gainNodes[trackId].gain.value = targetGain;
+            if (audioContext) {
+                gainNodes[trackId].gain.setTargetAtTime(targetGain, audioContext.currentTime, 0.01);
+            } else {
+                gainNodes[trackId].gain.value = targetGain;
+            }
         }
         
         // ========================================
