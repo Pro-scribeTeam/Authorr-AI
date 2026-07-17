@@ -9119,13 +9119,24 @@ Usage rules:
 - [tsk] and [tongue-click] appear at the start of a line of dialogue
 - Do not explain or comment on the tags — just weave them into the prose naturally
 
+STRUCTURAL DIALOGUE MARKUP (required — enables multi-voice narration):
+- Wrap EVERY line of spoken dialogue as: <line speaker="CharacterName">"Spoken words."</line>
+- Use the character's exact name consistently (e.g. speaker="Sarah", never speaker="she" or speaker="the woman")
+- Prose narration stays as plain text outside <line> tags
+- Speech tags like [pause] or <whisper> may appear inside the <line> content
+
 Format as clean prose with tags woven in, ready for narration.`;
+
+            // Use the Genre Engine system prompt when an outline was generated with it —
+            // it carries the genre pack, tone, audio-first rules, and dialogue markup contract.
+            const gmSystemPrompt = (typeof gmOutlineData !== 'undefined' && gmOutlineData && gmOutlineData.systemPrompt) ? gmOutlineData.systemPrompt : null;
+            const legacySystemPrompt = "You are a professional author and audiobook scriptwriter. Write compelling, well-crafted chapter content that engages listeners when read aloud. Embed Grok TTS speech tags naturally to enhance the narration experience — only where they genuinely add dramatic or emotional value. Inline tags: [pause], [long-pause], [breath], [inhale], [exhale], [sigh], [laugh], [chuckle], [giggle], [cry], [hum-tune], [tsk], [tongue-click], [lip-smack]. Wrapping tags: <soft>, <whisper>, <slow>, <loud>, <fast>, <build-intensity>, <decrease-intensity>, <higher-pitch>, <lower-pitch>, <emphasis>, <laugh-speak>, <sing-song>, <singing>. Use 4–8 tags per chapter, never stack wrapping tags, and pick each tag to match the exact emotional moment. STRUCTURAL DIALOGUE MARKUP: every line of spoken dialogue must be wrapped as <line speaker=\"CharacterName\">\"Spoken words.\"</line> with the character's exact name; prose narration stays plain text. This enables multi-voice TTS routing.";
 
             try {
                 chapter.content = await callOpenAI([
                     {
                         role: "system",
-                        content: "You are a professional author and audiobook scriptwriter. Write compelling, well-crafted chapter content that engages listeners when read aloud. Embed Grok TTS speech tags naturally to enhance the narration experience — only where they genuinely add dramatic or emotional value. Inline tags: [pause], [long-pause], [breath], [inhale], [exhale], [sigh], [laugh], [chuckle], [giggle], [cry], [hum-tune], [tsk], [tongue-click], [lip-smack]. Wrapping tags: <soft>, <whisper>, <slow>, <loud>, <fast>, <build-intensity>, <decrease-intensity>, <higher-pitch>, <lower-pitch>, <emphasis>, <laugh-speak>, <sing-song>, <singing>. Use 4–8 tags per chapter, never stack wrapping tags, and pick each tag to match the exact emotional moment."
+                        content: gmSystemPrompt || legacySystemPrompt
                     },
                     {
                         role: "user",
@@ -10765,14 +10776,9 @@ Format as clean prose with tags woven in, ready for narration.`;
             console.log('📝 Character voice assignments REMOVED - all dialogue uses narrator voice');
             console.log(`🎭 Characters detected (for reference): ${dialogueData.characters.join(', ')}`);
             
-            // AUTO-ASSIGN all characters to narrator voice (no UI needed)
-            dialogueData.voiceAssignments = {};
-            dialogueData.characters.forEach(character => {
-                dialogueData.voiceAssignments[character] = 'narrator'; // Will be replaced with actual narrator voice
-            });
-            dialogueData.voiceAssignments['Narrator'] = 'narrator'; // Will be replaced with actual narrator voice
-            
-            console.log('✅ All characters auto-assigned to narrator voice');
+            // Do NOT overwrite user voice picks here — characters without an explicit
+            // assignment automatically fall back to the narrator voice at generation time.
+            console.log('✅ Unassigned characters will fall back to narrator voice');
             
             // Populate dialogue preview (information only)
             dialogueData.dialogueSections.slice(0, 10).forEach((dialogue, index) => {
@@ -10970,7 +10976,7 @@ Format as clean prose with tags woven in, ready for narration.`;
             const voiceMap = {};
             if (voiceAssignments) {
                 Object.entries(voiceAssignments).forEach(([name, voice]) => {
-                    if (voice) voiceMap[name.toLowerCase()] = voice;
+                    if (voice && voice !== 'narrator') voiceMap[name.toLowerCase()] = voice;
                 });
             }
             function lookupVoice(charName) {
@@ -11034,6 +11040,11 @@ Format as clean prose with tags woven in, ready for narration.`;
         // Routes each speaker to their assigned voice from storyBible.castingLayer.
         function parseLineMarkupSegments(content, castingLayer, narratorVoice) {
             const segments = [];
+            // Case-insensitive casting lookup — AI markup may not match the bible's exact casing
+            const castingLC = {};
+            Object.entries(castingLayer || {}).forEach(([name, cast]) => {
+                if (cast && cast.voiceId && cast.voiceId !== 'narrator') castingLC[name.toLowerCase()] = cast;
+            });
             const re = /<line\s+speaker="([^"]*)"(?:\s+emotion="([^"]*)")?[^>]*>([\s\S]*?)<\/line>/gi;
             let lastIndex = 0;
             let match;
@@ -11044,7 +11055,7 @@ Format as clean prose with tags woven in, ready for narration.`;
                 }
                 const speaker = match[1].trim();
                 const text = match[3].replace(/<[^>]+>/g, '').trim();
-                const casting = castingLayer && castingLayer[speaker];
+                const casting = castingLC[speaker.toLowerCase()];
                 const voice = (casting && casting.voiceId) || narratorVoice;
                 if (text) segments.push({ text, voice, character: speaker });
                 lastIndex = match.index + match[0].length;
@@ -11263,18 +11274,26 @@ Format as clean prose with tags woven in, ready for narration.`;
                 const hasLineMarkup = /<line\s+speaker=/i.test(content);
                 const gmNarrationMode = (document.querySelector('input[name="narrationMode"]:checked') || {}).value || 'single';
 
-                // Build casting layer from user's voice assignment dropdowns, merged with any storyBible entries
+                // Build casting layer from user's voice assignment dropdowns, merged with any storyBible entries.
+                // 'narrator' is a legacy placeholder meaning "no specific voice" — never treat it as an assignment.
                 const castingFromAssignments = {};
                 Object.entries(dialogueData.voiceAssignments || {}).forEach(([name, voiceId]) => {
-                    if (voiceId) castingFromAssignments[name] = { voiceId };
+                    if (voiceId && voiceId !== 'narrator') castingFromAssignments[name] = { voiceId };
                 });
-                const mergedCasting = Object.assign({}, castingFromAssignments,
-                    (typeof storyBible !== 'undefined' ? storyBible.castingLayer : null) || {});
+                // Casting Screen entries first, then narration-page dropdown picks override them
+                const mergedCasting = Object.assign({},
+                    (typeof storyBible !== 'undefined' ? storyBible.castingLayer : null) || {},
+                    castingFromAssignments);
+                // Plain name → voiceId map for the legacy quote-attribution parser
+                const mergedVoiceMap = {};
+                Object.entries(mergedCasting).forEach(([name, cast]) => {
+                    if (cast && cast.voiceId && cast.voiceId !== 'narrator') mergedVoiceMap[name] = cast.voiceId;
+                });
 
                 let audioBlobs = [];
 
                 // Activate multi-voice when: toggle on, OR voices assigned in casting/narration page, OR Genre Engine markup present
-                const hasCastingAssignments = Object.keys(mergedCasting).length > 0;
+                const hasCastingAssignments = Object.keys(mergedVoiceMap).length > 0;
                 if (useMultiVoice || hasCastingAssignments || (hasLineMarkup && gmNarrationMode !== 'single')) {
                     // Multi-voice: route narrator prose and character dialogue to different voices
                     let segments;
@@ -11283,8 +11302,9 @@ Format as clean prose with tags woven in, ready for narration.`;
                         segments = parseLineMarkupSegments(content, mergedCasting, narratorVoice);
                         console.log(`🎭 GENRE ENGINE MULTI-VOICE — ${segments.length} segments, narrationMode=${gmNarrationMode}`);
                     } else {
-                        // Legacy "quote" said CharacterName format — activated by casting assignments or toggle
-                        segments = parseStoryIntoSegments(content, dialogueData.voiceAssignments, narratorVoice);
+                        // Legacy "quote" said CharacterName format — activated by casting assignments or toggle.
+                        // Uses the merged map so Casting Screen assignments work here too.
+                        segments = parseStoryIntoSegments(content, mergedVoiceMap, narratorVoice);
                         console.log(`🎭 MULTI-VOICE — ${segments.length} segments across ${new Set(segments.map(s => s.character)).size} speakers`);
                     }
                     // Flatten all segment sub-chunks into an ordered array for parallel processing
@@ -23433,9 +23453,15 @@ var storyBible = {
     characters: [], timeline: [], plantedClues: [], magicRules: [],
     abilities: [], openLoops: [], settings: [], castingLayer: {}
 };
+// Restore casting assignments so a page reload doesn't silently drop multi-voice routing
+try {
+    var _savedCasting = JSON.parse(localStorage.getItem('authorrCastingLayer') || 'null');
+    if (_savedCasting && typeof _savedCasting === 'object') storyBible.castingLayer = _savedCasting;
+} catch (e) { /* ignore corrupt saved casting */ }
 
 function resetStoryBible() {
     storyBible = { characters: [], timeline: [], plantedClues: [], magicRules: [], abilities: [], openLoops: [], settings: [], castingLayer: {} };
+    try { localStorage.removeItem('authorrCastingLayer'); } catch (e) {}
 }
 
 function getStoryBibleContext() {
@@ -23785,6 +23811,7 @@ function assignCharacterVoice(charIndex, voiceId) {
     var c = storyBible.characters[charIndex];
     if (!c) return;
     storyBible.castingLayer[c.name] = { voiceId: voiceId, displayName: c.name, pronounce: c.pronounce || c.name, descriptor: c.genderAge || '' };
+    try { localStorage.setItem('authorrCastingLayer', JSON.stringify(storyBible.castingLayer)); } catch (e) {}
 }
 
 function saveCasting() {
