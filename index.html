@@ -12585,6 +12585,7 @@ Format as clean prose with tags woven in, ready for narration.`;
                         });
                     });
                     window.dawNarrationStems = Object.entries(byVoice).map(([name, clips]) => ({ name, clips }));
+                    window.dawNarrationTransferId = Date.now();
                     console.log(`🎚️ Prepared ${window.dawNarrationStems.length} voice tracks for DAW:`, window.dawNarrationStems.map(v => `${v.name} (${v.clips.length} clips)`).join(', '));
                 }
 
@@ -14334,12 +14335,14 @@ Format as clean prose with tags woven in, ready for narration.`;
                             // Multi-voice: one track per character, clips at exact timeline positions
                             dawIframe.contentWindow.postMessage({
                                 type: 'LOAD_NARRATION_MULTI',
+                                transferId: window.dawNarrationTransferId || null,
                                 voices: window.dawNarrationStems
                             }, '*');
                             console.log('📤 Sent multi-voice narration stems to DAW iframe');
                         } else if (window.dawNarrationAudio && window.dawNarrationAudio.url) {
                             dawIframe.contentWindow.postMessage({
                                 type: 'LOAD_NARRATION',
+                                transferId: window.dawNarrationAudio.timestamp || null,
                                 audioData: {
                                     url: window.dawNarrationAudio.url,
                                     title: window.dawNarrationAudio.title,

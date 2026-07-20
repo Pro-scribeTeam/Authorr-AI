@@ -712,6 +712,40 @@
             color: #9ca3af;
             min-height: 10px;
         }
+
+        /* ── Track loading overlay ─────────────────────────────── */
+        #dawLoadingOverlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(10, 12, 16, 0.75);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 14px;
+            z-index: 8000;
+            backdrop-filter: blur(2px);
+        }
+        #dawLoadingOverlay.active { display: flex; }
+        .daw-loading-spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid rgba(120, 227, 254, 0.2);
+            border-top-color: #78e3fe;
+            border-radius: 50%;
+            animation: dawSpin 0.9s linear infinite;
+        }
+        @keyframes dawSpin { to { transform: rotate(360deg); } }
+        #dawLoadingText {
+            color: #c8d2dc;
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+        #dawLoadingSub {
+            color: #6B7280;
+            font-size: 11px;
+        }
         
         .led-meter {
             height: 70px;
@@ -1395,6 +1429,13 @@
                 <!-- Channel strips will be generated dynamically -->
             </div>
         </div>
+    </div>
+
+    <!-- Track loading overlay -->
+    <div id="dawLoadingOverlay">
+        <div class="daw-loading-spinner"></div>
+        <div id="dawLoadingText">Loading tracks…</div>
+        <div id="dawLoadingSub"></div>
     </div>
     
     <script>
@@ -3830,14 +3871,16 @@
 
                         // Save state after loading audio
                         saveState('Load audio file');
-                        
+                        dawHideLoading();
+
                         // Show notification
                         const trackName = track.name;
-                        alert(`✅ Audio added to ${trackName}:\n${file.name}\nDuration: ${duration.toFixed(2)}s`);
+                        dawToast(`✅ Audio added to ${trackName}: ${file.name} (${duration.toFixed(1)}s)`, '#16a34a');
                     }
                 });
-                
+
                 audio.addEventListener('error', function() {
+                    dawHideLoading();
                     console.error('❌ Error loading audio file');
                     alert('Error loading audio file. Please try a different file.');
                 });
@@ -4155,9 +4198,11 @@
                 console.log(`📍 Clip moved to: ${newStartTime.toFixed(2)}s`);
             });
             
-            // Create canvas for waveform — full audio duration width so trim reveals correct portion
+            // Create canvas for waveform — full audio duration width so trim reveals correct portion.
+            // Internal resolution is capped: browsers silently fail to draw on canvases wider than
+            // ~32k px, which made long narration clips render blank/white. CSS stretches it back.
             const canvas = document.createElement('canvas');
-            canvas.width = clip.duration * pixelsPerSecond;
+            canvas.width = Math.max(1, Math.min(Math.ceil(clip.duration * pixelsPerSecond), 16000));
             canvas.height = 60;
             canvas.style.position = 'absolute';
             canvas.style.top = '0';
@@ -4290,18 +4335,20 @@
                 const normalizedData = filteredData.map(n => n / maxVal);
 
                 ctx.clearRect(0, 0, width, height);
-                ctx.fillStyle = 'rgba(120, 227, 254, 0.6)';
+                // Subtle background tint first, waveform bars on top (drawing the
+                // gradient over the bars washed them out into a pale block)
+                const gradient = ctx.createLinearGradient(0, 0, 0, height);
+                gradient.addColorStop(0, 'rgba(120, 227, 254, 0.12)');
+                gradient.addColorStop(0.5, 'rgba(120, 227, 254, 0.05)');
+                gradient.addColorStop(1, 'rgba(120, 227, 254, 0.12)');
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, width, height);
+                ctx.fillStyle = 'rgba(120, 227, 254, 0.85)';
                 const middle = height / 2;
                 for (let i = 0; i < normalizedData.length; i++) {
                     const barHeight = normalizedData[i] * (height * 0.8);
                     ctx.fillRect(i, middle - barHeight / 2, 1, barHeight);
                 }
-                const gradient = ctx.createLinearGradient(0, 0, 0, height);
-                gradient.addColorStop(0, 'rgba(120, 227, 254, 0.4)');
-                gradient.addColorStop(0.5, 'rgba(120, 227, 254, 0.2)');
-                gradient.addColorStop(1, 'rgba(120, 227, 254, 0.4)');
-                ctx.fillStyle = gradient;
-                ctx.fillRect(0, 0, width, height);
 
                 // Cache the rendered waveform so undo/redo re-renders instantly
                 waveformCache[clip.id] = canvas.toDataURL();
@@ -4456,8 +4503,15 @@
             console.log('📨 DAW received message:', event.data);
             
             if (event.data && event.data.type === 'LOAD_NARRATION_MULTI') {
+                // Ignore repeated sends of the same transfer (DAW_READY can fire on every open)
+                if (event.data.transferId && event.data.transferId === window._lastNarrationTransferId) {
+                    console.log('⏭️ Narration transfer already loaded — skipping duplicate');
+                    return;
+                }
+                window._lastNarrationTransferId = event.data.transferId || null;
                 console.log('🎚️ Loading multi-voice narration into per-character tracks...');
                 loadMultiVoiceNarration(event.data.voices).catch(err => {
+                    dawHideLoading();
                     console.error('❌ Error loading multi-voice narration:', err);
                     alert('Failed to load multi-voice narration into DAW');
                 });
@@ -4465,38 +4519,97 @@
             }
 
             if (event.data && event.data.type === 'LOAD_NARRATION') {
+                if (event.data.transferId && event.data.transferId === window._lastNarrationTransferId) {
+                    console.log('⏭️ Narration transfer already loaded — skipping duplicate');
+                    return;
+                }
+                window._lastNarrationTransferId = event.data.transferId || null;
                 console.log('🎵 Loading narration audio into DAW...');
-                
+
                 const audioData = event.data.audioData;
                 if (!audioData || !audioData.url) {
                     console.error('❌ Invalid audio data received');
                     return;
                 }
-                
+
+                dawShowLoading('Loading narration…');
+                // Fresh transfer replaces any previously loaded/restored narration
+                clearNarrationTracks();
+                renderTracks();
+
                 // Fetch the audio blob from URL
                 fetch(audioData.url)
                     .then(response => response.blob())
                     .then(blob => {
                         // Create a File object from the blob
                         const file = new File([blob], audioData.title || 'Narration.wav', { type: 'audio/wav' });
-                        
+
                         // Load into narration track (first track - id: 'narration')
                         loadAudioFile(file, 'narration');
-                        
+
                         console.log('✅ Narration audio loaded into DAW successfully');
                     })
                     .catch(error => {
+                        dawHideLoading();
                         console.error('❌ Error loading narration audio:', error);
                         alert('Failed to load narration audio into DAW');
                     });
             }
         });
         
+        // ── Track loading overlay ──────────────────────────────────────────
+        function dawShowLoading(text, sub) {
+            const o = document.getElementById('dawLoadingOverlay');
+            if (!o) return;
+            document.getElementById('dawLoadingText').textContent = text || 'Loading tracks…';
+            document.getElementById('dawLoadingSub').textContent = sub || '';
+            o.classList.add('active');
+        }
+        function dawUpdateLoading(sub) {
+            const el = document.getElementById('dawLoadingSub');
+            if (el) el.textContent = sub || '';
+        }
+        function dawHideLoading() {
+            const o = document.getElementById('dawLoadingOverlay');
+            if (o) o.classList.remove('active');
+        }
+
+        // Remove ALL narration clips (and extra narration tracks) before a fresh
+        // narration transfer. Without this, a project restored from a previous
+        // session still holds the old narration, and the incoming transfer stacks
+        // duplicate clips on top — two narrations one over the other, both playing.
+        function clearNarrationTracks() {
+            let removedClips = 0;
+            dawState.tracks.forEach(t => {
+                if (t.type === 'narration') {
+                    t.clips.forEach(c => { delete clipDataStore[c.id]; delete clipBufferStore[c.id]; delete waveformCache[c.id]; });
+                    removedClips += t.clips.length;
+                    t.clips = [];
+                }
+            });
+            // Keep only the built-in narration track; per-character tracks are recreated by the transfer
+            dawState.tracks = dawState.tracks.filter(t => t.type !== 'narration' || t.id === 'narration');
+            // Recompute duration from what remains (music/sfx clips)
+            let maxEnd = 0;
+            dawState.tracks.forEach(t => t.clips.forEach(c => {
+                const end = c.startTime + c.duration;
+                if (end > maxEnd) maxEnd = end;
+            }));
+            dawState.totalDuration = maxEnd;
+            if (removedClips) console.log(`🧹 Cleared ${removedClips} previous narration clip(s) before fresh transfer`);
+        }
+
         // Load multi-voice narration: one narration track per character, each clip
         // placed at its exact timeline position so the story order is preserved
         // while every voice gets its own fader/mute/solo in the mixer.
         async function loadMultiVoiceNarration(voices) {
             if (!Array.isArray(voices) || voices.length === 0) return;
+
+            const totalClips = voices.reduce((n, v) => n + (v.clips || []).length, 0);
+            dawShowLoading('Loading voice tracks…', `0 / ${totalClips} clips`);
+            let loaded = 0;
+
+            clearNarrationTracks();
 
             for (const v of voices) {
                 // Find or create this character's narration track
@@ -4546,6 +4659,8 @@
                     const endTime = clip.startTime + clip.duration;
                     if (endTime > dawState.totalDuration) dawState.totalDuration = endTime;
                     decodeAudioClip(clip).catch(() => {});
+                    loaded++;
+                    dawUpdateLoading(`${loaded} / ${totalClips} clips`);
                 }
                 console.log(`✅ Voice track "${v.name}": ${(v.clips || []).length} clips loaded`);
             }
@@ -4555,6 +4670,7 @@
             renderMixerChannels();
             setupEventListeners();
             saveState('Load multi-voice narration');
+            dawHideLoading();
             console.log(`🎚️ Multi-voice narration loaded: ${voices.length} voice tracks`);
         }
 
