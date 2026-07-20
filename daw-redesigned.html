@@ -4308,6 +4308,15 @@
         window.addEventListener('message', function(event) {
             console.log('📨 DAW received message:', event.data);
             
+            if (event.data && event.data.type === 'LOAD_NARRATION_MULTI') {
+                console.log('🎚️ Loading multi-voice narration into per-character tracks...');
+                loadMultiVoiceNarration(event.data.voices).catch(err => {
+                    console.error('❌ Error loading multi-voice narration:', err);
+                    alert('Failed to load multi-voice narration into DAW');
+                });
+                return;
+            }
+
             if (event.data && event.data.type === 'LOAD_NARRATION') {
                 console.log('🎵 Loading narration audio into DAW...');
                 
@@ -4336,6 +4345,72 @@
             }
         });
         
+        // Load multi-voice narration: one narration track per character, each clip
+        // placed at its exact timeline position so the story order is preserved
+        // while every voice gets its own fader/mute/solo in the mixer.
+        async function loadMultiVoiceNarration(voices) {
+            if (!Array.isArray(voices) || voices.length === 0) return;
+
+            for (const v of voices) {
+                // Find or create this character's narration track
+                let track = dawState.tracks.find(t => t.type === 'narration' && t.name === v.name);
+                if (!track && v.name === 'Narrator') {
+                    // Reuse the built-in narration track for the Narrator
+                    track = dawState.tracks.find(t => t.id === 'narration');
+                    if (track) track.name = 'Narrator';
+                }
+                if (!track) {
+                    track = {
+                        id: 'narr_' + v.name.toLowerCase().replace(/[^a-z0-9]+/g, '_') + '_' + Date.now(),
+                        name: v.name,
+                        type: 'narration',
+                        icon: '🎙️',
+                        color: 'narration',
+                        clips: [],
+                        muted: false,
+                        solo: false,
+                        volume: 0.5,
+                        effects: {}
+                    };
+                    // Keep tracks grouped: narration → music → sfx
+                    const narrationTracks = dawState.tracks.filter(t => t.type === 'narration');
+                    const otherTracks = dawState.tracks.filter(t => t.type !== 'narration');
+                    dawState.tracks = [...narrationTracks, track, ...otherTracks];
+                }
+
+                for (const c of (v.clips || [])) {
+                    const blob = await fetch(c.url).then(r => r.blob());
+                    const dataUrl = await new Promise((resolve, reject) => {
+                        const fr = new FileReader();
+                        fr.onload = () => resolve(fr.result);
+                        fr.onerror = reject;
+                        fr.readAsDataURL(blob);
+                    });
+                    const clip = {
+                        id: `clip_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+                        name: c.title || v.name,
+                        data: dataUrl,
+                        duration: c.duration,
+                        startTime: Math.max(0, c.startTime || 0),
+                        trackId: track.id
+                    };
+                    clipDataStore[clip.id] = dataUrl;
+                    track.clips.push(clip);
+                    const endTime = clip.startTime + clip.duration;
+                    if (endTime > dawState.totalDuration) dawState.totalDuration = endTime;
+                    decodeAudioClip(clip).catch(() => {});
+                }
+                console.log(`✅ Voice track "${v.name}": ${(v.clips || []).length} clips loaded`);
+            }
+
+            document.getElementById('totalTime').textContent = formatTime(Math.ceil(dawState.totalDuration));
+            renderTracks();
+            renderMixerChannels();
+            setupEventListeners();
+            saveState('Load multi-voice narration');
+            console.log(`🎚️ Multi-voice narration loaded: ${voices.length} voice tracks`);
+        }
+
         // Re-render timeline ruler on window resize
         window.addEventListener('resize', () => {
             renderTimelineRuler();

@@ -11364,13 +11364,42 @@ Format as clean prose with tags woven in, ready for narration.`;
                     }));
                 }
                 
-                // Normalize volumes across blobs when multi-voice is active (different voices = different levels)
-                if ((useMultiVoice || hasCastingAssignments) && audioBlobs.length > 1) {
+                // Loudness-normalize every chunk to the same speech level — fixes volume
+                // fluctuation between narrator chunks AND dialogue louder than narration
+                if (audioBlobs.length > 1) {
                     showLoading('Normalizing voice volumes…');
                     audioBlobs = await Promise.all(audioBlobs.map(async a => ({
                         ...a,
                         blob: await normalizeWavBlob(a.blob)
                     })));
+                }
+
+                // Capture per-voice segment timeline BEFORE merging (multi-voice only) so the
+                // DAW can build one track per character with clips at their exact positions.
+                // Offsets replicate mergeWavBlobs exactly: cumulative duration + 300ms gaps.
+                window.generatedNarrationSegments = null;
+                if ((useMultiVoice || hasCastingAssignments || hasLineMarkup) && audioBlobs.length > 1) {
+                    try {
+                        const wavs = await Promise.all(audioBlobs.map(a => parseWavChunks(a.blob)));
+                        let t = 0;
+                        const segs = [];
+                        for (let i = 0; i < audioBlobs.length; i++) {
+                            const dur = wavs[i].dataSize / wavs[i].fmt.byteRate;
+                            segs.push({
+                                character: audioBlobs[i].segment.character || 'Narrator',
+                                voice: audioBlobs[i].segment.voice,
+                                text: (audioBlobs[i].segment.text || '').slice(0, 60),
+                                blob: audioBlobs[i].blob,
+                                startTime: t,
+                                duration: dur
+                            });
+                            t += dur + 0.3; // must match mergeWavBlobs silenceMs
+                        }
+                        window.generatedNarrationSegments = segs;
+                        console.log(`🎚️ Captured ${segs.length} timeline segments across ${new Set(segs.map(s => s.character)).size} voices for DAW`);
+                    } catch (e) {
+                        console.warn('Could not capture per-voice segments for DAW:', e.message);
+                    }
                 }
 
                 // Merge all chunks into a single clip
@@ -12023,35 +12052,48 @@ Format as clean prose with tags woven in, ready for narration.`;
 
         // ── WAV blob concatenation for multi-chunk audio ──
         // Normalize a WAV blob to a consistent peak level using OfflineAudioContext
-        async function normalizeWavBlob(blob, targetPeak = 0.92) {
+        // Loudness-normalize a WAV to a target speech RMS level (not peak!).
+        // Peak normalization is loudness-blind: one loud plosive pulls a whole chunk
+        // down and quiet chunks get cranked up, causing audible volume fluctuation
+        // between chunks and dialogue sounding louder than narration. RMS over the
+        // voiced portion equalizes perceived loudness across every voice and chunk.
+        async function normalizeWavBlob(blob, targetRms = 0.08, peakCeiling = 0.95) {
             try {
                 const arrayBuffer = await blob.arrayBuffer();
                 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                 const decoded = await audioCtx.decodeAudioData(arrayBuffer);
                 audioCtx.close();
 
-                // Find peak across all channels
-                let peak = 0;
+                // Measure peak, and RMS over voiced samples only (skip silence/pauses
+                // so long pauses don't make a chunk read as "quiet" and get boosted)
+                let peak = 0, sumSq = 0, voiced = 0;
+                const SILENCE = 0.004;
                 for (let ch = 0; ch < decoded.numberOfChannels; ch++) {
                     const data = decoded.getChannelData(ch);
                     for (let i = 0; i < data.length; i++) {
                         const abs = Math.abs(data[i]);
                         if (abs > peak) peak = abs;
+                        if (abs > SILENCE) { sumSq += data[i] * data[i]; voiced++; }
                     }
                 }
-                if (peak < 0.001) return blob; // silence — return as-is
+                if (peak < 0.001 || voiced === 0) return blob; // silence — return as-is
+                const rms = Math.sqrt(sumSq / voiced);
 
-                const gain = targetPeak / peak;
-                // Re-render with gain applied via OfflineAudioContext
-                const offline = new OfflineAudioContext(decoded.numberOfChannels, decoded.length, decoded.sampleRate);
-                const src = offline.createBufferSource();
-                src.buffer = decoded;
-                const gainNode = offline.createGain();
-                gainNode.gain.value = gain;
-                src.connect(gainNode);
-                gainNode.connect(offline.destination);
-                src.start(0);
-                const rendered = await offline.startRendering();
+                // Gain to hit target loudness, limited so the peak never clips
+                const gain = Math.min(targetRms / rms, peakCeiling / peak);
+
+                // Apply gain + short edge fades (kills clicks at chunk merge boundaries)
+                const rendered = decoded;
+                const fadeSamples = Math.min(Math.round(decoded.sampleRate * 0.008), Math.floor(decoded.length / 4));
+                for (let ch = 0; ch < decoded.numberOfChannels; ch++) {
+                    const data = decoded.getChannelData(ch);
+                    for (let i = 0; i < data.length; i++) data[i] *= gain;
+                    for (let i = 0; i < fadeSamples; i++) {
+                        const f = i / fadeSamples;
+                        data[i] *= f;                          // fade in
+                        data[data.length - 1 - i] *= f;        // fade out
+                    }
+                }
 
                 // Encode back to 16-bit PCM WAV
                 const numCh = rendered.numberOfChannels;
@@ -12526,6 +12568,25 @@ Format as clean prose with tags woven in, ready for narration.`;
                     title: storyData?.title ? `${storyData.title} - Narration` : 'Narration',
                     timestamp: Date.now()
                 };
+
+                // Build per-voice stems payload when multi-voice segments exist —
+                // one DAW track per character, clips at their exact timeline positions
+                window.dawNarrationStems = null;
+                const segs = window.generatedNarrationSegments;
+                if (segs && segs.length > 1 && new Set(segs.map(s => s.character)).size > 1) {
+                    const byVoice = {};
+                    segs.forEach(s => {
+                        if (!byVoice[s.character]) byVoice[s.character] = [];
+                        byVoice[s.character].push({
+                            url: URL.createObjectURL(s.blob),
+                            title: `${s.character}: ${s.text || ''}`,
+                            startTime: s.startTime,
+                            duration: s.duration
+                        });
+                    });
+                    window.dawNarrationStems = Object.entries(byVoice).map(([name, clips]) => ({ name, clips }));
+                    console.log(`🎚️ Prepared ${window.dawNarrationStems.length} voice tracks for DAW:`, window.dawNarrationStems.map(v => `${v.name} (${v.clips.length} clips)`).join(', '));
+                }
 
                 // Persist audio to IndexedDB so it survives page refresh
                 saveAudioToDB('narration_combined', combinedBlob).then(() => {
@@ -14267,9 +14328,16 @@ Format as clean prose with tags woven in, ready for narration.`;
             const dawReadyHandler = function(event) {
                 if (event.data && event.data.type === 'DAW_READY') {
                     console.log('🎵 DAW iframe is ready');
-                    if (window.dawNarrationAudio && window.dawNarrationAudio.url) {
-                        const dawIframe = document.getElementById('dawIframe');
-                        if (dawIframe && dawIframe.contentWindow) {
+                    const dawIframe = document.getElementById('dawIframe');
+                    if (dawIframe && dawIframe.contentWindow) {
+                        if (window.dawNarrationStems && window.dawNarrationStems.length > 1) {
+                            // Multi-voice: one track per character, clips at exact timeline positions
+                            dawIframe.contentWindow.postMessage({
+                                type: 'LOAD_NARRATION_MULTI',
+                                voices: window.dawNarrationStems
+                            }, '*');
+                            console.log('📤 Sent multi-voice narration stems to DAW iframe');
+                        } else if (window.dawNarrationAudio && window.dawNarrationAudio.url) {
                             dawIframe.contentWindow.postMessage({
                                 type: 'LOAD_NARRATION',
                                 audioData: {
