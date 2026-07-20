@@ -663,6 +663,55 @@
         .channel-label.master {
             color: var(--daw-accent);
         }
+
+        /* ── Per-track 3-band EQ knobs ─────────────────────────── */
+        .eq-knob-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 2px 2px 4px;
+            border-bottom: 1px solid var(--daw-border);
+        }
+        .eq-knob-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            width: 26px;
+        }
+        .eq-knob {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 35% 30%, #3a3f4a, #191c22 75%);
+            border: 1px solid #4B5563;
+            position: relative;
+            cursor: ns-resize;
+            touch-action: none;
+        }
+        .eq-knob::after {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 1px;
+            width: 2px;
+            height: 8px;
+            margin-left: -1px;
+            border-radius: 1px;
+            background: #78e3fe;
+            transform-origin: 50% 10px;
+            transform: rotate(var(--eq-angle, 0deg));
+        }
+        .eq-knob-label {
+            font-size: 8px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            color: #6B7280;
+        }
+        .eq-knob-value {
+            font-size: 8px;
+            color: #9ca3af;
+            min-height: 10px;
+        }
         
         .led-meter {
             height: 70px;
@@ -1720,8 +1769,19 @@
                 ledSegmentsHTML += `<div class="led-segment ${segmentClass}" data-level="${i}"></div>`;
             }
             
+            const eq = getTrackEQ(track);
+            const eqKnobsHTML = ['high', 'mid', 'low'].map(band => `
+                <div class="eq-knob-group">
+                    <span class="eq-knob-label">${band === 'high' ? 'HI' : band === 'mid' ? 'MID' : 'LO'}</span>
+                    <div class="eq-knob" data-track-id="${track.id}" data-band="${band}"
+                         style="--eq-angle: ${(eq[band] / 12) * 135}deg"
+                         title="${band} EQ — drag up/down, double-click to reset"></div>
+                    <span class="eq-knob-value" data-eq-value="${track.id}_${band}">${eq[band] > 0 ? '+' : ''}${eq[band]}</span>
+                </div>`).join('');
+
             strip.innerHTML = `
                 <div class="channel-label ${track.color}">${track.icon} ${track.name}</div>
+                <div class="eq-knob-row">${eqKnobsHTML}</div>
                 <div class="fader-container">
                     <div class="fader-track">
                         <div class="fader-thumb" data-track-id="${track.id}" style="bottom: ${track.volume * 148}px;"></div>
@@ -1749,7 +1809,6 @@
                         <i class="fas fa-magic"></i>
                     </button>
                 </div>
-                ${buildJamendoPanel(track)}
             `;
 
             return strip;
@@ -2028,7 +2087,62 @@
         let preventNextTimelineClick = false;
         let analyserNodes = {};
         let gainNodes = {};
+        let eqNodes = {};   // track.id → { low, mid, high } BiquadFilterNodes (live playback)
         let masterGainNode = null;
+
+        // Per-track 3-band EQ config (gains in dB, -12..+12)
+        const EQ_BANDS = {
+            low:  { type: 'lowshelf',  frequency: 200 },
+            mid:  { type: 'peaking',   frequency: 1000, Q: 0.9 },
+            high: { type: 'highshelf', frequency: 3500 }
+        };
+        function getTrackEQ(track) {
+            if (!track.eq) track.eq = { low: 0, mid: 0, high: 0 };
+            return track.eq;
+        }
+
+        function setTrackEQ(track, band, dB, knobEl) {
+            getTrackEQ(track)[band] = dB;
+            if (knobEl) knobEl.style.setProperty('--eq-angle', `${(dB / 12) * 135}deg`);
+            const valEl = document.querySelector(`[data-eq-value="${track.id}_${band}"]`);
+            if (valEl) valEl.textContent = `${dB > 0 ? '+' : ''}${dB}`;
+            // Live-update the filter while playing
+            const nodes = eqNodes[track.id];
+            if (nodes && nodes[band] && audioContext) {
+                nodes[band].gain.setTargetAtTime(dB, audioContext.currentTime, 0.01);
+            }
+        }
+
+        // EQ knob interaction — delegated, since channel strips re-render often
+        document.addEventListener('mousedown', e => {
+            const knob = e.target.closest('.eq-knob');
+            if (!knob) return;
+            e.preventDefault();
+            const track = dawState.tracks.find(t => t.id === knob.dataset.trackId);
+            if (!track) return;
+            const band = knob.dataset.band;
+            const startY = e.clientY;
+            const startVal = getTrackEQ(track)[band];
+            const onMove = mv => {
+                const dB = Math.max(-12, Math.min(12, startVal + (startY - mv.clientY) / 6));
+                setTrackEQ(track, band, Math.round(dB * 2) / 2, knob);
+            };
+            const onUp = () => {
+                document.removeEventListener('mousemove', onMove);
+                document.removeEventListener('mouseup', onUp);
+                saveState('Adjust EQ');
+            };
+            document.addEventListener('mousemove', onMove);
+            document.addEventListener('mouseup', onUp);
+        });
+        document.addEventListener('dblclick', e => {
+            const knob = e.target.closest('.eq-knob');
+            if (!knob) return;
+            const track = dawState.tracks.find(t => t.id === knob.dataset.trackId);
+            if (!track) return;
+            setTrackEQ(track, knob.dataset.band, 0, knob);
+            saveState('Reset EQ');
+        });
         let masterAnalyser = null;
 
         // Clip data/buffer/waveform caches — keyed by clip.id
@@ -2105,14 +2219,35 @@
                     const gainNode = ctx.createGain();
                     const analyser = ctx.createAnalyser();
                     analyser.fftSize = 256;
-                    
-                    gainNode.connect(analyser);
+
+                    // 3-band EQ chain: gain → low shelf → mid peak → high shelf → analyser
+                    const eqChain = {};
+                    let prev = gainNode;
+                    for (const [band, cfg] of Object.entries(EQ_BANDS)) {
+                        const f = ctx.createBiquadFilter();
+                        f.type = cfg.type;
+                        f.frequency.value = cfg.frequency;
+                        if (cfg.Q) f.Q.value = cfg.Q;
+                        prev.connect(f);
+                        prev = f;
+                        eqChain[band] = f;
+                    }
+                    prev.connect(analyser);
                     analyser.connect(masterGainNode);
-                    
+
                     gainNodes[track.id] = gainNode;
+                    eqNodes[track.id] = eqChain;
                     analyserNodes[track.id] = analyser;
                 }
-                
+
+                // Apply current EQ settings
+                const eqSettings = getTrackEQ(track);
+                for (const band of Object.keys(EQ_BANDS)) {
+                    if (eqNodes[track.id] && eqNodes[track.id][band]) {
+                        eqNodes[track.id][band].gain.value = eqSettings[band] || 0;
+                    }
+                }
+
                 // Update gain based on track volume and mute/solo
                 // Apply 2x boost for louder output (track.volume is 0-1, multiply by 2 for 0-2 range)
                 const shouldPlay = !track.muted && (!dawState.tracks.some(t => t.solo) || track.solo);
@@ -3344,7 +3479,19 @@
 
                 const trackGain = offCtx.createGain();
                 trackGain.gain.value = track.volume * 2;
-                trackGain.connect(masterGain);
+                // Same 3-band EQ chain as live playback so exports match what you hear
+                const eqSettings = getTrackEQ(track);
+                let prev = trackGain;
+                for (const [band, cfg] of Object.entries(EQ_BANDS)) {
+                    const f = offCtx.createBiquadFilter();
+                    f.type = cfg.type;
+                    f.frequency.value = cfg.frequency;
+                    if (cfg.Q) f.Q.value = cfg.Q;
+                    f.gain.value = eqSettings[band] || 0;
+                    prev.connect(f);
+                    prev = f;
+                }
+                prev.connect(masterGain);
 
                 for (const clip of track.clips) {
                     const audioBuffer = await decodeAudioClip(clip);
