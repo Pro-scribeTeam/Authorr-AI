@@ -3524,6 +3524,16 @@
                     </h2>
                     
                     <div id="coverPreviewPanel">
+                        <div class="flex justify-end items-center mb-3">
+                            <label class="flex items-center gap-2 cursor-pointer select-none text-sm text-theme-secondary">
+                                <span>Text overlay</span>
+                                <div class="relative" onclick="toggleCoverTextOverlay()">
+                                    <input type="checkbox" id="coverTextOverlayToggle" class="sr-only" checked>
+                                    <div id="coverTextOverlayTrack" class="w-9 h-5 bg-cyan-500 rounded-full transition-colors"></div>
+                                    <div id="coverTextOverlayThumb" class="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform translate-x-4 pointer-events-none"></div>
+                                </div>
+                            </label>
+                        </div>
                         <div id="placeholderPreview">
                             <div class="bg-theme-primary border-2 border-dashed border-theme rounded-lg p-8 mb-4 text-center">
                                 <i class="fas fa-image text-6xl text-theme-secondary mb-4"></i>
@@ -3561,16 +3571,6 @@
                             </div>
                             
                             <div class="space-y-3">
-                                <div class="flex justify-center items-center gap-3 mb-1">
-                                    <label class="flex items-center gap-2 cursor-pointer select-none text-sm text-theme-secondary">
-                                        <span>Text overlay</span>
-                                        <div class="relative" onclick="toggleCoverTextOverlay()">
-                                            <input type="checkbox" id="coverTextOverlayToggle" class="sr-only" checked>
-                                            <div id="coverTextOverlayTrack" class="w-9 h-5 bg-cyan-500 rounded-full transition-colors"></div>
-                                            <div id="coverTextOverlayThumb" class="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform translate-x-4 pointer-events-none"></div>
-                                        </div>
-                                    </label>
-                                </div>
                                 <div class="flex justify-center space-x-2">
                                     <button onclick="regenerateAICover()" class="btn-secondary px-4 py-2 rounded text-sm">
                                         <i class="fas fa-sync mr-1"></i><span data-i18n="cov_regenerate">Regenerate</span>
