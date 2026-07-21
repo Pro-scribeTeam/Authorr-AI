@@ -3524,10 +3524,30 @@
                     </h2>
                     
                     <div id="coverPreviewPanel">
-                        <div class="bg-theme-primary border-2 border-dashed border-theme rounded-lg p-8 mb-4 text-center" id="placeholderPreview">
-                            <i class="fas fa-image text-6xl text-theme-secondary mb-4"></i>
-                            <p class="text-theme-secondary" data-i18n="cov_preview_placeholder">Generate your AI cover to see preview</p>
-                            <p class="text-xs text-theme-secondary mt-2" data-i18n="cov_dim_hint">Dimensions will adjust based on selected platform</p>
+                        <div id="placeholderPreview">
+                            <div class="bg-theme-primary border-2 border-dashed border-theme rounded-lg p-8 mb-4 text-center">
+                                <i class="fas fa-image text-6xl text-theme-secondary mb-4"></i>
+                                <p class="text-theme-secondary" data-i18n="cov_preview_placeholder">Generate your AI cover to see preview</p>
+                                <p class="text-xs text-theme-secondary mt-2" data-i18n="cov_dim_hint">Dimensions will adjust based on selected platform</p>
+                            </div>
+                            <div class="flex items-center gap-3 mb-4">
+                                <div class="flex-1 h-px bg-theme opacity-40"></div>
+                                <span class="text-xs text-theme-secondary">or use your own image</span>
+                                <div class="flex-1 h-px bg-theme opacity-40"></div>
+                            </div>
+                            <div id="coverImageDropZone"
+                                 onclick="document.getElementById('userCoverImageInput').click()"
+                                 ondragover="event.preventDefault(); this.classList.add('border-cyan-400','bg-opacity-10')"
+                                 ondragleave="this.classList.remove('border-cyan-400','bg-opacity-10')"
+                                 ondrop="event.preventDefault(); this.classList.remove('border-cyan-400','bg-opacity-10'); handleUserCoverUpload(event.dataTransfer.files[0])"
+                                 class="border-2 border-dashed border-theme rounded-lg p-6 text-center cursor-pointer hover:border-cyan-400 transition-colors">
+                                <i class="fas fa-upload text-3xl text-cyan-400 mb-2"></i>
+                                <p class="text-sm font-medium text-theme-secondary mt-2">Drag &amp; drop your image here</p>
+                                <p class="text-xs text-theme-secondary mt-1">or click to browse files</p>
+                                <p class="text-xs text-theme-secondary mt-2 opacity-60">JPG, PNG, WEBP &bull; Title &amp; author text will be applied on top</p>
+                            </div>
+                            <input type="file" id="userCoverImageInput" accept="image/*" class="hidden"
+                                   onchange="handleUserCoverUpload(this.files[0])">
                         </div>
                         
                         <div id="coverPreview" class="hidden">
@@ -3544,6 +3564,9 @@
                                 <div class="flex justify-center space-x-2">
                                     <button onclick="regenerateAICover()" class="btn-secondary px-4 py-2 rounded text-sm">
                                         <i class="fas fa-sync mr-1"></i><span data-i18n="cov_regenerate">Regenerate</span>
+                                    </button>
+                                    <button onclick="document.getElementById('userCoverImageInput').click()" class="btn-secondary px-4 py-2 rounded text-sm" title="Import your own image">
+                                        <i class="fas fa-folder-open mr-1"></i>Import
                                     </button>
                                     <button onclick="toggleFontPicker()" id="fontPickerBtn" class="btn-secondary px-4 py-2 rounded text-sm">
                                         <i class="fas fa-font mr-1"></i><span data-i18n="cov_font">Font</span>
@@ -8501,6 +8524,21 @@ Return the COMPLETE text, dramatically rewritten with visible personality and hu
                 showNotification('Cover display error. Please click Regenerate.', 'error');
             };
             tempImg.src = imageUrl;
+        }
+
+        function handleUserCoverUpload(file) {
+            if (!file || !file.type.startsWith('image/')) {
+                showNotification('Please select a valid image file (JPG, PNG, or WEBP).', 'error');
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                displayGeneratedCover(e.target.result);
+            };
+            reader.readAsDataURL(file);
+            // Reset so the same file can be re-selected if needed
+            const input = document.getElementById('userCoverImageInput');
+            if (input) input.value = '';
         }
 
         async function regenerateAICover() {
