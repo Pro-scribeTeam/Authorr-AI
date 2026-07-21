@@ -3203,7 +3203,7 @@
                                     </div>
                                     <!-- TTS Audio Language -->
                                     <div class="mt-2 flex items-center gap-2">
-                                        <label class="text-xs text-gray-400 whitespace-nowrap">Audio language:</label>
+                                        <label class="text-xs text-gray-400 whitespace-nowrap" title="Sets the spoken language. Voice accent is determined by the selected voice.">Output language:</label>
                                         <select id="grokLanguageSelect" class="flex-1 px-2 py-1.5 rounded bg-theme-primary border border-theme text-sm">
                                             <option value="auto">Auto-detect</option>
                                             <optgroup label="── English Accents ──">
@@ -11263,12 +11263,40 @@ Format as clean prose with tags woven in, ready for narration.`;
                 return;
             }
             
+            // Language-matched sample sentences for preview when no story content exists
+            const LANG_SAMPLES = {
+                'fr':'La lumière du matin filtrait à travers les rideaux. Chaque page cachait un secret qui attendait d\'être découvert.',
+                'fr-CA':'La lumière du matin filtrait à travers les rideaux. Chaque page cachait un secret qui attendait d\'être découvert.',
+                'es':'La luz de la mañana se filtraba a través de las cortinas. Cada página guardaba un secreto esperando ser descubierto.',
+                'es-ES':'La luz de la mañana se filtraba a través de las cortinas. Cada página guardaba un secreto esperando ser descubierto.',
+                'es-MX':'La luz de la mañana se filtraba a través de las cortinas. Cada página guardaba un secreto esperando ser descubierto.',
+                'es-AR':'La luz de la mañana se filtraba a través de las cortinas. Cada página guardaba un secreto esperando ser descubierto.',
+                'es-CO':'La luz de la mañana se filtraba a través de las cortinas. Cada página guardaba un secreto esperando ser descubierto.',
+                'de':'Das Morgenlicht filterte durch die Vorhänge. Jede Seite verbarg ein Geheimnis, das darauf wartete, entdeckt zu werden.',
+                'it':'La luce del mattino filtrava attraverso le tende. Ogni pagina nascondeva un segreto in attesa di essere scoperto.',
+                'pt':'A luz da manhã filtrava pelas cortinas. Cada página escondia um segredo esperando para ser descoberto.',
+                'pt-BR':'A luz da manhã filtrava pelas cortinas. Cada página escondia um segredo esperando para ser descoberto.',
+                'nl':'Het ochtendlicht filterde door de gordijnen. Elke pagina verborg een geheim dat wachtte om ontdekt te worden.',
+                'pl':'Poranne światło filtrowało przez zasłony. Na każdej stronie kryła się tajemnica czekająca na odkrycie.',
+                'ru':'Утренний свет просачивался сквозь шторы. На каждой странице скрывалась тайна, ожидающая своего часа.',
+                'ja':'朝の光がカーテンを通して差し込む中、彼女は古い革の日記を開いた。各ページには発見を待つ秘密が隠されていた。',
+                'ko':'아침 빛이 커튼을 통해 스며들었다. 각 페이지에는 발견되기를 기다리는 비밀이 숨겨져 있었다.',
+                'zh':'晨光透过窗帘洒进来。每一页都藏着一个等待被发现的秘密。',
+                'zh-TW':'晨光透過窗簾灑進來。每一頁都藏著一個等待被發現的秘密。',
+                'ar':'تسلل ضوء الصباح عبر الستائر. كل صفحة تخفي سراً ينتظر أن يُكتشف.',
+                'hi':'सुबह की रोशनी पर्दों से छनकर आ रही थी। हर पन्ने में एक राज़ छुपा था जो खोजे जाने का इंतज़ार कर रहा था।',
+                'tr':'Sabah ışığı perdelerden süzüldü. Her sayfa keşfedilmeyi bekleyen bir sır barındırıyordu.',
+                'vi':'Ánh sáng buổi sáng lọc qua rèm cửa. Mỗi trang đều chứa đựng một bí mật đang chờ được khám phá.',
+                'id':'Cahaya pagi menyaring melalui tirai. Setiap halaman menyimpan rahasia yang menunggu untuk ditemukan.',
+            };
+            const EN_SAMPLE = 'The morning light filtered through the curtains as she opened the old leather journal. Each page held a secret waiting to be discovered, a story yearning to be told.';
+
             // Get a sample of the story text (first few sentences)
             const content = getFullStoryContent();
-            const SAMPLE_FALLBACK = 'The morning light filtered through the curtains as she opened the old leather journal. Each page held a secret waiting to be discovered, a story yearning to be told.';
-
-            // Extract first 200 characters for preview
-            let sampleText = content ? content.substring(0, 200).trim() : SAMPLE_FALLBACK;
+            const selectedLang = document.getElementById('grokLanguageSelect')?.value || 'en';
+            const langSample = LANG_SAMPLES[selectedLang] || EN_SAMPLE;
+            // Use story content if available, otherwise use language-matched sample
+            let sampleText = content ? content.substring(0, 200).trim() : langSample;
             
             // Try to end at a sentence boundary
             const lastPeriod = sampleText.lastIndexOf('.');
