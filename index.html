@@ -12418,10 +12418,11 @@ Format as clean prose with tags woven in, ready for narration.`;
             const langSel = document.getElementById('grokLanguageSelect')?.value || 'en';
             const falLang = langToChatterboxCode(langSel);
 
+            const seed = Math.floor(Math.random() * 2147483647);
             if (falLang && falLang !== 'english') {
                 // Non-English: multilingual model with the SAME reference voice
                 return await falDirect('fal-ai/chatterbox/text-to-speech/multilingual', {
-                    text,
+                    text, seed,
                     language_code: falLang,
                     exaggeration: ctrl.exaggeration, temperature: ctrl.temperature, cfg_scale: ctrl.cfg_weight,
                     ...(audioUrl ? { audio_url: audioUrl, custom_audio_language: 'english' } : {})
@@ -12429,7 +12430,7 @@ Format as clean prose with tags woven in, ready for narration.`;
             }
             // English (any accent variant) — standard model, accent comes from the voice itself
             return await falDirect('fal-ai/chatterbox/text-to-speech', {
-                text, exaggeration: ctrl.exaggeration, cfg: ctrl.cfg_weight, temperature: ctrl.temperature,
+                text, seed, exaggeration: ctrl.exaggeration, cfg: ctrl.cfg_weight, temperature: ctrl.temperature,
                 ...(audioUrl ? { audio_url: audioUrl } : {})
             }, 'Chatterbox Turbo');
         }
