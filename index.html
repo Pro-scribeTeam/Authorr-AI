@@ -11265,13 +11265,10 @@ Format as clean prose with tags woven in, ready for narration.`;
             
             // Get a sample of the story text (first few sentences)
             const content = getFullStoryContent();
-            if (!content) {
-                showNotification('No story content available for preview.', 'error');
-                return;
-            }
-            
+            const SAMPLE_FALLBACK = 'The morning light filtered through the curtains as she opened the old leather journal. Each page held a secret waiting to be discovered, a story yearning to be told.';
+
             // Extract first 200 characters for preview
-            let sampleText = content.substring(0, 200).trim();
+            let sampleText = content ? content.substring(0, 200).trim() : SAMPLE_FALLBACK;
             
             // Try to end at a sentence boundary
             const lastPeriod = sampleText.lastIndexOf('.');
