@@ -3206,7 +3206,15 @@
                                         <label class="text-xs text-gray-400 whitespace-nowrap">Audio language:</label>
                                         <select id="grokLanguageSelect" class="flex-1 px-2 py-1.5 rounded bg-theme-primary border border-theme text-sm">
                                             <option value="auto">Auto-detect</option>
-                                            <option value="en" selected>🇺🇸 English</option>
+                                            <optgroup label="── English Accents ──">
+                                            <option value="en" selected>🇺🇸 English (American)</option>
+                                            <option value="en-GB">🇬🇧 English (British)</option>
+                                            <option value="en-AU">🇦🇺 English (Australian)</option>
+                                            <option value="en-IN">🇮🇳 English (Indian)</option>
+                                            <option value="en-IE">🇮🇪 English (Irish)</option>
+                                            <option value="en-ZA">🇿🇦 English (South African)</option>
+                                            </optgroup>
+                                            <optgroup label="── Other Languages ──">
                                             <option value="es-ES">🇪🇸 Spanish (Spain)</option>
                                             <option value="es-MX">🇲🇽 Spanish (Mexico)</option>
                                             <option value="fr">🇫🇷 French</option>
@@ -3226,6 +3234,7 @@
                                             <option value="vi">🇻🇳 Vietnamese</option>
                                             <option value="id">🇮🇩 Indonesian</option>
                                             <option value="bn">🇧🇩 Bengali</option>
+                                            </optgroup>
                                         </select>
                                     </div>
                                 </div>
