@@ -3544,7 +3544,7 @@
                                 <i class="fas fa-upload text-3xl text-cyan-400 mb-2"></i>
                                 <p class="text-sm font-medium text-theme-secondary mt-2">Drag &amp; drop your image here</p>
                                 <p class="text-xs text-theme-secondary mt-1">or click to browse files</p>
-                                <p class="text-xs text-theme-secondary mt-2 opacity-60">JPG, PNG, WEBP &bull; Title &amp; author text will be applied on top</p>
+                                <p class="text-xs text-theme-secondary mt-2 opacity-60">JPG, PNG, WEBP &bull; Enable &ldquo;Text overlay&rdquo; to add title &amp; author on top</p>
                             </div>
                             <input type="file" id="userCoverImageInput" accept="image/*" class="hidden"
                                    onchange="handleUserCoverUpload(this.files[0])">
@@ -3561,6 +3561,16 @@
                             </div>
                             
                             <div class="space-y-3">
+                                <div class="flex justify-center items-center gap-3 mb-1">
+                                    <label class="flex items-center gap-2 cursor-pointer select-none text-sm text-theme-secondary">
+                                        <span>Text overlay</span>
+                                        <div class="relative" onclick="toggleCoverTextOverlay()">
+                                            <input type="checkbox" id="coverTextOverlayToggle" class="sr-only" checked>
+                                            <div id="coverTextOverlayTrack" class="w-9 h-5 bg-cyan-500 rounded-full transition-colors"></div>
+                                            <div id="coverTextOverlayThumb" class="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform translate-x-4"></div>
+                                        </div>
+                                    </label>
+                                </div>
                                 <div class="flex justify-center space-x-2">
                                     <button onclick="regenerateAICover()" class="btn-secondary px-4 py-2 rounded text-sm">
                                         <i class="fas fa-sync mr-1"></i><span data-i18n="cov_regenerate">Regenerate</span>
@@ -8511,7 +8521,8 @@ Return the COMPLETE text, dramatically rewritten with visible personality and hu
             // Load into a temp image so regenerate never hits onload caching issues
             const tempImg = new Image();
             tempImg.onload = () => {
-                if (title || author) {
+                const overlayOn = window._coverTextOverlay !== false;
+                if (overlayOn && (title || author)) {
                     generatedCover.src = compositeTextOnCover(tempImg, title, author, window._coverFont);
                 } else {
                     generatedCover.src = imageUrl;
@@ -8524,6 +8535,35 @@ Return the COMPLETE text, dramatically rewritten with visible personality and hu
                 showNotification('Cover display error. Please click Regenerate.', 'error');
             };
             tempImg.src = imageUrl;
+        }
+
+        function toggleCoverTextOverlay() {
+            const checkbox = document.getElementById('coverTextOverlayToggle');
+            const track = document.getElementById('coverTextOverlayTrack');
+            const thumb = document.getElementById('coverTextOverlayThumb');
+            checkbox.checked = !checkbox.checked;
+            window._coverTextOverlay = checkbox.checked;
+            if (checkbox.checked) {
+                track.classList.replace('bg-gray-600', 'bg-cyan-500');
+                thumb.classList.replace('translate-x-0', 'translate-x-4');
+            } else {
+                track.classList.replace('bg-cyan-500', 'bg-gray-600');
+                thumb.classList.replace('translate-x-4', 'translate-x-0');
+            }
+            // Re-composite or strip overlay on the current cover
+            if (!window._rawCoverUrl) return;
+            const generatedCover = document.getElementById('generatedCover');
+            const tempImg = new Image();
+            tempImg.onload = () => {
+                if (window._coverTextOverlay) {
+                    const title = document.getElementById('coverTitle')?.value?.trim() || '';
+                    const author = document.getElementById('coverAuthor')?.value?.trim() || '';
+                    generatedCover.src = compositeTextOnCover(tempImg, title, author, window._coverFont);
+                } else {
+                    generatedCover.src = window._rawCoverUrl;
+                }
+            };
+            tempImg.src = window._rawCoverUrl;
         }
 
         function handleUserCoverUpload(file) {
