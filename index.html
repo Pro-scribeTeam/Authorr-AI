@@ -10139,8 +10139,8 @@ Format as clean prose with tags woven in, ready for narration.`;
                 if (resp.ok) {
                     const voices = await resp.json();
                     if (Array.isArray(voices)) {
-                        // English voices
-                        const englishPublic = voices.filter(v => v.is_public && (!v.language || v.language === 'en'));
+                        // English voices — treat 'multilingual' as English since all Grok voices support English
+                        const englishPublic = voices.filter(v => v.is_public && (!v.language || v.language === 'en' || v.language === 'multilingual'));
                         if (englishPublic.length > 0) {
                             englishPublic.forEach(v => {
                                 const opt = document.createElement('option');
@@ -10200,6 +10200,53 @@ Format as clean prose with tags woven in, ready for narration.`;
                 });
                 voiceSelect.insertBefore(cloneGrp, voiceSelect.firstChild);
             }
+
+            // ── Named Voices (Chatterbox Turbo MP3 prompts) ──
+            const namedVoices = [
+                { id: 'adam',        label: 'Adam',        gender: 'Male' },
+                { id: 'alexandra',   label: 'Alexandra',   gender: 'Female' },
+                { id: 'annie',       label: 'Annie',       gender: 'Female' },
+                { id: 'benjamin',    label: 'Benjamin',    gender: 'Male' },
+                { id: 'betty',       label: 'Betty',       gender: 'Female' },
+                { id: 'bob',         label: 'Bob',         gender: 'Male' },
+                { id: 'brandy_ny',   label: 'Brandy NY',   gender: 'Female' },
+                { id: 'clark',       label: 'Clark',       gender: 'Male' },
+                { id: 'damon',       label: 'Damon',       gender: 'Male' },
+                { id: 'darren',      label: 'Darren',      gender: 'Male' },
+                { id: 'diana',       label: 'Diana',       gender: 'Female' },
+                { id: 'dwight',      label: 'Dwight',      gender: 'Male' },
+                { id: 'edward',      label: 'Edward',      gender: 'Male' },
+                { id: 'erica',       label: 'Erica',       gender: 'Female' },
+                { id: 'explainer',   label: 'Explainer',   gender: 'Male' },
+                { id: 'glen',        label: 'Glen',        gender: 'Male' },
+                { id: 'helen',       label: 'Helen',       gender: 'Female' },
+                { id: 'helen2',      label: 'Helen 2',     gender: 'Female' },
+                { id: 'jeffrey',     label: 'Jeffrey',     gender: 'Male' },
+                { id: 'jenny',       label: 'Jenny',       gender: 'Female' },
+                { id: 'john_forcast',label: 'John Forcast',gender: 'Male' },
+                { id: 'kim',         label: 'Kim',         gender: 'Female' },
+                { id: 'lerry',       label: 'Lerry',       gender: 'Male' },
+                { id: 'lizz',        label: 'Lizz',        gender: 'Female' },
+                { id: 'marie',       label: 'Marie',       gender: 'Female' },
+                { id: 'maxwell',     label: 'Maxwell',     gender: 'Male' },
+                { id: 'melissa',     label: 'Melissa',     gender: 'Female' },
+                { id: 'mia',         label: 'Mia',         gender: 'Female' },
+                { id: 'mike',        label: 'Mike',        gender: 'Male' },
+                { id: 'paul',        label: 'Paul',        gender: 'Male' },
+                { id: 'sean',        label: 'Sean',        gender: 'Male' },
+                { id: 'shaundria',   label: 'Shaundria',   gender: 'Female' },
+                { id: 'tawnya',      label: 'Tawnya',      gender: 'Female' },
+            ];
+            const namedGrp = document.createElement('optgroup');
+            namedGrp.label = '🎭 Named Voices';
+            namedVoices.forEach(v => {
+                const opt = document.createElement('option');
+                opt.value = 'cbturbo_' + v.id;
+                opt.textContent = v.label + ' — ' + v.gender;
+                opt.dataset.provider = 'cbturbo';
+                namedGrp.appendChild(opt);
+            });
+            voiceSelect.appendChild(namedGrp);
 
             // Default to first Grok voice
             const firstGrok = voiceSelect.querySelector('option[value^="grok_"]');
