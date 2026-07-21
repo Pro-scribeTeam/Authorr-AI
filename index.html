@@ -10154,8 +10154,8 @@ Format as clean prose with tags woven in, ready for narration.`;
                             grokFallbackVoices.forEach(v => addGrokFallback(grokOptgroup, v));
                         }
 
-                        // Multilingual voices — grouped by language
-                        const nonEnglish = voices.filter(v => v.is_public && v.language && v.language !== 'en');
+                        // Multilingual voices — grouped by language (exclude 'multilingual' tag, those go in English group)
+                        const nonEnglish = voices.filter(v => v.is_public && v.language && v.language !== 'en' && v.language !== 'multilingual');
                         const byLang = {};
                         nonEnglish.forEach(v => {
                             if (!byLang[v.language]) byLang[v.language] = [];
