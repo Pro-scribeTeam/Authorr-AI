@@ -10725,6 +10725,11 @@ Format as clean prose with tags woven in, ready for narration.`;
                 showNotification('Manuscript text is too short or empty.', 'error');
                 return;
             }
+            // Clear existing chapter content so getFullStoryContent() uses this manuscript.
+            // Without this, scanToNarration() re-reads chapters and overwrites currentContent.
+            if (storyData.chapters && storyData.chapters.length > 0) {
+                storyData.chapters.forEach(c => { c.content = ''; });
+            }
             // Load into story data and editor
             storyData.currentContent = text;
             const editor = document.getElementById('storyEditor');
@@ -10758,7 +10763,9 @@ Format as clean prose with tags woven in, ready for narration.`;
         }
 
         async function aiAddMulticast() {
-            const content = getFullStoryContent();
+            // Read directly from currentContent (set by loadManuscriptText) so chapter
+            // data in storyData.chapters can never override the uploaded manuscript.
+            const content = storyData.currentContent || document.getElementById('storyEditor')?.value || '';
             if (!content || content.trim().length < 100) {
                 showNotification('No manuscript content to process.', 'error');
                 return;
