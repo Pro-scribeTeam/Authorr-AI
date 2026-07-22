@@ -19336,55 +19336,36 @@ Rules:
         // Update genre settings when user selects a genre
         function updateGenreSettings() {
             const genreSelect = document.getElementById('storyGenre');
-            const tooltipElement = document.getElementById('genreTooltip');
-            
-            if (!genreSelect || !tooltipElement) {
-                console.log('Genre elements not found yet, will retry in 500ms...');
-                setTimeout(updateGenreSettings, 500);
-                return;
-            }
-            
+            if (!genreSelect) return; // #storyGenre is a hidden compat element; if missing, skip silently
+
             currentGenre = genreSelect.value;
-            console.log('Updating genre to:', currentGenre);
-            console.log('Genre config available:', !!genreConfig);
-            console.log('Available tooltip coachmarks:', genreConfig?.tooltip_coachmarks ? Object.keys(genreConfig.tooltip_coachmarks) : 'none');
-            
-            // Update tooltip with genre-specific coaching
-            if (genreConfig && genreConfig.tooltip_coachmarks && genreConfig.tooltip_coachmarks[currentGenre]) {
-                const coaching = genreConfig.tooltip_coachmarks[currentGenre];
-                tooltipElement.textContent = `💡 ${coaching}`;
-                tooltipElement.title = coaching;
-                tooltipElement.classList.remove('text-gray-400');
-                tooltipElement.classList.add('text-cyan-300', 'font-medium');
-                console.log('✅ Applied tooltip:', coaching);
-            } else if (currentGenre === 'General') {
-                tooltipElement.textContent = '';
-                tooltipElement.title = '';
-                console.log('✅ Cleared tooltip for General genre');
-            } else {
-                // If config isn't loaded yet, try again shortly
-                if (!genreConfig) {
+
+            // #genreTooltip is optional — only update if present in DOM
+            const tooltipElement = document.getElementById('genreTooltip');
+            if (tooltipElement) {
+                if (genreConfig && genreConfig.tooltip_coachmarks && genreConfig.tooltip_coachmarks[currentGenre]) {
+                    const coaching = genreConfig.tooltip_coachmarks[currentGenre];
+                    tooltipElement.textContent = `💡 ${coaching}`;
+                    tooltipElement.title = coaching;
+                    tooltipElement.classList.remove('text-gray-400');
+                    tooltipElement.classList.add('text-cyan-300', 'font-medium');
+                } else if (currentGenre === 'General') {
+                    tooltipElement.textContent = '';
+                    tooltipElement.title = '';
+                } else if (!genreConfig) {
                     tooltipElement.textContent = '⏳ Loading genre tips...';
-                    console.log('⏳ Genre config not loaded yet, retrying...');
-                    setTimeout(updateGenreSettings, 1000);
-                    return;
                 } else {
-                    tooltipElement.textContent = '⚠️ No tips available';
+                    tooltipElement.textContent = '';
                     tooltipElement.classList.add('text-gray-400');
-                    console.log('⚠️ No tooltip available for genre:', currentGenre);
                 }
             }
-            
-            // Update narration guidance
+
+            // Update narration guidance display
             updateNarrationGuidance();
-            
-            // Store genre selection
+
+            // Store genre in project data
             if (typeof storyData !== 'undefined') {
                 storyData.genre = currentGenre;
-            }
-            
-            if (currentGenre !== 'General' && genreConfig?.tooltip_coachmarks?.[currentGenre]) {
-                showNotification(`✨ Genre set to ${currentGenre}. Smart coaching active!`, 'success');
             }
         }
 
