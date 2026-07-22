@@ -2627,6 +2627,9 @@
                         <button onclick="toggleTranslatePanel()" id="translateToggleBtn" class="btn-secondary px-3 py-1 rounded text-sm flex items-center gap-1" title="Translate story to another language">
                             <i class="fas fa-language text-blue-400"></i> <span>Translate</span>
                         </button>
+                        <button onclick="toggleImportPanel()" id="importToggleBtn" class="btn-secondary px-3 py-1 rounded text-sm flex items-center gap-1" title="Import an existing manuscript">
+                            <i class="fas fa-file-import text-cyan-400"></i> <span>Import</span>
+                        </button>
                     </div>
                 </div>
 
@@ -2739,8 +2742,76 @@
                     </div>
                 </div>
                 
+                <!-- ── IMPORT MANUSCRIPT PANEL ───────────────────────────── -->
+                <div id="importPanel" class="hidden mb-4 rounded-xl border border-cyan-700 overflow-hidden" style="background:rgba(8,145,178,0.08)">
+                    <div class="px-4 py-3 border-b border-cyan-800/50 flex items-center justify-between">
+                        <span class="font-semibold text-cyan-300 flex items-center gap-2">
+                            <i class="fas fa-file-import"></i> Import Manuscript
+                        </span>
+                        <button onclick="toggleImportPanel()" class="text-theme-secondary hover:text-white text-sm"><i class="fas fa-times"></i></button>
+                    </div>
+                    <div class="px-4 py-4">
+                        <!-- Drop zone -->
+                        <div id="manuscriptDropZone"
+                             class="border-2 border-dashed border-cyan-800 rounded-xl p-5 text-center cursor-pointer hover:border-cyan-400 transition-colors mb-3"
+                             onclick="document.getElementById('manuscriptFileInput').click()"
+                             ondragover="event.preventDefault(); this.classList.add('border-cyan-400')"
+                             ondragleave="this.classList.remove('border-cyan-400')"
+                             ondrop="handleManuscriptDrop(event)">
+                            <i class="fas fa-file-alt text-xl text-cyan-400 mb-2 block"></i>
+                            <p class="font-semibold text-sm">Drop a .txt file here or click to browse</p>
+                            <p class="text-xs text-theme-secondary mt-1">Plain text (.txt) supported — use paste below for other formats</p>
+                            <input type="file" id="manuscriptFileInput" class="hidden" accept=".txt" onchange="handleManuscriptFile(this.files[0])">
+                        </div>
+                        <!-- Paste toggle -->
+                        <button onclick="toggleManuscriptPaste()" class="text-xs text-cyan-400 hover:text-cyan-300 flex items-center gap-1 mb-2">
+                            <i class="fas fa-paste"></i> Or paste manuscript text
+                        </button>
+                        <div id="manuscriptPasteArea" class="hidden mb-3">
+                            <textarea id="manuscriptPasteText" rows="5"
+                                class="w-full px-3 py-2 rounded-lg bg-theme-primary border border-cyan-800 text-sm font-mono resize-none"
+                                placeholder="Paste your full manuscript here..."></textarea>
+                            <button onclick="loadPastedManuscript()" class="mt-2 btn-primary px-4 py-2 rounded-lg text-sm font-semibold">
+                                <i class="fas fa-check mr-1"></i>Load Manuscript
+                            </button>
+                        </div>
+                        <!-- Status + AI multicast (shown after load) -->
+                        <div id="manuscriptUploadStatus" class="hidden mt-1 p-3 bg-green-500/10 border border-green-500/30 rounded-lg">
+                            <div class="flex items-center justify-between mb-2">
+                                <span id="manuscriptUploadStatusText" class="text-sm text-green-300 font-medium"></span>
+                                <button onclick="clearManuscript()" class="text-xs text-gray-400 hover:text-red-400 ml-3">
+                                    <i class="fas fa-times mr-1"></i>Clear
+                                </button>
+                            </div>
+                            <!-- AI Multi-cast (Author+) -->
+                            <div id="aiMulticastSection" class="hidden mt-2">
+                                <div class="border border-purple-500/30 rounded-lg p-3 bg-purple-500/5">
+                                    <div class="flex items-center gap-2 mb-1">
+                                        <i class="fas fa-users text-purple-400 text-sm"></i>
+                                        <span class="text-sm font-semibold text-purple-300">AI Character Voices</span>
+                                        <span class="text-xs bg-purple-500/20 text-purple-300 px-2 py-0.5 rounded-full">Author+</span>
+                                    </div>
+                                    <p class="text-xs text-gray-400 mb-2">AI reads your manuscript, identifies every speaking character, and tags their dialogue for multi-voice narration. You then assign a voice to each character on the Narration page.</p>
+                                    <button onclick="aiAddMulticast()" id="aiMulticastBtn"
+                                        class="w-full py-2 bg-purple-600 hover:bg-purple-500 rounded-lg text-white text-sm font-semibold transition-colors">
+                                        <i class="fas fa-magic mr-1"></i>Add Character Voices with AI
+                                    </button>
+                                </div>
+                            </div>
+                            <!-- Lock for Free/Starter -->
+                            <div id="aiMulticastLock" class="hidden mt-2">
+                                <div class="border border-yellow-500/20 rounded-lg p-3 bg-yellow-500/5 text-center">
+                                    <i class="fas fa-lock text-yellow-400 text-sm mb-1 block"></i>
+                                    <p class="text-xs text-yellow-200/70">AI character voice tagging is available on the <strong class="text-cyan-400">Author plan</strong> and above.</p>
+                                    <button onclick="showUpgradeModal('author')" class="mt-2 px-3 py-1 bg-cyan-400 text-black text-xs font-bold rounded-lg hover:bg-cyan-300 transition-colors">Upgrade to Author</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="relative mb-4">
-                    <textarea id="storyEditor" placeholder="Start writing your story here, or use the AI writing tools to generate content..." 
+                    <textarea id="storyEditor" placeholder="Start writing your story here, or use the AI writing tools to generate content..."
                               class="w-full px-4 py-3 rounded-lg form-field bg-theme-primary text-theme-primary h-96 resize-none"></textarea>
                 </div>
 
@@ -3093,73 +3164,6 @@
                                 </span>
                             </div>
                             <div id="clonedVoicesList" class="space-y-2 max-h-48 overflow-y-auto"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Manuscript Upload -->
-                <div id="manuscriptUploadCard" class="bg-theme-secondary p-6 rounded-xl border-2 border-theme">
-                    <h2 class="text-xl font-bold mb-1">
-                        <i class="fas fa-file-import text-cyan-400 mr-2"></i>Import Manuscript
-                    </h2>
-                    <p class="text-sm text-theme-secondary mb-4">Already have a book written? Upload or paste it to narrate directly.</p>
-
-                    <!-- Drop zone -->
-                    <div id="manuscriptDropZone"
-                         class="border-2 border-dashed border-theme rounded-xl p-6 text-center cursor-pointer hover:border-cyan-400 transition-colors mb-3"
-                         onclick="document.getElementById('manuscriptFileInput').click()"
-                         ondragover="event.preventDefault(); this.classList.add('border-cyan-400')"
-                         ondragleave="this.classList.remove('border-cyan-400')"
-                         ondrop="handleManuscriptDrop(event)">
-                        <i class="fas fa-file-alt text-2xl text-cyan-400 mb-2 block"></i>
-                        <p class="font-semibold text-sm">Drop a .txt file here or click to browse</p>
-                        <p class="text-xs text-theme-secondary mt-1">Plain text (.txt) supported — use paste below for other formats</p>
-                        <input type="file" id="manuscriptFileInput" class="hidden" accept=".txt" onchange="handleManuscriptFile(this.files[0])">
-                    </div>
-
-                    <!-- Paste toggle -->
-                    <button onclick="toggleManuscriptPaste()" class="text-xs text-cyan-400 hover:text-cyan-300 flex items-center gap-1 mb-2">
-                        <i class="fas fa-paste"></i> Or paste manuscript text
-                    </button>
-                    <div id="manuscriptPasteArea" class="hidden mb-3">
-                        <textarea id="manuscriptPasteText" rows="6"
-                            class="w-full px-3 py-2 rounded-lg bg-theme-primary border border-theme text-sm font-mono resize-none"
-                            placeholder="Paste your full manuscript here..."></textarea>
-                        <button onclick="loadPastedManuscript()" class="mt-2 btn-primary px-4 py-2 rounded-lg text-sm font-semibold">
-                            <i class="fas fa-check mr-1"></i>Load Manuscript
-                        </button>
-                    </div>
-
-                    <!-- Status after upload -->
-                    <div id="manuscriptUploadStatus" class="hidden mt-3 p-3 bg-green-500/10 border border-green-500/30 rounded-lg">
-                        <div class="flex items-center justify-between mb-2">
-                            <span id="manuscriptUploadStatusText" class="text-sm text-green-300 font-medium"></span>
-                            <button onclick="clearManuscript()" class="text-xs text-gray-400 hover:text-red-400 ml-3">
-                                <i class="fas fa-times mr-1"></i>Clear
-                            </button>
-                        </div>
-                        <!-- AI Multi-cast (Author+) -->
-                        <div id="aiMulticastSection" class="hidden mt-2">
-                            <div class="border border-purple-500/30 rounded-lg p-3 bg-purple-500/5">
-                                <div class="flex items-center gap-2 mb-1">
-                                    <i class="fas fa-users text-purple-400 text-sm"></i>
-                                    <span class="text-sm font-semibold text-purple-300">AI Character Voices</span>
-                                    <span class="text-xs bg-purple-500/20 text-purple-300 px-2 py-0.5 rounded-full">Author+</span>
-                                </div>
-                                <p class="text-xs text-gray-400 mb-2">AI reads your manuscript, identifies every speaking character, and tags their dialogue for multi-voice narration. You then assign a voice to each character.</p>
-                                <button onclick="aiAddMulticast()" id="aiMulticastBtn"
-                                    class="w-full py-2 bg-purple-600 hover:bg-purple-500 rounded-lg text-white text-sm font-semibold transition-colors">
-                                    <i class="fas fa-magic mr-1"></i>Add Character Voices with AI
-                                </button>
-                            </div>
-                        </div>
-                        <!-- Lock for Free/Starter -->
-                        <div id="aiMulticastLock" class="hidden mt-2">
-                            <div class="border border-yellow-500/20 rounded-lg p-3 bg-yellow-500/5 text-center">
-                                <i class="fas fa-lock text-yellow-400 text-sm mb-1 block"></i>
-                                <p class="text-xs text-yellow-200/70">AI character voice tagging is available on the <strong class="text-cyan-400">Author plan</strong> and above.</p>
-                                <button onclick="showUpgradeModal('author')" class="mt-2 px-3 py-1 bg-cyan-400 text-black text-xs font-bold rounded-lg hover:bg-cyan-300 transition-colors">Upgrade to Author</button>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -10691,6 +10695,11 @@ Format as clean prose with tags woven in, ready for narration.`;
         }
 
         // ── Manuscript Upload ─────────────────────────────────────────────────
+
+        function toggleImportPanel() {
+            const panel = document.getElementById('importPanel');
+            panel.classList.toggle('hidden');
+        }
 
         function toggleManuscriptPaste() {
             document.getElementById('manuscriptPasteArea').classList.toggle('hidden');
