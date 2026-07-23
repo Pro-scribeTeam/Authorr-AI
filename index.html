@@ -1910,7 +1910,7 @@
                     <div class="text-xs text-theme-secondary mt-1" data-i18n="dash_stat_mkt4">Revenue is digital</div>
                 </div>
             </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 max-w-6xl mx-auto">
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4 max-w-7xl mx-auto">
 
                 <!-- Free -->
                 <div class="bg-theme-secondary rounded-2xl border-2 border-theme p-6 flex flex-col">
@@ -1926,6 +1926,23 @@
                         <li><i class="fas fa-times text-gray-600 mr-2"></i><span data-i18n="dash_plan_f4">Voice cloning</span></li>
                     </ul>
                     <button onclick="showPage('workspace')" class="btn-secondary w-full py-2 rounded-lg text-sm font-semibold" data-i18n="dash_plan_get_started">Get Started</button>
+                </div>
+
+                
+                <!-- Essentials -->
+                <div class="bg-theme-secondary rounded-2xl border-2 border-green-500/50 p-6 flex flex-col">
+                    <div class="text-sm font-bold text-green-400 uppercase tracking-wide mb-2">Essentials</div>
+                    <div class="text-4xl font-black mb-1">$9.99</div>
+                    <div class="text-xs text-theme-secondary mb-4">/ month</div>
+                    <div class="text-cyan-400 font-bold text-lg mb-1">50,000</div>
+                    <div class="text-xs text-theme-secondary mb-6">credits / month<br><span class="text-gray-500">~5 chapters</span></div>
+                    <ul class="text-sm space-y-2 text-theme-secondary mb-6 flex-1">
+                        <li><i class="fas fa-check text-cyan-400 mr-2"></i>AI writing (5 chapters)</li>
+                        <li><i class="fas fa-check text-cyan-400 mr-2"></i>1 Grok voice</li>
+                        <li><i class="fas fa-check text-cyan-400 mr-2"></i>Basic export</li>
+                        <li><i class="fas fa-times text-gray-600 mr-2"></i>Voice cloning</li>
+                    </ul>
+                    <button onclick="showUpgradeModal('essentials')" class="btn-secondary w-full py-2 rounded-lg text-sm font-semibold">Upgrade</button>
                 </div>
 
                 <!-- Starter -->
@@ -1995,7 +2012,52 @@
                 </div>
 
             </div>
-            <p class="text-center text-xs text-gray-500 mt-8" data-i18n="dash_plan_fine">All plans include a 7-day free trial. Credits reset monthly. 1 credit = 1 character of narration. A standard full-length audiobook (70,000–100,000 words) uses approximately 350,000–500,000 credits.</p>
+
+            <!-- Value comparison banner -->
+            <div class="max-w-3xl mx-auto mt-10 mb-2 rounded-2xl border border-cyan-400/30 bg-gradient-to-r from-cyan-900/20 to-blue-900/20 p-5">
+                <div class="text-center mb-3">
+                    <span class="text-cyan-400 font-bold text-sm uppercase tracking-widest">Why Authorr AI?</span>
+                </div>
+                <div class="flex flex-wrap items-center justify-center gap-2 text-sm text-center">
+                    <div class="bg-gray-800/60 rounded-lg px-3 py-2">
+                        <div class="text-gray-400 text-xs">ElevenLabs</div>
+                        <div class="font-bold text-white">$22/mo</div>
+                        <div class="text-gray-500 text-xs">TTS only</div>
+                    </div>
+                    <div class="text-gray-500 font-bold text-lg">+</div>
+                    <div class="bg-gray-800/60 rounded-lg px-3 py-2">
+                        <div class="text-gray-400 text-xs">ChatGPT Plus</div>
+                        <div class="font-bold text-white">$20/mo</div>
+                        <div class="text-gray-500 text-xs">Writing only</div>
+                    </div>
+                    <div class="text-gray-500 font-bold text-lg">+</div>
+                    <div class="bg-gray-800/60 rounded-lg px-3 py-2">
+                        <div class="text-gray-400 text-xs">Midjourney</div>
+                        <div class="font-bold text-white">$10/mo</div>
+                        <div class="text-gray-500 text-xs">Covers only</div>
+                    </div>
+                    <div class="text-gray-500 font-bold text-lg">+</div>
+                    <div class="bg-gray-800/60 rounded-lg px-3 py-2">
+                        <div class="text-gray-400 text-xs">Adobe Audition</div>
+                        <div class="font-bold text-white">$22/mo</div>
+                        <div class="text-gray-500 text-xs">Editing only</div>
+                    </div>
+                    <div class="text-gray-500 font-bold text-2xl mx-1">=</div>
+                    <div class="bg-red-900/40 border border-red-500/40 rounded-lg px-4 py-2">
+                        <div class="text-red-400 text-xs font-semibold">4 tools</div>
+                        <div class="font-black text-red-400 text-xl">$74+/mo</div>
+                    </div>
+                    <div class="text-gray-400 font-bold text-xl mx-2">vs</div>
+                    <div class="bg-cyan-900/40 border border-cyan-400/60 rounded-lg px-4 py-2">
+                        <div class="text-cyan-400 text-xs font-semibold">All-in-one</div>
+                        <div class="font-black text-cyan-400 text-xl">$49/mo</div>
+                        <div class="text-cyan-400 text-xs">Author plan</div>
+                    </div>
+                </div>
+                <p class="text-center text-xs text-gray-400 mt-3">Write · Cover · Narrate · Edit · Export — one subscription, one platform.</p>
+            </div>
+
+                        <p class="text-center text-xs text-gray-500 mt-8" data-i18n="dash_plan_fine">All plans include a 7-day free trial. Credits reset monthly. 1 credit = 1 character of narration. A standard full-length audiobook (70,000–100,000 words) uses approximately 350,000–500,000 credits.</p>
         </section>
 
         <!-- ═══════════════════════════════════════════════
@@ -19755,6 +19817,7 @@ Rules:
 
         const PLAN_CONFIG = {
             free:       { credits: 10000,    label: 'Free',       price: 0   },
+            essentials: { credits: 50000,   label: 'Essentials', price: 9.99 },
             starter:    { credits: 150000,   label: 'Starter',    price: 19  },
             author:     { credits: 450000,   label: 'Author',     price: 49  },
             publisher:  { credits: 1200000,  label: 'Publisher',  price: 99  },
