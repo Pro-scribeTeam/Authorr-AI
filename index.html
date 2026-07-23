@@ -1910,7 +1910,89 @@
                     <div class="text-xs text-theme-secondary mt-1" data-i18n="dash_stat_mkt4">Revenue is digital</div>
                 </div>
             </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4 max-w-7xl mx-auto">
+
+            <!-- ── VALUE STACK COMPARISON ─────────────────────────────── -->
+            <div class="max-w-5xl mx-auto mb-12 px-2">
+                <h3 class="text-center text-2xl md:text-3xl font-black text-white mb-2">Stop paying four tools to do one job.</h3>
+                <p class="text-center text-sm text-gray-400 mb-8">Compare the Author plan ($49/mo) to buying each piece separately.</p>
+
+                <div class="flex flex-col md:flex-row items-stretch gap-0 rounded-2xl overflow-hidden border border-gray-700 shadow-2xl">
+
+                    <!-- LEFT — The old way -->
+                    <div class="flex-1 bg-gray-900/80 p-7 md:p-8">
+                        <div class="text-xs font-bold uppercase tracking-widest text-gray-500 mb-5">The old way</div>
+                        <ul class="space-y-3 mb-6">
+                            <li class="flex items-start gap-3">
+                                <span class="mt-0.5 text-red-500 font-bold text-base leading-none">✕</span>
+                                <div>
+                                    <div class="text-sm text-gray-300 font-medium">AI narration tool <span class="text-gray-500">(ElevenLabs)</span></div>
+                                    <div class="text-xs text-gray-500 mt-0.5">$22/mo</div>
+                                </div>
+                            </li>
+                            <li class="flex items-start gap-3">
+                                <span class="mt-0.5 text-red-500 font-bold text-base leading-none">✕</span>
+                                <div>
+                                    <div class="text-sm text-gray-300 font-medium">AI writing tool</div>
+                                    <div class="text-xs text-gray-500 mt-0.5">$20/mo</div>
+                                </div>
+                            </li>
+                            <li class="flex items-start gap-3">
+                                <span class="mt-0.5 text-red-500 font-bold text-base leading-none">✕</span>
+                                <div>
+                                    <div class="text-sm text-gray-300 font-medium">AI cover art tool</div>
+                                    <div class="text-xs text-gray-500 mt-0.5">$15–30/mo</div>
+                                </div>
+                            </li>
+                            <li class="flex items-start gap-3">
+                                <span class="mt-0.5 text-red-500 font-bold text-base leading-none">✕</span>
+                                <div>
+                                    <div class="text-sm text-gray-300 font-medium">Audio editing / DAW software</div>
+                                    <div class="text-xs text-gray-500 mt-0.5">$20+/mo</div>
+                                </div>
+                            </li>
+                        </ul>
+                        <div class="border-t border-gray-700 pt-4">
+                            <div class="text-base font-black text-gray-300">$77–136/month</div>
+                            <div class="text-xs text-gray-500 mt-1">four logins, nothing talks to each other</div>
+                        </div>
+                    </div>
+
+                    <!-- DIVIDER -->
+                    <div class="hidden md:flex flex-col items-center justify-center bg-gray-950 px-4 py-8 gap-3">
+                        <div class="w-px flex-1 bg-gray-700"></div>
+                        <div class="text-gray-500 font-black text-sm">vs</div>
+                        <div class="w-px flex-1 bg-gray-700"></div>
+                    </div>
+                    <div class="flex md:hidden items-center justify-center bg-gray-950 py-3 gap-4">
+                        <div class="h-px flex-1 bg-gray-700"></div>
+                        <div class="text-gray-500 font-black text-sm">vs</div>
+                        <div class="h-px flex-1 bg-gray-700"></div>
+                    </div>
+
+                    <!-- RIGHT — Authorr AI -->
+                    <div class="flex-1 bg-gradient-to-br from-cyan-950/60 to-gray-900/90 p-7 md:p-8 flex flex-col justify-between relative overflow-hidden">
+                        <div class="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-cyan-400 to-transparent"></div>
+                        <div>
+                            <div class="text-xs font-bold uppercase tracking-widest text-cyan-400 mb-5">Authorr AI</div>
+                            <div class="flex items-start gap-3 mb-8">
+                                <span class="mt-1 text-cyan-400 font-bold text-base leading-none">✓</span>
+                                <div class="text-base text-white font-semibold leading-snug">Everything above, in one platform</div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="text-6xl font-black text-white leading-none mb-2">$49<span class="text-2xl text-gray-400 font-semibold">/month</span></div>
+                            <div class="text-cyan-400 font-bold text-lg mt-3">One login. It all talks to each other.</div>
+                            <div class="mt-6">
+                                <button onclick="showUpgradeModal('author')" class="bg-cyan-400 text-black font-black text-sm px-6 py-2.5 rounded-lg hover:bg-cyan-300 transition-colors">Get Author Plan →</button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+            <!-- ── END VALUE STACK ─────────────────────────────────────── -->
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4 max-w-7xl mx-auto">
 
                 <!-- Free -->
                 <div class="bg-theme-secondary rounded-2xl border-2 border-theme p-6 flex flex-col">
