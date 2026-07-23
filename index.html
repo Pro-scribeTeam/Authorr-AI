@@ -1565,7 +1565,7 @@
                         </li>
                         <li class="flex items-start gap-3">
                             <i class="fas fa-laptop text-red-400 mt-1 flex-shrink-0"></i>
-                            <span><strong class="text-white">Steep learning curve</strong> <span data-i18n="dash_old_way_3">with DAW software, ACX specs, and platform requirements</span></span>
+                            <span><strong class="text-white">Steep learning curve</strong> <span data-i18n="dash_old_way_3">with audio studio software, ACX specs, and platform requirements</span></span>
                         </li>
                         <li class="flex items-start gap-3">
                             <i class="fas fa-puzzle-piece text-red-400 mt-1 flex-shrink-0"></i>
@@ -1589,7 +1589,7 @@
                         </li>
                         <li class="flex items-start gap-3">
                             <i class="fas fa-sliders-h text-cyan-400 mt-1 flex-shrink-0"></i>
-                            <span><strong class="text-white">Built-in audio studio (DAW)</strong> <span data-i18n="dash_ai_way_3">— add music, SFX, mix tracks, no experience needed</span></span>
+                            <span><strong class="text-white">Built-in Studio</strong> <span data-i18n="dash_ai_way_3">— add music, SFX, mix tracks, no experience needed</span></span>
                         </li>
                         <li class="flex items-start gap-3">
                             <i class="fas fa-share-alt text-cyan-400 mt-1 flex-shrink-0"></i>
@@ -1653,7 +1653,7 @@
                         </div>
                         <div class="hidden md:flex absolute -top-3 left-1/2 -translate-x-1/2 w-7 h-7 rounded-full bg-cyan-400 text-black text-xs font-bold items-center justify-center z-20">3</div>
                         <h3 class="font-bold text-base mb-1" data-i18n="dash_step3_title">Mix in the Studio</h3>
-                        <p class="text-xs text-theme-secondary" data-i18n="dash_step3_desc">Add background music, sound effects, and mix tracks in the built-in DAW</p>
+                        <p class="text-xs text-theme-secondary" data-i18n="dash_step3_desc">Add background music, sound effects, and mix tracks in the built-in Studio</p>
                     </div>
 
                     <!-- Step 4: Cover (was 3) -->
@@ -1736,7 +1736,7 @@
                         <i class="fas fa-sliders-h text-cyan-400 text-xl"></i>
                     </div>
                     <h3 class="font-bold text-lg mb-2" data-i18n="dash_feat4_title">Built-in Audio Studio</h3>
-                    <p class="text-theme-secondary text-sm leading-relaxed" data-i18n="dash_feat4_desc">Professional DAW with multi-track editing, background music, SFX library, and mixing — no downloads required.</p>
+                    <p class="text-theme-secondary text-sm leading-relaxed" data-i18n="dash_feat4_desc">Professional Studio with multi-track editing, background music, SFX library, and mixing — no downloads required.</p>
                 </div>
 
                 <div class="bg-theme-secondary rounded-2xl p-6 border border-theme hover:border-cyan-400 transition-all group">
@@ -1946,7 +1946,7 @@
                             <li class="flex items-start gap-3">
                                 <span class="mt-0.5 text-red-500 font-bold text-base leading-none">✕</span>
                                 <div>
-                                    <div class="text-sm text-gray-300 font-medium">Audio editing / DAW software</div>
+                                    <div class="text-sm text-gray-300 font-medium">Audio editing software</div>
                                     <div class="text-xs text-gray-500 mt-0.5">$20+/mo</div>
                                 </div>
                             </li>
@@ -3485,7 +3485,7 @@
                                 <i class="fas fa-microphone mr-2"></i><span data-i18n="nar_generate">Generate Narration</span>
                             </button>
                             <button onclick="openAudioDAW()" class="w-full py-3 rounded-lg font-semibold transition-all" style="background:#0e7490;color:#fff;border:none;cursor:pointer;" onmouseover="this.style.background='#155e75'" onmouseout="this.style.background='#0e7490'">
-                                <i class="fas fa-sliders-h mr-2"></i><span data-i18n="nar_go_daw">Go to DAW</span>
+                                <i class="fas fa-sliders-h mr-2"></i><span data-i18n="nar_go_daw">Go to Studio</span>
                             </button>
                         </div>
                     </div>
@@ -7871,7 +7871,7 @@ Return the COMPLETE text, dramatically rewritten with visible personality and hu
                 `;
                 notification.classList.remove('hidden');
                 
-                showNotification('🎵 Audio from DAW is ready for cover embedding!', 'success');
+                showNotification('🎵 Audio from Studio is ready for cover embedding!', 'success');
             }
             
             // Show embed button section if cover is already generated
@@ -8020,7 +8020,7 @@ Return the COMPLETE text, dramatically rewritten with visible personality and hu
             try {
                 // Check requirements
                 if (!window.dawMixedAudio || !window.dawMixedAudio.blob) {
-                    showNotification('No audio available from DAW. Please send audio from Audio DAW first.', 'error');
+                    showNotification('No audio available from Studio. Please send audio from Studio first.', 'error');
                     return;
                 }
                 
@@ -12982,7 +12982,7 @@ Rules:
                                 <i class="fas fa-magic mr-2"></i>Combine Into Final Audiobook
                             </button>
                             <button onclick="openAudioDAW()" class="btn-secondary px-6 py-2 rounded-lg w-full">
-                                <i class="fas fa-sliders-h mr-2"></i>Open Audio DAW
+                                <i class="fas fa-sliders-h mr-2"></i>Open Studio
                             </button>
                             <button onclick="downloadAllMultiVoiceAudio()" class="btn-outline px-6 py-2 rounded-lg w-full">
                                 <i class="fas fa-download mr-2"></i>Download Individual Segments
@@ -13095,10 +13095,10 @@ Rules:
                         ` : ''}
                         <div class="space-y-2">
                             <button onclick="transferNarrationToDAW()" class="btn-primary px-6 py-3 rounded-lg w-full font-semibold">
-                                <i class="fas fa-paper-plane mr-2"></i>Send to DAW Narration Channel
+                                <i class="fas fa-paper-plane mr-2"></i>Send to Studio Narration Channel
                             </button>
                             <button onclick="openAudioDAW()" class="btn-secondary px-6 py-2 rounded-lg w-full">
-                                <i class="fas fa-sliders-h mr-2"></i>Open Audio DAW
+                                <i class="fas fa-sliders-h mr-2"></i>Open Studio
                             </button>
                         </div>
                     </div>
@@ -13117,7 +13117,7 @@ Rules:
                 return;
             }
             
-            showLoading('Combining audio segments and preparing for DAW...');
+            showLoading('Combining audio segments and preparing for Studio...');
             
             try {
                 const audioBlobs = window.generatedNarrationAudio;
@@ -13216,7 +13216,7 @@ Rules:
                 });
 
                 hideLoading();
-                showNotification('✅ Narration ready! Opening Audio DAW...', 'success');
+                showNotification('✅ Narration ready! Opening Studio...', 'success');
                 
                 console.log('✅ Narration prepared for DAW transfer');
                 console.log('🎵 Opening DAW...');
@@ -13229,7 +13229,7 @@ Rules:
             } catch (error) {
                 console.error('❌ Error transferring to DAW:', error);
                 hideLoading();
-                showNotification(`Failed to transfer to DAW: ${error.message}`, 'error');
+                showNotification(`Failed to transfer to Studio: ${error.message}`, 'error');
             }
         }
         
@@ -14303,7 +14303,7 @@ Rules:
                 
                 // Also offer to open in DAW
                 setTimeout(() => {
-                    if (confirm('Would you like to open the combined audio in the Audio DAW for further editing?')) {
+                    if (confirm('Would you like to open the combined audio in the Studio for further editing?')) {
                         openAudioDAW();
                     }
                 }, 1000);
@@ -14545,7 +14545,7 @@ Rules:
                         id="dawIframe"
                         src="/daw-redesigned.html"
                         style="width:100%;height:100%;border:none;background:#0A0A0A;"
-                        title="Professional Audio DAW"
+                        title="Professional Studio"
                     ></iframe>
             `;
             
@@ -14558,7 +14558,7 @@ Rules:
                     <div class="bg-gray-900 p-4 border-b border-cyan-500">
                         <div class="flex items-center justify-between">
                             <h2 class="text-xl font-bold text-cyan-400">
-                                <i class="fas fa-sliders-h mr-2"></i>Professional Audio DAW
+                                <i class="fas fa-sliders-h mr-2"></i>Professional Studio
                             </h2>
                             <div class="flex items-center space-x-4">
                                 <button onclick="playDAWAudio()" id="dawPlayBtn" class="bg-green-600 hover:bg-green-500 px-4 py-2 rounded">
@@ -14927,7 +14927,7 @@ Rules:
                             blob:      audioBlob,
                             url:       audioUrl,
                             duration:  duration,
-                            title:     title || 'Mixed Audio from DAW',
+                            title:     title || 'Mixed Audio from Studio',
                             timestamp: Date.now()
                         };
                         closeAudioDAW();
@@ -15543,7 +15543,7 @@ Rules:
             // Update UI elements
             updateTimelinePosition();
             
-            document.getElementById('dawStatus').textContent = 'Enhanced DAW Ready - Drag audio to tracks';
+            document.getElementById('dawStatus').textContent = 'Studio Ready — Drag audio to tracks';
             
             // Mark as initialized to prevent double initialization
             audioDAW.initialized = true;
@@ -19176,7 +19176,7 @@ Rules:
                     buffer: renderedBuffer,
                     duration: maxDuration,
                     timestamp: Date.now(),
-                    title: storyData?.title || 'Mixed Audio from DAW'
+                    title: storyData?.title || 'Mixed Audio from Studio'
                 };
                 
                 hideLoading();
@@ -20488,7 +20488,7 @@ const UI_TRANSLATIONS = {
     nar_preview_content:'Preview Content', nar_clear_preview:'Clear Preview', nar_scan:'Scan to Narration',
     nar_story_content:'Story Content for Narration', nar_select_voice:'Select Narrator Voice',
     nar_preview_voice:'Preview Voice', nar_story_preview:'Story Content (First 500 characters)',
-    nar_generate:'Generate Narration', nar_go_daw:'Go to DAW',
+    nar_generate:'Generate Narration', nar_go_daw:'Go to Studio',
     nar_progress_title:'Narration Progress', nar_generating:'Generating Audio...',
     // Covers
     cov_title:'Book Cover Generator', cov_preview_audio:'Preview Mixed Audio',
@@ -20544,7 +20544,7 @@ const UI_TRANSLATIONS = {
     dash_old_way_title:'The Old Way',
     dash_old_way_1:'to hire a professional narrator — a full book can cost $3,000+',
     dash_old_way_2:'with narrators, editors, and cover designers',
-    dash_old_way_3:'with DAW software, ACX specs, and platform requirements',
+    dash_old_way_3:'with audio studio software, ACX specs, and platform requirements',
     dash_old_way_4:'— writing software, audio editor, cover designer, distributor',
     dash_ai_way_title:'With Authorr AI',
     dash_ai_way_1:'— multi-voice with character voices, done in minutes',
@@ -20557,7 +20557,7 @@ const UI_TRANSLATIONS = {
     dash_steps_h2:'Your audiobook in five steps',
     dash_step1_title:'Write Your Story', dash_step1_desc:'Paste your manuscript or generate chapters and dialogue',
     dash_step2_title:'Generate Narration', dash_step2_desc:'Multi-voice narration assigns unique voices to each character automatically',
-    dash_step3_title:'Mix in the Studio', dash_step3_desc:'Add background music, sound effects, and mix tracks in the built-in DAW',
+    dash_step3_title:'Mix in the Studio', dash_step3_desc:'Add background music, sound effects, and mix tracks in the built-in Studio',
     dash_step4_title:'Design Your Cover', dash_step4_desc:'Custom cover art styled to your genre, sized for every platform',
     dash_step5_title:'Export & Publish', dash_step5_desc:'Download platform-ready packages and publish to Audible, Spotify & more',
     dash_vid_steps_sub:'Watch each step in action from start to finished audiobook',
@@ -20567,7 +20567,7 @@ const UI_TRANSLATIONS = {
     dash_feat1_title:'Story Writing', dash_feat1_desc:'Generate full chapters with multi-character dialogue, plot arcs, and genre-specific tone. Your story, your voice.',
     dash_feat2_title:'Multi-Voice Narration', dash_feat2_desc:'Assign distinct voices to each character. Narrator, hero, villain — each gets their own voice, automatically.',
     dash_feat3_title:'Voice Cloning', dash_feat3_desc:'Record or upload 30 seconds of your voice and narrate your entire book in your own voice with voice cloning technology.',
-    dash_feat4_title:'Built-in Audio Studio', dash_feat4_desc:'Professional DAW with multi-track editing, background music, SFX library, and mixing — no downloads required.',
+    dash_feat4_title:'Built-in Audio Studio', dash_feat4_desc:'Professional Studio with multi-track editing, background music, SFX library, and mixing — no downloads required.',
     dash_feat5_title:'Cover Art', dash_feat5_desc:'Stunning, genre-accurate covers sized for every platform — Audible, Spotify, Apple, and more.',
     dash_feat6_title:'One-Click Publishing', dash_feat6_desc:'Platform-ready export packages for Audible/ACX, Spotify, Apple Books, Google Play, OverDrive, Kobo, and 4 more.',
     dash_stat1_label:'Average time to a complete audiobook',
@@ -20692,7 +20692,7 @@ const UI_TRANSLATIONS = {
     nar_preview_content:'Vista Previa', nar_clear_preview:'Limpiar Vista', nar_scan:'Escanear para Narración',
     nar_story_content:'Contenido de Historia para Narración', nar_select_voice:'Seleccionar Voz Narradora',
     nar_preview_voice:'Vista Previa de Voz', nar_story_preview:'Contenido (Primeros 500 caracteres)',
-    nar_generate:'Generar Narración', nar_go_daw:'Ir al DAW',
+    nar_generate:'Generar Narración', nar_go_daw:'Ir al Estudio',
     nar_progress_title:'Progreso de Narración', nar_generating:'Generando Audio...',
     cov_title:'Generador de Portadas con IA', cov_preview_audio:'Vista Previa de Audio',
     cov_platform_templates:'Plantillas de Dimensiones', cov_platform_hint:'Haz clic en una plataforma para configurar automáticamente',
@@ -20743,7 +20743,7 @@ const UI_TRANSLATIONS = {
     dash_old_way_title:'La Forma Antigua',
     dash_old_way_1:'contratar un narrador profesional — un libro completo puede costar $3,000+',
     dash_old_way_2:'con narradores, editores y diseñadores de portadas',
-    dash_old_way_3:'con software DAW, especificaciones ACX y requisitos de plataforma',
+    dash_old_way_3:'con software de estudio de audio, especificaciones ACX y requisitos de plataforma',
     dash_old_way_4:'— software de escritura, editor de audio, diseñador de portadas, distribuidor',
     dash_ai_way_title:'Con Authorr AI',
     dash_ai_way_1:'— multi-voz con voces de personajes, listo en minutos',
@@ -20756,7 +20756,7 @@ const UI_TRANSLATIONS = {
     dash_steps_h2:'Tu audiolibro en cinco pasos',
     dash_step1_title:'Escribe tu Historia', dash_step1_desc:'Pega tu manuscrito o deja que la IA genere capítulos y diálogos',
     dash_step2_title:'Genera la Narración', dash_step2_desc:'La IA multi-voz asigna voces únicas a cada personaje automáticamente',
-    dash_step3_title:'Mezcla en el Estudio', dash_step3_desc:'Añade música de fondo, efectos de sonido y mezcla pistas en el DAW integrado',
+    dash_step3_title:'Mezcla en el Estudio', dash_step3_desc:'Añade música de fondo, efectos de sonido y mezcla pistas en el Estudio integrado',
     dash_step4_title:'Diseña tu Portada', dash_step4_desc:'Arte de portada generado por IA adaptado a tu género y plataforma',
     dash_step5_title:'Exporta y Publica', dash_step5_desc:'Descarga paquetes listos para plataformas y publica en Audible, Spotify y más',
     dash_vid_steps_sub:'Ve cada paso en acción desde el principio hasta el audiolibro terminado',
@@ -20766,7 +20766,7 @@ const UI_TRANSLATIONS = {
     dash_feat1_title:'Escritura con IA', dash_feat1_desc:'Genera capítulos completos con diálogos, arcos argumentales y tono específico del género.',
     dash_feat2_title:'Narración Multi-Voz', dash_feat2_desc:'Asigna voces de IA distintas a cada personaje. Narrador, héroe, villano — cada uno tiene su propia voz.',
     dash_feat3_title:'Clonación de Voz', dash_feat3_desc:'Graba o sube 30 segundos de tu voz y narra todo tu libro con tecnología de clonación de voz IA.',
-    dash_feat4_title:'Estudio de Audio Integrado', dash_feat4_desc:'DAW profesional con edición multipista, música de fondo, biblioteca de SFX y mezcla — sin descargas.',
+    dash_feat4_title:'Estudio de Audio Integrado', dash_feat4_desc:'Estudio profesional con edición multipista, música de fondo, biblioteca de SFX y mezcla — sin descargas.',
     dash_feat5_title:'Arte de Portada con IA', dash_feat5_desc:'La IA genera portadas impresionantes y precisas para cada plataforma — Audible, Spotify, Apple y más.',
     dash_feat6_title:'Publicación con Un Clic', dash_feat6_desc:'Paquetes de exportación listos para Audible/ACX, Spotify, Apple Books, Google Play, OverDrive, Kobo y 4 más.',
     dash_stat1_label:'Tiempo promedio para un audiolibro completo',
@@ -20882,7 +20882,7 @@ const UI_TRANSLATIONS = {
     nar_preview_content:'Aperçu du Contenu', nar_clear_preview:'Effacer l\'Aperçu', nar_scan:'Scanner pour la Narration',
     nar_story_content:'Contenu de l\'Histoire', nar_select_voice:'Sélectionner la Voix Narratrice',
     nar_preview_voice:'Aperçu de la Voix', nar_story_preview:'Contenu (500 premiers caractères)',
-    nar_generate:'Générer la Narration', nar_go_daw:'Aller au DAW',
+    nar_generate:'Générer la Narration', nar_go_daw:'Aller au Studio',
     nar_progress_title:'Progression de la Narration', nar_generating:'Génération Audio...',
     cov_title:'Générateur de Couvertures IA', cov_preview_audio:'Aperçu de l\'Audio',
     cov_platform_templates:'Modèles de Dimensions', cov_platform_hint:'Cliquez sur une plateforme pour configurer automatiquement',
@@ -20933,7 +20933,7 @@ const UI_TRANSLATIONS = {
     dash_old_way_title:'L\'Ancienne Méthode',
     dash_old_way_1:'pour engager un narrateur professionnel — un livre complet peut coûter 3 000 $+',
     dash_old_way_2:'avec des narrateurs, éditeurs et designers de couvertures',
-    dash_old_way_3:'avec les logiciels DAW, les specs ACX et les exigences des plateformes',
+    dash_old_way_3:'avec les logiciels studio, les specs ACX et les exigences des plateformes',
     dash_old_way_4:'— logiciel d\'écriture, éditeur audio, designer, distributeur',
     dash_ai_way_title:'Avec Authorr AI',
     dash_ai_way_1:'— multi-voix avec voix de personnages, en quelques minutes',
@@ -20946,7 +20946,7 @@ const UI_TRANSLATIONS = {
     dash_steps_h2:'Ton livre audio en cinq étapes',
     dash_step1_title:'Écris ton Histoire', dash_step1_desc:'Colle ton manuscrit ou laisse l\'IA générer des chapitres et des dialogues',
     dash_step2_title:'Génère la Narration', dash_step2_desc:'L\'IA multi-voix assigne des voix uniques à chaque personnage automatiquement',
-    dash_step3_title:'Mixe en Studio', dash_step3_desc:'Ajoute de la musique de fond, des effets sonores et mixe les pistes dans le DAW intégré',
+    dash_step3_title:'Mixe en Studio', dash_step3_desc:'Ajoute de la musique de fond, des effets sonores et mixe les pistes dans le Studio intégré',
     dash_step4_title:'Conçois ta Couverture', dash_step4_desc:'Art de couverture généré par IA adapté à ton genre, pour chaque plateforme',
     dash_step5_title:'Exporte et Publie', dash_step5_desc:'Télécharge des packages prêts à publier sur Audible, Spotify et plus',
     dash_vid_steps_sub:'Vois chaque étape en action du début au livre audio terminé',
@@ -20956,7 +20956,7 @@ const UI_TRANSLATIONS = {
     dash_feat1_title:'Écriture avec IA', dash_feat1_desc:'Génère des chapitres complets avec dialogues multi-personnages, arcs narratifs et ton spécifique au genre.',
     dash_feat2_title:'Narration Multi-Voix', dash_feat2_desc:'Attribue des voix IA distinctes à chaque personnage. Narrateur, héros, vilain — chacun a sa propre voix.',
     dash_feat3_title:'Clonage de Voix', dash_feat3_desc:'Enregistre ou télécharge 30 secondes de ta voix et narre tout ton livre avec la technologie de clonage vocal IA.',
-    dash_feat4_title:'Studio Audio Intégré', dash_feat4_desc:'DAW professionnel avec édition multipiste, musique de fond, bibliothèque SFX et mixage — sans téléchargement.',
+    dash_feat4_title:'Studio Audio Intégré', dash_feat4_desc:'Studio professionnel avec édition multipiste, musique de fond, bibliothèque SFX et mixage — sans téléchargement.',
     dash_feat5_title:'Couverture IA', dash_feat5_desc:'L\'IA génère des couvertures époustouflantes adaptées à chaque plateforme — Audible, Spotify, Apple et plus.',
     dash_feat6_title:'Publication en Un Clic', dash_feat6_desc:'Packages prêts pour Audible/ACX, Spotify, Apple Books, Google Play, OverDrive, Kobo et 4 autres.',
     dash_stat1_label:'Temps moyen pour un livre audio complet',
@@ -21070,7 +21070,7 @@ const UI_TRANSLATIONS = {
     nar_preview_content:'Inhalt Vorschau', nar_clear_preview:'Vorschau Löschen', nar_scan:'Zum Narration Scannen',
     nar_story_content:'Geschichtsinhalt für Narration', nar_select_voice:'Erzählerstimme Auswählen',
     nar_preview_voice:'Stimme Vorschau', nar_story_preview:'Inhalt (Erste 500 Zeichen)',
-    nar_generate:'Narration Erstellen', nar_go_daw:'Zum DAW',
+    nar_generate:'Narration Erstellen', nar_go_daw:'Zum Studio',
     nar_progress_title:'Narrationfortschritt', nar_generating:'Audio wird generiert...',
     cov_title:'KI-Buchcover-Generator', cov_preview_audio:'Audio-Vorschau',
     cov_platform_templates:'Plattform-Dimensionsvorlagen', cov_platform_hint:'Klicke auf eine Plattform zur automatischen Konfiguration',
@@ -21121,7 +21121,7 @@ const UI_TRANSLATIONS = {
     dash_old_way_title:'Der Alte Weg',
     dash_old_way_1:'einen professionellen Sprecher zu engagieren — ein vollständiges Buch kann 3.000 $+ kosten',
     dash_old_way_2:'mit Sprechern, Redakteuren und Cover-Designern',
-    dash_old_way_3:'mit DAW-Software, ACX-Spezifikationen und Plattformanforderungen',
+    dash_old_way_3:'mit Audio-Studio-Software, ACX-Spezifikationen und Plattformanforderungen',
     dash_old_way_4:'— Schreibsoftware, Audioeditor, Cover-Designer, Distributor',
     dash_ai_way_title:'Mit Authorr AI',
     dash_ai_way_1:'— Multi-Stimme mit Charakterstimmen, in Minuten fertig',
@@ -21134,7 +21134,7 @@ const UI_TRANSLATIONS = {
     dash_steps_h2:'Dein Hörbuch in fünf Schritten',
     dash_step1_title:'Schreibe deine Geschichte', dash_step1_desc:'Füge dein Manuskript ein oder lass KI Kapitel und Dialoge generieren',
     dash_step2_title:'Erzählung generieren', dash_step2_desc:'Multi-Stimmen-KI weist jedem Charakter automatisch einzigartige Stimmen zu',
-    dash_step3_title:'Im Studio mischen', dash_step3_desc:'Hintergrundmusik, Soundeffekte hinzufügen und Spuren im integrierten DAW mischen',
+    dash_step3_title:'Im Studio mischen', dash_step3_desc:'Hintergrundmusik, Soundeffekte hinzufügen und Spuren im integrierten Studio mischen',
     dash_step4_title:'Cover designen', dash_step4_desc:'KI-generiertes Cover-Artwork für dein Genre, für jede Plattform optimiert',
     dash_step5_title:'Exportieren & Veröffentlichen', dash_step5_desc:'Plattform-fertige Pakete herunterladen und auf Audible, Spotify & mehr veröffentlichen',
     dash_vid_steps_sub:'Sieh jeden Schritt in Aktion vom Anfang bis zum fertigen Hörbuch',
@@ -21144,7 +21144,7 @@ const UI_TRANSLATIONS = {
     dash_feat1_title:'KI-Schreiben', dash_feat1_desc:'Vollständige Kapitel mit Multi-Charakter-Dialogen, Handlungsbögen und genrespezifischem Ton generieren.',
     dash_feat2_title:'Multi-Stimmen-Erzählung', dash_feat2_desc:'Verschiedene KI-Stimmen jedem Charakter zuweisen. Erzähler, Held, Bösewicht — jeder bekommt seine eigene Stimme.',
     dash_feat3_title:'Stimmenklonung', dash_feat3_desc:'30 Sekunden deiner Stimme aufnehmen oder hochladen und dein gesamtes Buch mit KI-Stimmenklonierung erzählen.',
-    dash_feat4_title:'Integriertes Audiostudio', dash_feat4_desc:'Professionelle DAW mit Mehrspurbearbeitung, Hintergrundmusik, SFX-Bibliothek und Mixing — ohne Downloads.',
+    dash_feat4_title:'Integriertes Audiostudio', dash_feat4_desc:'Professionelles Studio mit Mehrspurbearbeitung, Hintergrundmusik, SFX-Bibliothek und Mixing — ohne Downloads.',
     dash_feat5_title:'KI-Cover-Kunst', dash_feat5_desc:'KI erstellt atemberaubende, genaugenaue Cover für jede Plattform — Audible, Spotify, Apple und mehr.',
     dash_feat6_title:'Ein-Klick-Veröffentlichung', dash_feat6_desc:'Plattform-fertige Pakete für Audible/ACX, Spotify, Apple Books, Google Play, OverDrive, Kobo und 4 weitere.',
     dash_stat1_label:'Durchschnittliche Zeit für ein vollständiges Hörbuch',
@@ -21258,7 +21258,7 @@ const UI_TRANSLATIONS = {
     nar_preview_content:'Pré-visualizar Conteúdo', nar_clear_preview:'Limpar Prévia', nar_scan:'Escanear para Narração',
     nar_story_content:'Conteúdo da História', nar_select_voice:'Selecionar Voz Narradora',
     nar_preview_voice:'Pré-visualizar Voz', nar_story_preview:'Conteúdo (Primeiros 500 caracteres)',
-    nar_generate:'Gerar Narração', nar_go_daw:'Ir para o DAW',
+    nar_generate:'Gerar Narração', nar_go_daw:'Ir para o Estúdio',
     nar_progress_title:'Progresso da Narração', nar_generating:'Gerando Áudio...',
     cov_title:'Gerador de Capas com IA', cov_preview_audio:'Pré-visualizar Áudio',
     cov_platform_templates:'Modelos de Dimensões', cov_platform_hint:'Clique em uma plataforma para configurar automaticamente',
@@ -21309,7 +21309,7 @@ const UI_TRANSLATIONS = {
     dash_old_way_title:'A Forma Antiga',
     dash_old_way_1:'contratar um narrador profissional — um livro completo pode custar $3.000+',
     dash_old_way_2:'com narradores, editores e designers de capa',
-    dash_old_way_3:'com software DAW, especificações ACX e requisitos de plataforma',
+    dash_old_way_3:'com software de estúdio, especificações ACX e requisitos de plataforma',
     dash_old_way_4:'— software de escrita, editor de áudio, designer de capa, distribuidor',
     dash_ai_way_title:'Com Authorr AI',
     dash_ai_way_1:'— multi-voz com vozes de personagens, pronto em minutos',
@@ -21322,7 +21322,7 @@ const UI_TRANSLATIONS = {
     dash_steps_h2:'Seu audiolivro em cinco etapas',
     dash_step1_title:'Escreva sua História', dash_step1_desc:'Cole seu manuscrito ou deixe a IA gerar capítulos e diálogos',
     dash_step2_title:'Gere a Narração', dash_step2_desc:'IA multi-voz atribui vozes únicas a cada personagem automaticamente',
-    dash_step3_title:'Misture no Estúdio', dash_step3_desc:'Adicione música de fundo, efeitos sonoros e misture faixas no DAW integrado',
+    dash_step3_title:'Misture no Estúdio', dash_step3_desc:'Adicione música de fundo, efeitos sonoros e misture faixas no Estúdio integrado',
     dash_step4_title:'Projete sua Capa', dash_step4_desc:'Arte de capa gerada por IA adaptada ao seu gênero, para cada plataforma',
     dash_step5_title:'Exporte e Publique', dash_step5_desc:'Baixe pacotes prontos e publique no Audible, Spotify e mais',
     dash_vid_steps_sub:'Veja cada etapa em ação do início ao audiolivro terminado',
@@ -21332,7 +21332,7 @@ const UI_TRANSLATIONS = {
     dash_feat1_title:'Escrita com IA', dash_feat1_desc:'Gere capítulos completos com diálogos, arcos de enredo e tom específico do gênero.',
     dash_feat2_title:'Narração Multi-Voz', dash_feat2_desc:'Atribua vozes de IA distintas a cada personagem. Narrador, herói, vilão — cada um tem sua própria voz.',
     dash_feat3_title:'Clonagem de Voz', dash_feat3_desc:'Grave ou envie 30 segundos da sua voz e narre todo o seu livro com tecnologia de clonagem de voz IA.',
-    dash_feat4_title:'Estúdio de Áudio Integrado', dash_feat4_desc:'DAW profissional com edição multipista, música de fundo, biblioteca de SFX e mixagem — sem downloads.',
+    dash_feat4_title:'Estúdio de Áudio Integrado', dash_feat4_desc:'Estúdio profissional com edição multipista, música de fundo, biblioteca de SFX e mixagem — sem downloads.',
     dash_feat5_title:'Arte de Capa com IA', dash_feat5_desc:'IA gera capas impressionantes e precisas para cada plataforma — Audible, Spotify, Apple e mais.',
     dash_feat6_title:'Publicação com Um Clique', dash_feat6_desc:'Pacotes prontos para Audible/ACX, Spotify, Apple Books, Google Play, OverDrive, Kobo e 4 mais.',
     dash_stat1_label:'Tempo médio para um audiolivro completo',
@@ -21446,7 +21446,7 @@ const UI_TRANSLATIONS = {
     nar_preview_content:'Anteprima Contenuto', nar_clear_preview:'Cancella Anteprima', nar_scan:'Scansiona per Narrazione',
     nar_story_content:'Contenuto Storia per Narrazione', nar_select_voice:'Seleziona Voce Narratore',
     nar_preview_voice:'Anteprima Voce', nar_story_preview:'Contenuto (Primi 500 caratteri)',
-    nar_generate:'Genera Narrazione', nar_go_daw:'Vai al DAW',
+    nar_generate:'Genera Narrazione', nar_go_daw:'Vai allo Studio',
     nar_progress_title:'Progresso Narrazione', nar_generating:'Generazione Audio...',
     cov_title:'Generatore di Copertine IA', cov_preview_audio:'Anteprima Audio',
     cov_platform_templates:'Modelli di Dimensioni', cov_platform_hint:'Clicca su una piattaforma per configurare automaticamente',
@@ -21497,7 +21497,7 @@ const UI_TRANSLATIONS = {
     dash_old_way_title:'Il Vecchio Modo',
     dash_old_way_1:'assumere un narratore professionista — un libro completo può costare $3.000+',
     dash_old_way_2:'con narratori, editor e designer di copertine',
-    dash_old_way_3:'con software DAW, specifiche ACX e requisiti delle piattaforme',
+    dash_old_way_3:'con software studio, specifiche ACX e requisiti delle piattaforme',
     dash_old_way_4:'— software di scrittura, editor audio, designer di copertine, distributore',
     dash_ai_way_title:'Con Authorr AI',
     dash_ai_way_1:'— multi-voce con voci dei personaggi, pronto in minuti',
@@ -21510,7 +21510,7 @@ const UI_TRANSLATIONS = {
     dash_steps_h2:'Il tuo audiolibro in cinque fasi',
     dash_step1_title:'Scrivi la tua Storia', dash_step1_desc:'Incolla il tuo manoscritto o lascia che l\'IA generi capitoli e dialoghi',
     dash_step2_title:'Genera la Narrazione', dash_step2_desc:'L\'IA multi-voce assegna voci uniche a ogni personaggio automaticamente',
-    dash_step3_title:'Mixa in Studio', dash_step3_desc:'Aggiungi musica di sottofondo, effetti sonori e mixa le tracce nel DAW integrato',
+    dash_step3_title:'Mixa in Studio', dash_step3_desc:'Aggiungi musica di sottofondo, effetti sonori e mixa le tracce nello Studio integrato',
     dash_step4_title:'Progetta la Copertina', dash_step4_desc:'Copertina generata dall\'IA adattata al tuo genere, per ogni piattaforma',
     dash_step5_title:'Esporta e Pubblica', dash_step5_desc:'Scarica pacchetti pronti e pubblica su Audible, Spotify e altro',
     dash_vid_steps_sub:'Guarda ogni fase in azione dall\'inizio all\'audiolibro completato',
@@ -21520,7 +21520,7 @@ const UI_TRANSLATIONS = {
     dash_feat1_title:'Scrittura con IA', dash_feat1_desc:'Genera capitoli completi con dialoghi multi-personaggio, archi narrativi e tono specifico del genere.',
     dash_feat2_title:'Narrazione Multi-Voce', dash_feat2_desc:'Assegna voci IA distinte a ogni personaggio. Narratore, eroe, villain — ognuno ha la sua voce.',
     dash_feat3_title:'Clonazione Vocale', dash_feat3_desc:'Registra o carica 30 secondi della tua voce e narra l\'intero libro con tecnologia di clonazione vocale IA.',
-    dash_feat4_title:'Studio Audio Integrato', dash_feat4_desc:'DAW professionale con editing multipista, musica di sottofondo, libreria SFX e missaggio — senza download.',
+    dash_feat4_title:'Studio Audio Integrato', dash_feat4_desc:'Studio professionale con editing multipista, musica di sottofondo, libreria SFX e missaggio — senza download.',
     dash_feat5_title:'Copertina con IA', dash_feat5_desc:'L\'IA genera copertine straordinarie per ogni piattaforma — Audible, Spotify, Apple e altro.',
     dash_feat6_title:'Pubblicazione con Un Clic', dash_feat6_desc:'Pacchetti pronti per Audible/ACX, Spotify, Apple Books, Google Play, OverDrive, Kobo e 4 altri.',
     dash_stat1_label:'Tempo medio per un audiolibro completo',
@@ -21634,7 +21634,7 @@ const UI_TRANSLATIONS = {
     nar_preview_content:'सामग्री पूर्वावलोकन', nar_clear_preview:'पूर्वावलोकन साफ़ करें', nar_scan:'नैरेशन के लिए स्कैन करें',
     nar_story_content:'नैरेशन के लिए कहानी सामग्री', nar_select_voice:'नैरेटर आवाज़ चुनें',
     nar_preview_voice:'आवाज़ पूर्वावलोकन', nar_story_preview:'सामग्री (पहले 500 अक्षर)',
-    nar_generate:'नैरेशन बनाएं', nar_go_daw:'DAW पर जाएं',
+    nar_generate:'नैरेशन बनाएं', nar_go_daw:'Studio पर जाएं',
     nar_progress_title:'नैरेशन प्रगति', nar_generating:'ऑडियो बन रहा है...',
     cov_title:'AI बुक कवर जनरेटर', cov_preview_audio:'ऑडियो पूर्वावलोकन',
     cov_platform_templates:'प्लेटफ़ॉर्म आयाम टेम्पलेट', cov_platform_hint:'स्वचालित रूप से कॉन्फ़िगर करने के लिए एक प्लेटफ़ॉर्म पर क्लिक करें',
@@ -21685,7 +21685,7 @@ const UI_TRANSLATIONS = {
     dash_old_way_title:'पुराना तरीका',
     dash_old_way_1:'एक पेशेवर नैरेटर को किराए पर लें — एक पूरी किताब $3,000+ खर्च कर सकती है',
     dash_old_way_2:'नैरेटर, संपादकों और कवर डिज़ाइनरों के साथ',
-    dash_old_way_3:'DAW सॉफ़्टवेयर, ACX स्पेक्स और प्लेटफॉर्म आवश्यकताओं के साथ',
+    dash_old_way_3:'Studio सॉफ़्टवेयर, ACX स्पेक्स और प्लेटफॉर्म आवश्यकताओं के साथ',
     dash_old_way_4:'— लेखन सॉफ़्टवेयर, ऑडियो एडिटर, कवर डिज़ाइनर, वितरक',
     dash_ai_way_title:'Authorr AI के साथ',
     dash_ai_way_1:'— मिनटों में मल्टी-वॉयस के साथ',
@@ -21698,7 +21698,7 @@ const UI_TRANSLATIONS = {
     dash_steps_h2:'पाँच चरणों में आपकी ऑडियोबुक',
     dash_step1_title:'अपनी कहानी लिखें', dash_step1_desc:'अपना पांडुलिपि पेस्ट करें या AI को अध्याय और संवाद बनाने दें',
     dash_step2_title:'नैरेशन जनरेट करें', dash_step2_desc:'मल्टी-वॉयस AI स्वचालित रूप से प्रत्येक पात्र को अद्वितीय आवाजें असाइन करती है',
-    dash_step3_title:'स्टूडियो में मिक्स करें', dash_step3_desc:'बिल्ट-इन DAW में पृष्ठभूमि संगीत, ध्वनि प्रभाव जोड़ें और ट्रैक मिलाएं',
+    dash_step3_title:'स्टूडियो में मिक्स करें', dash_step3_desc:'बिल्ट-इन Studio में पृष्ठभूमि संगीत, ध्वनि प्रभाव जोड़ें और ट्रैक मिलाएं',
     dash_step4_title:'अपना कवर डिज़ाइन करें', dash_step4_desc:'AI-जनरेटेड कवर आर्ट आपके शैली के अनुसार, हर प्लेटफॉर्म के लिए',
     dash_step5_title:'निर्यात करें और प्रकाशित करें', dash_step5_desc:'प्लेटफॉर्म-तैयार पैकेज डाउनलोड करें और Audible, Spotify पर प्रकाशित करें',
     dash_vid_steps_sub:'शुरू से तैयार ऑडियोबुक तक हर चरण देखें',
@@ -21708,7 +21708,7 @@ const UI_TRANSLATIONS = {
     dash_feat1_title:'स्टोरी राइटिंग', dash_feat1_desc:'मल्टी-कैरेक्टर डायलॉग, प्लॉट आर्क्स के साथ पूरे अध्याय जनरेट करें।',
     dash_feat2_title:'मल्टी-वॉयस नैरेशन', dash_feat2_desc:'प्रत्येक पात्र को अलग AI आवाजें असाइन करें। नैरेटर, नायक, खलनायक — सभी की अपनी आवाज।',
     dash_feat3_title:'वॉयस क्लोनिंग', dash_feat3_desc:'30 सेकंड की अपनी आवाज रिकॉर्ड करें और AI वॉयस क्लोनिंग से पूरी किताब सुनाएं।',
-    dash_feat4_title:'बिल्ट-इन ऑडियो स्टूडियो', dash_feat4_desc:'मल्टी-ट्रैक एडिटिंग, बैकग्राउंड म्यूज़िक, SFX लाइब्रेरी के साथ प्रोफेशनल DAW।',
+    dash_feat4_title:'बिल्ट-इन ऑडियो स्टूडियो', dash_feat4_desc:'मल्टी-ट्रैक एडिटिंग, बैकग्राउंड म्यूज़िक, SFX लाइब्रेरी के साथ प्रोफेशनल Studio।',
     dash_feat5_title:'कवर आर्ट', dash_feat5_desc:'AI हर प्लेटफॉर्म के लिए शानदार, सटीक कवर बनाती है।',
     dash_feat6_title:'वन-क्लिक पब्लिशिंग', dash_feat6_desc:'Audible/ACX, Spotify, Apple Books, Google Play, OverDrive, Kobo और 4 और के लिए पैकेज।',
     dash_stat1_label:'एक पूर्ण ऑडियोबुक का औसत समय',
@@ -21822,7 +21822,7 @@ const UI_TRANSLATIONS = {
     nar_preview_content:'معاينة المحتوى', nar_clear_preview:'مسح المعاينة', nar_scan:'فحص للسرد',
     nar_story_content:'محتوى القصة للسرد', nar_select_voice:'اختر صوت الراوي',
     nar_preview_voice:'معاينة الصوت', nar_story_preview:'المحتوى (أول 500 حرف)',
-    nar_generate:'إنشاء السرد', nar_go_daw:'الذهاب إلى DAW',
+    nar_generate:'إنشاء السرد', nar_go_daw:'الذهاب إلى Studio',
     nar_progress_title:'تقدم السرد', nar_generating:'جارٍ إنشاء الصوت...',
     cov_title:'مولّد أغلفة الكتب بالذكاء الاصطناعي', cov_preview_audio:'معاينة الصوت',
     cov_platform_templates:'قوالب أبعاد المنصة', cov_platform_hint:'انقر على منصة للضبط التلقائي',
@@ -21873,7 +21873,7 @@ const UI_TRANSLATIONS = {
     dash_old_way_title:'الطريقة القديمة',
     dash_old_way_1:'لتوظيف راوٍ محترف — قد يكلف الكتاب الكامل أكثر من $3,000',
     dash_old_way_2:'مع الرواة والمحررين ومصممي الأغلفة',
-    dash_old_way_3:'مع برامج DAW ومواصفات ACX ومتطلبات المنصات',
+    dash_old_way_3:'مع برامج Studio ومواصفات ACX ومتطلبات المنصات',
     dash_old_way_4:'— برامج الكتابة، محرر الصوت، مصمم الغلاف، الموزع',
     dash_ai_way_title:'مع Authorr AI',
     dash_ai_way_1:'— متعدد الأصوات مع أصوات الشخصيات، جاهز في دقائق',
@@ -21886,7 +21886,7 @@ const UI_TRANSLATIONS = {
     dash_steps_h2:'كتابك الصوتي في خمس خطوات',
     dash_step1_title:'اكتب قصتك', dash_step1_desc:'الصق مخطوطتك أو دع الذكاء الاصطناعي يولد الفصول والحوارات',
     dash_step2_title:'أنشئ السرد', dash_step2_desc:'يعين الذكاء الاصطناعي متعدد الأصوات أصواتاً فريدة لكل شخصية تلقائياً',
-    dash_step3_title:'امزج في الاستوديو', dash_step3_desc:'أضف موسيقى خلفية ومؤثرات صوتية وامزج المسارات في DAW المدمج',
+    dash_step3_title:'امزج في الاستوديو', dash_step3_desc:'أضف موسيقى خلفية ومؤثرات صوتية وامزج المسارات في Studio المدمج',
     dash_step4_title:'صمم غلافك', dash_step4_desc:'غلاف فني مُولَّد بالذكاء الاصطناعي مناسب لنوعك، مُحسَّن لكل منصة',
     dash_step5_title:'صدِّر وانشر', dash_step5_desc:'حمِّل حزماً جاهزة للمنصات وانشر على Audible وSpotify والمزيد',
     dash_vid_steps_sub:'شاهد كل خطوة في العمل من البداية حتى الكتاب الصوتي المكتمل',
@@ -21896,7 +21896,7 @@ const UI_TRANSLATIONS = {
     dash_feat1_title:'كتابة بالذكاء الاصطناعي', dash_feat1_desc:'أنشئ فصولاً كاملة بحوارات متعددة الشخصيات وأقواس قصصية.',
     dash_feat2_title:'سرد متعدد الأصوات', dash_feat2_desc:'عيِّن أصوات ذكاء اصطناعي متميزة لكل شخصية. الراوي، البطل، الشرير — لكل منهم صوته.',
     dash_feat3_title:'استنساخ الصوت', dash_feat3_desc:'سجِّل أو حمِّل 30 ثانية من صوتك وروِّ كتابك كاملاً بتقنية استنساخ الصوت.',
-    dash_feat4_title:'استوديو الصوت المدمج', dash_feat4_desc:'DAW احترافي بتحرير متعدد المسارات وموسيقى خلفية ومكتبة SFX ومزج — بدون تنزيلات.',
+    dash_feat4_title:'استوديو الصوت المدمج', dash_feat4_desc:'Studio احترافي بتحرير متعدد المسارات وموسيقى خلفية ومكتبة SFX ومزج — بدون تنزيلات.',
     dash_feat5_title:'فن الغلاف بالذكاء الاصطناعي', dash_feat5_desc:'يولِّد الذكاء الاصطناعي أغلفة مذهلة لكل منصة — Audible وSpotify وApple والمزيد.',
     dash_feat6_title:'النشر بنقرة واحدة', dash_feat6_desc:'حزم جاهزة لـ Audible/ACX وSpotify وApple Books وGoogle Play وOverDrive وKobo و4 أخرى.',
     dash_stat1_label:'متوسط وقت إنشاء كتاب صوتي كامل',
@@ -22010,7 +22010,7 @@ const UI_TRANSLATIONS = {
     nar_preview_content:'预览内容', nar_clear_preview:'清除预览', nar_scan:'扫描朗读',
     nar_story_content:'朗读故事内容', nar_select_voice:'选择朗读者语音',
     nar_preview_voice:'预览语音', nar_story_preview:'内容（前500个字符）',
-    nar_generate:'生成朗读', nar_go_daw:'前往DAW',
+    nar_generate:'生成朗读', nar_go_daw:'前往Studio',
     nar_progress_title:'朗读进度', nar_generating:'正在生成音频...',
     cov_title:'AI书籍封面生成器', cov_preview_audio:'预览音频',
     cov_platform_templates:'平台尺寸模板', cov_platform_hint:'点击平台自动配置尺寸',
@@ -22061,7 +22061,7 @@ const UI_TRANSLATIONS = {
     dash_old_way_title:'传统方式',
     dash_old_way_1:'聘请专业配音员——完整的书可能花费 $3,000 以上',
     dash_old_way_2:'与配音员、编辑和封面设计师来回沟通',
-    dash_old_way_3:'学习 DAW 软件、ACX 规格和平台要求',
+    dash_old_way_3:'学习 Studio 软件、ACX 规格和平台要求',
     dash_old_way_4:'— 写作软件、音频编辑器、封面设计师、分销商',
     dash_ai_way_title:'使用 Authorr AI',
     dash_ai_way_1:'— 多声部角色配音，几分钟内完成',
@@ -22074,7 +22074,7 @@ const UI_TRANSLATIONS = {
     dash_steps_h2:'五步完成您的有声书',
     dash_step1_title:'写您的故事', dash_step1_desc:'粘贴您的手稿或让 AI 生成章节和对话',
     dash_step2_title:'生成朗读', dash_step2_desc:'多声部 AI 自动为每个角色分配独特的声音',
-    dash_step3_title:'在录音室混音', dash_step3_desc:'在内置 DAW 中添加背景音乐、音效并混音轨道',
+    dash_step3_title:'在录音室混音', dash_step3_desc:'在内置 Studio 中添加背景音乐、音效并混音轨道',
     dash_step4_title:'设计封面', dash_step4_desc:'AI 生成的封面艺术根据您的类型设计，适配每个平台',
     dash_step5_title:'导出并发布', dash_step5_desc:'下载平台就绪的包，发布到 Audible、Spotify 等',
     dash_vid_steps_sub:'从头到尾观看每个步骤的实际操作',
@@ -22084,7 +22084,7 @@ const UI_TRANSLATIONS = {
     dash_feat1_title:'AI 写作', dash_feat1_desc:'生成包含多角色对话、情节弧和类型特定语调的完整章节。',
     dash_feat2_title:'多声部朗读', dash_feat2_desc:'为每个角色分配不同的 AI 声音。叙述者、英雄、反派——各有其声。',
     dash_feat3_title:'声音克隆', dash_feat3_desc:'录制或上传 30 秒的声音，用 AI 声音克隆技术用您的声音朗读整本书。',
-    dash_feat4_title:'内置音频工作室', dash_feat4_desc:'专业 DAW，支持多轨编辑、背景音乐、音效库和混音——无需下载。',
+    dash_feat4_title:'内置音频工作室', dash_feat4_desc:'专业 Studio，支持多轨编辑、背景音乐、音效库和混音——无需下载。',
     dash_feat5_title:'AI 封面艺术', dash_feat5_desc:'AI 生成适合每个平台的精美封面——Audible、Spotify、Apple 等。',
     dash_feat6_title:'一键发布', dash_feat6_desc:'为 Audible/ACX、Spotify、Apple Books、Google Play、OverDrive、Kobo 等准备的导出包。',
     dash_stat1_label:'完成一本有声书的平均时间',
@@ -22198,7 +22198,7 @@ const UI_TRANSLATIONS = {
     nar_preview_content:'コンテンツをプレビュー', nar_clear_preview:'プレビューをクリア', nar_scan:'ナレーションにスキャン',
     nar_story_content:'ナレーション用ストーリーコンテンツ', nar_select_voice:'ナレーター音声を選択',
     nar_preview_voice:'音声をプレビュー', nar_story_preview:'コンテンツ（最初の500文字）',
-    nar_generate:'ナレーションを生成', nar_go_daw:'DAWへ',
+    nar_generate:'ナレーションを生成', nar_go_daw:'Studioへ',
     nar_progress_title:'ナレーションの進捗', nar_generating:'オーディオを生成中...',
     cov_title:'AI本の表紙ジェネレーター', cov_preview_audio:'オーディオプレビュー',
     cov_platform_templates:'プラットフォームサイズテンプレート', cov_platform_hint:'プラットフォームをクリックして自動設定',
@@ -22249,7 +22249,7 @@ const UI_TRANSLATIONS = {
     dash_old_way_title:'従来の方法',
     dash_old_way_1:'プロのナレーターを雇う — 完全な本は$3,000以上かかることも',
     dash_old_way_2:'ナレーター、編集者、カバーデザイナーとのやり取り',
-    dash_old_way_3:'DAWソフトウェア、ACX仕様、プラットフォーム要件の学習',
+    dash_old_way_3:'Studioソフトウェア、ACX仕様、プラットフォーム要件の学習',
     dash_old_way_4:'— ライティングソフト、オーディオエディター、カバーデザイナー、ディストリビューター',
     dash_ai_way_title:'Authorr AIで',
     dash_ai_way_1:'— キャラクターボイスによるマルチボイス、数分で完成',
@@ -22262,7 +22262,7 @@ const UI_TRANSLATIONS = {
     dash_steps_h2:'5つのステップでオーディオブック完成',
     dash_step1_title:'ストーリーを書く', dash_step1_desc:'原稿を貼り付けるか、AIにチャプターとダイアログを生成させる',
     dash_step2_title:'ナレーション生成', dash_step2_desc:'マルチボイスAIが各キャラクターに自動的にユニークな声を割り当てる',
-    dash_step3_title:'スタジオでミックス', dash_step3_desc:'内蔵DAWでBGM、効果音を追加してトラックをミックス',
+    dash_step3_title:'スタジオでミックス', dash_step3_desc:'内蔵StudioでBGM、効果音を追加してトラックをミックス',
     dash_step4_title:'カバーをデザイン', dash_step4_desc:'ジャンルに合わせたAI生成カバーアート、各プラットフォーム対応',
     dash_step5_title:'エクスポート＆出版', dash_step5_desc:'プラットフォーム対応パッケージをダウンロードしてAudible、Spotifyなどに出版',
     dash_vid_steps_sub:'最初から完成したオーディオブックまで各ステップを見る',
@@ -22272,7 +22272,7 @@ const UI_TRANSLATIONS = {
     dash_feat1_title:'AIストーリーライティング', dash_feat1_desc:'マルチキャラクターダイアログ、プロットアーク、ジャンル特有のトーンで完全なチャプターを生成。',
     dash_feat2_title:'マルチボイスナレーション', dash_feat2_desc:'各キャラクターに異なるAIボイスを割り当て。ナレーター、ヒーロー、ヴィラン — それぞれ独自の声。',
     dash_feat3_title:'ボイスクローニング', dash_feat3_desc:'30秒の声を録音またはアップロードして、AIボイスクローニングで自分の声で本全体をナレーション。',
-    dash_feat4_title:'内蔵オーディオスタジオ', dash_feat4_desc:'マルチトラック編集、BGM、SFXライブラリ、ミキシング対応のプロDAW — ダウンロード不要。',
+    dash_feat4_title:'内蔵オーディオスタジオ', dash_feat4_desc:'マルチトラック編集、BGM、SFXライブラリ、ミキシング対応のプロStudio — ダウンロード不要。',
     dash_feat5_title:'AIカバーアート', dash_feat5_desc:'各プラットフォーム向けに正確なカバーをAIが生成 — Audible、Spotify、Appleなど。',
     dash_feat6_title:'ワンクリック出版', dash_feat6_desc:'Audible/ACX、Spotify、Apple Books、Google Play、OverDrive、Koboなど4つ以上のプラットフォーム対応パッケージ。',
     dash_stat1_label:'オーディオブック完成の平均時間',
@@ -22386,7 +22386,7 @@ const UI_TRANSLATIONS = {
     nar_preview_content:'콘텐츠 미리보기', nar_clear_preview:'미리보기 지우기', nar_scan:'나레이션으로 스캔',
     nar_story_content:'나레이션용 스토리 콘텐츠', nar_select_voice:'나레이터 음성 선택',
     nar_preview_voice:'음성 미리보기', nar_story_preview:'콘텐츠（처음 500자）',
-    nar_generate:'나레이션 생성', nar_go_daw:'DAW로 이동',
+    nar_generate:'나레이션 생성', nar_go_daw:'Studio로 이동',
     nar_progress_title:'나레이션 진행', nar_generating:'오디오 생성 중...',
     cov_title:'AI 책 표지 생성기', cov_preview_audio:'오디오 미리보기',
     cov_platform_templates:'플랫폼 크기 템플릿', cov_platform_hint:'플랫폼 클릭으로 자동 설정',
@@ -22437,7 +22437,7 @@ const UI_TRANSLATIONS = {
     dash_old_way_title:'기존 방식',
     dash_old_way_1:'전문 성우 고용 — 전체 책이 $3,000 이상 들 수 있음',
     dash_old_way_2:'성우, 편집자, 표지 디자이너와의 오랜 소통',
-    dash_old_way_3:'DAW 소프트웨어, ACX 사양, 플랫폼 요구사항 학습',
+    dash_old_way_3:'Studio 소프트웨어, ACX 사양, 플랫폼 요구사항 학습',
     dash_old_way_4:'— 글쓰기 소프트웨어, 오디오 편집기, 표지 디자이너, 배급사',
     dash_ai_way_title:'Authorr AI와 함께',
     dash_ai_way_1:'— 캐릭터 음성을 포함한 멀티보이스, 몇 분 안에 완성',
@@ -22450,7 +22450,7 @@ const UI_TRANSLATIONS = {
     dash_steps_h2:'다섯 단계로 완성하는 오디오북',
     dash_step1_title:'이야기 쓰기', dash_step1_desc:'원고를 붙여넣거나 AI가 챕터와 대화를 생성하도록 하세요',
     dash_step2_title:'나레이션 생성', dash_step2_desc:'멀티보이스 AI가 각 캐릭터에 자동으로 고유한 목소리를 할당합니다',
-    dash_step3_title:'스튜디오에서 믹싱', dash_step3_desc:'내장 DAW에서 배경음악, 음향효과를 추가하고 트랙을 믹싱하세요',
+    dash_step3_title:'스튜디오에서 믹싱', dash_step3_desc:'내장 Studio에서 배경음악, 음향효과를 추가하고 트랙을 믹싱하세요',
     dash_step4_title:'표지 디자인', dash_step4_desc:'AI가 생성한 표지 아트, 장르에 맞게 모든 플랫폼에 최적화',
     dash_step5_title:'내보내기 & 게시', dash_step5_desc:'플랫폼 준비 패키지를 다운로드하여 Audible, Spotify 등에 게시',
     dash_vid_steps_sub:'처음부터 완성된 오디오북까지 각 단계를 확인하세요',
@@ -22460,7 +22460,7 @@ const UI_TRANSLATIONS = {
     dash_feat1_title:'AI 스토리 작성', dash_feat1_desc:'멀티 캐릭터 대화, 플롯 아크, 장르별 톤으로 완전한 챕터를 생성합니다.',
     dash_feat2_title:'멀티보이스 나레이션', dash_feat2_desc:'각 캐릭터에 다른 AI 목소리를 할당합니다. 화자, 주인공, 악당 — 각자 고유한 목소리.',
     dash_feat3_title:'음성 복제', dash_feat3_desc:'30초 목소리를 녹음하거나 업로드하여 AI 음성 복제 기술로 전체 책을 나레이션하세요.',
-    dash_feat4_title:'내장 오디오 스튜디오', dash_feat4_desc:'멀티트랙 편집, 배경음악, SFX 라이브러리, 믹싱을 지원하는 프로 DAW — 다운로드 불필요.',
+    dash_feat4_title:'내장 오디오 스튜디오', dash_feat4_desc:'멀티트랙 편집, 배경음악, SFX 라이브러리, 믹싱을 지원하는 프로 Studio — 다운로드 불필요.',
     dash_feat5_title:'AI 표지 아트', dash_feat5_desc:'AI가 모든 플랫폼에 맞는 멋진 표지를 생성합니다 — Audible, Spotify, Apple 등.',
     dash_feat6_title:'원클릭 게시', dash_feat6_desc:'Audible/ACX, Spotify, Apple Books, Google Play, OverDrive, Kobo 등 4개 더를 위한 패키지.',
     dash_stat1_label:'완전한 오디오북 완성 평균 시간',
@@ -22574,7 +22574,7 @@ const UI_TRANSLATIONS = {
     nar_preview_content:'Предпросмотр Содержания', nar_clear_preview:'Очистить Предпросмотр', nar_scan:'Сканировать для Озвучки',
     nar_story_content:'Содержание Истории для Озвучки', nar_select_voice:'Выбрать Голос Нарратора',
     nar_preview_voice:'Предпросмотр Голоса', nar_story_preview:'Содержание (первые 500 символов)',
-    nar_generate:'Создать Озвучку', nar_go_daw:'Перейти в DAW',
+    nar_generate:'Создать Озвучку', nar_go_daw:'Перейти в Studio',
     nar_progress_title:'Прогресс Озвучки', nar_generating:'Генерация Аудио...',
     cov_title:'Генератор Обложек с ИИ', cov_preview_audio:'Предпросмотр Аудио',
     cov_platform_templates:'Шаблоны Размеров Платформы', cov_platform_hint:'Нажмите на платформу для автоматической настройки',
@@ -22625,7 +22625,7 @@ const UI_TRANSLATIONS = {
     dash_old_way_title:'Старый Способ',
     dash_old_way_1:'нанять профессионального диктора — полная книга может обойтись в $3 000+',
     dash_old_way_2:'с дикторами, редакторами и дизайнерами обложек',
-    dash_old_way_3:'с DAW-программами, спецификациями ACX и требованиями платформ',
+    dash_old_way_3:'с Studio-программами, спецификациями ACX и требованиями платформ',
     dash_old_way_4:'— программа для письма, аудиоредактор, дизайнер обложки, дистрибьютор',
     dash_ai_way_title:'С Authorr AI',
     dash_ai_way_1:'— многоголосное озвучивание с голосами персонажей за минуты',
@@ -22638,7 +22638,7 @@ const UI_TRANSLATIONS = {
     dash_steps_h2:'Ваша аудиокнига за пять шагов',
     dash_step1_title:'Напишите Историю', dash_step1_desc:'Вставьте рукопись или позвольте ИИ генерировать главы и диалоги',
     dash_step2_title:'Создайте Озвучку', dash_step2_desc:'Многоголосный ИИ автоматически назначает уникальные голоса каждому персонажу',
-    dash_step3_title:'Сведите в Студии', dash_step3_desc:'Добавьте фоновую музыку, звуковые эффекты и смикшируйте дорожки во встроенном DAW',
+    dash_step3_title:'Сведите в Студии', dash_step3_desc:'Добавьте фоновую музыку, звуковые эффекты и смикшируйте дорожки во встроенном Studio',
     dash_step4_title:'Создайте Обложку', dash_step4_desc:'Обложка, сгенерированная ИИ в стиле вашего жанра, для каждой платформы',
     dash_step5_title:'Экспорт и Публикация', dash_step5_desc:'Загружайте пакеты, готовые к публикации на Audible, Spotify и других платформах',
     dash_vid_steps_sub:'Смотрите каждый шаг в действии от начала до готовой аудиокниги',
@@ -22648,7 +22648,7 @@ const UI_TRANSLATIONS = {
     dash_feat1_title:'Написание с ИИ', dash_feat1_desc:'Генерируйте полные главы с многоперсонажными диалогами, сюжетными дугами и жанровым стилем.',
     dash_feat2_title:'Многоголосное Озвучивание', dash_feat2_desc:'Назначайте разные голоса ИИ каждому персонажу. Рассказчик, герой, злодей — каждый со своим голосом.',
     dash_feat3_title:'Клонирование Голоса', dash_feat3_desc:'Запишите или загрузите 30 секунд своего голоса и озвучьте всю книгу своим голосом с помощью ИИ.',
-    dash_feat4_title:'Встроенная Аудиостудия', dash_feat4_desc:'Профессиональный DAW с многодорожечным редактированием, фоновой музыкой, библиотекой SFX и микшированием.',
+    dash_feat4_title:'Встроенная Аудиостудия', dash_feat4_desc:'Профессиональный Studio с многодорожечным редактированием, фоновой музыкой, библиотекой SFX и микшированием.',
     dash_feat5_title:'Обложка с ИИ', dash_feat5_desc:'ИИ генерирует точные обложки для каждой платформы — Audible, Spotify, Apple и другие.',
     dash_feat6_title:'Публикация Одним Кликом', dash_feat6_desc:'Пакеты для Audible/ACX, Spotify, Apple Books, Google Play, OverDrive, Kobo и ещё 4 платформ.',
     dash_stat1_label:'Среднее время создания полной аудиокниги',
@@ -22762,7 +22762,7 @@ const UI_TRANSLATIONS = {
     nar_preview_content:'Inhoud Bekijken', nar_clear_preview:'Voorbeeld Wissen', nar_scan:'Scannen voor Vertelling',
     nar_story_content:'Verhaalinhoud voor Vertelling', nar_select_voice:'Vertellerstem Selecteren',
     nar_preview_voice:'Stem Bekijken', nar_story_preview:'Inhoud (Eerste 500 tekens)',
-    nar_generate:'Vertelling Genereren', nar_go_daw:'Naar DAW',
+    nar_generate:'Vertelling Genereren', nar_go_daw:'Naar Studio',
     nar_progress_title:'Vertelvoortgang', nar_generating:'Audio Genereren...',
     cov_title:'AI Boekomslag Generator', cov_preview_audio:'Audio Bekijken',
     cov_platform_templates:'Platform Afmetingssjablonen', cov_platform_hint:'Klik op een platform om automatisch te configureren',
@@ -22813,7 +22813,7 @@ const UI_TRANSLATIONS = {
     dash_old_way_title:'De Oude Manier',
     dash_old_way_1:'een professionele verteller inhuren — een volledig boek kan $3.000+ kosten',
     dash_old_way_2:'met vertellers, redacteurs en omslagontwerpers',
-    dash_old_way_3:'met DAW-software, ACX-specificaties en platformvereisten',
+    dash_old_way_3:'met Studio-software, ACX-specificaties en platformvereisten',
     dash_old_way_4:'— schrijfsoftware, audiobewerker, omslagontwerper, distributeur',
     dash_ai_way_title:'Met Authorr AI',
     dash_ai_way_1:'— meerstemmig met karakterstemmen, in minuten klaar',
@@ -22826,7 +22826,7 @@ const UI_TRANSLATIONS = {
     dash_steps_h2:'Jouw audioboek in vijf stappen',
     dash_step1_title:'Schrijf je Verhaal', dash_step1_desc:'Plak je manuscript of laat AI hoofdstukken en dialogen genereren',
     dash_step2_title:'Genereer Vertelling', dash_step2_desc:'Meerstemmige AI wijst automatisch unieke stemmen toe aan elk personage',
-    dash_step3_title:'Mix in de Studio', dash_step3_desc:'Voeg achtergrondmuziek, geluidseffecten toe en mix tracks in de ingebouwde DAW',
+    dash_step3_title:'Mix in de Studio', dash_step3_desc:'Voeg achtergrondmuziek, geluidseffecten toe en mix tracks in de ingebouwde Studio',
     dash_step4_title:'Ontwerp je Omslag', dash_step4_desc:'AI-gegenereerde omslagkunst afgestemd op jouw genre, voor elk platform',
     dash_step5_title:'Exporteer & Publiceer', dash_step5_desc:'Download platformklare pakketten en publiceer op Audible, Spotify en meer',
     dash_vid_steps_sub:'Bekijk elke stap in actie van begin tot voltooid audioboek',
@@ -22836,7 +22836,7 @@ const UI_TRANSLATIONS = {
     dash_feat1_title:'AI Verhalen Schrijven', dash_feat1_desc:'Genereer volledige hoofdstukken met meerpersoonsdialogen, plotbogen en genrespecifieke toon.',
     dash_feat2_title:'Meerstemmige Vertelling', dash_feat2_desc:'Wijs verschillende AI-stemmen toe aan elk personage. Verteller, held, schurk — elk een eigen stem.',
     dash_feat3_title:'Stem Klonen', dash_feat3_desc:'Neem 30 seconden van je stem op of upload die en vertel je hele boek met AI-stemkloontechnologie.',
-    dash_feat4_title:'Ingebouwde Audiostudio', dash_feat4_desc:'Professionele DAW met meerspoorsbewerking, achtergrondmuziek, SFX-bibliotheek en mixing — geen downloads.',
+    dash_feat4_title:'Ingebouwde Audiostudio', dash_feat4_desc:'Professionele Studio met meerspoorsbewerking, achtergrondmuziek, SFX-bibliotheek en mixing — geen downloads.',
     dash_feat5_title:'AI Omslagkunst', dash_feat5_desc:'AI genereert prachtige, genrenauwkeurige omslagen voor elk platform — Audible, Spotify, Apple en meer.',
     dash_feat6_title:'Één-Klik Publicatie', dash_feat6_desc:'Platformklare pakketten voor Audible/ACX, Spotify, Apple Books, Google Play, OverDrive, Kobo en 4 meer.',
     dash_stat1_label:'Gemiddelde tijd voor een compleet audioboek',
@@ -22950,7 +22950,7 @@ const UI_TRANSLATIONS = {
     nar_preview_content:'Podgląd Treści', nar_clear_preview:'Wyczyść Podgląd', nar_scan:'Skanuj do Narracji',
     nar_story_content:'Treść Historii do Narracji', nar_select_voice:'Wybierz Głos Narratora',
     nar_preview_voice:'Podgląd Głosu', nar_story_preview:'Treść (Pierwsze 500 znaków)',
-    nar_generate:'Generuj Narrację', nar_go_daw:'Przejdź do DAW',
+    nar_generate:'Generuj Narrację', nar_go_daw:'Przejdź do Studio',
     nar_progress_title:'Postęp Narracji', nar_generating:'Generowanie Audio...',
     cov_title:'Generator Okładek AI', cov_preview_audio:'Podgląd Audio',
     cov_platform_templates:'Szablony Wymiarów Platformy', cov_platform_hint:'Kliknij platformę, aby automatycznie skonfigurować',
@@ -23001,7 +23001,7 @@ const UI_TRANSLATIONS = {
     dash_old_way_title:'Stary Sposób',
     dash_old_way_1:'zatrudnić profesjonalnego lektora — pełna książka może kosztować $3 000+',
     dash_old_way_2:'z lektorami, redaktorami i projektantami okładek',
-    dash_old_way_3:'z oprogramowaniem DAW, specyfikacjami ACX i wymaganiami platform',
+    dash_old_way_3:'z oprogramowaniem Studio, specyfikacjami ACX i wymaganiami platform',
     dash_old_way_4:'— oprogramowanie do pisania, edytor audio, projektant okładki, dystrybutor',
     dash_ai_way_title:'Z Authorr AI',
     dash_ai_way_1:'— wielogłosowe z głosami postaci, gotowe w minutach',
@@ -23014,7 +23014,7 @@ const UI_TRANSLATIONS = {
     dash_steps_h2:'Twój audiobook w pięciu krokach',
     dash_step1_title:'Napisz swoją Historię', dash_step1_desc:'Wklej rękopis lub pozwól AI generować rozdziały i dialogi',
     dash_step2_title:'Generuj Narrację', dash_step2_desc:'Wielogłosowa AI automatycznie przypisuje unikalne głosy każdej postaci',
-    dash_step3_title:'Miksuj w Studio', dash_step3_desc:'Dodaj muzykę w tle, efekty dźwiękowe i miksuj ścieżki w wbudowanym DAW',
+    dash_step3_title:'Miksuj w Studio', dash_step3_desc:'Dodaj muzykę w tle, efekty dźwiękowe i miksuj ścieżki w wbudowanym Studio',
     dash_step4_title:'Zaprojektuj Okładkę', dash_step4_desc:'Sztuka okładki generowana przez AI w twoim gatunku, dla każdej platformy',
     dash_step5_title:'Eksportuj i Publikuj', dash_step5_desc:'Pobierz gotowe pakiety i publikuj na Audible, Spotify i nie tylko',
     dash_vid_steps_sub:'Oglądaj każdy krok w akcji od początku do gotowego audiobooka',
@@ -23024,7 +23024,7 @@ const UI_TRANSLATIONS = {
     dash_feat1_title:'Pisanie z AI', dash_feat1_desc:'Generuj pełne rozdziały z wielopostaciowymi dialogami, łukami fabularnymi i gatunkowym tonem.',
     dash_feat2_title:'Wielogłosowa Narracja', dash_feat2_desc:'Przypisz różne głosy AI każdej postaci. Narrator, bohater, złoczyńca — każdy z własnym głosem.',
     dash_feat3_title:'Klonowanie Głosu', dash_feat3_desc:'Nagraj lub prześlij 30 sekund swojego głosu i narruj całą książkę swoim głosem z AI.',
-    dash_feat4_title:'Wbudowane Studio Audio', dash_feat4_desc:'Profesjonalne DAW z edycją wielościeżkową, muzyką w tle, biblioteką SFX i miksowaniem.',
+    dash_feat4_title:'Wbudowane Studio Audio', dash_feat4_desc:'Profesjonalne Studio z edycją wielościeżkową, muzyką w tle, biblioteką SFX i miksowaniem.',
     dash_feat5_title:'Okładka z AI', dash_feat5_desc:'AI generuje wspaniałe okładki dla każdej platformy — Audible, Spotify, Apple i więcej.',
     dash_feat6_title:'Publikacja Jednym Kliknięciem', dash_feat6_desc:'Pakiety dla Audible/ACX, Spotify, Apple Books, Google Play, OverDrive, Kobo i 4 innych.',
     dash_stat1_label:'Średni czas stworzenia kompletnego audiobooka',
@@ -23138,7 +23138,7 @@ const UI_TRANSLATIONS = {
     nar_preview_content:'Förhandsgranska Innehåll', nar_clear_preview:'Rensa Förhandsgranskning', nar_scan:'Skanna för Berättarröst',
     nar_story_content:'Berättelseinnehåll för Berättarröst', nar_select_voice:'Välj Berättarröst',
     nar_preview_voice:'Förhandsgranska Röst', nar_story_preview:'Innehåll (Första 500 tecken)',
-    nar_generate:'Generera Berättarröst', nar_go_daw:'Gå till DAW',
+    nar_generate:'Generera Berättarröst', nar_go_daw:'Gå till Studio',
     nar_progress_title:'Berättarframsteg', nar_generating:'Genererar Ljud...',
     cov_title:'AI Bokomslags Generator', cov_preview_audio:'Förhandsgranska Ljud',
     cov_platform_templates:'Plattformsdimensionsmallar', cov_platform_hint:'Klicka på en plattform för automatisk konfiguration',
@@ -23189,7 +23189,7 @@ const UI_TRANSLATIONS = {
     dash_old_way_title:'Det Gamla Sättet',
     dash_old_way_1:'anlita en professionell berättare — en hel bok kan kosta $3 000+',
     dash_old_way_2:'med berättare, redaktörer och omslagsdesigners',
-    dash_old_way_3:'med DAW-programvara, ACX-specifikationer och plattformskrav',
+    dash_old_way_3:'med Studio-programvara, ACX-specifikationer och plattformskrav',
     dash_old_way_4:'— skrivprogramvara, ljudredigerare, omslagsdesigner, distributör',
     dash_ai_way_title:'Med Authorr AI',
     dash_ai_way_1:'— flerstämmigt med karaktärsröster, klart på minuter',
@@ -23202,7 +23202,7 @@ const UI_TRANSLATIONS = {
     dash_steps_h2:'Din ljudbok i fem steg',
     dash_step1_title:'Skriv din Historia', dash_step1_desc:'Klistra in ditt manus eller låt AI generera kapitel och dialoger',
     dash_step2_title:'Generera Berättande', dash_step2_desc:'Flerstämmig AI tilldelar automatiskt unika röster till varje karaktär',
-    dash_step3_title:'Mixa i Studion', dash_step3_desc:'Lägg till bakgrundsmusik, ljudeffekter och mixa spår i den inbyggda DAW',
+    dash_step3_title:'Mixa i Studion', dash_step3_desc:'Lägg till bakgrundsmusik, ljudeffekter och mixa spår i den inbyggda Studio',
     dash_step4_title:'Designa ditt Omslag', dash_step4_desc:'AI-genererad omslagskonst anpassad för din genre, för varje plattform',
     dash_step5_title:'Exportera & Publicera', dash_step5_desc:'Ladda ner plattformsfärdiga paket och publicera på Audible, Spotify och mer',
     dash_vid_steps_sub:'Se varje steg i aktion från start till färdig ljudbok',
@@ -23212,7 +23212,7 @@ const UI_TRANSLATIONS = {
     dash_feat1_title:'AI Berättarskrivning', dash_feat1_desc:'Generera hela kapitel med flerkaraktärsdialog, handlingsbågar och genrespecifik ton.',
     dash_feat2_title:'Flerstämmigt Berättande', dash_feat2_desc:'Tilldela distinkta AI-röster till varje karaktär. Berättare, hjälte, skurk — var och en med sin röst.',
     dash_feat3_title:'Röstkloning', dash_feat3_desc:'Spela in eller ladda upp 30 sekunder av din röst och berätta hela boken med AI-röstkloningsteknik.',
-    dash_feat4_title:'Inbyggt Audiostudio', dash_feat4_desc:'Professionell DAW med flerspårsredigering, bakgrundsmusik, SFX-bibliotek och mixning — inga nedladdningar.',
+    dash_feat4_title:'Inbyggt Audiostudio', dash_feat4_desc:'Professionell Studio med flerspårsredigering, bakgrundsmusik, SFX-bibliotek och mixning — inga nedladdningar.',
     dash_feat5_title:'AI Omslagskonst', dash_feat5_desc:'AI genererar fantastiska, genrekorrekta omslag för varje plattform — Audible, Spotify, Apple och mer.',
     dash_feat6_title:'Enklickspublicering', dash_feat6_desc:'Plattformsfärdiga paket för Audible/ACX, Spotify, Apple Books, Google Play, OverDrive, Kobo och 4 till.',
     dash_stat1_label:'Genomsnittlig tid för en komplett ljudbok',
@@ -23326,7 +23326,7 @@ const UI_TRANSLATIONS = {
     nar_preview_content:'İçeriği Önizle', nar_clear_preview:'Önizlemeyi Temizle', nar_scan:'Anlatıma Tara',
     nar_story_content:'Anlatım için Hikaye İçeriği', nar_select_voice:'Anlatıcı Sesini Seç',
     nar_preview_voice:'Sesi Önizle', nar_story_preview:'Hikaye İçeriği (İlk 500 karakter)',
-    nar_generate:'Anlatım Oluştur', nar_go_daw:'DAW\'a Git',
+    nar_generate:'Anlatım Oluştur', nar_go_daw:'Studio\'a Git',
     nar_progress_title:'Anlatım İlerlemesi', nar_generating:'Ses Oluşturuluyor...',
     cov_title:'Yapay Zeka Kitap Kapağı Oluşturucu', cov_preview_audio:'Karışık Sesi Önizle',
     cov_platform_templates:'Platform Boyut Şablonları',
@@ -23378,7 +23378,7 @@ const UI_TRANSLATIONS = {
     dash_old_way_title:'Eski Yöntem',
     dash_old_way_1:'profesyonel bir anlatıcı tutmak — tam bir kitap $3.000+ tutabilir',
     dash_old_way_2:'anlatıcılar, editörler ve kapak tasarımcılarıyla',
-    dash_old_way_3:'DAW yazılımı, ACX özellikleri ve platform gereksinimleriyle',
+    dash_old_way_3:'Studio yazılımı, ACX özellikleri ve platform gereksinimleriyle',
     dash_old_way_4:'— yazı yazılımı, ses düzenleyici, kapak tasarımcısı, dağıtıcı',
     dash_ai_way_title:'Authorr AI ile',
     dash_ai_way_1:'— karakter sesleriyle çok sesli, dakikalar içinde hazır',
@@ -23391,7 +23391,7 @@ const UI_TRANSLATIONS = {
     dash_steps_h2:'Beş adımda sesli kitabınız',
     dash_step1_title:'Hikayenizi Yazın', dash_step1_desc:'El yazmanızı yapıştırın veya AI\'nin bölümler ve diyaloglar oluşturmasına izin verin',
     dash_step2_title:'Seslendirme Oluştur', dash_step2_desc:'Çok sesli AI her karaktere otomatik olarak benzersiz sesler atar',
-    dash_step3_title:'Stüdyoda Karıştır', dash_step3_desc:'Yerleşik DAW\'da arka plan müziği, ses efektleri ekleyin ve parçaları karıştırın',
+    dash_step3_title:'Stüdyoda Karıştır', dash_step3_desc:'Yerleşik Studio\'da arka plan müziği, ses efektleri ekleyin ve parçaları karıştırın',
     dash_step4_title:'Kapağınızı Tasarlayın', dash_step4_desc:'Türünüze göre stilize edilmiş AI oluşturulmuş kapak sanatı, her platform için',
     dash_step5_title:'Dışa Aktar ve Yayınla', dash_step5_desc:'Platforma hazır paketleri indirin ve Audible, Spotify\'de yayınlayın',
     dash_vid_steps_sub:'Başlangıçtan bitmiş sesli kitaba kadar her adımı izleyin',
@@ -23401,7 +23401,7 @@ const UI_TRANSLATIONS = {
     dash_feat1_title:'AI Hikaye Yazma', dash_feat1_desc:'Çok karakterli diyaloglar, olay örgüleri ve türe özgü tonla tam bölümler oluşturun.',
     dash_feat2_title:'Çok Sesli Seslendirme', dash_feat2_desc:'Her karaktere farklı AI sesleri atayın. Anlatıcı, kahraman, kötü adam — her birinin kendi sesi.',
     dash_feat3_title:'Ses Klonlama', dash_feat3_desc:'30 saniye sesinizi kaydedin veya yükleyin ve AI ses klonlama teknolojisiyle tüm kitabı kendi sesinizle seslendir.',
-    dash_feat4_title:'Yerleşik Ses Stüdyosu', dash_feat4_desc:'Çok parçalı düzenleme, arka plan müziği, SFX kitaplığı ve karıştırma ile profesyonel DAW — indirme gerekmez.',
+    dash_feat4_title:'Yerleşik Ses Stüdyosu', dash_feat4_desc:'Çok parçalı düzenleme, arka plan müziği, SFX kitaplığı ve karıştırma ile profesyonel Studio — indirme gerekmez.',
     dash_feat5_title:'AI Kapak Sanatı', dash_feat5_desc:'AI her platform için çarpıcı, türe doğru kapaklar oluşturur — Audible, Spotify, Apple ve daha fazlası.',
     dash_feat6_title:'Tek Tıkla Yayınlama', dash_feat6_desc:'Audible/ACX, Spotify, Apple Books, Google Play, OverDrive, Kobo ve 4 daha fazlası için paketler.',
     dash_stat1_label:'Eksiksiz bir sesli kitap için ortalama süre',
