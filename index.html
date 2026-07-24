@@ -25100,6 +25100,7 @@ function exportTTSManifest() {
         {
             page: 'narration',
             target: null,
+            openStudio: true,
             tag: 'Studio',
             title: 'Channel Mixer',
             text: 'Inside the Studio you get a 4-channel mixer: Narration, Music Track 1, Music Track 2, and Sound Effects. Each channel has its own volume fader so you can blend everything to exactly the right levels.'
@@ -25107,6 +25108,7 @@ function exportTTSManifest() {
         {
             page: 'narration',
             target: null,
+            openStudio: true,
             tag: 'Studio',
             title: 'Audio Timeline',
             text: 'The visual timeline shows all your audio clips arranged in order. Use the Hand tool to drag clips, the Cut tool to split them, and trim handles to fine-tune every moment before you export.'
@@ -25115,6 +25117,7 @@ function exportTTSManifest() {
         {
             page: 'covers',
             target: '#coverPlatformTemplates',
+            closeStudio: true,
             tag: 'Cover Generator',
             title: 'Platform Templates',
             text: 'Start by selecting your target platform — Audible, Spotify, Apple, Google Play, or OverDrive. Each template auto-sets the exact pixel dimensions required for submission on that marketplace.'
@@ -25209,6 +25212,15 @@ function exportTTSManifest() {
         const currentPageId = currentPage ? currentPage.id : null;
         if (step.page && currentPageId !== step.page) {
             showPage(step.page);
+        }
+
+        // Studio open/close hooks
+        if (step.openStudio) {
+            if (!document.getElementById('audioDAWModal')) openAudioDAW();
+        }
+        if (step.closeStudio) {
+            const dawModal = document.getElementById('audioDAWModal');
+            if (dawModal) dawModal.remove();
         }
 
         // Wait for page render then position elements
