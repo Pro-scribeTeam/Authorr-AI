@@ -1061,6 +1061,81 @@
             font-size: 1.25rem;
           }
         }
+
+        /* ── GUIDED TOUR ─────────────────────────────────── */
+        #tourOverlay {
+            position: fixed; inset: 0; z-index: 99990;
+            pointer-events: none;
+        }
+        #tourOverlay.active { pointer-events: all; }
+
+        #tourBackdrop {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.55);
+            z-index: 99991; pointer-events: none;
+            opacity: 0; transition: opacity 0.3s;
+        }
+        #tourOverlay.active #tourBackdrop { opacity: 1; }
+
+        #tourHighlight {
+            position: fixed; z-index: 99992;
+            box-shadow: 0 0 0 9999px rgba(0,0,0,0.55),
+                        0 0 0 3px #22d3ee,
+                        0 0 18px 4px rgba(34,211,238,0.6);
+            border-radius: 10px;
+            pointer-events: none;
+            transition: top 0.35s ease, left 0.35s ease, width 0.35s ease, height 0.35s ease, opacity 0.3s;
+            opacity: 0;
+        }
+        #tourOverlay.active #tourHighlight { opacity: 1; }
+
+        #tourCard {
+            position: fixed; z-index: 99993;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            border: 2px solid #22d3ee;
+            border-radius: 16px;
+            padding: 20px 24px;
+            max-width: 340px;
+            width: calc(100vw - 32px);
+            box-shadow: 0 8px 40px rgba(0,0,0,0.7), 0 0 30px rgba(34,211,238,0.2);
+            transition: top 0.35s ease, left 0.35s ease, opacity 0.25s;
+            opacity: 0;
+        }
+        #tourOverlay.active #tourCard { opacity: 1; }
+        #tourCard h3 { color: #22d3ee; font-size: 1rem; font-weight: 800; margin: 0 0 8px; }
+        #tourCard p  { color: #cbd5e1; font-size: 0.87rem; line-height: 1.55; margin: 0 0 16px; }
+        #tourProgress {
+            display: flex; align-items: center; gap: 6px; margin-bottom: 14px; flex-wrap: wrap;
+        }
+        .tour-dot {
+            width: 7px; height: 7px; border-radius: 50%;
+            background: #334155; transition: background 0.2s;
+        }
+        .tour-dot.active { background: #22d3ee; }
+        .tour-dot.done   { background: #0891b2; }
+        #tourCounter { color: #64748b; font-size: 0.75rem; margin-left: auto; }
+        #tourCardBtns { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+        #tourPrevBtn {
+            padding: 6px 14px; border-radius: 8px; font-size: 0.82rem; font-weight: 600;
+            background: #1e293b; border: 1px solid #334155; color: #94a3b8; cursor: pointer;
+            transition: border-color 0.2s, color 0.2s;
+        }
+        #tourPrevBtn:hover { border-color: #22d3ee; color: #22d3ee; }
+        #tourNextBtn {
+            padding: 7px 18px; border-radius: 8px; font-size: 0.82rem; font-weight: 700;
+            background: linear-gradient(135deg, #0891b2, #22d3ee); color: #000; cursor: pointer;
+            border: none; transition: opacity 0.2s;
+        }
+        #tourNextBtn:hover { opacity: 0.88; }
+        #tourSkipBtn {
+            margin-left: auto; font-size: 0.75rem; color: #475569; cursor: pointer;
+            background: none; border: none; text-decoration: underline; padding: 4px;
+        }
+        #tourSkipBtn:hover { color: #94a3b8; }
+        .tour-step-tag {
+            display: inline-block; font-size: 0.7rem; font-weight: 700; letter-spacing: .04em;
+            background: rgba(34,211,238,0.12); color: #22d3ee; border: 1px solid rgba(34,211,238,0.3);
+            border-radius: 6px; padding: 2px 8px; margin-bottom: 8px;
+        }
     </style>
 </head>
 <body class="theme-dark">
@@ -1135,7 +1210,7 @@
                             <button onclick="setUILanguage('tr')"  class="ui-lang-opt w-full text-left px-3 py-2 hover:bg-cyan-900 text-sm flex items-center gap-2">🇹🇷 Türkçe</button>
                         </div>
                     </div>
-                    <button onclick="toggleTheme()" class="text-cyan-400 hover:text-cyan-300 text-xl ml-2">
+                    <button id="themeToggleBtn" onclick="toggleTheme()" class="text-cyan-400 hover:text-cyan-300 text-xl ml-2">
                         <i id="themeIcon" class="fas fa-moon"></i>
                     </button>
                     <!-- Hamburger — mobile only -->
@@ -1361,6 +1436,12 @@
                     </span>
                     <span class="text-gray-600">|</span>
                     <span data-i18n="dash_social_proof">Loved by independent authors &amp; creators</span>
+                </div>
+                <!-- Tour CTA -->
+                <div class="mt-6">
+                    <button onclick="startTour()" class="text-sm text-cyan-400 hover:text-cyan-300 border border-cyan-800 hover:border-cyan-500 px-5 py-2 rounded-xl transition-all flex items-center gap-2 mx-auto">
+                        <i class="fas fa-map-signs"></i> Take a Quick Tour
+                    </button>
                 </div>
             </div>
         </section>
@@ -2550,7 +2631,7 @@
             <!-- Story Planning Form -->
             <div class="grid lg:grid-cols-2 gap-8 mb-8">
                 <!-- Left Column: Story Parameters -->
-                <div class="bg-theme-secondary p-6 rounded-xl border-2 border-theme">
+                <div id="storyParamsBox" class="bg-theme-secondary p-6 rounded-xl border-2 border-theme">
                     <h2 class="text-xl font-bold mb-4">
                         <i class="fas fa-cogs text-cyan-400 mr-2"></i>
                         Story Parameters
@@ -2974,7 +3055,7 @@
                         <div class="text-xs text-theme-secondary" data-i18n="ws_chapter_tools_hint">Work on one chapter at a time</div>
                     </div>
                     
-                    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 p-4 bg-theme-primary rounded-lg border border-theme">
+                    <div id="chapterEditingToolsGrid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 p-4 bg-theme-primary rounded-lg border border-theme">
                         <!-- Row 1 -->
                         <div class="relative">
                             <button onclick="plotHoleDetector()" class="tool-btn w-full px-3 py-2 rounded text-sm font-medium">
@@ -3065,7 +3146,7 @@
                 </div>
 
                 <!-- Text Humanization Section -->
-                <div class="mb-6">
+                <div id="humanizeSection" class="mb-6">
                     <div class="bg-theme-primary p-4 rounded-lg border border-theme">
                         <div class="flex justify-between items-center mb-3">
                             <h3 class="text-lg font-semibold text-purple-400">
@@ -25078,7 +25159,344 @@ function exportTTSManifest() {
         showNotification(`Plan updated to ${plan}`, 'success');
         adminLoadUsers();
     }
+
+    /* ══════════════════════════════════════════════════════════
+       GUIDED TOUR
+    ══════════════════════════════════════════════════════════ */
+    const TOUR_STEPS = [
+        // ── Dashboard ──────────────────────────────────────────
+        {
+            page: 'dashboard',
+            target: null,
+            tag: 'Dashboard',
+            title: 'Welcome to Authorr AI!',
+            text: 'This quick tour will walk you through every feature so you can start creating your audiobook with confidence. You can exit at any time.'
+        },
+        {
+            page: 'dashboard',
+            target: '#uiLangSwitcher',
+            tag: 'Dashboard',
+            title: 'Change Your Language',
+            text: 'Click the globe icon to switch the entire site to your preferred language — every label, button, and instruction will translate so you fully understand each step.'
+        },
+        {
+            page: 'dashboard',
+            target: '#themeToggleBtn',
+            tag: 'Dashboard',
+            title: 'Dark & Light Mode',
+            text: 'Toggle between dark and light mode using this button. Choose whatever is most comfortable for your eyes while you write.'
+        },
+        // ── Workspace: Story Parameters ────────────────────────
+        {
+            page: 'workspace',
+            target: '#storyParamsBox',
+            tag: 'Workspace',
+            title: 'Story Parameters',
+            text: 'Everything starts here. Fill in your book title, genre, tone, length, and story language to give the AI the direction it needs.'
+        },
+        {
+            page: 'workspace',
+            target: '#genreMaster',
+            tag: 'Workspace',
+            title: 'Genre',
+            text: 'Select your genre — from Children\'s to Thriller to Self-Help. The AI tailors its writing style, vocabulary, and structure to match your chosen genre.'
+        },
+        {
+            page: 'workspace',
+            target: '#toneModifier',
+            tag: 'Workspace',
+            title: 'Tone',
+            text: 'Set the emotional tone of your book — Dramatic, Lighthearted, Suspenseful, and more. This shapes how every sentence is written.'
+        },
+        {
+            page: 'workspace',
+            target: '#lengthTier',
+            tag: 'Workspace',
+            title: 'Book Length',
+            text: 'Choose how long your book will be. This controls the number of chapters and word count per chapter — from a short story to a full-length novel.'
+        },
+        {
+            page: 'workspace',
+            target: '#storyLanguage',
+            tag: 'Workspace',
+            title: 'Story Language',
+            text: 'Choose what language your story will be written in. This is separate from the site interface language — your story can be in Spanish while you navigate in English, for example.'
+        },
+        {
+            page: 'workspace',
+            target: '#narrationModeGrid',
+            tag: 'Workspace',
+            title: 'Narration Mode',
+            text: 'Choose how your audiobook will be narrated: a Single Narrator for a classic feel, a Duet for two voices, or Full Cast where every character has their own voice actor.'
+        },
+        {
+            page: 'workspace',
+            target: '#storyOutline',
+            tag: 'Workspace',
+            title: 'Story Concept',
+            text: 'Describe your story idea here — main characters, setting, and key plot points. The more detail you give, the better the AI can shape your outline.'
+        },
+        {
+            page: 'workspace',
+            target: null,
+            scrollTo: 'button[onclick="generateOutline()"]',
+            highlightQuery: 'button[onclick="generateOutline()"]',
+            tag: 'Workspace',
+            title: 'Generate Outline',
+            text: 'Click this button to have the AI create a full chapter-by-chapter outline based on your story concept and settings.'
+        },
+        {
+            page: 'workspace',
+            target: '#chapterPlan',
+            tag: 'Workspace',
+            title: 'Chapter Plan',
+            text: 'Your generated chapter outline appears here. You can review each chapter title and description, then click "Write All Chapters" to send the full story to the editor.'
+        },
+        {
+            page: 'workspace',
+            target: '#storyEditor',
+            tag: 'Workspace',
+            title: 'Story Editor',
+            text: 'The Story Editor is where your book comes to life. Read, edit, paste, or generate content here. Use Undo/Redo and Save to manage your work.'
+        },
+        {
+            page: 'workspace',
+            target: '#chapterEditingToolsGrid',
+            tag: 'Workspace',
+            title: 'Chapter Editing Tools',
+            text: 'Twelve AI-powered tools to deepen your story — Plot Hole Detector, Character Arc Designer, Dialogue Enhancer, Pacing Balancer, and more. Work on one chapter at a time.'
+        },
+        {
+            page: 'workspace',
+            target: '#humanizeSection',
+            tag: 'Workspace',
+            title: 'Text Humanization',
+            text: 'After generating content, use Humanize to make it sound naturally written — not robotic. Choose Subtle, Moderate, or Aggressive intensity, and apply it to the current chapter or the whole book.'
+        },
+        // ── Narration ──────────────────────────────────────────
+        {
+            page: 'narration',
+            target: '#narPageHeader',
+            tag: 'Narration',
+            title: 'Audio Narration',
+            text: 'Here you give your book a real voice. Select a narrator from 26+ professional voices, preview them, clone your own voice, and generate studio-quality narration for every chapter.'
+        },
+        // ── Covers ─────────────────────────────────────────────
+        {
+            page: 'covers',
+            target: null,
+            tag: 'Cover Generator',
+            title: 'Book Cover Generator',
+            text: 'Create a professional book cover with AI-generated artwork. Customize fonts, colors, text size, and overlay your title and author name. Download in full resolution — ready for any marketplace.'
+        },
+        // ── Export ─────────────────────────────────────────────
+        {
+            page: 'export',
+            target: null,
+            tag: 'Export',
+            title: 'Export Your Audiobook',
+            text: 'Download your complete audiobook package: audio files, cover art, metadata, and a distribution-ready bundle — compatible with ACX, Findaway, Google Play Books, and 10+ platforms.'
+        },
+        // ── Account ────────────────────────────────────────────
+        {
+            page: 'config',
+            target: null,
+            tag: 'Account',
+            title: 'Account & Settings',
+            text: 'Manage your subscription, enter API keys, adjust voice and audio settings, and upgrade your plan here. Free users get 3 chapters — upgrade to unlock the full book length and all features.'
+        },
+        // ── Done ───────────────────────────────────────────────
+        {
+            page: 'dashboard',
+            target: null,
+            tag: 'Done!',
+            title: "You're All Set!",
+            text: "You've seen every part of Authorr AI. Click \"Start Creating Free\" to begin your first audiobook — your story is waiting!"
+        }
+    ];
+
+    let _tourStep = 0;
+    let _tourActive = false;
+    let _tourHighlightTimeout = null;
+
+    function startTour() {
+        _tourStep = 0;
+        _tourActive = true;
+        document.getElementById('tourOverlay').classList.add('active');
+        _tourGoto(0);
+    }
+
+    function endTour() {
+        _tourActive = false;
+        const overlay = document.getElementById('tourOverlay');
+        overlay.classList.remove('active');
+        const hl = document.getElementById('tourHighlight');
+        hl.style.opacity = '0';
+    }
+
+    function _tourGoto(idx) {
+        if (idx < 0 || idx >= TOUR_STEPS.length) { endTour(); return; }
+        _tourStep = idx;
+        const step = TOUR_STEPS[idx];
+
+        // Navigate to the right page first
+        const currentPage = document.querySelector('.page:not(.hidden)');
+        const currentPageId = currentPage ? currentPage.id : null;
+        if (step.page && currentPageId !== step.page) {
+            showPage(step.page);
+        }
+
+        // Wait for page render then position elements
+        setTimeout(() => _tourRender(step, idx), 100);
+    }
+
+    function _tourRender(step, idx) {
+        const card = document.getElementById('tourCard');
+        const hl   = document.getElementById('tourHighlight');
+
+        // Update progress dots
+        const dots = document.querySelectorAll('.tour-dot');
+        dots.forEach((d, i) => {
+            d.classList.remove('active', 'done');
+            if (i === idx) d.classList.add('active');
+            else if (i < idx) d.classList.add('done');
+        });
+        document.getElementById('tourCounter').textContent = `${idx + 1} / ${TOUR_STEPS.length}`;
+
+        // Update card content
+        card.querySelector('.tour-step-tag').textContent = step.tag || '';
+        card.querySelector('h3').textContent = step.title;
+        card.querySelector('p').textContent = step.text;
+
+        // Prev/Next/Skip button states
+        const prevBtn = document.getElementById('tourPrevBtn');
+        const nextBtn = document.getElementById('tourNextBtn');
+        prevBtn.style.display = idx === 0 ? 'none' : '';
+        nextBtn.textContent = idx === TOUR_STEPS.length - 1 ? 'Finish Tour' : 'Next';
+
+        // Determine target element
+        const targetSel = step.highlightQuery || step.target;
+        const targetEl = targetSel ? document.querySelector(targetSel) : null;
+
+        if (targetEl) {
+            // Scroll target into view
+            targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+            setTimeout(() => {
+                const rect = targetEl.getBoundingClientRect();
+                const pad = 8;
+                hl.style.top    = (rect.top  - pad) + 'px';
+                hl.style.left   = (rect.left - pad) + 'px';
+                hl.style.width  = (rect.width  + pad*2) + 'px';
+                hl.style.height = (rect.height + pad*2) + 'px';
+                hl.style.opacity = '1';
+
+                // Position card
+                _positionCard(card, rect);
+            }, 250);
+        } else {
+            // No target — center the card and hide highlight
+            hl.style.opacity = '0';
+            hl.style.width = '0px';
+            hl.style.height = '0px';
+
+            const vw = window.innerWidth;
+            const vh = window.innerHeight;
+            card.style.left = Math.max(16, (vw - 340) / 2) + 'px';
+            card.style.top  = Math.max(80, (vh - 260) / 2) + 'px';
+
+            // Scroll page to top for page-level steps
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    }
+
+    function _positionCard(card, targetRect) {
+        const cw = 340;
+        const ch = 260;
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+        const pad = 16;
+        const gap = 14;
+
+        let top, left;
+
+        // Try below target
+        if (targetRect.bottom + gap + ch + pad < vh) {
+            top  = targetRect.bottom + gap;
+            left = Math.max(pad, Math.min(targetRect.left, vw - cw - pad));
+        }
+        // Try above
+        else if (targetRect.top - gap - ch - pad > 0) {
+            top  = targetRect.top - gap - ch;
+            left = Math.max(pad, Math.min(targetRect.left, vw - cw - pad));
+        }
+        // Try right
+        else if (targetRect.right + gap + cw + pad < vw) {
+            top  = Math.max(pad, Math.min(targetRect.top, vh - ch - pad));
+            left = targetRect.right + gap;
+        }
+        // Fallback left
+        else {
+            top  = Math.max(pad, Math.min(targetRect.top, vh - ch - pad));
+            left = Math.max(pad, targetRect.left - cw - gap);
+        }
+
+        card.style.top  = top  + 'px';
+        card.style.left = left + 'px';
+    }
+
+    // Build tour dots on DOM ready
+    document.addEventListener('DOMContentLoaded', function() {
+        const progress = document.getElementById('tourProgress');
+        if (!progress) return;
+        TOUR_STEPS.forEach((_, i) => {
+            const d = document.createElement('div');
+            d.className = 'tour-dot';
+            progress.insertBefore(d, document.getElementById('tourCounter'));
+        });
+    });
+
+    // Reposition highlight on scroll/resize during active tour
+    function _tourReposition() {
+        if (!_tourActive) return;
+        const step = TOUR_STEPS[_tourStep];
+        const targetSel = step.highlightQuery || step.target;
+        if (!targetSel) return;
+        const targetEl = document.querySelector(targetSel);
+        if (!targetEl) return;
+        const hl   = document.getElementById('tourHighlight');
+        const card = document.getElementById('tourCard');
+        const rect = targetEl.getBoundingClientRect();
+        const pad = 8;
+        hl.style.top    = (rect.top  - pad) + 'px';
+        hl.style.left   = (rect.left - pad) + 'px';
+        hl.style.width  = (rect.width  + pad*2) + 'px';
+        hl.style.height = (rect.height + pad*2) + 'px';
+        _positionCard(card, rect);
+    }
+    window.addEventListener('scroll', _tourReposition, true);
+    window.addEventListener('resize', _tourReposition);
+
     </script>
+
+    <!-- ── TOUR OVERLAY ─────────────────────────────────── -->
+    <div id="tourOverlay">
+        <div id="tourBackdrop"></div>
+        <div id="tourHighlight"></div>
+        <div id="tourCard">
+            <div class="tour-step-tag"></div>
+            <h3></h3>
+            <p></p>
+            <div id="tourProgress">
+                <span id="tourCounter"></span>
+            </div>
+            <div id="tourCardBtns">
+                <button id="tourPrevBtn" onclick="_tourGoto(_tourStep - 1)">Back</button>
+                <button id="tourNextBtn" onclick="_tourGoto(_tourStep + 1)">Next</button>
+                <button id="tourSkipBtn" onclick="endTour()">Exit tour</button>
+            </div>
+        </div>
+    </div>
 
 </body>
 </html>
