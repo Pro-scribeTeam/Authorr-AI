@@ -4049,7 +4049,7 @@
 
             <!-- Export Options -->
             <div class="grid md:grid-cols-2 gap-8 mb-8">
-                <div class="bg-theme-secondary p-6 rounded-xl border-2 border-theme">
+                <div id="exportPackageOptions" class="bg-theme-secondary p-6 rounded-xl border-2 border-theme">
                     <h2 class="text-xl font-bold mb-4">
                         <i class="fas fa-file-archive text-cyan-400 mr-2"></i>
                         <span data-i18n="exp_package_options">Package Options</span>
@@ -4116,7 +4116,7 @@
                 </div>
 
                 <!-- Publish to Platforms -->
-                <div class="bg-theme-secondary p-6 rounded-xl border-2 border-theme lg:col-span-1">
+                <div id="exportPublishPlatforms" class="bg-theme-secondary p-6 rounded-xl border-2 border-theme lg:col-span-1">
                     <h2 class="text-xl font-bold mb-1">
                         <i class="fas fa-share-alt text-cyan-400 mr-2"></i>
                         Publish to Platforms
@@ -4261,7 +4261,7 @@
 
             <!-- Account & Subscription Info -->
             <div class="grid lg:grid-cols-2 gap-8 mb-8">
-                <div class="bg-theme-secondary p-6 rounded-xl border-2 border-theme">
+                <div id="accountInfoPanel" class="bg-theme-secondary p-6 rounded-xl border-2 border-theme">
                     <h2 class="text-xl font-bold mb-4">
                         <i class="fas fa-user-circle text-cyan-400 mr-2"></i>
                         My Account
@@ -25160,18 +25160,25 @@ function exportTTSManifest() {
         // ── Export ─────────────────────────────────────────────
         {
             page: 'export',
-            target: null,
+            target: '#exportPackageOptions',
             tag: 'Export',
-            title: 'Export Your Audiobook',
-            text: 'Download your complete audiobook package: audio files, cover art, metadata, and a distribution-ready bundle — compatible with ACX, Findaway, Google Play Books, and 10+ platforms.'
+            title: 'Package Options',
+            text: 'Choose what to export — a Complete Audiobook Package (audio + manuscript + metadata), Audio Files Only, Text Manuscript, or a formatted Shunn .docx. Every format your publisher needs is here.'
+        },
+        {
+            page: 'export',
+            target: '#exportPublishPlatforms',
+            tag: 'Export',
+            title: 'Publish to Platforms',
+            text: 'Select a distribution platform — ACX (Audible), Spotify, Apple, Google Play, Findaway Voices, and more. Each platform guide auto-configures the package to meet that marketplace\'s exact requirements.'
         },
         // ── Account ────────────────────────────────────────────
         {
             page: 'config',
-            target: null,
+            target: '#accountInfoPanel',
             tag: 'Account',
             title: 'Account & Settings',
-            text: 'Manage your subscription, enter API keys, adjust voice and audio settings, and upgrade your plan here. Free users get 3 chapters — upgrade to unlock the full book length and all features.'
+            text: 'Manage your subscription plan, track credits used this month, and upgrade your account here. Free users get 3 chapters — upgrade to Studio or Pro to unlock the full book length and all features.'
         },
         // ── Done ───────────────────────────────────────────────
         {
