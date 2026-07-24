@@ -1215,7 +1215,7 @@
              HEADER / TRANSPORT CONTROLS
              ======================================== -->
         <div id="headerJamResults"></div>
-        <div class="daw-header">
+        <div id="dawTransportBar" class="daw-header">
             <!-- Logo — top-left, replaces old title -->
             <div class="daw-logo-wrap">
                 <img src="/logo.png"
@@ -1281,7 +1281,7 @@
         </div>
 
         <!-- Jamendo Quick-Search bar — full-width strip below the main header -->
-        <div class="jamendo-subbar">
+        <div id="jamendoSubbar" class="jamendo-subbar">
             <span class="jam-type-label">MUSIC</span>
             <select id="headerMusicGenre">
                 <option value="">— Genre —</option>
@@ -1298,7 +1298,7 @@
                 <option value="newage">New Age</option>
                 <option value="world">World / Ethnic</option>
             </select>
-            <button class="jam-find-btn music" onclick="headerSearchJamendo('music')">🔍 Find Music</button>
+            <button id="findMusicBtn" class="jam-find-btn music" onclick="headerSearchJamendo('music')">🔍 Find Music</button>
             <div class="jam-sep"></div>
             <span class="jam-type-label">SFX</span>
             <select id="headerSfxCategory">
@@ -1314,7 +1314,7 @@
                 <option value="scifi">Sci-Fi / Futuristic</option>
                 <option value="medieval">Medieval / Historical</option>
             </select>
-            <button class="jam-find-btn sfx" onclick="headerSearchJamendo('sfx')">🔍 Find SFX</button>
+            <button id="findSfxBtn" class="jam-find-btn sfx" onclick="headerSearchJamendo('sfx')">🔍 Find SFX</button>
         </div>
 
         <!-- ========================================

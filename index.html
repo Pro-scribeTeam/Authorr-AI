@@ -3245,7 +3245,7 @@
 
             <div class="grid lg:grid-cols-2 gap-8">
                 <!-- High-Tech Voice Cloning Station -->
-                <div class="bg-theme-secondary p-6 rounded-xl border-2 border-theme cloning-station">
+                <div id="voiceCloningStation" class="bg-theme-secondary p-6 rounded-xl border-2 border-theme cloning-station">
                     <h2 class="text-xl font-bold mb-4">
                         <i class="fas fa-dna text-cyan-400 mr-2 animate-pulse"></i>
                         <span data-i18n="nar_voice_clone">Voice Cloning Station</span>
@@ -3401,7 +3401,7 @@
                 </div>
 
                 <!-- Dialogue-Specific Voice Assignment -->
-                <div class="bg-theme-secondary p-6 rounded-xl border-2 border-theme">
+                <div id="dialogueVoicePanel" class="bg-theme-secondary p-6 rounded-xl border-2 border-theme">
                     <h2 class="text-xl font-bold mb-4">
                         <i class="fas fa-users text-purple-400 mr-2"></i>
                         <span data-i18n="nar_dialogue_assign">Dialogue Voice Assignment</span>
@@ -25089,29 +25089,83 @@ function exportTTSManifest() {
             title: 'Audio Narration',
             text: 'Here you give your book a real voice. Select a narrator from 26+ professional voices, preview them, clone your own voice, and generate studio-quality narration for every chapter.'
         },
+        {
+            page: 'narration',
+            target: '#voiceCloningStation',
+            tag: 'Narration',
+            title: 'Voice Cloning Station',
+            text: 'Upload 60 seconds of any voice — yours or anyone\'s — and the AI clones it as a custom narrator. This also lets you add any accent automatically. Your cloned voices appear in the voice selector for all chapters.'
+        },
+        {
+            page: 'narration',
+            target: '#dialogueVoicePanel',
+            tag: 'Narration',
+            title: 'Dialogue Voice Assignment',
+            text: 'Scan your story and Authorr AI detects every character with spoken lines. Assign each one a unique voice — your narrator reads prose while each character speaks in their own distinct voice.'
+        },
+        {
+            page: 'narration',
+            target: '#generateNarrationBtn',
+            tag: 'Narration',
+            title: 'Generate Narration',
+            text: 'Once your voices are set, click Generate Narration. The AI reads every chapter in the assigned voices and produces studio-quality audio files ready for mixing and export.'
+        },
         // ── Studio ─────────────────────────────────────────────
         {
             page: 'narration',
             target: '#goToStudioBtn',
             tag: 'Studio',
-            title: 'Audio Mixing Studio',
+            title: 'Go to Studio',
             text: 'After generating narration, click "Go to Studio" to open the built-in professional audio mixer. Layer your narration with background music and sound effects for a cinematic audiobook experience.'
         },
         {
             page: 'narration',
             target: null,
             openStudio: true,
+            studioTarget: '#dawTransportBar',
             tag: 'Studio',
-            title: 'Channel Mixer',
-            text: 'Inside the Studio you get a 4-channel mixer: Narration, Music Track 1, Music Track 2, and Sound Effects. Each channel has its own volume fader so you can blend everything to exactly the right levels.'
+            title: 'Transport Controls',
+            text: 'The top bar has your transport controls — Play, Stop, Loop, and a BPM display. Use the EDIT/MIX/MIXEDIT view buttons to switch layouts, and Export or Send to Cover when your mix is ready.'
         },
         {
             page: 'narration',
-            target: null,
             openStudio: true,
+            studioTarget: '#jamendoSubbar',
+            tag: 'Studio',
+            title: 'Add Background Music',
+            text: 'Use the MUSIC bar to pick a genre — Cinematic, Ambient, Jazz, Orchestral, and more — then click "Find Music" to browse and add royalty-free background tracks directly to your timeline.'
+        },
+        {
+            page: 'narration',
+            openStudio: true,
+            studioTarget: '#findSfxBtn',
+            tag: 'Studio',
+            title: 'Add Sound Effects',
+            text: 'The SFX bar lets you pick a category — Rain, Forest, Horror, Sci-Fi, and more — then click "Find SFX" to browse sound effects and drop them anywhere on the timeline for atmosphere.'
+        },
+        {
+            page: 'narration',
+            openStudio: true,
+            studioTarget: '#timelineTracks',
             tag: 'Studio',
             title: 'Audio Timeline',
-            text: 'The visual timeline shows all your audio clips arranged in order. Use the Hand tool to drag clips, the Cut tool to split them, and trim handles to fine-tune every moment before you export.'
+            text: 'Every clip — narration, music, and sound effects — appears as a colored block in the timeline. Drag clips to reposition them, use the Cut tool to split, and trim handles to fine-tune each moment.'
+        },
+        {
+            page: 'narration',
+            openStudio: true,
+            studioTarget: '#mixerChannels',
+            tag: 'Studio',
+            title: 'Channel Faders',
+            text: 'The mixer at the bottom has a fader for every track. Drag a fader up or down to control the volume of that channel. Use the EQ knobs to shape the sound, and M/S buttons to Mute or Solo any track.'
+        },
+        {
+            page: 'narration',
+            openStudio: true,
+            studioTarget: '#sendToCoverBtn',
+            tag: 'Studio',
+            title: 'Send to Cover',
+            text: 'When your mix is perfect, click "Send to Cover" to pass the finished audio to the Cover Generator page, or click "Export" to download the final mixed audiobook file directly.'
         },
         // ── Covers ─────────────────────────────────────────────
         {
@@ -25258,9 +25312,15 @@ function exportTTSManifest() {
         prevBtn.style.display = idx === 0 ? 'none' : '';
         nextBtn.textContent = idx === TOUR_STEPS.length - 1 ? 'Finish Tour' : 'Next';
 
-        // Determine target element
-        const targetSel = step.highlightQuery || step.target;
-        const targetEl = targetSel ? document.querySelector(targetSel) : null;
+        // Determine target element — supports studioTarget for same-origin DAW iframe
+        let targetEl = null;
+        if (step.studioTarget) {
+            const iframeDoc = document.getElementById('dawIframe')?.contentDocument;
+            if (iframeDoc) targetEl = iframeDoc.querySelector(step.studioTarget);
+        } else {
+            const targetSel = step.highlightQuery || step.target;
+            if (targetSel) targetEl = document.querySelector(targetSel);
+        }
 
         const backdrop = document.getElementById('tourBackdrop');
 
