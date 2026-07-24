@@ -3669,7 +3669,7 @@
             </div>
 
             <!-- Platform Dimension Templates -->
-            <div class="mb-8 bg-theme-secondary p-6 rounded-xl border-2 border-theme">
+            <div id="coverPlatformTemplates" class="mb-8 bg-theme-secondary p-6 rounded-xl border-2 border-theme">
                 <h2 class="text-xl font-bold mb-4">
                     <i class="fas fa-ruler text-cyan-400 mr-2"></i>
                     <span data-i18n="cov_platform_templates">Platform Dimension Templates</span>
@@ -3719,7 +3719,7 @@
 
             <div class="grid lg:grid-cols-2 gap-8">
                 <!-- Cover Design Panel -->
-                <div class="bg-theme-secondary p-6 rounded-xl border-2 border-theme">
+                <div id="coverDesignPanel" class="bg-theme-secondary p-6 rounded-xl border-2 border-theme">
                     <h2 class="text-xl font-bold mb-4">
                         <i class="fas fa-palette text-cyan-400 mr-2"></i>
                         <span data-i18n="cov_design">Design Your Cover</span>
@@ -3789,7 +3789,7 @@
                                    class="w-full px-4 py-2 rounded-lg form-field bg-theme-primary text-theme-primary">
                         </div>
                         
-                        <div class="grid grid-cols-3 gap-4">
+                        <div id="coverColorPickers" class="grid grid-cols-3 gap-4">
                             <div>
                                 <label class="block text-sm font-semibold mb-2" data-i18n="cov_primary_color">Primary Color</label>
                                 <input type="color" id="primaryColor" value="#06b6d4" 
@@ -3828,7 +3828,7 @@
                             </div>
                         </div>
                         
-                        <button onclick="generateAICover()" class="btn-primary w-full py-3 rounded-lg font-semibold bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500">
+                        <button id="generateCoverBtn" onclick="generateAICover()" class="btn-primary w-full py-3 rounded-lg font-semibold bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500">
                             <i class="fas fa-magic mr-2"></i><span data-i18n="cov_generate">Generate Cover</span>
                         </button>
                     </div>
@@ -25095,15 +25095,64 @@ function exportTTSManifest() {
             target: '#goToStudioBtn',
             tag: 'Studio',
             title: 'Audio Mixing Studio',
-            text: 'After generating narration, open the Studio — a full built-in audio mixer where you can layer music tracks, sound effects, adjust volume fades, and fine-tune your audiobook before export.'
+            text: 'After generating narration, click "Go to Studio" to open the built-in professional audio mixer. Layer your narration with background music and sound effects for a cinematic audiobook experience.'
+        },
+        {
+            page: 'narration',
+            target: null,
+            tag: 'Studio',
+            title: 'Channel Mixer',
+            text: 'Inside the Studio you get a 4-channel mixer: Narration, Music Track 1, Music Track 2, and Sound Effects. Each channel has its own volume fader so you can blend everything to exactly the right levels.'
+        },
+        {
+            page: 'narration',
+            target: null,
+            tag: 'Studio',
+            title: 'Audio Timeline',
+            text: 'The visual timeline shows all your audio clips arranged in order. Use the Hand tool to drag clips, the Cut tool to split them, and trim handles to fine-tune every moment before you export.'
         },
         // ── Covers ─────────────────────────────────────────────
         {
             page: 'covers',
-            target: null,
+            target: '#coverPlatformTemplates',
             tag: 'Cover Generator',
-            title: 'Book Cover Generator',
-            text: 'Create a professional book cover with AI-generated artwork. Customize fonts, colors, text size, and overlay your title and author name. Download in full resolution — ready for any marketplace.'
+            title: 'Platform Templates',
+            text: 'Start by selecting your target platform — Audible, Spotify, Apple, Google Play, or OverDrive. Each template auto-sets the exact pixel dimensions required for submission on that marketplace.'
+        },
+        {
+            page: 'covers',
+            target: '#coverDesignPanel',
+            tag: 'Cover Generator',
+            title: 'Design Your Cover',
+            text: 'Enter your book title, author name, and subtitle. Then choose a Cover Style — Modern, Fantasy, Horror, Children\'s, and more — to set the overall visual direction for the AI to follow.'
+        },
+        {
+            page: 'covers',
+            target: '#coverDescription',
+            tag: 'Cover Generator',
+            title: 'Visual Description',
+            text: 'Describe exactly what you want on your cover — the scene, mood, lighting, and atmosphere. The more specific you are, the better the result. Hit "Enhance Description" to let AI improve your prompt.'
+        },
+        {
+            page: 'covers',
+            target: '#coverColorPickers',
+            tag: 'Cover Generator',
+            title: 'Color Palette',
+            text: 'Set the Primary, Accent, and Text colors to match your brand or genre. These colors influence the overall palette of the AI-generated artwork and any text overlay.'
+        },
+        {
+            page: 'covers',
+            target: '#generateCoverBtn',
+            tag: 'Cover Generator',
+            title: 'Generate Cover',
+            text: 'Click here to generate your AI cover. The image is created at full resolution and ready to download. You can also regenerate for variations, or upload your own artwork and add a text overlay.'
+        },
+        {
+            page: 'covers',
+            target: '#coverPreviewPanel',
+            tag: 'Cover Generator',
+            title: 'Cover Preview',
+            text: 'Your generated cover appears here. Toggle the text overlay on or off, drag and drop your own image as an alternative, and download the final cover once you\'re happy with it.'
         },
         // ── Export ─────────────────────────────────────────────
         {
