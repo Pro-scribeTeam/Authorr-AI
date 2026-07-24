@@ -1078,8 +1078,10 @@
 
         #tourHighlight {
             position: fixed; z-index: 99992;
-            box-shadow: 0 0 0 3px #22d3ee,
-                        0 0 22px 6px rgba(34,211,238,0.65);
+            /* large spread-shadow dims everything outside the ring; element inside stays bright */
+            box-shadow: 0 0 0 9999px rgba(0,0,0,0.6),
+                        0 0 0 3px #22d3ee,
+                        0 0 22px 6px rgba(34,211,238,0.7);
             border-radius: 10px;
             pointer-events: none;
             transition: top 0.35s ease, left 0.35s ease, width 0.35s ease, height 0.35s ease, opacity 0.3s;
@@ -25192,8 +25194,12 @@ function exportTTSManifest() {
         const targetSel = step.highlightQuery || step.target;
         const targetEl = targetSel ? document.querySelector(targetSel) : null;
 
+        const backdrop = document.getElementById('tourBackdrop');
+
         if (targetEl) {
-            // Scroll target into view
+            // Hide backdrop — the highlight's outward box-shadow dims everything outside it
+            // leaving the target element fully bright inside the ring
+            backdrop.style.opacity = '0';
             targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
             setTimeout(() => {
@@ -25204,39 +25210,21 @@ function exportTTSManifest() {
                 hl.style.width  = (rect.width  + pad*2) + 'px';
                 hl.style.height = (rect.height + pad*2) + 'px';
                 hl.style.opacity = '1';
-
-                // Cut a bright hole in the backdrop over the element
-                _tourCutout(rect, pad);
-
-                // Position card
                 _positionCard(card, rect);
             }, 250);
         } else {
-            // No target — center the card, full backdrop, hide highlight
+            // No target — use full backdrop, hide highlight ring
+            backdrop.style.opacity = '1';
             hl.style.opacity = '0';
             hl.style.width = '0px';
             hl.style.height = '0px';
-            document.getElementById('tourBackdrop').style.clipPath = 'none';
 
             const vw = window.innerWidth;
             const vh = window.innerHeight;
             card.style.left = Math.max(16, (vw - 340) / 2) + 'px';
             card.style.top  = Math.max(80, (vh - 260) / 2) + 'px';
-
-            // Scroll page to top for page-level steps
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
-    }
-
-    function _tourCutout(rect, pad) {
-        const p = pad || 8;
-        const l = Math.max(0, rect.left - p);
-        const t = Math.max(0, rect.top  - p);
-        const r = rect.right  + p;
-        const b = rect.bottom + p;
-        // Polygon with a rectangular hole: outer box → hole → back to outer
-        document.getElementById('tourBackdrop').style.clipPath =
-            `polygon(0% 0%, 0% 100%, ${l}px 100%, ${l}px ${t}px, ${r}px ${t}px, ${r}px ${b}px, ${l}px ${b}px, ${l}px 100%, 100% 100%, 100% 0%)`;
     }
 
     function _positionCard(card, targetRect) {
@@ -25301,7 +25289,6 @@ function exportTTSManifest() {
         hl.style.left   = (rect.left - pad) + 'px';
         hl.style.width  = (rect.width  + pad*2) + 'px';
         hl.style.height = (rect.height + pad*2) + 'px';
-        _tourCutout(rect, pad);
         _positionCard(card, rect);
     }
     window.addEventListener('scroll', _tourReposition, true);
