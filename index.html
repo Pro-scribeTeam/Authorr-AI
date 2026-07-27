@@ -20024,14 +20024,10 @@ Rules:
         }
 
         async function loadCreditStatus() {
-            const token = await getAuthToken();
-            if (!token) return;
+            if (!window.supabaseClient || !currentUser) return;
             try {
-                const resp = await fetch('/api/plans', {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                if (!resp.ok) return;
-                const data = await resp.json();
+                const { data, error } = await window.supabaseClient.rpc('get_credit_status', { user_id: currentUser.id });
+                if (error) { console.warn('Credit status fetch failed:', error.message); return; }
                 window._creditStatus = data;
                 updateCreditUI(data);
             } catch (e) {
