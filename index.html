@@ -9284,7 +9284,7 @@ JSON Structure:
                     </div>
                     <p class="text-sm text-theme-secondary mb-2 editable-summary" contenteditable="true" data-chapter="${chapter.number}">${chapter.summary}</p>
                     <div class="flex flex-wrap gap-1 mb-3">
-                        ${chapter.keyPoints.map(point => 
+                        ${(chapter.keyPoints || []).map(point =>
                             `<span class="text-xs bg-cyan-900 text-cyan-300 px-2 py-1 rounded">${point}</span>`
                         ).join('')}
                     </div>
@@ -9466,7 +9466,7 @@ JSON Structure:
 
 Chapter ${chapter.number}: ${chapter.title}
 Summary: ${chapter.summary}
-Key Points: ${chapter.keyPoints.join(', ')}
+Key Points: ${(chapter.keyPoints || []).join(', ')}
 Target Word Count: ${chapter.wordCount}
 Genre: ${document.getElementById('genre')?.value}
 Tone: ${document.getElementById('tone')?.value}${langInstruction}
@@ -25268,6 +25268,8 @@ function exportTTSManifest() {
         overlay.classList.remove('active');
         const hl = document.getElementById('tourHighlight');
         hl.style.opacity = '0';
+        const backdrop = document.getElementById('tourBackdrop');
+        backdrop.style.opacity = '0';
     }
 
     function _tourGoto(idx) {
