@@ -2107,7 +2107,7 @@
                     <div class="text-xs text-theme-secondary mb-6"><span data-i18n="dash_plan_credits_mo">credits / month</span><br><span class="text-gray-500">~5 chapter book</span></div>
                     <ul class="text-sm space-y-2 text-theme-secondary mb-6 flex-1">
                         <li><i class="fas fa-check text-cyan-400 mr-2"></i>Writing (5 chapters/mo)</li>
-                        <li><i class="fas fa-check text-cyan-400 mr-2"></i>1 voice</li>
+                        <li><i class="fas fa-check text-cyan-400 mr-2"></i>10 voices</li>
                         <li><i class="fas fa-check text-cyan-400 mr-2"></i>Basic export</li>
                         <li><i class="fas fa-times text-gray-600 mr-2"></i>Voice cloning</li>
                     </ul>
@@ -2126,6 +2126,7 @@
                         <li><i class="fas fa-check text-cyan-400 mr-2"></i><span data-i18n="dash_plan_f6">All voices</span></li>
                         <li><i class="fas fa-check text-cyan-400 mr-2"></i><span data-i18n="dash_plan_f4">Voice cloning</span></li>
                         <li><i class="fas fa-check text-cyan-400 mr-2"></i><span data-i18n="dash_plan_f7">All export formats</span></li>
+                        <li><i class="fas fa-check text-cyan-400 mr-2"></i><span data-i18n="dash_plan_f10">Cover image</span></li>
                     </ul>
                     <button onclick="showUpgradeModal('starter')" class="btn-secondary w-full py-2 rounded-lg text-sm font-semibold" data-i18n="dash_plan_upgrade">Upgrade</button>
                 </div>
@@ -2141,7 +2142,6 @@
                     <ul class="text-sm space-y-2 text-theme-secondary mb-6 flex-1">
                         <li><i class="fas fa-check text-cyan-400 mr-2"></i><span data-i18n="dash_plan_f8">Everything in Author</span></li>
                         <li><i class="fas fa-check text-cyan-400 mr-2"></i><span data-i18n="dash_plan_f9">Priority generation</span></li>
-                        <li><i class="fas fa-check text-cyan-400 mr-2"></i><span data-i18n="dash_plan_f10">Cover image</span></li>
                         <li><i class="fas fa-check text-cyan-400 mr-2"></i><span data-i18n="dash_plan_f11">SFX & music</span></li>
                         <li><i class="fas fa-check text-purple-400 mr-2"></i><span data-i18n="dash_plan_f11b">Multi-voice cast</span></li>
                     </ul>
@@ -19994,7 +19994,7 @@ Rules:
 
         const PLAN_CONFIG = {
             free:       { credits: 10000,    label: 'Free',        price: 0   },
-            essentials: { credits: 50000,    label: 'Essentials',  price: 9.99 },
+            essentials: { credits: 50000,    label: 'Essentials',  price: 9.99, voices: 10 },
             starter:    { credits: 150000,   label: 'Author',      price: 19  },
             author:     { credits: 450000,   label: 'Author Lite', price: 49  },
             publisher:  { credits: 1200000,  label: 'Publisher',   price: 99  },
