@@ -1,5 +1,11 @@
 const { requireAuth, sendError, applySecurityHeaders } = require('./_auth');
 const rateLimit = require('./_ratelimit');
+const { createClient } = require('@supabase/supabase-js');
+
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
+);
 
 // Non-Venice models first (Google/NVIDIA infra), then Venice as fallback.
 // Venice hosts Llama/Hermes/Qwen free models and rate-limits them all together.
@@ -24,7 +30,14 @@ module.exports = async function handler(req, res) {
   try { authData = await requireAuth(req); } catch (err) { return sendError(res, err); }
   if (!rateLimit.ai(req, res, authData.user.id)) return;
 
-  const { provider = 'openrouter', model, messages, temperature, max_tokens } = req.body;
+  const { provider = 'openrouter', model, messages, temperature, max_tokens, generation_type } = req.body;
+
+  // Trial chapter gate — admin role bypasses
+  if (authData.subscription.status === 'trial' && authData.subscription.role !== 'admin') {
+    if (generation_type === 'chapter' && authData.subscription.chapters_generated >= 3) {
+      return res.status(403).json({ error: 'Trial chapter limit reached. You have used all 3 trial chapters. Please upgrade to continue writing.' });
+    }
+  }
 
   // Input validation — prevent abuse
   if (!Array.isArray(messages) || messages.length === 0) return res.status(400).json({ error: 'messages required' });
@@ -43,7 +56,11 @@ module.exports = async function handler(req, res) {
         method: 'POST', headers,
         body: JSON.stringify({ model, messages, temperature, max_tokens })
       });
-      return res.status(response.status).json(await response.json());
+      const data = await response.json();
+      if (response.ok && generation_type === 'chapter' && authData.subscription.status === 'trial' && authData.subscription.role !== 'admin') {
+        await supabase.rpc('increment_chapters_generated', { user_id: authData.user.id }).catch(() => {});
+      }
+      return res.status(response.status).json(data);
     } catch (err) { return sendError(res, err); }
   }
 
@@ -81,6 +98,9 @@ module.exports = async function handler(req, res) {
       // Strip any leaked <think> reasoning blocks from the response content
       if (data?.choices?.[0]?.message?.content) {
         data.choices[0].message.content = stripThinking(data.choices[0].message.content);
+      }
+      if (generation_type === 'chapter' && authData.subscription.status === 'trial' && authData.subscription.role !== 'admin') {
+        await supabase.rpc('increment_chapters_generated', { user_id: authData.user.id }).catch(() => {});
       }
       return res.json(data);
     } catch (err) {

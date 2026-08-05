@@ -54,15 +54,21 @@ async function requireAuth(req, requiredRole = null) {
 
   const { data: subscription } = await supabase
     .from('subscriptions')
-    .select('plan, role, status, expires_at')
+    .select('plan, role, status, expires_at, trial_ends_at, chapters_generated')
     .eq('user_id', user.id)
     .single();
 
-  if (!subscription || subscription.status !== 'active') {
+  if (!subscription || !['active', 'trial'].includes(subscription.status)) {
     const e = new Error('No active subscription'); e.status = 403; throw e;
   }
   if (subscription.expires_at && new Date(subscription.expires_at) < new Date()) {
     const e = new Error('Subscription expired'); e.status = 403; throw e;
+  }
+  // Trial expiry gate — admin role bypasses so testing is never interrupted
+  if (subscription.status === 'trial' && subscription.role !== 'admin') {
+    if (subscription.trial_ends_at && new Date(subscription.trial_ends_at) < new Date()) {
+      const e = new Error('Your 7-day trial has ended. Please choose a plan to continue.'); e.status = 403; throw e;
+    }
   }
   if (requiredRole && subscription.role !== requiredRole) {
     const e = new Error('Insufficient permissions'); e.status = 403; throw e;

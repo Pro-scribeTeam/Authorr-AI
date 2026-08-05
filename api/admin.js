@@ -4,9 +4,9 @@ const rateLimit = require('./_ratelimit');
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
 
-const VALID_PLANS = ['free', 'starter', 'author', 'publisher', 'studio'];
+const VALID_PLANS = ['free', 'essentials', 'starter', 'author', 'publisher', 'studio'];
 const VALID_ROLES = ['user', 'admin'];
-const VALID_STATUSES = ['active', 'inactive', 'cancelled'];
+const VALID_STATUSES = ['active', 'trial', 'inactive', 'cancelled'];
 
 module.exports = async function handler(req, res) {
   if (!applySecurityHeaders(req, res)) return;

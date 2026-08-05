@@ -2082,32 +2082,31 @@
 
                         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4 max-w-7xl mx-auto">
 
-                <!-- Free -->
-                <div class="bg-theme-secondary rounded-2xl border-2 border-theme p-6 flex flex-col">
-                    <div class="text-sm font-bold text-gray-400 uppercase tracking-wide mb-2" data-i18n="dash_plan_free">Free</div>
+                <!-- 7-Day Trial (sole free entry point) -->
+                <div class="bg-theme-secondary rounded-2xl border-2 border-amber-500/60 p-6 flex flex-col">
+                    <div class="text-sm font-bold text-amber-400 uppercase tracking-wide mb-2">7-Day Trial</div>
                     <div class="text-4xl font-black mb-1">$0</div>
-                    <div class="text-xs text-theme-secondary mb-4" data-i18n="dash_plan_forever">forever</div>
-                    <div class="text-cyan-400 font-bold text-lg mb-1">10,000</div>
-                    <div class="text-xs text-theme-secondary mb-6"><span data-i18n="dash_plan_credits_mo">credits / month</span><br><span class="text-gray-500" data-i18n="dash_plan_story1">~1 short story</span></div>
+                    <div class="text-xs text-theme-secondary mb-4">for 7 days</div>
+                    <div class="text-amber-400 font-bold text-lg mb-1">3 chapters</div>
+                    <div class="text-xs text-theme-secondary mb-6">total during trial<br><span class="text-gray-500">then choose a plan</span></div>
                     <ul class="text-sm space-y-2 text-theme-secondary mb-6 flex-1">
-                        <li><i class="fas fa-check text-cyan-400 mr-2"></i><span data-i18n="dash_plan_f1">Writing</span></li>
-                        <li><i class="fas fa-check text-cyan-400 mr-2"></i><span data-i18n="dash_plan_f2">1 voice</span></li>
-                        <li><i class="fas fa-check text-cyan-400 mr-2"></i><span data-i18n="dash_plan_f3">Basic export</span></li>
-                        <li><i class="fas fa-times text-gray-600 mr-2"></i><span data-i18n="dash_plan_f4">Voice cloning</span></li>
+                        <li><i class="fas fa-check text-amber-400 mr-2"></i><span>Writing (3 chapters)</span></li>
+                        <li><i class="fas fa-check text-amber-400 mr-2"></i><span>1 voice</span></li>
+                        <li><i class="fas fa-check text-amber-400 mr-2"></i><span>Basic export</span></li>
+                        <li><i class="fas fa-times text-gray-600 mr-2"></i><span>Voice cloning</span></li>
                     </ul>
-                    <button onclick="showPage('workspace')" class="btn-secondary w-full py-2 rounded-lg text-sm font-semibold" data-i18n="dash_plan_get_started">Get Started</button>
+                    <button onclick="showPage('workspace')" class="w-full py-2 rounded-lg text-sm font-semibold bg-amber-500 text-black hover:bg-amber-400 transition-colors">Start Free Trial</button>
                 </div>
 
-                
                 <!-- Essentials -->
                 <div class="bg-theme-secondary rounded-2xl border-2 border-green-500/50 p-6 flex flex-col">
                     <div class="text-sm font-bold text-green-400 uppercase tracking-wide mb-2">Essentials</div>
                     <div class="text-4xl font-black mb-1">$9.99</div>
-                    <div class="text-xs text-theme-secondary mb-4">/ month</div>
+                    <div class="text-xs text-theme-secondary mb-4" data-i18n="dash_plan_per_mo">/ month</div>
                     <div class="text-cyan-400 font-bold text-lg mb-1">50,000</div>
-                    <div class="text-xs text-theme-secondary mb-6">credits / month<br><span class="text-gray-500">~5 chapter book</span></div>
+                    <div class="text-xs text-theme-secondary mb-6"><span data-i18n="dash_plan_credits_mo">credits / month</span><br><span class="text-gray-500">~5 chapter book</span></div>
                     <ul class="text-sm space-y-2 text-theme-secondary mb-6 flex-1">
-                        <li><i class="fas fa-check text-cyan-400 mr-2"></i>Writing (5 chapters)</li>
+                        <li><i class="fas fa-check text-cyan-400 mr-2"></i>Writing (5 chapters/mo)</li>
                         <li><i class="fas fa-check text-cyan-400 mr-2"></i>1 voice</li>
                         <li><i class="fas fa-check text-cyan-400 mr-2"></i>Basic export</li>
                         <li><i class="fas fa-times text-gray-600 mr-2"></i>Voice cloning</li>
@@ -2115,9 +2114,9 @@
                     <button onclick="showUpgradeModal('essentials')" class="btn-secondary w-full py-2 rounded-lg text-sm font-semibold">Upgrade</button>
                 </div>
 
-                <!-- Starter -->
+                <!-- Author (internal slug: starter) -->
                 <div class="bg-theme-secondary rounded-2xl border-2 border-theme p-6 flex flex-col">
-                    <div class="text-sm font-bold text-cyan-400 uppercase tracking-wide mb-2" data-i18n="dash_plan_starter">Starter</div>
+                    <div class="text-sm font-bold text-cyan-400 uppercase tracking-wide mb-2" data-i18n="dash_plan_starter">Author</div>
                     <div class="text-4xl font-black mb-1">$19</div>
                     <div class="text-xs text-theme-secondary mb-4" data-i18n="dash_plan_per_mo">/ month</div>
                     <div class="text-cyan-400 font-bold text-lg mb-1">150,000</div>
@@ -2131,16 +2130,16 @@
                     <button onclick="showUpgradeModal('starter')" class="btn-secondary w-full py-2 rounded-lg text-sm font-semibold" data-i18n="dash_plan_upgrade">Upgrade</button>
                 </div>
 
-                <!-- Author — POPULAR -->
+                <!-- Author Lite (internal slug: author) — POPULAR -->
                 <div class="bg-gradient-to-b from-cyan-900/60 to-theme-secondary rounded-2xl border-2 border-cyan-400 p-6 flex flex-col relative sm:col-span-2 md:col-span-1">
                     <div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-cyan-400 text-black text-xs font-black px-3 py-1 rounded-full" data-i18n="dash_plan_popular">MOST POPULAR</div>
-                    <div class="text-sm font-bold text-cyan-400 uppercase tracking-wide mb-2 mt-2" data-i18n="dash_plan_author">Author</div>
+                    <div class="text-sm font-bold text-cyan-400 uppercase tracking-wide mb-2 mt-2" data-i18n="dash_plan_author">Author Lite</div>
                     <div class="text-4xl font-black mb-1">$49</div>
                     <div class="text-xs text-theme-secondary mb-4" data-i18n="dash_plan_per_mo">/ month</div>
                     <div class="text-cyan-400 font-bold text-lg mb-1">450,000</div>
                     <div class="text-xs text-theme-secondary mb-6"><span data-i18n="dash_plan_credits_mo">credits / month</span><br><span class="text-gray-500" data-i18n="dash_plan_books9">~40–50 chapter audiobook</span></div>
                     <ul class="text-sm space-y-2 text-theme-secondary mb-6 flex-1">
-                        <li><i class="fas fa-check text-cyan-400 mr-2"></i><span data-i18n="dash_plan_f8">Everything in Starter</span></li>
+                        <li><i class="fas fa-check text-cyan-400 mr-2"></i><span data-i18n="dash_plan_f8">Everything in Author</span></li>
                         <li><i class="fas fa-check text-cyan-400 mr-2"></i><span data-i18n="dash_plan_f9">Priority generation</span></li>
                         <li><i class="fas fa-check text-cyan-400 mr-2"></i><span data-i18n="dash_plan_f10">Cover image</span></li>
                         <li><i class="fas fa-check text-cyan-400 mr-2"></i><span data-i18n="dash_plan_f11">SFX & music</span></li>
@@ -2227,7 +2226,7 @@
                 <p class="text-center text-xs text-gray-400 mt-3">Write · Cover · Narrate · Edit · Export — one subscription, one platform.</p>
             </div>
 
-                        <p class="text-center text-xs text-gray-500 mt-8" data-i18n="dash_plan_fine">All plans include a 7-day free trial. Credits reset monthly. 1 credit = 1 character of narration. A standard full-length audiobook (70,000–100,000 words) uses approximately 350,000–500,000 credits.</p>
+                        <p class="text-center text-xs text-gray-500 mt-8" data-i18n="dash_plan_fine">Start with a free 7-day trial — write up to 3 chapters, no credit card required. After your trial, choose a plan to continue. Paid plan credits reset monthly. 1 credit = 1 character of narration. A full-length audiobook (70,000–100,000 words) uses approximately 350,000–500,000 credits.</p>
         </section>
 
         <!-- ═══════════════════════════════════════════════
@@ -4322,11 +4321,11 @@
                             if (el) el.textContent = currentUser.email;
                         }
                         if (window._userSubscription) {
-                            const planName = window._userSubscription.plan || 'free';
+                            const planName = getPlanDisplayName(window._userSubscription.plan || 'free', window._userSubscription.status);
                             const plan = document.getElementById('cfgUserPlan');
                             const badge = document.getElementById('cfgPlanBadge');
                             const status = document.getElementById('cfgUserStatus');
-                            if (plan) plan.textContent = planName.charAt(0).toUpperCase() + planName.slice(1);
+                            if (plan) plan.textContent = planName;
                             if (badge) badge.textContent = planName;
                             if (status) status.textContent = window._userSubscription.status || 'Active';
                         }
@@ -19994,20 +19993,26 @@ Rules:
         }
 
         const PLAN_CONFIG = {
-            free:       { credits: 10000,    label: 'Free',       price: 0   },
-            essentials: { credits: 50000,   label: 'Essentials', price: 9.99 },
-            starter:    { credits: 150000,   label: 'Starter',    price: 19  },
-            author:     { credits: 450000,   label: 'Author',     price: 49  },
-            publisher:  { credits: 1200000,  label: 'Publisher',  price: 99  },
-            studio:     { credits: 3000000,  label: 'Studio',     price: 249 },
-            admin_test: { credits: 9999999,  label: 'Admin Test', price: 0   }  // admin-only, not public
+            free:       { credits: 10000,    label: 'Free',        price: 0   },
+            essentials: { credits: 50000,    label: 'Essentials',  price: 9.99 },
+            starter:    { credits: 150000,   label: 'Author',      price: 19  },
+            author:     { credits: 450000,   label: 'Author Lite', price: 49  },
+            publisher:  { credits: 1200000,  label: 'Publisher',   price: 99  },
+            studio:     { credits: 3000000,  label: 'Studio',      price: 249 },
+            admin_test: { credits: 9999999,  label: 'Admin Test',  price: 0   }  // admin-only, not public
         };
+
+        // Returns the display name for a plan, accounting for trial status
+        function getPlanDisplayName(plan, status) {
+            if (plan === 'free' && status === 'trial') return '7-Day Trial';
+            return PLAN_CONFIG[plan]?.label || plan;
+        }
 
         function getPlanTier() {
             const plan = window._userSubscription?.plan || 'free';
-            return { free: 0, starter: 1, author: 2, publisher: 3, studio: 4, admin_test: 5 }[plan] ?? 0;
+            return { free: 0, essentials: 1, starter: 2, author: 3, publisher: 4, studio: 5, admin_test: 6 }[plan] ?? 0;
         }
-        function hasMultiVoicePlan() { return getPlanTier() >= 2; } // Author+
+        function hasMultiVoicePlan() { return getPlanTier() >= 3; } // Author Lite+ (was Author+)
         function isAdminTestTier() { return (window._userSubscription?.plan) === 'admin_test'; }
         const ADMIN_TEST_CHAPTER_CAP = 2; // credit-saving limit for admin testing
 
@@ -20392,7 +20397,7 @@ Rules:
             <div id="upgradeTabPlanContent" class="space-y-3 mb-5">
                 <div class="border border-theme rounded-xl p-3 sm:p-4 flex items-center justify-between hover:border-cyan-400 cursor-pointer gap-2">
                     <div class="min-w-0">
-                        <div class="font-bold">Starter</div>
+                        <div class="font-bold">Author</div>
                         <div class="text-xs sm:text-sm text-gray-400 truncate">150K credits/mo (~3 books)</div>
                     </div>
                     <div class="text-right shrink-0">
@@ -20401,7 +20406,7 @@ Rules:
                 </div>
                 <div class="border-2 border-cyan-400 bg-cyan-900/20 rounded-xl p-3 sm:p-4 flex items-center justify-between cursor-pointer gap-2">
                     <div class="min-w-0">
-                        <div class="font-bold">Author <span class="text-xs bg-cyan-400 text-black px-2 py-0.5 rounded-full ml-1">POPULAR</span></div>
+                        <div class="font-bold">Author Lite <span class="text-xs bg-cyan-400 text-black px-2 py-0.5 rounded-full ml-1">POPULAR</span></div>
                         <div class="text-xs sm:text-sm text-gray-400 truncate">450K credits/mo (~9 books)</div>
                     </div>
                     <div class="text-right shrink-0">
@@ -20701,16 +20706,16 @@ const UI_TRANSLATIONS = {
     dash_price_label:'Simple Pricing', dash_price_h2:'Choose your plan',
     dash_price_sub:'Credits power every narration. 1 credit = 1 character of AI audio — no hidden fees, cancel anytime.',
     dash_stat_mkt1:'Market today', dash_stat_mkt2:'Annual growth', dash_stat_mkt3:'Projected by 2034', dash_stat_mkt4:'Revenue is digital',
-    dash_plan_free:'Free', dash_plan_starter:'Starter', dash_plan_author:'Author', dash_plan_publisher:'Publisher', dash_plan_studio:'Studio',
+    dash_plan_free:'Free', dash_plan_starter:'Author', dash_plan_author:'Author Lite', dash_plan_publisher:'Publisher', dash_plan_studio:'Studio',
     dash_plan_forever:'forever', dash_plan_per_mo:'/ month', dash_plan_credits_mo:'credits / month',
     dash_plan_story1:'~1 short story', dash_plan_story3:'~1 short audiobook', dash_plan_books9:'~40–50 chapter audiobook', dash_plan_books25:'~2–3 full audiobooks', dash_plan_books65:'~6 full audiobooks',
     dash_plan_f1:'Writing', dash_plan_f2:'1 voice', dash_plan_f3:'Basic export', dash_plan_f4:'Voice cloning',
     dash_plan_f5:'Everything in Essentials', dash_plan_f6:'All voices', dash_plan_f7:'All export formats',
-    dash_plan_f8:'Everything in Starter', dash_plan_f9:'Priority generation', dash_plan_f10:'Cover image', dash_plan_f11:'SFX & music', dash_plan_f11b:'Multi-voice cast',
+    dash_plan_f8:'Everything in Author', dash_plan_f9:'Priority generation', dash_plan_f10:'Cover image', dash_plan_f11:'SFX & music', dash_plan_f11b:'Multi-voice cast',
     dash_plan_f12:'Everything in Author', dash_plan_f13:'Team seats (3)', dash_plan_f14:'Bulk export', dash_plan_f15:'API access',
     dash_plan_f16:'Everything in Publisher', dash_plan_f17:'Unlimited team seats', dash_plan_f18:'White-label exports', dash_plan_f19:'Dedicated support',
     dash_plan_get_started:'Get Started', dash_plan_upgrade:'Upgrade', dash_plan_popular:'MOST POPULAR',
-    dash_plan_fine:'All plans include a 7-day free trial. Credits reset monthly. 1 credit = 1 character of narration. A standard full-length audiobook (70,000–100,000 words) uses approximately 350,000–500,000 credits.',
+    dash_plan_fine:'Start with a free 7-day trial — write up to 3 chapters, no credit card required. After your trial, choose a plan to continue. Paid plan credits reset monthly. 1 credit = 1 character of narration. A full-length audiobook (70,000–100,000 words) uses approximately 350,000–500,000 credits.',
     // Testimonials
     dash_test1_quote:'"I had my first audiobook on ACX within a day. The multi-voice narration makes my dialogue scenes come alive — it sounds like a full cast production."',
     dash_test2_quote:'"The cover generator actually gets my genre right. My romance novel cover looks like it was made by a professional designer. Readers keep commenting on it."',
@@ -20894,7 +20899,7 @@ const UI_TRANSLATIONS = {
     dash_price_label:'Precios Simples', dash_price_h2:'Elige tu plan',
     dash_price_sub:'Los créditos impulsan cada narración. 1 crédito = 1 carácter de audio IA — sin tarifas ocultas, cancela cuando quieras.',
     dash_stat_mkt1:'Mercado hoy', dash_stat_mkt2:'Crecimiento anual', dash_stat_mkt3:'Proyectado 2034', dash_stat_mkt4:'Ingresos digitales',
-    dash_plan_free:'Gratis', dash_plan_starter:'Inicial', dash_plan_author:'Autor', dash_plan_publisher:'Editor', dash_plan_studio:'Estudio',
+    dash_plan_free:'Gratis', dash_plan_starter:'Author', dash_plan_author:'Author Lite', dash_plan_publisher:'Editor', dash_plan_studio:'Estudio',
     dash_plan_forever:'siempre gratis', dash_plan_per_mo:'/ mes', dash_plan_credits_mo:'créditos / mes',
     dash_plan_story1:'~1 historia corta', dash_plan_story3:'~3 libros cortos', dash_plan_books9:'~9 libros completos', dash_plan_books25:'~25 libros completos', dash_plan_books65:'~65 libros completos',
     dash_plan_f1:'Escritura con IA', dash_plan_f2:'1 voz', dash_plan_f3:'Exportación básica', dash_plan_f4:'Clonación de voz',
@@ -21082,7 +21087,7 @@ const UI_TRANSLATIONS = {
     dash_price_label:'Tarification Simple', dash_price_h2:'Choisissez votre plan',
     dash_price_sub:'Les crédits alimentent chaque narration. 1 crédit = 1 caractère d\'audio IA — sans frais cachés, annulez à tout moment.',
     dash_stat_mkt1:'Marché aujourd\'hui', dash_stat_mkt2:'Croissance annuelle', dash_stat_mkt3:'Projeté en 2034', dash_stat_mkt4:'Revenus numériques',
-    dash_plan_free:'Gratuit', dash_plan_starter:'Débutant', dash_plan_author:'Auteur', dash_plan_publisher:'Éditeur', dash_plan_studio:'Studio',
+    dash_plan_free:'Gratuit', dash_plan_starter:'Author', dash_plan_author:'Author Lite', dash_plan_publisher:'Éditeur', dash_plan_studio:'Studio',
     dash_plan_forever:'pour toujours', dash_plan_per_mo:'/ mois', dash_plan_credits_mo:'crédits / mois',
     dash_plan_story1:'~1 nouvelle', dash_plan_story3:'~3 courts livres', dash_plan_books9:'~9 livres complets', dash_plan_books25:'~25 livres complets', dash_plan_books65:'~65 livres complets',
     dash_plan_f1:'Écriture IA', dash_plan_f2:'1 voix', dash_plan_f3:'Export basique', dash_plan_f4:'Clonage vocal',
@@ -21270,7 +21275,7 @@ const UI_TRANSLATIONS = {
     dash_price_label:'Einfache Preise', dash_price_h2:'Wähle deinen Plan',
     dash_price_sub:'Credits treiben jede Erzählung an. 1 Credit = 1 Zeichen KI-Audio — keine versteckten Gebühren, jederzeit kündigen.',
     dash_stat_mkt1:'Markt heute', dash_stat_mkt2:'Jährliches Wachstum', dash_stat_mkt3:'Prognose 2034', dash_stat_mkt4:'Digitale Einnahmen',
-    dash_plan_free:'Kostenlos', dash_plan_starter:'Einsteiger', dash_plan_author:'Autor', dash_plan_publisher:'Verlag', dash_plan_studio:'Studio',
+    dash_plan_free:'Kostenlos', dash_plan_starter:'Author', dash_plan_author:'Author Lite', dash_plan_publisher:'Verlag', dash_plan_studio:'Studio',
     dash_plan_forever:'für immer', dash_plan_per_mo:'/ Monat', dash_plan_credits_mo:'Credits / Monat',
     dash_plan_story1:'~1 Kurzgeschichte', dash_plan_story3:'~3 kurze Bücher', dash_plan_books9:'~9 vollständige Bücher', dash_plan_books25:'~25 vollständige Bücher', dash_plan_books65:'~65 vollständige Bücher',
     dash_plan_f1:'KI-Schreiben', dash_plan_f2:'1 Stimme', dash_plan_f3:'Basisexport', dash_plan_f4:'Stimmenklonen',
@@ -21458,7 +21463,7 @@ const UI_TRANSLATIONS = {
     dash_price_label:'Preços Simples', dash_price_h2:'Escolha seu plano',
     dash_price_sub:'Créditos alimentam cada narração. 1 crédito = 1 caractere de áudio IA — sem taxas ocultas, cancele quando quiser.',
     dash_stat_mkt1:'Mercado hoje', dash_stat_mkt2:'Crescimento anual', dash_stat_mkt3:'Projetado 2034', dash_stat_mkt4:'Receita digital',
-    dash_plan_free:'Grátis', dash_plan_starter:'Iniciante', dash_plan_author:'Autor', dash_plan_publisher:'Editora', dash_plan_studio:'Estúdio',
+    dash_plan_free:'Grátis', dash_plan_starter:'Author', dash_plan_author:'Author Lite', dash_plan_publisher:'Editora', dash_plan_studio:'Estúdio',
     dash_plan_forever:'para sempre', dash_plan_per_mo:'/ mês', dash_plan_credits_mo:'créditos / mês',
     dash_plan_story1:'~1 conto', dash_plan_story3:'~3 livros curtos', dash_plan_books9:'~9 livros completos', dash_plan_books25:'~25 livros completos', dash_plan_books65:'~65 livros completos',
     dash_plan_f1:'Escrita com IA', dash_plan_f2:'1 voz', dash_plan_f3:'Exportação básica', dash_plan_f4:'Clonagem de voz',
@@ -21646,7 +21651,7 @@ const UI_TRANSLATIONS = {
     dash_price_label:'Prezzi Semplici', dash_price_h2:'Scegli il tuo piano',
     dash_price_sub:'I crediti alimentano ogni narrazione. 1 credito = 1 carattere di audio AI — senza costi nascosti, annulla quando vuoi.',
     dash_stat_mkt1:'Mercato oggi', dash_stat_mkt2:'Crescita annua', dash_stat_mkt3:'Previsto 2034', dash_stat_mkt4:'Ricavi digitali',
-    dash_plan_free:'Gratuito', dash_plan_starter:'Base', dash_plan_author:'Autore', dash_plan_publisher:'Editore', dash_plan_studio:'Studio',
+    dash_plan_free:'Gratuito', dash_plan_starter:'Author', dash_plan_author:'Author Lite', dash_plan_publisher:'Editore', dash_plan_studio:'Studio',
     dash_plan_forever:'per sempre', dash_plan_per_mo:'/ mese', dash_plan_credits_mo:'crediti / mese',
     dash_plan_story1:'~1 racconto breve', dash_plan_story3:'~3 libri brevi', dash_plan_books9:'~9 libri completi', dash_plan_books25:'~25 libri completi', dash_plan_books65:'~65 libri completi',
     dash_plan_f1:'Scrittura', dash_plan_f2:'1 voce', dash_plan_f3:'Esportazione base', dash_plan_f4:'Clonazione vocale',
@@ -21834,7 +21839,7 @@ const UI_TRANSLATIONS = {
     dash_price_label:'सरल मूल्य निर्धारण', dash_price_h2:'अपना प्लान चुनें',
     dash_price_sub:'क्रेडिट हर नैरेशन को शक्ति देते हैं। 1 क्रेडिट = 1 AI ऑडियो कैरेक्टर — कोई छुपा शुल्क नहीं, कभी भी रद्द करें।',
     dash_stat_mkt1:'आज का बाज़ार', dash_stat_mkt2:'वार्षिक वृद्धि', dash_stat_mkt3:'2034 अनुमान', dash_stat_mkt4:'डिजिटल राजस्व',
-    dash_plan_free:'मुफ़्त', dash_plan_starter:'स्टार्टर', dash_plan_author:'लेखक', dash_plan_publisher:'प्रकाशक', dash_plan_studio:'स्टूडियो',
+    dash_plan_free:'मुफ़्त', dash_plan_starter:'Author', dash_plan_author:'Author Lite', dash_plan_publisher:'प्रकाशक', dash_plan_studio:'स्टूडियो',
     dash_plan_forever:'हमेशा के लिए', dash_plan_per_mo:'/ माह', dash_plan_credits_mo:'क्रेडिट / माह',
     dash_plan_story1:'~1 लघु कहानी', dash_plan_story3:'~3 छोटी पुस्तकें', dash_plan_books9:'~9 पूरी पुस्तकें', dash_plan_books25:'~25 पूरी पुस्तकें', dash_plan_books65:'~65 पूरी पुस्तकें',
     dash_plan_f1:'लेखन', dash_plan_f2:'1 आवाज़', dash_plan_f3:'बेसिक एक्सपोर्ट', dash_plan_f4:'वॉयस क्लोनिंग',
@@ -22022,7 +22027,7 @@ const UI_TRANSLATIONS = {
     dash_price_label:'تسعير بسيط', dash_price_h2:'اختر خطتك',
     dash_price_sub:'الرصيد يشغّل كل سرد. 1 رصيد = 1 حرف صوت ذكاء اصطناعي — لا رسوم خفية، إلغاء في أي وقت.',
     dash_stat_mkt1:'السوق اليوم', dash_stat_mkt2:'النمو السنوي', dash_stat_mkt3:'متوقع 2034', dash_stat_mkt4:'الإيرادات الرقمية',
-    dash_plan_free:'مجاني', dash_plan_starter:'مبتدئ', dash_plan_author:'مؤلف', dash_plan_publisher:'ناشر', dash_plan_studio:'استوديو',
+    dash_plan_free:'مجاني', dash_plan_starter:'Author', dash_plan_author:'Author Lite', dash_plan_publisher:'ناشر', dash_plan_studio:'استوديو',
     dash_plan_forever:'للأبد', dash_plan_per_mo:'/ شهر', dash_plan_credits_mo:'رصيد / شهر',
     dash_plan_story1:'~قصة قصيرة واحدة', dash_plan_story3:'~3 كتب قصيرة', dash_plan_books9:'~9 كتب كاملة', dash_plan_books25:'~25 كتاباً كاملاً', dash_plan_books65:'~65 كتاباً كاملاً',
     dash_plan_f1:'كتابة ذكاء اصطناعي', dash_plan_f2:'صوت واحد', dash_plan_f3:'تصدير أساسي', dash_plan_f4:'استنساخ الصوت',
@@ -22210,7 +22215,7 @@ const UI_TRANSLATIONS = {
     dash_price_label:'简单定价', dash_price_h2:'选择您的方案',
     dash_price_sub:'积分驱动每次旁白。1积分 = 1个AI音频字符——无隐藏费用，随时取消。',
     dash_stat_mkt1:'今日市场', dash_stat_mkt2:'年均增长', dash_stat_mkt3:'2034年预测', dash_stat_mkt4:'数字收入',
-    dash_plan_free:'免费', dash_plan_starter:'入门', dash_plan_author:'作者', dash_plan_publisher:'出版商', dash_plan_studio:'工作室',
+    dash_plan_free:'免费', dash_plan_starter:'Author', dash_plan_author:'Author Lite', dash_plan_publisher:'出版商', dash_plan_studio:'工作室',
     dash_plan_forever:'永久免费', dash_plan_per_mo:'/ 月', dash_plan_credits_mo:'积分 / 月',
     dash_plan_story1:'~1篇短故事', dash_plan_story3:'~3本短书', dash_plan_books9:'~9本完整书籍', dash_plan_books25:'~25本完整书籍', dash_plan_books65:'~65本完整书籍',
     dash_plan_f1:'AI写作', dash_plan_f2:'1个声音', dash_plan_f3:'基础导出', dash_plan_f4:'声音克隆',
@@ -22398,7 +22403,7 @@ const UI_TRANSLATIONS = {
     dash_price_label:'シンプルな料金', dash_price_h2:'プランを選択',
     dash_price_sub:'クレジットがすべてのナレーションを支えます。1クレジット = 1文字のAIオーディオ — 隠れた費用なし、いつでもキャンセル可能。',
     dash_stat_mkt1:'今日の市場', dash_stat_mkt2:'年間成長', dash_stat_mkt3:'2034年予測', dash_stat_mkt4:'デジタル収益',
-    dash_plan_free:'無料', dash_plan_starter:'スターター', dash_plan_author:'著者', dash_plan_publisher:'出版社', dash_plan_studio:'スタジオ',
+    dash_plan_free:'無料', dash_plan_starter:'Author', dash_plan_author:'Author Lite', dash_plan_publisher:'出版社', dash_plan_studio:'スタジオ',
     dash_plan_forever:'永久無料', dash_plan_per_mo:'/ 月', dash_plan_credits_mo:'クレジット / 月',
     dash_plan_story1:'~1短編', dash_plan_story3:'~3短編本', dash_plan_books9:'~9冊', dash_plan_books25:'~25冊', dash_plan_books65:'~65冊',
     dash_plan_f1:'AI執筆', dash_plan_f2:'ボイス1つ', dash_plan_f3:'基本エクスポート', dash_plan_f4:'ボイスクローン',
@@ -22586,7 +22591,7 @@ const UI_TRANSLATIONS = {
     dash_price_label:'간단한 요금제', dash_price_h2:'플랜을 선택하세요',
     dash_price_sub:'크레딧이 모든 나레이션을 구동합니다. 1크레딧 = 1자 AI 오디오 — 숨겨진 요금 없음, 언제든지 취소.',
     dash_stat_mkt1:'오늘의 시장', dash_stat_mkt2:'연간 성장', dash_stat_mkt3:'2034년 예상', dash_stat_mkt4:'디지털 매출',
-    dash_plan_free:'무료', dash_plan_starter:'스타터', dash_plan_author:'저자', dash_plan_publisher:'출판사', dash_plan_studio:'스튜디오',
+    dash_plan_free:'무료', dash_plan_starter:'Author', dash_plan_author:'Author Lite', dash_plan_publisher:'출판사', dash_plan_studio:'스튜디오',
     dash_plan_forever:'영구 무료', dash_plan_per_mo:'/ 월', dash_plan_credits_mo:'크레딧 / 월',
     dash_plan_story1:'~1편 단편', dash_plan_story3:'~3권 단행본', dash_plan_books9:'~9권 완성본', dash_plan_books25:'~25권 완성본', dash_plan_books65:'~65권 완성본',
     dash_plan_f1:'AI 글쓰기', dash_plan_f2:'음성 1개', dash_plan_f3:'기본 내보내기', dash_plan_f4:'음성 복제',
@@ -22774,7 +22779,7 @@ const UI_TRANSLATIONS = {
     dash_price_label:'Простое Ценообразование', dash_price_h2:'Выберите тариф',
     dash_price_sub:'Кредиты обеспечивают каждую начитку. 1 кредит = 1 символ ИИ-аудио — без скрытых платежей, отмена в любое время.',
     dash_stat_mkt1:'Рынок сегодня', dash_stat_mkt2:'Годовой рост', dash_stat_mkt3:'Прогноз 2034', dash_stat_mkt4:'Цифровая выручка',
-    dash_plan_free:'Бесплатно', dash_plan_starter:'Стартер', dash_plan_author:'Автор', dash_plan_publisher:'Издатель', dash_plan_studio:'Студия',
+    dash_plan_free:'Бесплатно', dash_plan_starter:'Author', dash_plan_author:'Author Lite', dash_plan_publisher:'Издатель', dash_plan_studio:'Студия',
     dash_plan_forever:'навсегда', dash_plan_per_mo:'/ месяц', dash_plan_credits_mo:'кредитов / месяц',
     dash_plan_story1:'~1 короткий рассказ', dash_plan_story3:'~3 короткие книги', dash_plan_books9:'~9 полных книг', dash_plan_books25:'~25 полных книг', dash_plan_books65:'~65 полных книг',
     dash_plan_f1:'ИИ-написание', dash_plan_f2:'1 голос', dash_plan_f3:'Базовый экспорт', dash_plan_f4:'Клонирование голоса',
@@ -22962,12 +22967,12 @@ const UI_TRANSLATIONS = {
     dash_price_label:'Eenvoudige Prijsstelling', dash_price_h2:'Kies jouw abonnement',
     dash_price_sub:'Credits sturen elke vertelling aan. 1 credit = 1 teken AI-audio — geen verborgen kosten, annuleer op elk moment.',
     dash_stat_mkt1:'Markt vandaag', dash_stat_mkt2:'Jaarlijkse groei', dash_stat_mkt3:'Geprojecteerd 2034', dash_stat_mkt4:'Digitale omzet',
-    dash_plan_free:'Gratis', dash_plan_starter:'Starter', dash_plan_author:'Auteur', dash_plan_publisher:'Uitgever', dash_plan_studio:'Studio',
+    dash_plan_free:'Gratis', dash_plan_starter:'Author', dash_plan_author:'Author Lite', dash_plan_publisher:'Uitgever', dash_plan_studio:'Studio',
     dash_plan_forever:'voor altijd', dash_plan_per_mo:'/ maand', dash_plan_credits_mo:'credits / maand',
     dash_plan_story1:'~1 kort verhaal', dash_plan_story3:'~3 korte boeken', dash_plan_books9:'~9 volledige boeken', dash_plan_books25:'~25 volledige boeken', dash_plan_books65:'~65 volledige boeken',
     dash_plan_f1:'AI-schrijven', dash_plan_f2:'1 stem', dash_plan_f3:'Basisexport', dash_plan_f4:'Stemklonen',
     dash_plan_f5:'Alles in Gratis', dash_plan_f6:'Alle stemmen', dash_plan_f7:'Alle exportformaten',
-    dash_plan_f8:'Alles in Starter', dash_plan_f9:'Prioriteitsgeneratie', dash_plan_f10:'AI omslagafbeelding', dash_plan_f11:'SFX en muziek AI', dash_plan_f11b:'Multi-stem karakterbezetting',
+    dash_plan_f8:'Alles in Author', dash_plan_f9:'Prioriteitsgeneratie', dash_plan_f10:'AI omslagafbeelding', dash_plan_f11:'SFX en muziek AI', dash_plan_f11b:'Multi-stem karakterbezetting',
     dash_plan_f12:'Alles in Auteur', dash_plan_f13:'Teamplaatsen (3)', dash_plan_f14:'Bulkexport', dash_plan_f15:'API-toegang',
     dash_plan_f16:'Alles in Uitgever', dash_plan_f17:'Onbeperkte teamplaatsen', dash_plan_f18:'White-label exports', dash_plan_f19:'Toegewijde ondersteuning',
     dash_plan_get_started:'Aan de slag', dash_plan_upgrade:'Upgraden', dash_plan_popular:'MEEST POPULAIR',
@@ -23150,7 +23155,7 @@ const UI_TRANSLATIONS = {
     dash_price_label:'Prosta Wycena', dash_price_h2:'Wybierz swój plan',
     dash_price_sub:'Kredyty napędzają każdą narrację. 1 kredyt = 1 znak audio AI — bez ukrytych opłat, anuluj kiedy chcesz.',
     dash_stat_mkt1:'Rynek dziś', dash_stat_mkt2:'Roczny wzrost', dash_stat_mkt3:'Prognoza 2034', dash_stat_mkt4:'Przychody cyfrowe',
-    dash_plan_free:'Bezpłatny', dash_plan_starter:'Startowy', dash_plan_author:'Autor', dash_plan_publisher:'Wydawca', dash_plan_studio:'Studio',
+    dash_plan_free:'Bezpłatny', dash_plan_starter:'Author', dash_plan_author:'Author Lite', dash_plan_publisher:'Wydawca', dash_plan_studio:'Studio',
     dash_plan_forever:'na zawsze', dash_plan_per_mo:'/ miesiąc', dash_plan_credits_mo:'kredytów / miesiąc',
     dash_plan_story1:'~1 opowiadanie', dash_plan_story3:'~3 krótkie książki', dash_plan_books9:'~9 pełnych książek', dash_plan_books25:'~25 pełnych książek', dash_plan_books65:'~65 pełnych książek',
     dash_plan_f1:'Pisanie AI', dash_plan_f2:'1 głos', dash_plan_f3:'Podstawowy eksport', dash_plan_f4:'Klonowanie głosu',
@@ -23338,7 +23343,7 @@ const UI_TRANSLATIONS = {
     dash_price_label:'Enkel Prissättning', dash_price_h2:'Välj ditt abonnemang',
     dash_price_sub:'Krediter driver varje berättelse. 1 kredit = 1 tecken AI-ljud — inga dolda avgifter, avbryt när som helst.',
     dash_stat_mkt1:'Marknaden idag', dash_stat_mkt2:'Årlig tillväxt', dash_stat_mkt3:'Projicerad 2034', dash_stat_mkt4:'Digitala intäkter',
-    dash_plan_free:'Gratis', dash_plan_starter:'Nybörjare', dash_plan_author:'Författare', dash_plan_publisher:'Förlag', dash_plan_studio:'Studio',
+    dash_plan_free:'Gratis', dash_plan_starter:'Author', dash_plan_author:'Author Lite', dash_plan_publisher:'Förlag', dash_plan_studio:'Studio',
     dash_plan_forever:'för alltid', dash_plan_per_mo:'/ månad', dash_plan_credits_mo:'krediter / månad',
     dash_plan_story1:'~1 korthistoria', dash_plan_story3:'~3 korta böcker', dash_plan_books9:'~9 hela böcker', dash_plan_books25:'~25 hela böcker', dash_plan_books65:'~65 hela böcker',
     dash_plan_f1:'AI-skrivning', dash_plan_f2:'1 röst', dash_plan_f3:'Grundexport', dash_plan_f4:'Röstkloning',
@@ -23527,7 +23532,7 @@ const UI_TRANSLATIONS = {
     dash_price_label:'Basit Fiyatlandırma', dash_price_h2:'Planınızı seçin',
     dash_price_sub:'Krediler her anlatımı güçlendirir. 1 kredi = 1 karakter AI sesi — gizli ücret yok, istediğiniz zaman iptal edin.',
     dash_stat_mkt1:'Bugünkü pazar', dash_stat_mkt2:'Yıllık büyüme', dash_stat_mkt3:'2034 tahmini', dash_stat_mkt4:'Dijital gelir',
-    dash_plan_free:'Ücretsiz', dash_plan_starter:'Başlangıç', dash_plan_author:'Yazar', dash_plan_publisher:'Yayıncı', dash_plan_studio:'Stüdyo',
+    dash_plan_free:'Ücretsiz', dash_plan_starter:'Author', dash_plan_author:'Author Lite', dash_plan_publisher:'Yayıncı', dash_plan_studio:'Stüdyo',
     dash_plan_forever:'sonsuza kadar', dash_plan_per_mo:'/ ay', dash_plan_credits_mo:'kredi / ay',
     dash_plan_story1:'~1 kısa hikaye', dash_plan_story3:'~3 kısa kitap', dash_plan_books9:'~9 tam kitap', dash_plan_books25:'~25 tam kitap', dash_plan_books65:'~65 tam kitap',
     dash_plan_f1:'AI yazma', dash_plan_f2:'1 ses', dash_plan_f3:'Temel dışa aktarma', dash_plan_f4:'Ses klonlama',
@@ -23762,7 +23767,7 @@ function setUILanguage(lang) {
         event.currentTarget.classList.add('ring-2', 'ring-offset-1', 'ring-offset-gray-900', 'ring-yellow-400');
 
         // Update status label
-        const labels = { free:'Free', starter:'Starter', author:'Author', publisher:'Publisher', studio:'Studio', admin_test:'Admin Test' };
+        const labels = { free:'Free', essentials:'Essentials', starter:'Author', author:'Author Lite', publisher:'Publisher', studio:'Studio', admin_test:'Admin Test' };
         const current = document.getElementById('tierPreviewCurrent');
         if (current) current.textContent = (labels[plan] || plan) + ' (preview)';
         const statusEl = document.getElementById('tierPreviewStatus');
@@ -23789,7 +23794,7 @@ function setUILanguage(lang) {
         });
 
         const plan = (window._userSubscription && window._userSubscription.plan) || 'studio';
-        const labels = { free:'Free', starter:'Starter', author:'Author', publisher:'Publisher', studio:'Studio', admin_test:'Admin Test' };
+        const labels = { free:'Free', essentials:'Essentials', starter:'Author', author:'Author Lite', publisher:'Publisher', studio:'Studio', admin_test:'Admin Test' };
         const current = document.getElementById('tierPreviewCurrent');
         if (current) current.textContent = (labels[plan] || plan) + ' (real)';
         const statusEl = document.getElementById('tierPreviewStatus');
@@ -23804,7 +23809,7 @@ function setUILanguage(lang) {
     // Keep tier preview label in sync when admin panel is opened
     function adminSyncTierLabel() {
         const plan = (window._userSubscription && window._userSubscription.plan) || 'studio';
-        const labels = { free:'Free', starter:'Starter', author:'Author', publisher:'Publisher', studio:'Studio', admin_test:'Admin Test' };
+        const labels = { free:'Free', essentials:'Essentials', starter:'Author', author:'Author Lite', publisher:'Publisher', studio:'Studio', admin_test:'Admin Test' };
         const current = document.getElementById('tierPreviewCurrent');
         const isPreview = !!_adminRealSubscription;
         if (current) current.textContent = (labels[plan] || plan) + (isPreview ? ' (preview)' : ' (real)');
@@ -23820,15 +23825,16 @@ function setUILanguage(lang) {
         const users = await res.json();
         const tbody = document.getElementById('adminUserTable');
         const active = users.filter(u => u.status === 'active').length;
-        const pro = users.filter(u => u.plan !== 'free').length;
+        const trial  = users.filter(u => u.status === 'trial').length;
+        const pro    = users.filter(u => u.plan !== 'free').length;
         document.getElementById('adminTotalUsers').textContent = users.length;
         document.getElementById('adminActiveUsers').textContent = active;
         document.getElementById('adminProUsers').textContent = pro;
-        document.getElementById('adminFreeUsers').textContent = users.filter(u => u.plan === 'free').length;
+        document.getElementById('adminFreeUsers').textContent = users.filter(u => u.plan === 'free' && u.status !== 'trial').length + ' free / ' + trial + ' trial';
         tbody.innerHTML = users.map(u => `
             <tr class="hover:bg-gray-800">
                 <td class="px-4 py-3 text-gray-400 font-mono text-xs">${u.user_id.slice(0,8)}…</td>
-                <td class="px-4 py-3"><span class="px-2 py-1 rounded text-xs font-semibold ${u.plan === 'free' ? 'bg-gray-700 text-gray-300' : 'bg-cyan-900 text-cyan-300'}">${u.plan}</span></td>
+                <td class="px-4 py-3"><span class="px-2 py-1 rounded text-xs font-semibold ${u.plan === 'free' ? (u.status === 'trial' ? 'bg-amber-900 text-amber-300' : 'bg-gray-700 text-gray-300') : 'bg-cyan-900 text-cyan-300'}">${u.status === 'trial' ? '7-Day Trial' : getPlanDisplayName(u.plan, u.status)}</span></td>
                 <td class="px-4 py-3"><span class="px-2 py-1 rounded text-xs font-semibold ${u.role === 'admin' ? 'bg-yellow-900 text-yellow-300' : 'bg-gray-700 text-gray-300'}">${u.role}</span></td>
                 <td class="px-4 py-3"><span class="text-${u.status === 'active' ? 'green' : 'red'}-400">${u.status}</span></td>
                 <td class="px-4 py-3 text-gray-400 text-xs">${new Date(u.created_at).toLocaleDateString()}</td>
@@ -24248,18 +24254,18 @@ function getStoryBibleContext() {
 // Plan tier helpers
 function isFreeTier() {
     var plan = (window._userSubscription && window._userSubscription.plan) || 'free';
-    return plan === 'free';
+    return plan === 'free'; // covers both trial (status='trial') and legacy free users
 }
 
 function updatePlanTierUI() {
-    var plan = (window._userSubscription && window._userSubscription.plan) || 'free';
+    var plan   = (window._userSubscription && window._userSubscription.plan)   || 'free';
+    var status = (window._userSubscription && window._userSubscription.status) || 'trial';
     var box = document.getElementById('planTierBox');
     var opt = document.getElementById('planTierOption');
     var freeRow = document.getElementById('freeTierLimitsRow');
     var paidRow = document.getElementById('paidTierLimitsRow');
     if (!box) return;
-    var labels = { free: 'Free', starter: 'Starter', author: 'Author', publisher: 'Publisher', studio: 'Studio', admin_test: 'Admin Test' };
-    if (opt) opt.textContent = labels[plan] || plan;
+    if (opt) opt.textContent = getPlanDisplayName(plan, status);
     if (plan === 'free') {
         box.style.borderColor = '#ca8a04';
         box.style.background = 'rgba(202,138,4,0.08)';
