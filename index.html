@@ -2082,20 +2082,21 @@
 
                         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4 max-w-7xl mx-auto">
 
-                <!-- 7-Day Trial (sole free entry point) -->
-                <div class="bg-theme-secondary rounded-2xl border-2 border-amber-500/60 p-6 flex flex-col">
-                    <div class="text-sm font-bold text-amber-400 uppercase tracking-wide mb-2">7-Day Trial</div>
+                <!-- 7-Day Trial -->
+                <div class="bg-theme-secondary rounded-2xl border-2 border-yellow-400/60 p-6 flex flex-col">
+                    <div class="text-sm font-bold text-yellow-400 uppercase tracking-wide mb-2">7-Day Trial</div>
                     <div class="text-4xl font-black mb-1">$0</div>
                     <div class="text-xs text-theme-secondary mb-4">for 7 days</div>
-                    <div class="text-amber-400 font-bold text-lg mb-1">3 chapters</div>
+                    <div class="text-yellow-400 font-bold text-lg mb-1">2 chapters</div>
                     <div class="text-xs text-theme-secondary mb-6">total during trial<br><span class="text-gray-500">then choose a plan</span></div>
                     <ul class="text-sm space-y-2 text-theme-secondary mb-6 flex-1">
-                        <li><i class="fas fa-check text-amber-400 mr-2"></i><span>Writing (3 chapters)</span></li>
-                        <li><i class="fas fa-check text-amber-400 mr-2"></i><span>1 voice</span></li>
-                        <li><i class="fas fa-check text-amber-400 mr-2"></i><span>Basic export</span></li>
-                        <li><i class="fas fa-times text-gray-600 mr-2"></i><span>Voice cloning</span></li>
+                        <li><i class="fas fa-check text-yellow-400 mr-2"></i>Writing (2 chapters)</li>
+                        <li><i class="fas fa-check text-yellow-400 mr-2"></i>Cover image</li>
+                        <li><i class="fas fa-check text-yellow-400 mr-2"></i>1 voice</li>
+                        <li><i class="fas fa-check text-yellow-400 mr-2"></i>Basic export</li>
+                        <li><i class="fas fa-times text-gray-600 mr-2"></i>Voice cloning</li>
                     </ul>
-                    <button onclick="showPage('workspace')" class="w-full py-2 rounded-lg text-sm font-semibold bg-amber-500 text-black hover:bg-amber-400 transition-colors">Start Free Trial</button>
+                    <button onclick="showPage('workspace')" class="bg-yellow-400 text-black w-full py-2 rounded-lg text-sm font-bold hover:bg-yellow-300 transition-colors">Start Free Trial</button>
                 </div>
 
                 <!-- Essentials -->
@@ -2230,7 +2231,7 @@
                 <p class="text-center text-xs text-gray-400 mt-3">Write · Cover · Narrate · Edit · Export — one subscription, one platform.</p>
             </div>
 
-                        <p class="text-center text-xs text-gray-500 mt-8" data-i18n="dash_plan_fine">Start with a free 7-day trial — write up to 3 chapters, no credit card required. After your trial, choose a plan to continue. Paid plan credits reset monthly. 1 credit = 1 character of narration. A full-length audiobook (70,000–100,000 words) uses approximately 350,000–500,000 credits.</p>
+                        <p class="text-center text-xs text-gray-500 mt-8" data-i18n="dash_plan_fine">7-day free trial includes 2 chapters + cover image. Credits reset monthly. 1 credit = 1 character of narration. A standard full-length audiobook (70,000–100,000 words) uses approximately 350,000–500,000 credits.</p>
         </section>
 
         <!-- ═══════════════════════════════════════════════
@@ -2779,7 +2780,7 @@
                                 </select>
                             </div>
                             <div id="freeTierLimitsRow" class="text-xs text-yellow-300 mt-1">
-                                All genres available &mdash; limited to <strong>3 chapters</strong> &amp; <strong>500 words/chapter</strong>.
+                                All genres available &mdash; limited to <strong>2 chapters</strong> &amp; <strong>500 words/chapter</strong>.
                                 <button onclick="showPage('config')" class="underline text-cyan-400 ml-1 hover:text-cyan-300">Upgrade</button>
                             </div>
                             <div id="paidTierLimitsRow" class="text-xs text-green-400 mt-1 hidden">
@@ -20770,7 +20771,7 @@ const UI_TRANSLATIONS = {
     dash_plan_f12:'Everything in Author', dash_plan_f13:'Team seats (3)', dash_plan_f14:'Bulk export', dash_plan_f15:'API access',
     dash_plan_f16:'Everything in Publisher', dash_plan_f17:'Unlimited team seats', dash_plan_f18:'White-label exports', dash_plan_f19:'Dedicated support',
     dash_plan_get_started:'Get Started', dash_plan_upgrade:'Upgrade', dash_plan_popular:'MOST POPULAR',
-    dash_plan_fine:'Start with a free 7-day trial — write up to 3 chapters, no credit card required. After your trial, choose a plan to continue. Paid plan credits reset monthly. 1 credit = 1 character of narration. A full-length audiobook (70,000–100,000 words) uses approximately 350,000–500,000 credits.',
+    dash_plan_fine:'7-day free trial includes 2 chapters + cover image. Credits reset monthly. 1 credit = 1 character of narration. A standard full-length audiobook (70,000–100,000 words) uses approximately 350,000–500,000 credits.',
     // Testimonials
     dash_test1_quote:'"I had my first audiobook on ACX within a day. The multi-voice narration makes my dialogue scenes come alive — it sounds like a full cast production."',
     dash_test2_quote:'"The cover generator actually gets my genre right. My romance novel cover looks like it was made by a professional designer. Readers keep commenting on it."',
@@ -24360,8 +24361,8 @@ async function generateOutline() {
 
     syncCompatFields(genre, tone);
 
-    var FREE_MAX_CHAPTERS = 3;  // suggested target
-    var FREE_HARD_CAP = 5;       // allow up to 5 to complete the story arc
+    var FREE_MAX_CHAPTERS = 2;  // trial target
+    var FREE_HARD_CAP = 2;       // strict cap — no overflow for trial
     var FREE_MAX_WORDS = 500;
     var freeTier = isFreeTier();
 
@@ -24376,12 +24377,12 @@ async function generateOutline() {
         chapterCount = 12;
     }
 
-    // Free-tier caps: all genres allowed, max 3 chapters, max 500 words/chapter
+    // Free-tier caps: all genres allowed, max 2 chapters, max 500 words/chapter
     if (freeTier) {
         chapterCount = Math.min(chapterCount, FREE_MAX_CHAPTERS);
         chapterWordTarget = Math.min(chapterWordTarget, FREE_MAX_WORDS);
         if (chapterCount < 12 || chapterWordTarget < Math.round(targetWords / 12)) {
-            showNotification('Free tier: ~' + FREE_MAX_CHAPTERS + ' chapters (up to ' + FREE_HARD_CAP + ' to complete the story) & ' + FREE_MAX_WORDS + ' words/chapter. Upgrade for full length.', 'warning');
+            showNotification('7-day trial: ' + FREE_MAX_CHAPTERS + ' chapters & ' + FREE_MAX_WORDS + ' words/chapter. Upgrade for full length.', 'warning');
         }
     }
 
@@ -25296,7 +25297,7 @@ function exportTTSManifest() {
             target: '#accountInfoPanel',
             tag: 'Account',
             title: 'Account & Settings',
-            text: 'Manage your subscription plan, track credits used this month, and upgrade your account here. Free users get 3 chapters — upgrade to Studio or Pro to unlock the full book length and all features.'
+            text: 'Manage your subscription plan, track credits used this month, and upgrade your account here. The 7-day trial includes 2 chapters + a cover — upgrade to unlock the full book length and all features.'
         },
         // ── Done ───────────────────────────────────────────────
         {
