@@ -7789,15 +7789,30 @@ Return the COMPLETE text, dramatically rewritten with visible personality and hu
         }
         
         function handleVoiceFiles(files) {
-            const validTypes = ['audio/mp3', 'audio/wav', 'audio/m4a'];
-            const validFiles = Array.from(files).filter(file => 
-                validTypes.includes(file.type) || 
-                validTypes.some(type => file.name.toLowerCase().endsWith(type.split('/')[1]))
+            const validTypes = ['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/x-wav', 'audio/m4a', 'audio/mp4'];
+            const validExts = ['.mp3', '.wav', '.m4a'];
+            const validFiles = Array.from(files).filter(file =>
+                validTypes.includes(file.type) ||
+                validExts.some(ext => file.name.toLowerCase().endsWith(ext))
             );
-            
+
             if (validFiles.length > 0) {
-                console.log('Voice files selected:', validFiles.map(f => f.name));
-                showNotification(`${validFiles.length} voice sample(s) selected for cloning`, 'success');
+                window._voiceDropFiles = validFiles;
+                // Update drop zone UI to show selected filename(s)
+                const zone = document.querySelector('[ondrop="handleVoiceDrop(event)"]');
+                if (zone) {
+                    const names = validFiles.map(f => f.name).join(', ');
+                    zone.innerHTML = `
+                        <i class="fas fa-check-circle text-cyan-400 text-2xl mb-2"></i>
+                        <p class="text-sm text-cyan-300 font-semibold">${names}</p>
+                        <p class="text-xs text-gray-400 mt-1">Click to change file</p>
+                        <input type="file" id="voiceUpload" accept=".mp3,.wav,.m4a" multiple class="hidden">`;
+                    // Re-attach change listener to the new input
+                    document.getElementById('voiceUpload').addEventListener('change', function() {
+                        handleVoiceFiles(this.files);
+                    });
+                }
+                showNotification(`${validFiles.length} voice sample(s) ready for cloning`, 'success');
             } else {
                 showNotification('Please select valid audio files (.mp3, .wav, .m4a)', 'error');
             }
@@ -7815,6 +7830,11 @@ Return the COMPLETE text, dramatically rewritten with visible personality and hu
 
             if (uploadInput && uploadInput.files.length > 0) {
                 const file = uploadInput.files[0];
+                audioBlob = file;
+                filename = file.name;
+                contentType = file.type || 'audio/wav';
+            } else if (window._voiceDropFiles && window._voiceDropFiles.length > 0) {
+                const file = window._voiceDropFiles[0];
                 audioBlob = file;
                 filename = file.name;
                 contentType = file.type || 'audio/wav';
