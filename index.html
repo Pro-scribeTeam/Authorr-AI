@@ -7913,30 +7913,30 @@ Return the COMPLETE text, dramatically rewritten with visible personality and hu
                 progressBar.style.width = '50%';
                 progressPercent.textContent = '50%';
 
-                // Clone voice via Grok
-                const token = await getAuthToken();
-                const resp = await fetch('/api/grok', {
+                // Upload voice sample to fal.ai storage to get a public URL for Chatterbox
+                const ext = contentType.includes('mp4') ? 'm4a' : contentType.includes('webm') ? 'webm' : 'mp3';
+                const uploadResp = await fetch('/api/fal', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                    body: JSON.stringify({ action: 'clone', audio_b64, name: cloneName, language: 'en', content_type: contentType })
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'upload_audio', audio_b64, filename: `${cloneName}.${ext}`, content_type: contentType })
                 });
 
                 progressBar.style.width = '80%';
                 progressPercent.textContent = '80%';
 
-                if (!resp.ok) {
-                    const err = await resp.json();
-                    throw new Error(err.error || `Cloning failed (${resp.status})`);
+                if (!uploadResp.ok) {
+                    const err = await uploadResp.json();
+                    throw new Error(err.error || `Upload failed (${uploadResp.status})`);
                 }
 
-                const { id: grokVoiceId } = await resp.json();
-                if (!grokVoiceId) throw new Error('No voice ID returned from Grok');
+                const { url: audioUrl } = await uploadResp.json();
+                if (!audioUrl) throw new Error('No audio URL returned from fal storage');
 
-                // Save to localStorage with Grok voice ID
+                // Save to localStorage with Chatterbox audio URL
                 const saved = JSON.parse(localStorage.getItem('clonedVoices') || '[]');
                 const idx = saved.findIndex(v => v.name === cloneName);
-                if (idx >= 0) saved[idx] = { name: cloneName, grokVoiceId };
-                else saved.push({ name: cloneName, grokVoiceId });
+                if (idx >= 0) saved[idx] = { name: cloneName, audioUrl, provider: 'chatterbox' };
+                else saved.push({ name: cloneName, audioUrl, provider: 'chatterbox' });
                 localStorage.setItem('clonedVoices', JSON.stringify(saved));
                 localStorage.setItem('clonedActiveVoice', cloneName);
 
@@ -9902,8 +9902,15 @@ Format as clean prose with tags woven in, ready for narration.`;
             showNotification(`Generating voice preview with "${cloneVoice.name}"...`, 'info');
 
             try {
-                if (!cloneVoice.grokVoiceId) throw new Error('Clone was created with old system — please delete it and re-initialize.');
-                const audioBlob = await generateGrokAudio(text, cloneVoice.grokVoiceId);
+                if (!cloneVoice.audioUrl && !cloneVoice.grokVoiceId) throw new Error('Clone was created with an old system — please delete it and re-initialize.');
+                let audioBlob;
+                if (cloneVoice.audioUrl) {
+                    // Chatterbox voice clone — pass reference audio URL directly
+                    audioBlob = await generateChatterboxAudio(text, null, cloneVoice.audioUrl);
+                } else {
+                    // Legacy Grok voice clone
+                    audioBlob = await generateGrokAudio(text, cloneVoice.grokVoiceId);
+                }
                 _clonePreviewUrl = URL.createObjectURL(audioBlob);
 
                 // Change button to "▶ Play Audio" — clicking it is a fresh user gesture Chrome allows
@@ -12966,14 +12973,15 @@ Rules:
         async function generateSegmentAudio(segment) {
             const voice = segment.voice || '';
 
-            // Cloned voices (Grok)
+            // Cloned voices
             if (voice.startsWith('clone_')) {
                 const name = voice.replace('clone_', '');
                 const saved = JSON.parse(localStorage.getItem('clonedVoices') || '[]');
                 const cv = saved.find(v => v.name === name);
                 if (!cv) throw new Error(`Cloned voice "${name}" not found. Re-initialize in Clone Station.`);
-                if (!cv.grokVoiceId) throw new Error(`Clone "${name}" was created with old system — please delete and re-initialize.`);
-                return await generateGrokAudio(segment.text, cv.grokVoiceId);
+                if (cv.audioUrl) return await generateChatterboxAudio(segment.text, null, cv.audioUrl);
+                if (cv.grokVoiceId) return await generateGrokAudio(segment.text, cv.grokVoiceId);
+                throw new Error(`Clone "${name}" has no audio source — please delete and re-initialize.`);
             }
 
             // Named Voices (cbturbo) go through fal Chatterbox — sending them to the
