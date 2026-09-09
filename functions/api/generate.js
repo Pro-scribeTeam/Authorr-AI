@@ -9,50 +9,7 @@
  *   SUPABASE_SERVICE_ROLE_KEY — service role key (server-side only)
  */
 
-const CORS_HEADERS = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization'
-};
-
-function json(data, status = 200) {
-    return new Response(JSON.stringify(data), {
-        status,
-        headers: { 'Content-Type': 'application/json', ...CORS_HEADERS }
-    });
-}
-
-async function getSubscription(supabaseUrl, serviceKey, userToken) {
-    // Resolve user id from JWT
-    const userRes = await fetch(`${supabaseUrl}/auth/v1/user`, {
-        headers: { 'Authorization': `Bearer ${userToken}`, 'apikey': serviceKey }
-    });
-    if (!userRes.ok) return { error: 'Invalid or expired token', status: 401 };
-    const user = await userRes.json().catch(() => null);
-    if (!user?.id) return { error: 'Invalid token', status: 401 };
-
-    // Fetch subscription row
-    const subRes = await fetch(
-        `${supabaseUrl}/rest/v1/subscriptions?user_id=eq.${user.id}&select=plan,role,status,expires_at,trial_ends_at,chapters_generated&limit=1`,
-        { headers: { 'Authorization': `Bearer ${serviceKey}`, 'apikey': serviceKey } }
-    );
-    const rows = await subRes.json().catch(() => []);
-    const sub = rows?.[0] || null;
-
-    if (!sub || !['active', 'trial'].includes(sub.status)) {
-        return { error: 'No active subscription', status: 403 };
-    }
-    if (sub.expires_at && new Date(sub.expires_at) < new Date()) {
-        return { error: 'Subscription expired', status: 403 };
-    }
-    // Trial expiry gate — admin bypasses
-    if (sub.status === 'trial' && sub.role !== 'admin') {
-        if (sub.trial_ends_at && new Date(sub.trial_ends_at) < new Date()) {
-            return { error: 'Your 7-day trial has ended. Please choose a plan to continue.', status: 403 };
-        }
-    }
-    return { user, sub };
-}
+import { requireAuth, json, CORS_HEADERS } from './_shared.js';
 
 async function incrementChapters(supabaseUrl, serviceKey, userId) {
     await fetch(`${supabaseUrl}/rest/v1/rpc/increment_chapters_generated`, {
@@ -74,15 +31,7 @@ export async function onRequest(context) {
     }
     if (request.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
 
-    const supabaseUrl = env.SUPABASE_URL;
-    const serviceKey = env.SUPABASE_SERVICE_ROLE_KEY;
-    if (!supabaseUrl || !serviceKey) return json({ error: 'Supabase env vars not configured' }, 500);
-
-    const authHeader = request.headers.get('Authorization') || '';
-    const userToken = authHeader.replace('Bearer ', '').trim();
-    if (!userToken) return json({ error: 'Missing authorization token' }, 401);
-
-    const authResult = await getSubscription(supabaseUrl, serviceKey, userToken);
+    const authResult = await requireAuth(request, env);
     if (authResult.error) return json({ error: authResult.error }, authResult.status);
     const { user, sub } = authResult;
 
@@ -93,8 +42,8 @@ export async function onRequest(context) {
 
     if (!messages || !Array.isArray(messages)) return json({ error: 'messages array required' }, 400);
 
-    // Trial chapter gate — admin bypasses
-    if (sub.status === 'trial' && sub.role !== 'admin') {
+    // Trial chapter gate — real admin (bypassGates) is never blocked; simulating admin respects the gate
+    if (sub.status === 'trial' && !sub.bypassGates) {
         if (generation_type === 'chapter' && sub.chapters_generated >= 3) {
             return json({ error: 'Trial chapter limit reached. You have used all 3 trial chapters. Please upgrade to continue writing.' }, 403);
         }
@@ -129,9 +78,9 @@ export async function onRequest(context) {
         const data = await upstreamRes.json();
         if (!upstreamRes.ok) return json({ error: data }, upstreamRes.status);
 
-        // Increment chapter counter atomically after successful chapter generation
-        if (upstreamRes.ok && generation_type === 'chapter' && sub.status === 'trial' && sub.role !== 'admin') {
-            await incrementChapters(supabaseUrl, serviceKey, user.id);
+        // Increment chapter counter after successful chapter generation (only for trial, not admin bypass)
+        if (generation_type === 'chapter' && sub.status === 'trial' && !sub.bypassGates) {
+            await incrementChapters(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, user.id);
         }
 
         return json(data);

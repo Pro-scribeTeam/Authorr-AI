@@ -32,8 +32,8 @@ module.exports = async function handler(req, res) {
 
   const { provider = 'openrouter', model, messages, temperature, max_tokens, generation_type } = req.body;
 
-  // Trial chapter gate — admin role bypasses
-  if (authData.subscription.status === 'trial' && authData.subscription.role !== 'admin') {
+  // Trial chapter gate — admin bypasses unless simulating a tier
+  if (authData.subscription.status === 'trial' && authData.subscription.bypassGates !== true) {
     if (generation_type === 'chapter' && authData.subscription.chapters_generated >= 3) {
       return res.status(403).json({ error: 'Trial chapter limit reached. You have used all 3 trial chapters. Please upgrade to continue writing.' });
     }
@@ -57,7 +57,7 @@ module.exports = async function handler(req, res) {
         body: JSON.stringify({ model, messages, temperature, max_tokens })
       });
       const data = await response.json();
-      if (response.ok && generation_type === 'chapter' && authData.subscription.status === 'trial' && authData.subscription.role !== 'admin') {
+      if (response.ok && generation_type === 'chapter' && authData.subscription.status === 'trial' && authData.subscription.bypassGates !== true) {
         await supabase.rpc('increment_chapters_generated', { user_id: authData.user.id }).catch(() => {});
       }
       return res.status(response.status).json(data);
@@ -99,7 +99,7 @@ module.exports = async function handler(req, res) {
       if (data?.choices?.[0]?.message?.content) {
         data.choices[0].message.content = stripThinking(data.choices[0].message.content);
       }
-      if (generation_type === 'chapter' && authData.subscription.status === 'trial' && authData.subscription.role !== 'admin') {
+      if (generation_type === 'chapter' && authData.subscription.status === 'trial' && authData.subscription.bypassGates !== true) {
         await supabase.rpc('increment_chapters_generated', { user_id: authData.user.id }).catch(() => {});
       }
       return res.json(data);

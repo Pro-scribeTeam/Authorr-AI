@@ -54,7 +54,7 @@ async function requireAuth(req, requiredRole = null) {
 
   const { data: subscription } = await supabase
     .from('subscriptions')
-    .select('plan, role, status, expires_at, trial_ends_at, chapters_generated')
+    .select('plan, role, status, expires_at, trial_ends_at, chapters_generated, credits_used, period_end, admin_test_as, admin_test_trial_ends_at')
     .eq('user_id', user.id)
     .single();
 
@@ -64,9 +64,21 @@ async function requireAuth(req, requiredRole = null) {
   if (subscription.expires_at && new Date(subscription.expires_at) < new Date()) {
     const e = new Error('Subscription expired'); e.status = 403; throw e;
   }
-  // Trial expiry gate — admin role bypasses so testing is never interrupted
-  if (subscription.status === 'trial' && subscription.role !== 'admin') {
-    if (subscription.trial_ends_at && new Date(subscription.trial_ends_at) < new Date()) {
+
+  // Admin simulation: override plan/status when admin_test_as is set
+  const simulating      = subscription.role === 'admin' && !!subscription.admin_test_as;
+  const bypassGates     = subscription.role === 'admin' && !simulating;
+  const effectivePlan   = simulating ? subscription.admin_test_as : subscription.plan;
+  const effectiveStatus = simulating
+    ? (subscription.admin_test_as === 'trial' ? 'trial' : 'active')
+    : subscription.status;
+  const effectiveTrialEnds = simulating
+    ? subscription.admin_test_trial_ends_at
+    : subscription.trial_ends_at;
+
+  // Trial expiry gate (real admin without simulation bypasses)
+  if (!bypassGates && effectiveStatus === 'trial') {
+    if (effectiveTrialEnds && new Date(effectiveTrialEnds) < new Date()) {
       const e = new Error('Your 7-day trial has ended. Please choose a plan to continue.'); e.status = 403; throw e;
     }
   }
@@ -74,11 +86,32 @@ async function requireAuth(req, requiredRole = null) {
     const e = new Error('Insufficient permissions'); e.status = 403; throw e;
   }
 
-  return { user, subscription };
+  return {
+    user,
+    subscription: {
+      ...subscription,
+      plan:          effectivePlan,
+      status:        effectiveStatus,
+      trial_ends_at: effectiveTrialEnds,
+      simulating,
+      bypassGates
+    }
+  };
 }
 
 function sendError(res, err) {
   res.status(err.status || 500).json({ error: err.message || 'Internal server error' });
 }
 
-module.exports = { requireAuth, sendError, applySecurityHeaders };
+/**
+ * Deduct credits via Supabase RPC.
+ * Returns true on success, false if credit limit exceeded.
+ * Admin without simulation active always returns true (DB handles bypass).
+ */
+async function deductCredits(userId, amount) {
+  const { data, error } = await supabase.rpc('deduct_credits', { user_id: userId, amount });
+  if (error) return false;
+  return data === true;
+}
+
+module.exports = { requireAuth, sendError, applySecurityHeaders, deductCredits };

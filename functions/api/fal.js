@@ -5,28 +5,23 @@
  * Actions (POST JSON body):
  *   { action: 'direct',  model, payload }                        — synchronous run
  *   { action: 'submit',  model, payload }                        — queue submit
- *   { action: 'status',  model, request_id, status_url }         — poll status
- *   { action: 'result',  model, request_id, response_url }       — get result
- *   { action: 'fetch_audio',  url }                              — proxy audio download
- *   { action: 'fetch_image_noauth', url }                        — proxy CDN image (no auth)
- *   { action: 'upload_audio', audio_b64, filename, content_type }— upload to Fal storage
+ *   { action: 'status',  model, request_id, status_url }         — poll status (no cost)
+ *   { action: 'result',  model, request_id, response_url }       — get result (no cost)
+ *   { action: 'fetch_audio',  url }                              — proxy audio download (no cost)
+ *   { action: 'fetch_image_noauth', url }                        — proxy CDN image (no cost)
+ *   { action: 'upload_audio', audio_b64, filename, content_type }— upload to Fal storage (no cost)
  *
- * Required env var (Cloudflare Pages → Settings → Environment Variables):
- *   FAL_API_KEY  — from https://fal.ai/dashboard
+ * Credit costs:
+ *   Chatterbox TTS  (model contains 'chatterbox') → 1 credit/character of input text
+ *   Flux Pro image  (model contains 'flux')        → 3,500 credits flat
+ *
+ * Required env vars (Cloudflare Pages → Settings → Environment Variables):
+ *   FAL_API_KEY               — from https://fal.ai/dashboard
+ *   SUPABASE_URL              — e.g. https://xxxx.supabase.co
+ *   SUPABASE_SERVICE_ROLE_KEY — service role key (server-side only)
  */
 
-const CORS_HEADERS = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization'
-};
-
-function json(data, status = 200) {
-    return new Response(JSON.stringify(data), {
-        status,
-        headers: { 'Content-Type': 'application/json', ...CORS_HEADERS }
-    });
-}
+import { requireAuth, deductCredits, json, CORS_HEADERS } from './_shared.js';
 
 export async function onRequest(context) {
     const { request, env } = context;
@@ -34,13 +29,15 @@ export async function onRequest(context) {
     if (request.method === 'OPTIONS') {
         return new Response(null, { status: 204, headers: CORS_HEADERS });
     }
-
-    if (request.method !== 'POST') {
-        return json({ error: 'Method not allowed' }, 405);
-    }
+    if (request.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
 
     const falKey = env.FAL_API_KEY;
     if (!falKey) return json({ error: 'FAL_API_KEY not configured in Cloudflare environment.' }, 500);
+
+    // All actions require authentication
+    const authResult = await requireAuth(request, env);
+    if (authResult.error) return json({ error: authResult.error }, authResult.status);
+    const { user, sub } = authResult;
 
     const falHeaders = { 'Authorization': `Key ${falKey}`, 'Content-Type': 'application/json' };
 
@@ -50,35 +47,62 @@ export async function onRequest(context) {
     const { action, model, request_id, payload } = body;
 
     try {
-        if (action === 'direct') {
-            const resp = await fetch(`https://fal.run/${model}`, {
+        // ── Actions that incur costs: direct + submit ─────────────────────────
+        if (action === 'direct' || action === 'submit') {
+            if (!model) return json({ error: 'model is required' }, 400);
+
+            // Determine credit cost by model type
+            let creditCost = 0;
+            if (model.toLowerCase().includes('chatterbox')) {
+                const text = payload?.text || payload?.input?.text || '';
+                creditCost = text.length; // 1 credit/char
+                if (!text) return json({ error: 'payload.text is required for Chatterbox TTS' }, 400);
+            } else if (model.toLowerCase().includes('flux')) {
+                creditCost = 3500; // flat rate for Flux Pro
+            }
+
+            if (creditCost > 0) {
+                const credited = await deductCredits(env, user.id, creditCost);
+                if (!credited) {
+                    const msg = sub.status === 'trial'
+                        ? 'Trial credit limit reached. Please upgrade to continue.'
+                        : 'Monthly credit limit reached. Credits reset at the start of your next billing period.';
+                    return json({ error: msg, code: 'CREDITS_EXHAUSTED' }, 402);
+                }
+            }
+
+            const endpoint = action === 'direct'
+                ? `https://fal.run/${model}`
+                : `https://queue.fal.run/${model}`;
+            const resp = await fetch(endpoint, {
                 method: 'POST', headers: falHeaders, body: JSON.stringify(payload)
             });
             const data = await resp.json();
-            return json(data, resp.status);
 
-        } else if (action === 'submit') {
-            const resp = await fetch(`https://queue.fal.run/${model}`, {
-                method: 'POST', headers: falHeaders, body: JSON.stringify(payload)
-            });
-            const data = await resp.json();
-            return json(data, resp.status);
+            // Refund on upstream failure
+            if (!resp.ok && creditCost > 0) {
+                await deductCredits(env, user.id, -creditCost).catch(() => {});
+            }
 
-        } else if (action === 'status') {
+            return json(data, resp.status);
+        }
+
+        // ── No-cost polling/fetch actions ─────────────────────────────────────
+        if (action === 'status') {
             const { status_url } = body;
             const url = status_url || `https://queue.fal.run/${model}/requests/${request_id}/status`;
             const resp = await fetch(url, { headers: falHeaders });
-            const data = await resp.json();
-            return json(data, resp.status);
+            return json(await resp.json(), resp.status);
+        }
 
-        } else if (action === 'result') {
+        if (action === 'result') {
             const { response_url } = body;
             const url = response_url || `https://queue.fal.run/${model}/requests/${request_id}`;
             const resp = await fetch(url, { headers: falHeaders });
-            const data = await resp.json();
-            return json(data, resp.status);
+            return json(await resp.json(), resp.status);
+        }
 
-        } else if (action === 'fetch_audio') {
+        if (action === 'fetch_audio') {
             const { url: audioUrl } = body;
             if (!audioUrl) return json({ error: 'Missing url' }, 400);
             const resp = await fetch(audioUrl, { headers: { 'Authorization': `Key ${falKey}` } });
@@ -90,8 +114,9 @@ export async function onRequest(context) {
                 binary += String.fromCharCode(...bytes.subarray(i, i + 8192));
             }
             return json({ audio: btoa(binary), contentType });
+        }
 
-        } else if (action === 'fetch_image_noauth') {
+        if (action === 'fetch_image_noauth') {
             const { url: imgUrl } = body;
             if (!imgUrl) return json({ error: 'Missing url' }, 400);
             const resp = await fetch(imgUrl);
@@ -104,8 +129,9 @@ export async function onRequest(context) {
                 binary += String.fromCharCode(...bytes.subarray(i, i + 8192));
             }
             return json({ image: btoa(binary), contentType });
+        }
 
-        } else if (action === 'upload_audio') {
+        if (action === 'upload_audio') {
             const { audio_b64, filename = 'voice.wav', content_type = 'audio/wav' } = body;
             if (!audio_b64) return json({ error: 'Missing audio_b64' }, 400);
 
@@ -113,7 +139,6 @@ export async function onRequest(context) {
             const bytes = new Uint8Array(binaryStr.length);
             for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i);
 
-            // Step 1: Get pre-signed upload URL
             const initiateResp = await fetch('https://rest.alpha.fal.ai/storage/upload/initiate', {
                 method: 'POST',
                 headers: { 'Authorization': `Key ${falKey}`, 'Content-Type': 'application/json' },
@@ -122,7 +147,6 @@ export async function onRequest(context) {
             const { file_url, upload_url } = await initiateResp.json();
             if (!initiateResp.ok || !upload_url) return json({ error: 'Failed to initiate upload' }, initiateResp.status);
 
-            // Step 2: PUT binary to pre-signed URL
             const putResp = await fetch(upload_url, {
                 method: 'PUT',
                 headers: { 'Content-Type': content_type },
@@ -131,10 +155,10 @@ export async function onRequest(context) {
             if (!putResp.ok) return json({ error: `Upload PUT failed: ${putResp.status}` }, putResp.status);
 
             return json({ url: file_url });
-
-        } else {
-            return json({ error: 'Invalid action' }, 400);
         }
+
+        return json({ error: 'Invalid action' }, 400);
+
     } catch (err) {
         return json({ error: err.message, step: 'fal_call', action }, 500);
     }

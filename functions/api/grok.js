@@ -4,27 +4,18 @@
  *
  * Actions (POST JSON body):
  *   { action: 'voices' }                          — list available voices
- *   { action: 'tts', text, voice_id }             — generate audio
+ *   { action: 'tts', text, voice_id }             — generate audio (1 credit/char)
  *   { action: 'clone', audio_b64, name, language, content_type } — clone voice
  *
- * Required env var (Cloudflare Pages → Settings → Environment Variables):
- *   XAI_API_KEY  — xAI API key from https://console.x.ai/
+ * Required env vars (Cloudflare Pages → Settings → Environment Variables):
+ *   XAI_API_KEY               — xAI API key from https://console.x.ai/
+ *   SUPABASE_URL              — e.g. https://xxxx.supabase.co
+ *   SUPABASE_SERVICE_ROLE_KEY — service role key (server-side only)
  */
 
+import { requireAuth, deductCredits, json, CORS_HEADERS } from './_shared.js';
+
 const XAI_BASE = 'https://api.x.ai/v1';
-
-const CORS_HEADERS = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization'
-};
-
-function json(data, status = 200) {
-    return new Response(JSON.stringify(data), {
-        status,
-        headers: { 'Content-Type': 'application/json', ...CORS_HEADERS }
-    });
-}
 
 function preprocessText(text) {
     return text
@@ -45,13 +36,15 @@ export async function onRequest(context) {
     if (request.method === 'OPTIONS') {
         return new Response(null, { status: 204, headers: CORS_HEADERS });
     }
-
-    if (request.method !== 'POST') {
-        return json({ error: 'Method not allowed' }, 405);
-    }
+    if (request.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
 
     const apiKey = env.XAI_API_KEY;
     if (!apiKey) return json({ error: 'XAI_API_KEY not configured in Cloudflare environment.' }, 500);
+
+    // All actions require authentication
+    const authResult = await requireAuth(request, env);
+    if (authResult.error) return json({ error: authResult.error }, authResult.status);
+    const { user, sub } = authResult;
 
     const authHeader = { 'Authorization': `Bearer ${apiKey}` };
 
@@ -84,6 +77,16 @@ export async function onRequest(context) {
         if (text.length > 100_000) return json({ error: 'Text too long (max 100,000 characters)' }, 400);
 
         const cleanedText = preprocessText(text);
+        const creditCost  = cleanedText.length; // 1 credit per character
+
+        // Deduct credits BEFORE calling xAI (admin bypass handled in DB)
+        const credited = await deductCredits(env, user.id, creditCost);
+        if (!credited) {
+            const msg = sub.status === 'trial'
+                ? 'Trial credit limit reached. Please upgrade to continue.'
+                : 'Monthly credit limit reached. Credits reset at the start of your next billing period.';
+            return json({ error: msg, code: 'CREDITS_EXHAUSTED' }, 402);
+        }
 
         const resp = await fetch(`${XAI_BASE}/tts`, {
             method: 'POST',
@@ -96,11 +99,14 @@ export async function onRequest(context) {
             })
         });
 
-        if (!resp.ok) return json({ error: await resp.text() }, resp.status);
+        if (!resp.ok) {
+            // Attempt to refund credits on upstream failure
+            await deductCredits(env, user.id, -creditCost).catch(() => {});
+            return json({ error: await resp.text() }, resp.status);
+        }
 
         const audioBuffer = await resp.arrayBuffer();
         const contentType = resp.headers.get('content-type') || 'audio/wav';
-        // Chunk the conversion to avoid stack overflow on large audio buffers
         const bytes = new Uint8Array(audioBuffer);
         let binary = '';
         for (let i = 0; i < bytes.length; i += 8192) {
