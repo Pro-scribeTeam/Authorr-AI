@@ -11880,6 +11880,13 @@ Rules:
                 } else if (provider === 'cbturbo') {
                     // Shared path — honors both the chosen named voice AND the language dropdown
                     return await generateCbTurboAudio(text, voice);
+                } else if (provider === 'clone') {
+                    const name = voice.replace('clone_', '');
+                    const saved = JSON.parse(localStorage.getItem('clonedVoices') || '[]');
+                    const cv = saved.find(v => v.name === name);
+                    if (!cv) throw new Error(`Cloned voice "${name}" not found. Re-initialize in Clone Station.`);
+                    if (!cv.audioUrl) throw new Error('This voice was created with an older system and is no longer supported — delete it and re-clone using Clone Station to continue.');
+                    return await generateChatterboxAudio(text, null, cv.audioUrl);
                 } else {
                     throw new Error(`Unknown voice provider: ${provider}`);
                 }
