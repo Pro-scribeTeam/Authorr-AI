@@ -9902,15 +9902,10 @@ Format as clean prose with tags woven in, ready for narration.`;
             showNotification(`Generating voice preview with "${cloneVoice.name}"...`, 'info');
 
             try {
-                if (!cloneVoice.audioUrl && !cloneVoice.grokVoiceId) throw new Error('Clone was created with an old system — please delete it and re-initialize.');
+                if (!cloneVoice.audioUrl) throw new Error('This voice was created with an older system and is no longer supported — delete it and re-clone using Clone Station to continue.');
                 let audioBlob;
-                if (cloneVoice.audioUrl) {
-                    // Chatterbox voice clone — pass reference audio URL directly
-                    audioBlob = await generateChatterboxAudio(text, null, cloneVoice.audioUrl);
-                } else {
-                    // Legacy Grok voice clone
-                    audioBlob = await generateGrokAudio(text, cloneVoice.grokVoiceId);
-                }
+                // Chatterbox voice clone — pass reference audio URL directly
+                audioBlob = await generateChatterboxAudio(text, null, cloneVoice.audioUrl);
                 _clonePreviewUrl = URL.createObjectURL(audioBlob);
 
                 // Change button to "▶ Play Audio" — clicking it is a fresh user gesture Chrome allows
@@ -11882,21 +11877,9 @@ Rules:
                     const apiKey = getElevenLabsApiKey();
                     if (!apiKey) throw new Error('ElevenLabs API key not configured');
                     return await generateElevenLabsAudio(text, voiceId, apiKey);
-                } else if (provider === 'chatterbox') {
-                    // Use direct (no-queue) endpoint for fast preview
-                    const ctrl = getChatterboxControlValues();
-                    return await falDirect('fal-ai/chatterbox/text-to-speech', {
-                        text, exaggeration: ctrl.exaggeration, cfg: ctrl.cfg_weight, temperature: ctrl.temperature
-                    }, 'Chatterbox Preview');
                 } else if (provider === 'cbturbo') {
                     // Shared path — honors both the chosen named voice AND the language dropdown
                     return await generateCbTurboAudio(text, voice);
-                } else if (provider === 'cbmulti') {
-                    const langCode = voice.replace('cbmulti_', '');
-                    const ctrl = getChatterboxControlValues();
-                    return await falDirect('fal-ai/chatterbox/text-to-speech/multilingual', {
-                        text, voice: langCode, exaggeration: ctrl.exaggeration, temperature: ctrl.temperature, cfg_scale: ctrl.cfg_weight
-                    }, 'Chatterbox Multilingual Preview');
                 } else {
                     throw new Error(`Unknown voice provider: ${provider}`);
                 }
@@ -12210,54 +12193,26 @@ Rules:
 
         // ── Chatterbox Voice Clone Helpers ──────────────────────────────
 
-        let chatterboxVoiceClipB64 = null; // base64 of the currently active voice sample
-
         function toggleChatterboxVoicePanel() {
             const sel = document.getElementById('voiceSelection');
             const panel = document.getElementById('chatterboxVoicePanel');
             const controlsPanel = document.getElementById('chatterboxControlsPanel');
-            const classicControls = document.getElementById('chatterboxClassicControls');
             if (!sel || !panel) return;
-            const isClassic = sel.value.startsWith('chatterbox_');
-            const isTurbo   = sel.value.startsWith('cbturbo_');
-            const isChatterbox = isClassic || isTurbo;
+            const isTurbo = sel.value.startsWith('cbturbo_');
 
-            // Show/hide clone panel
-            panel.classList.toggle('hidden', !isChatterbox);
-            // Show/hide controls panel
-            if (controlsPanel) controlsPanel.classList.toggle('hidden', !isChatterbox);
-            // Show/hide Classic-only sliders (exaggeration / cfg)
-            if (classicControls) classicControls.style.display = isClassic ? '' : 'none';
+            // Show/hide clone panel and controls panel
+            panel.classList.toggle('hidden', !isTurbo);
+            if (controlsPanel) controlsPanel.classList.toggle('hidden', !isTurbo);
 
-            if (isChatterbox) {
+            if (isTurbo) {
                 const heading = panel.querySelector('h4');
                 const desc    = panel.querySelector('p');
-                if (isTurbo) {
-                    if (heading) heading.innerHTML = '<i class="fas fa-bolt mr-1"></i> Chatterbox Turbo — Named Voices';
-                    if (desc)    desc.textContent  = 'Turbo uses built-in named voices (~4x faster). Voice cloning is not available in Turbo mode.';
-                    const uploadArea = panel.querySelector('.border-dashed');
-                    if (uploadArea) uploadArea.style.display = 'none';
-                    const savedList = document.getElementById('savedVoicesList');
-                    if (savedList) savedList.style.display = 'none';
-                } else {
-                    if (heading) heading.innerHTML = '<i class="fas fa-microphone-alt mr-1"></i> Chatterbox Voice Clone';
-                    if (desc)    desc.textContent  = 'Upload a 5–30 second WAV or MP3 clip of any speaker and Chatterbox will clone that voice. No clip = default AI voice.';
-                    const uploadArea = panel.querySelector('.border-dashed');
-                    if (uploadArea) uploadArea.style.display = '';
-                    const savedList = document.getElementById('savedVoicesList');
-                    if (savedList) savedList.style.display = '';
-                    renderSavedVoicesList();
-                }
-                // Sync exaggeration/cfg sliders with the selected preset values
-                if (isClassic) {
-                    const selectedOption = sel.options[sel.selectedIndex];
-                    const exag = parseFloat(selectedOption?.dataset?.exaggeration || 0.5);
-                    const cfg  = parseFloat(selectedOption?.dataset?.cfg || 0.5);
-                    const exagSlider = document.getElementById('cbExaggeration');
-                    const cfgSlider  = document.getElementById('cbCfgWeight');
-                    if (exagSlider) { exagSlider.value = exag; document.getElementById('exaggerationVal').textContent = exag.toFixed(2); }
-                    if (cfgSlider)  { cfgSlider.value  = cfg;  document.getElementById('cfgWeightVal').textContent  = cfg.toFixed(2); }
-                }
+                if (heading) heading.innerHTML = '<i class="fas fa-bolt mr-1"></i> Chatterbox Turbo — Named Voices';
+                if (desc)    desc.textContent  = 'Turbo uses built-in named voices (~4x faster). Voice cloning is not available in Turbo mode.';
+                const uploadArea = panel.querySelector('.border-dashed');
+                if (uploadArea) uploadArea.style.display = 'none';
+                const savedList = document.getElementById('savedVoicesList');
+                if (savedList) savedList.style.display = 'none';
             }
         }
 
@@ -12275,56 +12230,6 @@ Rules:
             const seed = document.getElementById('cbSeed');
             if (seed) seed.value = '';
             showNotification('Chatterbox controls reset to defaults', 'info');
-        }
-
-        function handleVoiceClipUpload(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            const nameEl = document.getElementById('voiceClipFileName');
-            const previewRow = document.getElementById('voiceClipPreviewRow');
-            const nameInput = document.getElementById('voiceClipName');
-            if (nameEl) nameEl.textContent = file.name;
-            // Read file as base64
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                // Store raw base64 (strip the data:...;base64, prefix)
-                chatterboxVoiceClipB64 = e.target.result.split(',')[1];
-                if (previewRow) previewRow.classList.remove('hidden');
-                // Pre-fill name from filename
-                if (nameInput && !nameInput.value) {
-                    nameInput.value = file.name.replace(/\.[^/.]+$/, '');
-                }
-            };
-            reader.readAsDataURL(file);
-        }
-
-        function saveVoiceClip() {
-            const name = document.getElementById('voiceClipName')?.value?.trim();
-            if (!name) { showNotification('Please enter a name for this voice', 'error'); return; }
-            if (!chatterboxVoiceClipB64) { showNotification('No audio clip loaded', 'error'); return; }
-            // Save to localStorage as JSON array
-            const saved = JSON.parse(localStorage.getItem('chatterboxVoices') || '[]');
-            // Replace if same name exists
-            const idx = saved.findIndex(v => v.name === name);
-            if (idx >= 0) saved[idx] = { name, b64: chatterboxVoiceClipB64 };
-            else saved.push({ name, b64: chatterboxVoiceClipB64 });
-            localStorage.setItem('chatterboxVoices', JSON.stringify(saved));
-            showNotification(`Voice "${name}" saved!`, 'success');
-            document.getElementById('voiceClipPreviewRow').classList.add('hidden');
-            document.getElementById('voiceClipFileName').textContent = 'WAV or MP3 · 5–30 seconds';
-            document.getElementById('voiceClipName').value = '';
-            document.getElementById('voiceClipUpload').value = '';
-            renderSavedVoicesList();
-            // Auto-select the saved voice
-            setActiveChatterboxVoice(name);
-        }
-
-        function clearVoiceClip() {
-            chatterboxVoiceClipB64 = null;
-            document.getElementById('voiceClipPreviewRow').classList.add('hidden');
-            document.getElementById('voiceClipFileName').textContent = 'WAV or MP3 · 5–30 seconds';
-            document.getElementById('voiceClipName').value = '';
-            document.getElementById('voiceClipUpload').value = '';
         }
 
         function renderClonedVoicesList() {
@@ -12372,61 +12277,6 @@ Rules:
             if (localStorage.getItem('clonedActiveVoice') === name) localStorage.removeItem('clonedActiveVoice');
             renderClonedVoicesList();
             populateVoiceOptions();
-        }
-
-        function renderSavedVoicesList() {
-            const container = document.getElementById('savedVoicesList');
-            if (!container) return;
-            const saved = JSON.parse(localStorage.getItem('chatterboxVoices') || '[]');
-            const active = localStorage.getItem('chatterboxActiveVoice') || '';
-            if (saved.length === 0) {
-                container.innerHTML = '<p class="text-xs text-theme-secondary italic">No saved voices yet — upload one below.</p>';
-                return;
-            }
-            container.innerHTML = saved.map(v => `
-                <div class="flex items-center gap-2 p-2 rounded-lg border ${active === v.name ? 'border-cyan-400 bg-cyan-400/10' : 'border-theme bg-theme-primary'}">
-                    <i class="fas fa-user-circle text-cyan-400"></i>
-                    <span class="flex-1 text-sm font-medium">${v.name}</span>
-                    ${active === v.name ? '<span class="text-xs text-cyan-400 font-bold">Active</span>' : ''}
-                    <button onclick="setActiveChatterboxVoice('${v.name}')" class="text-xs text-cyan-400 hover:underline px-2">Use</button>
-                    <button onclick="deleteChatterboxVoice('${v.name}')" class="text-xs text-red-400 hover:text-red-300 px-1"><i class="fas fa-trash"></i></button>
-                </div>
-            `).join('');
-        }
-
-        function setActiveChatterboxVoice(name) {
-            const saved = JSON.parse(localStorage.getItem('chatterboxVoices') || '[]');
-            const voice = saved.find(v => v.name === name);
-            if (voice) {
-                chatterboxVoiceClipB64 = voice.b64;
-                localStorage.setItem('chatterboxActiveVoice', name);
-                showNotification(`Voice set to "${name}"`, 'success');
-                renderSavedVoicesList();
-            }
-        }
-
-        function deleteChatterboxVoice(name) {
-            if (!confirm(`Delete voice "${name}"?`)) return;
-            let saved = JSON.parse(localStorage.getItem('chatterboxVoices') || '[]');
-            saved = saved.filter(v => v.name !== name);
-            localStorage.setItem('chatterboxVoices', JSON.stringify(saved));
-            if (localStorage.getItem('chatterboxActiveVoice') === name) {
-                localStorage.removeItem('chatterboxActiveVoice');
-                chatterboxVoiceClipB64 = null;
-            }
-            renderSavedVoicesList();
-        }
-
-        function getActiveChatterboxVoiceB64() {
-            // Returns base64 audio prompt if one is active, otherwise null
-            if (chatterboxVoiceClipB64) return chatterboxVoiceClipB64;
-            const active = localStorage.getItem('chatterboxActiveVoice');
-            if (active) {
-                const saved = JSON.parse(localStorage.getItem('chatterboxVoices') || '[]');
-                const voice = saved.find(v => v.name === active);
-                if (voice) return voice.b64;
-            }
-            return null;
         }
 
         // ────────────────────────────────────────────────────────────────
@@ -12980,8 +12830,7 @@ Rules:
                 const cv = saved.find(v => v.name === name);
                 if (!cv) throw new Error(`Cloned voice "${name}" not found. Re-initialize in Clone Station.`);
                 if (cv.audioUrl) return await generateChatterboxAudio(segment.text, null, cv.audioUrl);
-                if (cv.grokVoiceId) return await generateGrokAudio(segment.text, cv.grokVoiceId);
-                throw new Error(`Clone "${name}" has no audio source — please delete and re-initialize.`);
+                throw new Error('This voice was created with an older system and is no longer supported — delete it and re-clone using Clone Station to continue.');
             }
 
             // Named Voices (cbturbo) go through fal Chatterbox — sending them to the
@@ -12989,18 +12838,6 @@ Rules:
             if (voice.startsWith('cbturbo_')) {
                 return await generateCbTurboAudio(segment.text, voice);
             }
-            if (voice.startsWith('cbmulti_')) {
-                const langCode = voice.replace('cbmulti_', '');
-                const ctrl = getChatterboxControlValues();
-                return await falDirect('fal-ai/chatterbox/text-to-speech/multilingual', {
-                    text: segment.text, voice: langCode,
-                    exaggeration: ctrl.exaggeration, temperature: ctrl.temperature, cfg_scale: ctrl.cfg_weight
-                }, 'Chatterbox Multilingual');
-            }
-            if (voice.startsWith('chatterbox_')) {
-                return await generateChatterboxAudio(segment.text, voice.replace('chatterbox_', '') + '.mp3');
-            }
-
             // Grok voices — extract voiceId regardless of prefix format
             const voiceId = voice.replace('grok_', '');
             const blob = await generateGrokAudio(segment.text, voiceId);
@@ -13071,7 +12908,7 @@ Rules:
             `;
             
             Object.entries(assignments).forEach(([character, voice]) => {
-                const voiceDisplay = voice.replace('cbturbo_', '').replace('chatterbox_', 'Classic: ');
+                const voiceDisplay = voice.replace('cbturbo_', '');
                 resultsHTML += `<div>• <span class="text-cyan-300">${character}:</span> ${voiceDisplay}</div>`;
             });
             
@@ -13234,7 +13071,7 @@ Rules:
                     <div class="mb-4 p-3 bg-theme-primary rounded-lg border border-theme">
                         <h4 class="font-semibold mb-2 text-cyan-400">Content Statistics:</h4>
                         <div class="text-sm space-y-1">
-                            <div>• <span class="text-cyan-300">Voice:</span> ${voiceName.replace('cbturbo_', '').replace('chatterbox_', 'Classic: ')}</div>
+                            <div>• <span class="text-cyan-300">Voice:</span> ${voiceName.replace('cbturbo_', '')}</div>
                             <div>• <span class="text-cyan-300">Words:</span> ${totalWordCount.toLocaleString()}</div>
                             <div>• <span class="text-cyan-300">Characters:</span> ${totalCharCount.toLocaleString()}</div>
                             <div>• <span class="text-cyan-300">Estimated Duration:</span> ~${Math.floor(estimatedDuration / 60)}:${(estimatedDuration % 60).toString().padStart(2, '0')} minutes</div>
