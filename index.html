@@ -7932,12 +7932,8 @@ Return the COMPLETE text, dramatically rewritten with visible personality and hu
                 const { url: audioUrl } = await uploadResp.json();
                 if (!audioUrl) throw new Error('No audio URL returned from fal storage');
 
-                // Save to localStorage with Chatterbox audio URL
-                const saved = JSON.parse(localStorage.getItem('clonedVoices') || '[]');
-                const idx = saved.findIndex(v => v.name === cloneName);
-                if (idx >= 0) saved[idx] = { name: cloneName, audioUrl, provider: 'chatterbox' };
-                else saved.push({ name: cloneName, audioUrl, provider: 'chatterbox' });
-                localStorage.setItem('clonedVoices', JSON.stringify(saved));
+                // Save to Supabase (with localStorage cache backup)
+                await saveClonedVoiceToDB(cloneName, audioUrl, 'chatterbox');
                 localStorage.setItem('clonedActiveVoice', cloneName);
 
                 progressBar.style.width = '100%';
@@ -9882,9 +9878,9 @@ Format as clean prose with tags woven in, ready for narration.`;
                 return;
             }
 
-            // Use active cloned voice from localStorage
+            // Use active cloned voice from cache
             const activeName = localStorage.getItem('clonedActiveVoice');
-            const saved = JSON.parse(localStorage.getItem('clonedVoices') || '[]');
+            const saved = window._clonedVoicesCache || [];
             const cloneVoice = activeName ? saved.find(v => v.name === activeName) : saved[0];
 
             if (!cloneVoice) {
@@ -10555,8 +10551,8 @@ Format as clean prose with tags woven in, ready for narration.`;
                 grokFallbackVoices.forEach(v => addGrokFallback(grokOptgroup, v));
             }
 
-            // ── My Cloned Voices (Grok) — inserted at top ──
-            const clonedVoices = JSON.parse(localStorage.getItem('clonedVoices') || '[]');
+            // ── My Cloned Voices — inserted at top ──
+            const clonedVoices = window._clonedVoicesCache || [];
             if (clonedVoices.length > 0) {
                 const cloneGrp = document.createElement('optgroup');
                 cloneGrp.label = '🎙️ My Cloned Voices';
@@ -11882,8 +11878,7 @@ Rules:
                     return await generateCbTurboAudio(text, voice);
                 } else if (provider === 'clone') {
                     const name = voice.replace('clone_', '');
-                    const saved = JSON.parse(localStorage.getItem('clonedVoices') || '[]');
-                    const cv = saved.find(v => v.name === name);
+                    const cv = (window._clonedVoicesCache || []).find(v => v.name === name);
                     if (!cv) throw new Error(`Cloned voice "${name}" not found. Re-initialize in Clone Station.`);
                     if (!cv.audioUrl) throw new Error('This voice was created with an older system and is no longer supported — delete it and re-clone using Clone Station to continue.');
                     return await generateChatterboxAudio(text, null, cv.audioUrl);
@@ -12239,11 +12234,91 @@ Rules:
             showNotification('Chatterbox controls reset to defaults', 'info');
         }
 
+        // ── Cloned Voice DB helpers ──────────────────────────────────────
+        // Cache is the single source of truth for all synchronous reads.
+        // loadClonedVoices() is the only function that touches Supabase.
+
+        async function loadClonedVoices() {
+            const client = window.supabaseClient;
+            if (!client || !currentUser) {
+                window._clonedVoicesCache = JSON.parse(localStorage.getItem('clonedVoices') || '[]');
+                return window._clonedVoicesCache;
+            }
+            try {
+                const { data, error } = await client
+                    .from('user_cloned_voices')
+                    .select('name, audio_url, provider')
+                    .eq('user_id', currentUser.id)
+                    .order('created_at', { ascending: true });
+                if (error) throw error;
+                window._clonedVoicesCache = (data || []).map(r => ({
+                    name: r.name,
+                    audioUrl: r.audio_url || undefined,
+                    provider: r.provider
+                }));
+                localStorage.setItem('clonedVoices', JSON.stringify(window._clonedVoicesCache));
+            } catch (e) {
+                console.warn('loadClonedVoices: DB unavailable, falling back to localStorage:', e.message);
+                window._clonedVoicesCache = JSON.parse(localStorage.getItem('clonedVoices') || '[]');
+            }
+            return window._clonedVoicesCache;
+        }
+
+        async function saveClonedVoiceToDB(name, audioUrl, provider = 'chatterbox') {
+            const client = window.supabaseClient;
+            if (client && currentUser) {
+                const { error } = await client
+                    .from('user_cloned_voices')
+                    .upsert({ user_id: currentUser.id, name, audio_url: audioUrl || null, provider },
+                             { onConflict: 'user_id,name' });
+                if (error) console.warn('saveClonedVoiceToDB failed:', error.message);
+            }
+            const entry = { name, audioUrl: audioUrl || undefined, provider };
+            const idx = window._clonedVoicesCache.findIndex(v => v.name === name);
+            if (idx >= 0) window._clonedVoicesCache[idx] = entry;
+            else window._clonedVoicesCache.push(entry);
+            localStorage.setItem('clonedVoices', JSON.stringify(window._clonedVoicesCache));
+        }
+
+        async function deleteClonedVoiceFromDB(name) {
+            const client = window.supabaseClient;
+            if (client && currentUser) {
+                const { error } = await client
+                    .from('user_cloned_voices')
+                    .delete()
+                    .eq('user_id', currentUser.id)
+                    .eq('name', name);
+                if (error) console.warn('deleteClonedVoiceFromDB failed:', error.message);
+            }
+            window._clonedVoicesCache = window._clonedVoicesCache.filter(v => v.name !== name);
+            localStorage.setItem('clonedVoices', JSON.stringify(window._clonedVoicesCache));
+        }
+
+        async function migrateLocalClonesToDB() {
+            const client = window.supabaseClient;
+            if (!client || !currentUser) return;
+            const local = JSON.parse(localStorage.getItem('clonedVoices') || '[]');
+            if (local.length === 0) return;
+            const { data: existing } = await client
+                .from('user_cloned_voices')
+                .select('name')
+                .eq('user_id', currentUser.id);
+            const existingNames = new Set((existing || []).map(r => r.name));
+            const toInsert = local
+                .filter(v => !existingNames.has(v.name))
+                .map(v => ({ user_id: currentUser.id, name: v.name, audio_url: v.audioUrl || null, provider: v.provider || 'chatterbox' }));
+            if (toInsert.length > 0) {
+                const { error } = await client.from('user_cloned_voices').insert(toInsert);
+                if (error) console.warn('migrateLocalClonesToDB failed:', error.message);
+                else console.log(`Migrated ${toInsert.length} local cloned voice(s) to Supabase`);
+            }
+        }
+
         function renderClonedVoicesList() {
             const container = document.getElementById('clonedVoicesList');
             const panel = document.getElementById('savedClonedVoices');
             if (!container) return;
-            const saved = JSON.parse(localStorage.getItem('clonedVoices') || '[]');
+            const saved = window._clonedVoicesCache || [];
             if (saved.length === 0) {
                 if (panel) panel.classList.add('hidden');
                 return;
@@ -12276,11 +12351,9 @@ Rules:
             renderClonedVoicesList();
         }
 
-        function deleteClonedVoice(name) {
+        async function deleteClonedVoice(name) {
             if (!confirm(`Delete cloned voice "${name}"?`)) return;
-            let saved = JSON.parse(localStorage.getItem('clonedVoices') || '[]');
-            saved = saved.filter(v => v.name !== name);
-            localStorage.setItem('clonedVoices', JSON.stringify(saved));
+            await deleteClonedVoiceFromDB(name);
             if (localStorage.getItem('clonedActiveVoice') === name) localStorage.removeItem('clonedActiveVoice');
             renderClonedVoicesList();
             populateVoiceOptions();
@@ -12833,8 +12906,7 @@ Rules:
             // Cloned voices
             if (voice.startsWith('clone_')) {
                 const name = voice.replace('clone_', '');
-                const saved = JSON.parse(localStorage.getItem('clonedVoices') || '[]');
-                const cv = saved.find(v => v.name === name);
+                const cv = (window._clonedVoicesCache || []).find(v => v.name === name);
                 if (!cv) throw new Error(`Cloned voice "${name}" not found. Re-initialize in Clone Station.`);
                 if (cv.audioUrl) return await generateChatterboxAudio(segment.text, null, cv.audioUrl);
                 throw new Error('This voice was created with an older system and is no longer supported — delete it and re-clone using Clone Station to continue.');
@@ -19716,6 +19788,7 @@ Rules:
         // ============================================================
 
         let currentUser = null;
+        window._clonedVoicesCache = [];
 
         // Initialize Supabase if not already done (fallback for CDN load timing)
         function ensureSupabase() {
@@ -19738,6 +19811,10 @@ Rules:
                 if (currentUser) {
                     loadUserProjects();
                     loadUserSubscription(currentUser.id);
+                    migrateLocalClonesToDB().then(() => loadClonedVoices()).then(() => {
+                        renderClonedVoicesList();
+                        populateVoiceOptions();
+                    });
                     // tour auto-launch removed
                 }
             });
@@ -19748,6 +19825,10 @@ Rules:
                 if (currentUser) {
                     loadUserProjects();
                     loadUserSubscription(currentUser.id);
+                    migrateLocalClonesToDB().then(() => loadClonedVoices()).then(() => {
+                        renderClonedVoicesList();
+                        populateVoiceOptions();
+                    });
                     showPage('workspace');
                     /* tour auto-launch removed */
                 }
