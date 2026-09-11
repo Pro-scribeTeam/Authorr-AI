@@ -12,7 +12,8 @@
     "Drama": "Let silence speak. Sometimes what's not said is the most powerful.",
     "Comedy": "Punchlines work best after setup. Let the reader lean in… then surprise them.",
     "Horror": "Fear lives in the unknown. Describe less — imply more.",
-    "YoungAdult": "Voice matters most. Let your character sound like they're talking to a friend."
+    "YoungAdult": "Voice matters most. Let your character sound like they're talking to a friend.",
+    "War": "Honor and horror on the same page. One death that matters. Never rush the silence after."
   },
   "genres": {
     "Memoir": {
@@ -242,6 +243,65 @@
         "voice_tone": "Low, urgent, controlled intensity",
         "pauses": "Insert pause markers after cliffhangers",
         "effects": "Add whisper cues for secrets or hidden lines"
+      }
+    },
+    "War": {
+      "outline_rules": {
+        "structure": ["The World Before", "The Call or Conscription", "Arrival and Disorientation", "First Combat or Atrocity", "Brotherhood Forged", "Moral Compromise", "Devastating Loss", "Pyrrhic Victory or Ambiguous Survival", "Haunted Aftermath"],
+        "required_elements": [
+          "One death that genuinely matters (never off-screen)",
+          "Moral compromise — protagonist crosses a line they cannot uncross",
+          "Band-of-brothers/sisters unit dynamic with distinct voices",
+          "Home front or civilian perspective (at least one chapter)",
+          "The gap between what war promised and what it delivered",
+          "Physical and psychological cost rendered without sentimentality",
+          "An enemy humanized at least once"
+        ],
+        "characters": [
+          "Protagonist (ordinary person, not a born warrior)",
+          "The Brother/Sister-in-Arms (closest bond, often the one who dies)",
+          "The Cynic (has seen this before, survivalist, morally corroded)",
+          "The Idealist (believes in the cause, arc tests that belief)",
+          "The Enemy (human, not cartoon — glimpsed with empathy)",
+          "The Home Front Voice (letter writer, waiting civilian, or returning stranger)"
+        ]
+      },
+      "chapter_writing_rules": {
+        "point_of_view": "First Person or Close Third Limited",
+        "focus": [
+          "Visceral sensory detail — sound, smell, cold, mud, blood, silence",
+          "Short staccato sentences in combat; long reflective prose in aftermath",
+          "Internal monologue during dread and waiting",
+          "Soldier slang and unit culture authentic to era and theater",
+          "Contrast: beauty of landscape vs. brutality of what happens within it",
+          "Silence after violence — let scenes breathe before moving on",
+          "Letters, radio, or memory as connective tissue between front and home"
+        ],
+        "avoid": [
+          "Glorifying violence or reducing combat to spectacle",
+          "Clean moral victories — war is ambiguous by definition",
+          "Villain-coded enemies without a single humanizing moment",
+          "Rushing death scenes — every casualty deserves weight",
+          "Anachronistic language, equipment, or attitudes",
+          "Info-dumping historical context — weave it through action and dialogue",
+          "Redemptive arcs that feel too neat given what was lost"
+        ]
+      },
+      "tool_customizations": {
+        "EmotionalResonance": { "flag_if_missing": ["Dread", "Grief", "Brotherhood", "Moral weight", "Survivor's guilt"] },
+        "SubtextBuilder": { "prompt": "Soldiers rarely say what they feel directly — rewrite confessions as action, dark humor, or silence. 'I'm scared' becomes 'He cleaned his rifle a third time.'" },
+        "ToneShifter": { "default_tone": "Visceral, Haunted, Earned — honor and horror on the same page" },
+        "PacingBalancer": { "pace": "Slow burn before contact; staccato during combat; long exhale in aftermath. Never rush a death." },
+        "DialogueEnhancer": { "goal": "Terse under fire, dark humor in camp, raw in quiet moments. Unit nicknames and period slang essential." },
+        "ThemeTracker": { "themes": ["Brotherhood vs. Institution", "Survival vs. Honor", "The Home You Can't Return To", "What We Do in the Dark", "Moral Injury"] },
+        "ConflictIntensifier": { "prompt": "Escalate through friendly-fire ambiguity, orders that violate conscience, the moment a soldier stops believing in the cause" },
+        "SymbolismSuggester": { "prompt": "Recurring war symbols: the letter never sent, the photograph worn to nothing, the landscape that looked like home, the enemy's face" }
+      },
+      "narration_prep": {
+        "voice_tone": "Measured, low, bearing weight — like a veteran speaking carefully to avoid breaking",
+        "pauses": "Long silence after deaths and moral-compromise moments. Combat narration can accelerate to breathless then cut to silence.",
+        "tip": "Avoid over-dramatizing — the understatement is where the power lives. Let the listener fill the silence with their own dread.",
+        "effects": "Optional: distant artillery, rain on canvas, static radio crackle as atmospheric underlay"
       }
     }
   }

@@ -2669,6 +2669,7 @@
                                 <option value="fantasy">Fantasy</option>
                                 <option value="scifi">Science Fiction</option>
                                 <option value="historical">Historical Fiction</option>
+                                <option value="war">War Stories</option>
                                 <option value="literary" selected>Literary / Drama</option>
                                 <option value="memoir">Memoir</option>
                                 <option value="selfhelp">Self-Help / Business</option>
@@ -24418,6 +24419,14 @@ var GENRE_PACKS = {
         prose: 'Third person narrative nonfiction. Journalistic precision. Clear sourcing language.',
         pacing: 'Chapters 3,000–5,000. Evidence and timeline chapters alternate with character-focused chapters.',
         wordCounts: { novella: 70000, standard: 80000, epic: 90000 }
+    },
+    war: {
+        label: 'War Stories',
+        beats: 'Ordinary life shattered by the call to conflict → arrival and disorientation → first combat or atrocity → moral compromise under extreme pressure → band-of-brothers/sisters bond forged in shared suffering → devastating loss (the death that changes everything) → pyrrhic victory, ambiguous survival, or homecoming that doesn\'t fit → haunted aftermath and the long cost of war.',
+        promises: 'Authentic portrayal of combat and its psychological toll — honor and horror coexist on the same page. No glorification; valor earns its place through sacrifice, not spectacle. Brotherhood/sisterhood is the emotional core. At least one death that genuinely matters. Moral ambiguity throughout — no clean heroes, no cartoon villains. The home front or civilian perspective included. War\'s effect on landscape, language, and body rendered in full sensory detail.',
+        prose: 'Visceral, grounded, sensory-specific. Short punchy sentences in combat sequences; longer, reflective prose in quiet moments and aftermath. Soldier slang, military voice, and unit culture authentic to the era and theater. Internal monologue heavy during trauma and waiting. Contrast the beauty of landscape with the brutality of what happens in it. Sounds, smells, and physical sensation drive immersion. Dialogue terse under fire; expansive around the campfire.',
+        pacing: 'Three-phase rhythm: slow immersive opening in the world-before-war; explosive, relentless middle during active conflict; haunted, unresolved closing in the aftermath. Combat scenes: staccato rhythm, present-tense urgency. Waiting and dread: slow burn with mounting tension. Never rush a death scene — let it land fully. Chapters 3,000–4,500 words; battle sequences may compress to 2,000.',
+        wordCounts: { novella: 55000, standard: 85000, epic: 120000 }
     }
 };
 
@@ -24669,8 +24678,8 @@ async function generateOutline() {
 }
 
 function syncCompatFields(genre, tone) {
-    var genreMap = { children:'children-adventure', middlegrade:'children-adventure', youngadult:'YoungAdult', romance:'fiction-romance', mystery:'fiction-mystery', thriller:'fiction-mystery', horror:'fiction-horror', fantasy:'fiction-fantasy', scifi:'fiction-scifi', historical:'fiction-historical', literary:'fiction-literary', memoir:'nonfiction-biography', selfhelp:'nonfiction-selfhelp', truecrime:'nonfiction-biography' };
-    var storyGenreMap = { children:'Children', middlegrade:'Children', youngadult:'YoungAdult', romance:'Romance', mystery:'Thriller', thriller:'Thriller', horror:'Horror', fantasy:'Fantasy', scifi:'General', historical:'Drama', literary:'Drama', memoir:'Memoir', selfhelp:'Memoir', truecrime:'Memoir' };
+    var genreMap = { children:'children-adventure', middlegrade:'children-adventure', youngadult:'YoungAdult', romance:'fiction-romance', mystery:'fiction-mystery', thriller:'fiction-mystery', horror:'fiction-horror', fantasy:'fiction-fantasy', scifi:'fiction-scifi', historical:'fiction-historical', war:'fiction-historical', literary:'fiction-literary', memoir:'nonfiction-biography', selfhelp:'nonfiction-selfhelp', truecrime:'nonfiction-biography' };
+    var storyGenreMap = { children:'Children', middlegrade:'Children', youngadult:'YoungAdult', romance:'Romance', mystery:'Thriller', thriller:'Thriller', horror:'Horror', fantasy:'Fantasy', scifi:'General', historical:'Drama', war:'Drama', literary:'Drama', memoir:'Memoir', selfhelp:'Memoir', truecrime:'Memoir' };
     var toneMap = { dramatic:'dramatic', comedic:'humorous', dark:'mysterious', cozy:'casual', steamy:'romantic', clean:'inspiring' };
     var genreEl = document.getElementById('genre');
     var sgEl = document.getElementById('storyGenre');
