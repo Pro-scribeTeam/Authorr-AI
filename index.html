@@ -1243,6 +1243,9 @@
             <button data-page="config" onclick="showPage('config')" class="nav-item px-4 py-3 rounded-lg font-semibold text-left">
                 <i class="fas fa-user-circle mr-2"></i><span data-i18n="nav_config">Account</span>
             </button>
+            <a id="mobileAdminNavLink" onclick="toggleMobileNav(); showPage('admin');" class="hidden nav-item px-4 py-3 rounded-lg font-semibold text-left border border-yellow-700 text-yellow-300">
+                <i class="fas fa-shield-alt mr-2 text-yellow-400"></i>Admin
+            </a>
             <button onclick="toggleMobileNav(); startTour();" class="nav-item px-4 py-3 rounded-lg font-semibold text-left border-t border-theme mt-1 pt-4">
                 <i class="fas fa-question-circle mr-2 text-purple-400"></i>Take a Tour
             </button>
@@ -20005,6 +20008,7 @@ Rules:
             window._userSubscription = null;
             document.getElementById('logoutBtn')?.classList.add('hidden');
             document.getElementById('adminNavLink')?.classList.add('hidden');
+            document.getElementById('mobileAdminNavLink')?.classList.add('hidden');
             showNotification('👋 Signed out', 'info');
         }
 
@@ -20032,14 +20036,23 @@ Rules:
         function isAdminTestTier() { return (window._userSubscription?.plan) === 'admin_test'; }
         const ADMIN_TEST_CHAPTER_CAP = 2; // credit-saving limit for admin testing
 
-        async function loadUserSubscription(userId) {
+        async function loadUserSubscription(userId, retry) {
             const client = ensureSupabase();
             if (!client || !userId) return;
-            const { data } = await client.from('subscriptions').select('plan, role, status').eq('user_id', userId).single();
+            const { data, error } = await client.from('subscriptions').select('plan, role, status').eq('user_id', userId).single();
+            if (error || !data) {
+                console.error('loadUserSubscription failed:', error?.message || 'no data returned');
+                // Retry once after 2s (handles transient network/auth timing issues)
+                if (!retry) setTimeout(() => loadUserSubscription(userId, true), 2000);
+                return;
+            }
             window._userSubscription = data;
             document.getElementById('authLoginBtn')?.classList.add('hidden');
             document.getElementById('logoutBtn')?.classList.remove('hidden');
-            if (data?.role === 'admin') document.getElementById('adminNavLink')?.classList.remove('hidden');
+            if (data?.role === 'admin') {
+                document.getElementById('adminNavLink')?.classList.remove('hidden');
+                document.getElementById('mobileAdminNavLink')?.classList.remove('hidden');
+            }
             // Load credit status after subscription loads
             loadCreditStatus();
         }
