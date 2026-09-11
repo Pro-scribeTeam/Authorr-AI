@@ -15,7 +15,7 @@
  *   SUPABASE_SERVICE_ROLE_KEY — service role key (server-side only)
  */
 
-import { requireAuth, deductCredits, json, CORS_HEADERS } from './_shared.js';
+import { requireAuth, deductCredits, checkFeature, creditExhaustedError, json, CORS_HEADERS } from './_shared.js';
 
 export async function onRequest(context) {
     const { request, env } = context;
@@ -38,15 +38,14 @@ export async function onRequest(context) {
     const { prompt, model = 'dall-e-3', size = '1024x1024', quality = 'standard', n = 1 } = body;
     if (!prompt) return json({ error: 'prompt is required' }, 400);
 
+    // Cover generation requires Author plan (starter, tier 2)
+    const featureErr = checkFeature(sub, 2);
+    if (featureErr) return json(featureErr, 403);
+
     // Deduct credits BEFORE calling OpenAI
     const creditCost = (quality === 'hd') ? 5000 : 2500;
     const credited = await deductCredits(env, user.id, creditCost);
-    if (!credited) {
-        const msg = sub.status === 'trial'
-            ? 'Trial credit limit reached. Please upgrade to continue.'
-            : 'Monthly credit limit reached. Credits reset at the start of your next billing period.';
-        return json({ error: msg, code: 'CREDITS_EXHAUSTED' }, 402);
-    }
+    if (!credited) return json(creditExhaustedError(sub), 402);
 
     try {
         const response = await fetch('https://api.openai.com/v1/images/generations', {

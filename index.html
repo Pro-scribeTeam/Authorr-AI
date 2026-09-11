@@ -8648,7 +8648,8 @@ Return the COMPLETE text, dramatically rewritten with visible personality and hu
                     const data = await response.json();
                     if (!response.ok) {
                         const msg = data?.error || `Image generation failed (${response.status})`;
-                        if (data?.code === 'CREDITS_EXHAUSTED') showCreditExhaustedModal(data.error);
+                        if (data?.code === 'CREDITS_EXHAUSTED') handleCreditExhausted(data);
+                        else if (data?.code === 'PLAN_REQUIRED') showUpgradeModal();
                         throw new Error(msg);
                     }
                     imageUrl = data.data[0].url;
@@ -11979,6 +11980,8 @@ Rules:
                 // Activate multi-voice when: toggle on, OR voices assigned in casting/narration page, OR Genre Engine markup present
                 const hasCastingAssignments = Object.keys(mergedVoiceMap).length > 0;
                 if (useMultiVoice || hasCastingAssignments || (hasLineMarkup && gmNarrationMode !== 'single')) {
+                    // Signal to API calls in this session that this is multi-voice (server enforces tier 3 gate)
+                    window._narrationIsMultiVoice = true;
                     // Multi-voice: route narrator prose and character dialogue to different voices
                     let segments;
                     if (hasLineMarkup) {
@@ -12017,6 +12020,7 @@ Rules:
                         }));
                     }
                     audioBlobs = flatBlobs;
+                    window._narrationIsMultiVoice = false;
                 } else {
                     // Single narrator voice — strip any <line> markup tags, keep inner text
                     content = content.replace(/<line\b[^>]*>([\s\S]*?)<\/line>/gi, '$1');
@@ -12489,13 +12493,23 @@ Rules:
             const headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` };
 
             // 1. Submit to queue — returns request_id immediately
+            const submitBody = { action: 'submit', model: modelPath, payload: inputPayload };
+            if (window._narrationIsMultiVoice) submitBody.narration_mode = 'multi_voice';
             const submitResp = await fetch('/api/fal', {
                 method: 'POST', headers,
-                body: JSON.stringify({ action: 'submit', model: modelPath, payload: inputPayload })
+                body: JSON.stringify(submitBody)
             });
             if (!submitResp.ok) {
-                const e = await submitResp.text().catch(() => submitResp.status);
-                throw new Error(`${labelForErrors} submit error: ${e}`);
+                const err = await submitResp.json().catch(() => ({ error: submitResp.status }));
+                if (submitResp.status === 402 || err.code === 'CREDITS_EXHAUSTED') {
+                    handleCreditExhausted(err);
+                    throw new Error(err.error || 'Credit limit reached.');
+                }
+                if (submitResp.status === 403 && err.code === 'PLAN_REQUIRED') {
+                    showUpgradeModal();
+                    throw new Error(err.error || 'This feature requires a higher plan.');
+                }
+                throw new Error(`${labelForErrors} submit error: ${JSON.stringify(err)}`);
             }
             const submitData = await submitResp.json();
             const { request_id, status_url, response_url } = submitData;
@@ -12578,16 +12592,22 @@ Rules:
             const token = await getAuthToken();
             if (!token) throw new Error('Please log in to use Authorr AI.');
             const grokLang = sanitizeGrokLanguage(document.getElementById('grokLanguageSelect')?.value || 'en');
+            const grokBody = { action: 'tts', text, voice_id: voiceId, language: grokLang };
+            if (window._narrationIsMultiVoice) grokBody.narration_mode = 'multi_voice';
             const resp = await fetch('/api/grok', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                body: JSON.stringify({ action: 'tts', text, voice_id: voiceId, language: grokLang })
+                body: JSON.stringify(grokBody)
             });
             if (!resp.ok) {
                 const err = await resp.json().catch(() => ({ error: resp.status }));
                 if (resp.status === 402 || err.code === 'CREDITS_EXHAUSTED') {
+                    handleCreditExhausted(err);
+                    throw new Error(err.error || 'Credit limit reached.');
+                }
+                if (resp.status === 403 && err.code === 'PLAN_REQUIRED') {
                     showUpgradeModal();
-                    throw new Error(err.error || 'Insufficient credits — please upgrade your plan.');
+                    throw new Error(err.error || 'This feature requires a higher plan.');
                 }
                 throw new Error(`Narration error: ${err.error || resp.status}`);
             }
@@ -20125,6 +20145,23 @@ Rules:
         function showUpgradeModal(tab) {
             document.getElementById('upgradeModal')?.classList.remove('hidden');
             switchUpgradeTab(tab === 'pack' ? 'pack' : 'plan');
+        }
+
+        /**
+         * Routes a CREDITS_EXHAUSTED or PLAN_REQUIRED error to the right modal.
+         * Paid users hitting their ceiling see the buy-credits tab.
+         * Trial users and plan-gated features see the upgrade/subscribe modal.
+         */
+        function handleCreditExhausted(err) {
+            if (err?.action === 'buy_credits') {
+                showUpgradeModal('pack');
+            } else {
+                showUpgradeModal();
+            }
+        }
+        // Alias — called from DALL-E path
+        function showCreditExhaustedModal(msgOrErr) {
+            handleCreditExhausted(typeof msgOrErr === 'object' ? msgOrErr : {});
         }
 
         function switchUpgradeTab(tab) {

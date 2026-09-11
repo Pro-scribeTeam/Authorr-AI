@@ -21,7 +21,7 @@
  *   SUPABASE_SERVICE_ROLE_KEY — service role key (server-side only)
  */
 
-import { requireAuth, deductCredits, json, CORS_HEADERS } from './_shared.js';
+import { requireAuth, deductCredits, checkFeature, creditExhaustedError, json, CORS_HEADERS } from './_shared.js';
 
 export async function onRequest(context) {
     const { request, env } = context;
@@ -44,31 +44,46 @@ export async function onRequest(context) {
     let body;
     try { body = await request.json(); } catch { return json({ error: 'Invalid JSON body' }, 400); }
 
-    const { action, model, request_id, payload } = body;
+    const { action, model, request_id, payload, narration_mode } = body;
 
     try {
         // ── Actions that incur costs: direct + submit ─────────────────────────
         if (action === 'direct' || action === 'submit') {
             if (!model) return json({ error: 'model is required' }, 400);
+            const modelLower = model.toLowerCase();
 
-            // Determine credit cost by model type
+            // ── Feature gates (plan tier) ─────────────────────────────────────
+            if (modelLower.includes('flux')) {
+                // Cover generation requires Author plan (starter, tier 2)
+                const featureErr = checkFeature(sub, 2);
+                if (featureErr) return json(featureErr, 403);
+            }
+            if (modelLower.includes('chatterbox')) {
+                // Using a reference/cloned voice requires Author plan (starter, tier 2)
+                if (payload?.audio_url) {
+                    const featureErr = checkFeature(sub, 2);
+                    if (featureErr) return json(featureErr, 403);
+                }
+                // Multi-voice character narration requires Author Lite (author, tier 3)
+                if (narration_mode === 'multi_voice') {
+                    const featureErr = checkFeature(sub, 3);
+                    if (featureErr) return json(featureErr, 403);
+                }
+            }
+
+            // ── Credit deduction ──────────────────────────────────────────────
             let creditCost = 0;
-            if (model.toLowerCase().includes('chatterbox')) {
+            if (modelLower.includes('chatterbox')) {
                 const text = payload?.text || payload?.input?.text || '';
                 creditCost = text.length; // 1 credit/char
                 if (!text) return json({ error: 'payload.text is required for Chatterbox TTS' }, 400);
-            } else if (model.toLowerCase().includes('flux')) {
+            } else if (modelLower.includes('flux')) {
                 creditCost = 3500; // flat rate for Flux Pro
             }
 
             if (creditCost > 0) {
                 const credited = await deductCredits(env, user.id, creditCost);
-                if (!credited) {
-                    const msg = sub.status === 'trial'
-                        ? 'Trial credit limit reached. Please upgrade to continue.'
-                        : 'Monthly credit limit reached. Credits reset at the start of your next billing period.';
-                    return json({ error: msg, code: 'CREDITS_EXHAUSTED' }, 402);
-                }
+                if (!credited) return json(creditExhaustedError(sub), 402);
             }
 
             const endpoint = action === 'direct'

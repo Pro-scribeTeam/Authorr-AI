@@ -13,7 +13,7 @@
  *   SUPABASE_SERVICE_ROLE_KEY — service role key (server-side only)
  */
 
-import { requireAuth, deductCredits, json, CORS_HEADERS } from './_shared.js';
+import { requireAuth, deductCredits, checkFeature, creditExhaustedError, json, CORS_HEADERS } from './_shared.js';
 
 const XAI_BASE = 'https://api.x.ai/v1';
 
@@ -51,7 +51,7 @@ export async function onRequest(context) {
     let body;
     try { body = await request.json(); } catch { return json({ error: 'Invalid JSON body' }, 400); }
 
-    const { action } = body;
+    const { action, narration_mode } = body;
 
     // ── List voices ──────────────────────────────────────────────────────────
     if (action === 'voices') {
@@ -76,17 +76,18 @@ export async function onRequest(context) {
         if (!voice_id) return json({ error: 'Missing voice_id' }, 400);
         if (text.length > 100_000) return json({ error: 'Text too long (max 100,000 characters)' }, 400);
 
+        // Multi-voice character narration requires Author Lite (tier 3)
+        if (narration_mode === 'multi_voice') {
+            const featureErr = checkFeature(sub, 3);
+            if (featureErr) return json(featureErr, 403);
+        }
+
         const cleanedText = preprocessText(text);
         const creditCost  = cleanedText.length; // 1 credit per character
 
         // Deduct credits BEFORE calling xAI (admin bypass handled in DB)
         const credited = await deductCredits(env, user.id, creditCost);
-        if (!credited) {
-            const msg = sub.status === 'trial'
-                ? 'Trial credit limit reached. Please upgrade to continue.'
-                : 'Monthly credit limit reached. Credits reset at the start of your next billing period.';
-            return json({ error: msg, code: 'CREDITS_EXHAUSTED' }, 402);
-        }
+        if (!credited) return json(creditExhaustedError(sub), 402);
 
         const resp = await fetch(`${XAI_BASE}/tts`, {
             method: 'POST',
@@ -117,6 +118,10 @@ export async function onRequest(context) {
 
     // ── Voice cloning ────────────────────────────────────────────────────────
     if (action === 'clone') {
+        // Voice cloning requires Author plan (starter, tier 2) or above
+        const featureErr = checkFeature(sub, 2);
+        if (featureErr) return json(featureErr, 403);
+
         const { audio_b64, name, language = 'en', content_type = 'audio/webm' } = body;
         if (!audio_b64) return json({ error: 'Missing audio_b64' }, 400);
         if (!name)      return json({ error: 'Missing name' }, 400);

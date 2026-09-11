@@ -1,4 +1,4 @@
-const { requireAuth, sendError, applySecurityHeaders, deductCredits } = require('./_auth');
+const { requireAuth, sendError, applySecurityHeaders, deductCredits, checkFeature, creditExhaustedError } = require('./_auth');
 const rateLimit = require('./_ratelimit');
 
 module.exports = async function handler(req, res) {
@@ -10,15 +10,14 @@ module.exports = async function handler(req, res) {
 
   const { prompt, model = 'dall-e-3', size = '1024x1024', quality = 'standard', n = 1 } = req.body;
   try {
+    // Cover generation requires Author plan (starter, tier 2)
+    const featureErr = checkFeature(authData.subscription, 2);
+    if (featureErr) return res.status(403).json(featureErr);
+
     // 5000 credits for HD, 2500 for standard
     const creditCost = (quality === 'hd') ? 5000 : 2500;
     const credited = await deductCredits(authData.user.id, creditCost);
-    if (!credited) {
-      const msg = authData.subscription.status === 'trial'
-        ? 'Trial credit limit reached. Please upgrade to continue.'
-        : 'Monthly credit limit reached. Credits reset at the start of your next billing period.';
-      return res.status(402).json({ error: msg, code: 'CREDITS_EXHAUSTED' });
-    }
+    if (!credited) return res.status(402).json(creditExhaustedError(authData.subscription));
 
     const response = await fetch('https://api.openai.com/v1/images/generations', {
       method: 'POST',

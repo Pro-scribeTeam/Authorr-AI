@@ -1,4 +1,4 @@
-const { requireAuth, sendError, applySecurityHeaders, deductCredits } = require('./_auth');
+const { requireAuth, sendError, applySecurityHeaders, deductCredits, checkFeature, creditExhaustedError } = require('./_auth');
 const rateLimit = require('./_ratelimit');
 
 module.exports = async function handler(req, res) {
@@ -11,27 +11,41 @@ module.exports = async function handler(req, res) {
   const { user, subscription } = authData;
   if (!rateLimit.strict(req, res, user.id)) return;
 
-  const { action, model, request_id, payload } = req.body;
+  const { action, model, request_id, payload, narration_mode } = req.body;
   const headers = { 'Authorization': `Key ${process.env.FAL_API_KEY}`, 'Content-Type': 'application/json' };
 
   try {
     // ── Actions that incur costs ───────────────────────────────────────────
     if (action === 'direct' || action === 'submit') {
+      const modelLower = (model || '').toLowerCase();
+
+      // ── Feature gates (plan tier) ─────────────────────────────────────
+      if (modelLower.includes('flux')) {
+        const featureErr = checkFeature(subscription, 2);
+        if (featureErr) return res.status(403).json(featureErr);
+      }
+      if (modelLower.includes('chatterbox')) {
+        if (payload?.audio_url) {
+          const featureErr = checkFeature(subscription, 2);
+          if (featureErr) return res.status(403).json(featureErr);
+        }
+        if (narration_mode === 'multi_voice') {
+          const featureErr = checkFeature(subscription, 3);
+          if (featureErr) return res.status(403).json(featureErr);
+        }
+      }
+
+      // ── Credit deduction ──────────────────────────────────────────────
       let creditCost = 0;
-      if (model && model.toLowerCase().includes('chatterbox')) {
+      if (modelLower.includes('chatterbox')) {
         const text = payload?.text || payload?.input?.text || '';
         creditCost = text.length; // 1 credit/char
-      } else if (model && model.toLowerCase().includes('flux')) {
+      } else if (modelLower.includes('flux')) {
         creditCost = 3500; // flat rate for Flux Pro
       }
       if (creditCost > 0) {
         const credited = await deductCredits(user.id, creditCost);
-        if (!credited) {
-          const msg = subscription.status === 'trial'
-            ? 'Trial credit limit reached. Please upgrade to continue.'
-            : 'Monthly credit limit reached. Credits reset at the start of your next billing period.';
-          return res.status(402).json({ error: msg, code: 'CREDITS_EXHAUSTED' });
-        }
+        if (!credited) return res.status(402).json(creditExhaustedError(subscription));
       }
       const endpoint = action === 'direct'
         ? `https://fal.run/${model}`

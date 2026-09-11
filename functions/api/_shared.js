@@ -94,6 +94,43 @@ export async function requireAuth(request, env) {
     };
 }
 
+// Plan tier order for feature gating
+export const PLAN_TIER = {
+    free: 0, trial: 0, essentials: 1,
+    starter: 2, author: 3, publisher: 4, studio: 5, admin_test: 99
+};
+
+const PLAN_LABELS = { 2: 'Author', 3: 'Author Lite', 4: 'Publisher', 5: 'Studio' };
+
+/**
+ * Returns an error object if `sub` doesn't meet `requiredTier`, or null if allowed.
+ * Admin bypass (bypassGates) always returns null.
+ */
+export function checkFeature(sub, requiredTier) {
+    if (sub.bypassGates) return null;
+    const tier = PLAN_TIER[sub.plan] ?? 0;
+    if (tier >= requiredTier) return null;
+    return {
+        error: `This feature requires the ${PLAN_LABELS[requiredTier] ?? 'a higher'} plan or above.`,
+        code: 'PLAN_REQUIRED'
+    };
+}
+
+/**
+ * Returns the correct 402 error body for a credit-exhausted response.
+ * Trial users see subscribe path; paid users see buy-credits path.
+ */
+export function creditExhaustedError(sub) {
+    const isTrial = sub.status === 'trial';
+    return {
+        error: isTrial
+            ? 'Trial credit limit reached. Please upgrade to continue.'
+            : 'Monthly credit limit reached. Buy more credits to continue now, or wait for your next billing cycle.',
+        code: 'CREDITS_EXHAUSTED',
+        action: isTrial ? 'subscribe' : 'buy_credits'
+    };
+}
+
 /**
  * Deduct `amount` credits via Supabase RPC.
  * Returns true on success, false if limit exceeded.

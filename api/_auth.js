@@ -1,6 +1,13 @@
 // Shared auth + security middleware for all /api/ functions
 const { createClient } = require('@supabase/supabase-js');
 
+// Plan tier order for feature gating
+const PLAN_TIER = {
+    free: 0, trial: 0, essentials: 1,
+    starter: 2, author: 3, publisher: 4, studio: 5, admin_test: 99
+};
+const PLAN_LABELS = { 2: 'Author', 3: 'Author Lite', 4: 'Publisher', 5: 'Studio' };
+
 const ALLOWED_ORIGINS = [
   'https://authorr-ai.vercel.app',
   'https://www.authorr-ai.vercel.app'
@@ -114,4 +121,33 @@ async function deductCredits(userId, amount) {
   return data === true;
 }
 
-module.exports = { requireAuth, sendError, applySecurityHeaders, deductCredits };
+/**
+ * Returns an error object if `subscription` doesn't meet `requiredTier`, null if allowed.
+ * Admin bypass (bypassGates) always returns null.
+ */
+function checkFeature(subscription, requiredTier) {
+  if (subscription.bypassGates) return null;
+  const tier = PLAN_TIER[subscription.plan] ?? 0;
+  if (tier >= requiredTier) return null;
+  return {
+    error: `This feature requires the ${PLAN_LABELS[requiredTier] ?? 'a higher'} plan or above.`,
+    code: 'PLAN_REQUIRED'
+  };
+}
+
+/**
+ * Returns the correct 402 error body for a credit-exhausted response.
+ * Trial → subscribe path. Paid → buy-credits path.
+ */
+function creditExhaustedError(subscription) {
+  const isTrial = subscription.status === 'trial';
+  return {
+    error: isTrial
+      ? 'Trial credit limit reached. Please upgrade to continue.'
+      : 'Monthly credit limit reached. Buy more credits to continue now, or wait for your next billing cycle.',
+    code: 'CREDITS_EXHAUSTED',
+    action: isTrial ? 'subscribe' : 'buy_credits'
+  };
+}
+
+module.exports = { requireAuth, sendError, applySecurityHeaders, deductCredits, checkFeature, creditExhaustedError };
