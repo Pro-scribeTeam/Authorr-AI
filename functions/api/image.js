@@ -15,7 +15,7 @@
  *   SUPABASE_SERVICE_ROLE_KEY — service role key (server-side only)
  */
 
-import { requireAuth, deductCredits, checkFeature, creditExhaustedError, json, CORS_HEADERS } from './_shared.js';
+import { requireAuth, deductCredits, checkFeature, creditExhaustedError, json, authError, CORS_HEADERS } from './_shared.js';
 
 export async function onRequest(context) {
     const { request, env } = context;
@@ -29,7 +29,7 @@ export async function onRequest(context) {
     if (!apiKey) return json({ error: 'OPENAI_API_KEY not configured' }, 500);
 
     const authResult = await requireAuth(request, env);
-    if (authResult.error) return json({ error: authResult.error }, authResult.status);
+    if (authResult.error) return authError(authResult);
     const { user, sub } = authResult;
 
     let body;

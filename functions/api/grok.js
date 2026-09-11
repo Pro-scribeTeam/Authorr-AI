@@ -13,7 +13,7 @@
  *   SUPABASE_SERVICE_ROLE_KEY — service role key (server-side only)
  */
 
-import { requireAuth, deductCredits, checkFeature, creditExhaustedError, json, CORS_HEADERS } from './_shared.js';
+import { requireAuth, deductCredits, checkFeature, creditExhaustedError, json, authError, CORS_HEADERS } from './_shared.js';
 
 const XAI_BASE = 'https://api.x.ai/v1';
 
@@ -43,7 +43,7 @@ export async function onRequest(context) {
 
     // All actions require authentication
     const authResult = await requireAuth(request, env);
-    if (authResult.error) return json({ error: authResult.error }, authResult.status);
+    if (authResult.error) return authError(authResult);
     const { user, sub } = authResult;
 
     const authHeader = { 'Authorization': `Bearer ${apiKey}` };

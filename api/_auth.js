@@ -83,6 +83,11 @@ async function requireAuth(req, requiredRole = null) {
     ? subscription.admin_test_trial_ends_at
     : subscription.trial_ends_at;
 
+  // Email confirmation gate (admin bypass exempt)
+  if (!bypassGates && !user.email_confirmed_at) {
+    const e = new Error('Please confirm your email address before using Authorr AI. Check your inbox for a confirmation link.'); e.status = 403; e.code = 'EMAIL_UNCONFIRMED'; throw e;
+  }
+
   // Trial expiry gate (real admin without simulation bypasses)
   if (!bypassGates && effectiveStatus === 'trial') {
     if (effectiveTrialEnds && new Date(effectiveTrialEnds) < new Date()) {
@@ -107,7 +112,9 @@ async function requireAuth(req, requiredRole = null) {
 }
 
 function sendError(res, err) {
-  res.status(err.status || 500).json({ error: err.message || 'Internal server error' });
+  const body = { error: err.message || 'Internal server error' };
+  if (err.code) body.code = err.code;
+  res.status(err.status || 500).json(body);
 }
 
 /**

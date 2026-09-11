@@ -25,6 +25,13 @@ export function json(data, status = 200) {
     });
 }
 
+/** Converts a requireAuth failure object to a Response, preserving the code field. */
+export function authError(authResult) {
+    const body = { error: authResult.error };
+    if (authResult.code) body.code = authResult.code;
+    return json(body, authResult.status);
+}
+
 /**
  * Resolve user + subscription from Bearer token.
  * Returns { user, sub } on success, or { error, status } on failure.
@@ -73,6 +80,15 @@ export async function requireAuth(request, env) {
     const effectiveTrialEnds = simulating
         ? sub.admin_test_trial_ends_at
         : sub.trial_ends_at;
+
+    // Email confirmation gate (admin bypass exempt)
+    if (!bypassGates && !user.email_confirmed_at) {
+        return {
+            error: 'Please confirm your email address before using Authorr AI. Check your inbox for a confirmation link.',
+            code: 'EMAIL_UNCONFIRMED',
+            status: 403
+        };
+    }
 
     // Trial expiry gate (real admin without simulation bypasses)
     if (!bypassGates && effectiveStatus === 'trial') {

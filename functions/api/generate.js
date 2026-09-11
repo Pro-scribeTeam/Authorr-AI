@@ -9,7 +9,7 @@
  *   SUPABASE_SERVICE_ROLE_KEY — service role key (server-side only)
  */
 
-import { requireAuth, json, CORS_HEADERS } from './_shared.js';
+import { requireAuth, json, authError, CORS_HEADERS } from './_shared.js';
 
 async function incrementChapters(supabaseUrl, serviceKey, userId) {
     await fetch(`${supabaseUrl}/rest/v1/rpc/increment_chapters_generated`, {
@@ -32,7 +32,7 @@ export async function onRequest(context) {
     if (request.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
 
     const authResult = await requireAuth(request, env);
-    if (authResult.error) return json({ error: authResult.error }, authResult.status);
+    if (authResult.error) return authError(authResult);
     const { user, sub } = authResult;
 
     let body;

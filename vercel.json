@@ -17,7 +17,6 @@
     { "src": "/api/email-send(.*)", "dest": "/api/email?route=send$1" },
     { "src": "/api/email-ai(.*)", "dest": "/api/email?route=ai$1" },
     { "src": "/api/email-settings(.*)", "dest": "/api/email?route=settings$1" },
-    { "src": "/api/elevenlabs-voices(.*)", "dest": "/api/elevenlabs-tts$1" },
     { "src": "/api/(.*)", "dest": "/api/$1" },
     { "src": "/(.*\\.json)", "dest": "/$1" },
     { "src": "/(.*\\.(png|jpg|jpeg|gif|svg|ico|webp))", "dest": "/$1" },

@@ -15,6 +15,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
     <!-- Supabase Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+    <!-- Cloudflare Turnstile — bot protection for signup -->
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
     <!-- DOCX Generation (Shunn manuscript export) -->
     <script src="https://unpkg.com/docx@8/build/index.umd.js" defer></script>
     <script>
@@ -8652,6 +8654,7 @@ Return the COMPLETE text, dramatically rewritten with visible personality and hu
                     if (!response.ok) {
                         const msg = data?.error || `Image generation failed (${response.status})`;
                         if (data?.code === 'CREDITS_EXHAUSTED') handleCreditExhausted(data);
+                        else if (data?.code === 'EMAIL_UNCONFIRMED') handleEmailUnconfirmed();
                         else if (data?.code === 'PLAN_REQUIRED') showUpgradeModal();
                         throw new Error(msg);
                     }
@@ -12508,6 +12511,10 @@ Rules:
                     handleCreditExhausted(err);
                     throw new Error(err.error || 'Credit limit reached.');
                 }
+                if (submitResp.status === 403 && err.code === 'EMAIL_UNCONFIRMED') {
+                    handleEmailUnconfirmed();
+                    throw new Error(err.error || 'Email not confirmed.');
+                }
                 if (submitResp.status === 403 && err.code === 'PLAN_REQUIRED') {
                     showUpgradeModal();
                     throw new Error(err.error || 'This feature requires a higher plan.');
@@ -12607,6 +12614,10 @@ Rules:
                 if (resp.status === 402 || err.code === 'CREDITS_EXHAUSTED') {
                     handleCreditExhausted(err);
                     throw new Error(err.error || 'Credit limit reached.');
+                }
+                if (resp.status === 403 && err.code === 'EMAIL_UNCONFIRMED') {
+                    handleEmailUnconfirmed();
+                    throw new Error(err.error || 'Email not confirmed.');
                 }
                 if (resp.status === 403 && err.code === 'PLAN_REQUIRED') {
                     showUpgradeModal();
@@ -19946,26 +19957,50 @@ Rules:
         }
 
         async function signUpUser() {
-            const client = ensureSupabase();
-            if (!client) return showNotification('Supabase not connected', 'error');
-            const email = document.getElementById('signupEmail').value.trim();
+            const email    = document.getElementById('signupEmail').value.trim();
             const password = document.getElementById('signupPassword').value;
-            const name = document.getElementById('signupName').value.trim();
+            const name     = document.getElementById('signupName').value.trim();
+            const errEl    = document.getElementById('authError');
+
             if (!email || !password) {
-                document.getElementById('authError').textContent = 'Please enter email and password.';
+                errEl.textContent = 'Please enter email and password.';
                 return;
             }
+
+            // Collect Turnstile token from the hidden input the widget injects
+            const turnstileToken = document.querySelector('#authSignupPanel input[name="cf-turnstile-response"]')?.value || '';
+            if (!turnstileToken) {
+                errEl.textContent = 'Please complete the security check above.';
+                return;
+            }
+
             const btn = document.getElementById('signupBtn');
             btn.disabled = true;
             btn.textContent = 'Creating account...';
-            const { data, error } = await client.auth.signUp({ email, password, options: { data: { display_name: name } } });
-            btn.disabled = false;
-            btn.textContent = 'Create Account';
-            if (error) {
-                document.getElementById('authError').textContent = error.message;
-            } else {
+            errEl.textContent = '';
+
+            try {
+                const resp = await fetch('/api/signup', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password, name, turnstileToken })
+                });
+                const data = await resp.json().catch(() => ({}));
+                if (!resp.ok) {
+                    errEl.textContent = data.error || 'Signup failed — please try again.';
+                    // Reset Turnstile so user can try again
+                    if (window.turnstile) window.turnstile.reset();
+                    return;
+                }
+                // Success — email confirmation required
                 hideAuthModal();
-                showNotification('✅ Account created! You are now signed in.', 'success');
+                showNotification('Account created! Check your inbox and click the confirmation link before signing in.', 'success');
+            } catch (e) {
+                errEl.textContent = 'Network error — please try again.';
+                if (window.turnstile) window.turnstile.reset();
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Create Account';
             }
         }
 
@@ -20175,6 +20210,27 @@ Rules:
         // Alias — called from DALL-E path
         function showCreditExhaustedModal(msgOrErr) {
             handleCreditExhausted(typeof msgOrErr === 'object' ? msgOrErr : {});
+        }
+
+        /**
+         * Called when an API returns 403 with code EMAIL_UNCONFIRMED.
+         * Prompts the user to confirm their email; offers to resend the link.
+         */
+        async function handleEmailUnconfirmed() {
+            const resend = confirm(
+                'Your email address hasn\'t been confirmed yet.\n\n' +
+                'Check your inbox for a confirmation link from Authorr AI.\n\n' +
+                'Click OK to resend the confirmation email, or Cancel to dismiss.'
+            );
+            if (!resend) return;
+            const client = ensureSupabase();
+            if (!client || !currentUser?.email) return showNotification('Please sign in first.', 'error');
+            const { error } = await client.auth.resend({ type: 'signup', email: currentUser.email });
+            if (error) {
+                showNotification('Could not resend — ' + error.message, 'error');
+            } else {
+                showNotification('Confirmation email resent! Check your inbox.', 'success');
+            }
         }
 
         function switchUpgradeTab(tab) {
@@ -20614,6 +20670,13 @@ Rules:
                     <input type="text" id="signupName" placeholder="Your name (optional)" class="w-full px-4 py-3 rounded-lg bg-gray-800 border border-gray-600 focus:border-cyan-400 text-white outline-none">
                     <input type="email" id="signupEmail" placeholder="Email address" class="w-full px-4 py-3 rounded-lg bg-gray-800 border border-gray-600 focus:border-cyan-400 text-white outline-none">
                     <input type="password" id="signupPassword" placeholder="Password (min 6 characters)" class="w-full px-4 py-3 rounded-lg bg-gray-800 border border-gray-600 focus:border-cyan-400 text-white outline-none" onkeydown="if(event.key==='Enter') signUpUser()">
+                    <!-- Turnstile widget — site key must be set by founder in Cloudflare dashboard -->
+                    <div id="turnstileContainer" class="flex justify-center">
+                        <div class="cf-turnstile"
+                             data-sitekey="REPLACE_WITH_TURNSTILE_SITE_KEY"
+                             data-theme="dark"
+                             data-size="normal"></div>
+                    </div>
                     <button id="signupBtn" onclick="signUpUser()" class="w-full btn-primary py-3 rounded-lg font-semibold">
                         Create Account
                     </button>
