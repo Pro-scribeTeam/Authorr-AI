@@ -23833,8 +23833,8 @@ function setUILanguage(lang) {
                 </div>
                 <div class="flex flex-wrap gap-2">
                     <button onclick="adminPreviewTier('free')"    class="tier-preview-btn text-xs px-4 py-2 rounded-lg font-semibold border border-gray-600 text-gray-300 hover:border-gray-400 transition-colors">Free</button>
-                    <button onclick="adminPreviewTier('starter')" class="tier-preview-btn text-xs px-4 py-2 rounded-lg font-semibold border border-blue-700 text-blue-300 hover:border-blue-400 transition-colors">Starter</button>
-                    <button onclick="adminPreviewTier('author')"  class="tier-preview-btn text-xs px-4 py-2 rounded-lg font-semibold border border-purple-700 text-purple-300 hover:border-purple-400 transition-colors">Author</button>
+                    <button onclick="adminPreviewTier('starter')" class="tier-preview-btn text-xs px-4 py-2 rounded-lg font-semibold border border-blue-700 text-blue-300 hover:border-blue-400 transition-colors">Author</button>
+                    <button onclick="adminPreviewTier('author')"  class="tier-preview-btn text-xs px-4 py-2 rounded-lg font-semibold border border-purple-700 text-purple-300 hover:border-purple-400 transition-colors">Author Lite</button>
                     <button onclick="adminPreviewTier('publisher')" class="tier-preview-btn text-xs px-4 py-2 rounded-lg font-semibold border border-cyan-700 text-cyan-300 hover:border-cyan-400 transition-colors">Publisher</button>
                     <button onclick="adminPreviewTier('studio')"  class="tier-preview-btn text-xs px-4 py-2 rounded-lg font-semibold border border-yellow-600 text-yellow-300 hover:border-yellow-400 transition-colors">Studio</button>
                     <button onclick="adminPreviewTier('admin_test')" class="tier-preview-btn text-xs px-4 py-2 rounded-lg font-semibold border border-red-700 text-red-300 hover:border-red-400 transition-colors">Admin Test (2ch)</button>
@@ -23859,8 +23859,8 @@ function setUILanguage(lang) {
                             <option value="">Off (bypass — admin default)</option>
                             <option value="trial">Trial (10K credits)</option>
                             <option value="essentials">Essentials (50K)</option>
-                            <option value="starter">Starter (150K)</option>
-                            <option value="author">Author (450K)</option>
+                            <option value="starter">Author (150K)</option>
+                            <option value="author">Author Lite (450K)</option>
                             <option value="publisher">Publisher (1.2M)</option>
                             <option value="studio">Studio (3M)</option>
                         </select>
@@ -24062,6 +24062,12 @@ function setUILanguage(lang) {
                 : 'Admin bypass restored (no simulation)';
             showNotification(label, 'success');
             await loadServerTestStatus();
+            // Sync client-side subscription so UI gates/badges reflect the simulation immediately
+            if (plan) {
+                adminPreviewTier(plan);
+            } else {
+                adminRestoreTier();
+            }
         } catch (err) {
             showNotification('Error: ' + (err.message || JSON.stringify(err)), 'error');
         }
@@ -24633,7 +24639,8 @@ async function generateOutline() {
         content = content.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
         content = content.replace(/```json\s*/gi, '').replace(/```\s*/gi, '').trim();
         var j0 = content.indexOf('{'), j1 = content.lastIndexOf('}');
-        if (j0 !== -1 && j1 !== -1) content = content.substring(j0, j1 + 1);
+        if (j0 === -1 || j1 === -1) throw new Error('AI returned a text response instead of JSON. Please try again, or switch to a different model in Settings.');
+        content = content.substring(j0, j1 + 1);
 
         var parsed = JSON.parse(content);
         if (!parsed.chapters || !parsed.chapters.length) throw new Error('No chapters in outline response.');
