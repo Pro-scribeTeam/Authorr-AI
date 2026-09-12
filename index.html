@@ -23973,7 +23973,9 @@ function setUILanguage(lang) {
         document.querySelectorAll('.tier-preview-btn').forEach(function(btn) {
             btn.classList.remove('ring-2', 'ring-offset-1', 'ring-offset-gray-900', 'ring-yellow-400');
         });
-        event.currentTarget.classList.add('ring-2', 'ring-offset-1', 'ring-offset-gray-900', 'ring-yellow-400');
+        if (typeof event !== 'undefined' && event?.currentTarget) {
+            event.currentTarget.classList.add('ring-2', 'ring-offset-1', 'ring-offset-gray-900', 'ring-yellow-400');
+        }
 
         // Update status label
         const labels = { free:'Free', essentials:'Essentials', starter:'Author', author:'Author Lite', publisher:'Publisher', studio:'Studio', admin_test:'Admin Test' };
