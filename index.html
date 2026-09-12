@@ -6613,6 +6613,11 @@ Return the COMPLETE text, dramatically rewritten with visible personality and hu
             if (!response.ok) {
                 const err = await response.json().catch(() => ({}));
                 if (err?.error?.attempts) console.warn('AI model attempts:', err.error.attempts);
+                // Token expired — refresh and retry once
+                if (response.status === 401 && _retryCount === 0) {
+                    await window.supabaseClient.auth.refreshSession();
+                    return callOpenRouter(messages, 1);
+                }
                 // If rate limited, wait and retry (up to 2 times)
                 if (response.status === 429 && _retryCount < 2) {
                     const waitSecs = err?.error?.retry_after || 30;
@@ -10096,9 +10101,15 @@ Format as clean prose with tags woven in, ready for narration.`;
         // ── Auth token helper — returns the Supabase JWT for /api/ calls ──
         async function getAuthToken() {
             if (!window.supabaseClient) return null;
-            const { data: { session } } = await window.supabaseClient.auth.getSession();
+            let { data: { session } } = await window.supabaseClient.auth.getSession();
             if (!session) return null;
-            return session.access_token;
+            // Force refresh if token is expired or expiring within 60 seconds
+            const exp = session.expires_at; // Unix seconds
+            if (exp && (exp - Math.floor(Date.now() / 1000)) < 60) {
+                const { data } = await window.supabaseClient.auth.refreshSession();
+                session = data?.session;
+            }
+            return session?.access_token || null;
         }
 
         // Legacy stubs — keep so any stray references don't throw errors
