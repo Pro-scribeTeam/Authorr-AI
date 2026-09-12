@@ -33,15 +33,18 @@ export async function onRequestPost({ request, env }) {
                request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
                'unknown';
 
-    const tsForm = new URLSearchParams({
-        secret:   env.TURNSTILE_SECRET_KEY || '',
-        response: turnstileToken,
-        remoteip: ip
-    });
-    const tsRes  = await fetch(TURNSTILE_VERIFY, { method: 'POST', body: tsForm });
-    const tsData = await tsRes.json().catch(() => ({}));
-    if (!tsData.success) {
-        return json({ error: 'Security check failed. Please refresh and try again.', code: 'TURNSTILE_FAILED' }, 400);
+    // Skip verification if secret key not yet configured (widget uses test key)
+    if (env.TURNSTILE_SECRET_KEY) {
+        const tsForm = new URLSearchParams({
+            secret:   env.TURNSTILE_SECRET_KEY,
+            response: turnstileToken,
+            remoteip: ip
+        });
+        const tsRes  = await fetch(TURNSTILE_VERIFY, { method: 'POST', body: tsForm });
+        const tsData = await tsRes.json().catch(() => ({}));
+        if (!tsData.success) {
+            return json({ error: 'Security check failed. Please refresh and try again.', code: 'TURNSTILE_FAILED' }, 400);
+        }
     }
 
     // ── 2. IP rate limit (Supabase signup_attempts table) ───────────────────

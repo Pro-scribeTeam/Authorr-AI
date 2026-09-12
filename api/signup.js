@@ -37,15 +37,18 @@ module.exports = async function handler(req, res) {
 
     // ── 2. Verify Turnstile ──────────────────────────────────────────────────
     const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket?.remoteAddress || '';
-    const tsForm = new URLSearchParams({
-        secret:   process.env.TURNSTILE_SECRET_KEY || '',
-        response: turnstileToken,
-        remoteip: ip
-    });
-    const tsRes  = await fetch(TURNSTILE_VERIFY, { method: 'POST', body: tsForm });
-    const tsData = await tsRes.json().catch(() => ({}));
-    if (!tsData.success) {
-        return res.status(400).json({ error: 'Security check failed. Please refresh and try again.', code: 'TURNSTILE_FAILED' });
+    // Skip verification if secret key not yet configured (widget uses test key)
+    if (process.env.TURNSTILE_SECRET_KEY) {
+        const tsForm = new URLSearchParams({
+            secret:   process.env.TURNSTILE_SECRET_KEY,
+            response: turnstileToken,
+            remoteip: ip
+        });
+        const tsRes  = await fetch(TURNSTILE_VERIFY, { method: 'POST', body: tsForm });
+        const tsData = await tsRes.json().catch(() => ({}));
+        if (!tsData.success) {
+            return res.status(400).json({ error: 'Security check failed. Please refresh and try again.', code: 'TURNSTILE_FAILED' });
+        }
     }
 
     // ── 3. Create Supabase Auth user ─────────────────────────────────────────
