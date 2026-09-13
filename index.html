@@ -19991,6 +19991,28 @@ Rules:
             btn.textContent = 'Creating account...';
             errEl.textContent = '';
 
+            // ── 1. Clear any existing session before creating a new account ─────
+            // Prevents a logged-in admin/user session from persisting into the new
+            // account, and ensures localStorage holds no stale workspace data.
+            const client = ensureSupabase();
+            if (client) {
+                const { data: { session: existingSession } } = await client.auth.getSession().catch(() => ({ data: { session: null } }));
+                if (existingSession) {
+                    await client.auth.signOut().catch(() => {});
+                }
+            }
+            currentUser = null;
+            storyData = { title: '', chapters: [], currentChapter: 0, settings: { chapterCount: 10, wordsPerChapter: 1000, genre: 'fiction-literary', tone: 'professional' } };
+            window._userSubscription = null;
+            window._clonedVoicesCache = [];
+            [
+                'authorr_project_state', 'authorr_story_content', 'authorr_story_data',
+                'authorr_supabase_project_id', 'authorrCastingLayer', 'grokCharacterVoices',
+                'mainBookCover', 'clonedVoices', 'clonedActiveVoice'
+            ].forEach(k => localStorage.removeItem(k));
+            const editorEl = document.getElementById('storyEditor');
+            if (editorEl) editorEl.value = '';
+
             try {
                 const resp = await fetch('/api/signup', {
                     method: 'POST',
@@ -20004,7 +20026,30 @@ Rules:
                     if (window.turnstile) window.turnstile.reset();
                     return;
                 }
-                // Success — email confirmation required
+
+                // ── 2. Re-check real auth state after server-side signup ─────────
+                // onAuthStateChange won't fire for a server-side signup call, so we
+                // manually re-check. If email confirmation is OFF, Supabase issues a
+                // session immediately and we can log the user straight in.
+                if (client && !data.emailConfirmationRequired) {
+                    const { data: { session: newSession } } = await client.auth.getSession().catch(() => ({ data: { session: null } }));
+                    if (newSession) {
+                        currentUser = newSession.user;
+                        updateAuthUI();
+                        loadUserProjects();
+                        loadUserSubscription(currentUser.id);
+                        migrateLocalClonesToDB().then(() => loadClonedVoices()).then(() => {
+                            renderClonedVoicesList();
+                            populateVoiceOptions();
+                        });
+                        hideAuthModal();
+                        showPage('workspace');
+                        showNotification('Account created! Welcome to Authorr AI.', 'success');
+                        return;
+                    }
+                }
+
+                // Confirmation required (or auto-session not yet available)
                 hideAuthModal();
                 showNotification('Account created! Check your inbox and click the confirmation link before signing in.', 'success');
             } catch (e) {

@@ -68,5 +68,10 @@ module.exports = async function handler(req, res) {
         return res.status(signupRes.status).json({ error: msg });
     }
 
-    return res.status(200).json({ success: true, emailConfirmationRequired: true });
+    // Determine whether email confirmation is actually required by checking
+    // whether Supabase returned an access_token (confirmation OFF = auto-session)
+    // or not (confirmation ON = pending email click).
+    const emailConfirmationRequired = !signupData?.access_token;
+
+    return res.status(200).json({ success: true, emailConfirmationRequired });
 };

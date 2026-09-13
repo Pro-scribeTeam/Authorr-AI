@@ -102,7 +102,12 @@ export async function onRequestPost({ request, env }) {
         body: JSON.stringify({ ip })
     }).catch(() => {}); // non-fatal
 
-    return json({ success: true, emailConfirmationRequired: true });
+    // Determine whether email confirmation is actually required by checking
+    // whether Supabase returned an access_token (confirmation OFF = auto-session)
+    // or not (confirmation ON = pending email click).
+    const emailConfirmationRequired = !signupData?.access_token;
+
+    return json({ success: true, emailConfirmationRequired });
 }
 
 export async function onRequestOptions() {
