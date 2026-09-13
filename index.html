@@ -19970,6 +19970,8 @@ Rules:
             ].forEach(k => localStorage.removeItem(k));
             const editorEl = document.getElementById('storyEditor');
             if (editorEl) editorEl.value = '';
+            const chapterPlanEl = document.getElementById('chapterPlan');
+            if (chapterPlanEl) chapterPlanEl.innerHTML = '';
 
             const { error } = await client.auth.signInWithPassword({ email, password });
             btn.disabled = false;
@@ -20027,6 +20029,8 @@ Rules:
             ].forEach(k => localStorage.removeItem(k));
             const editorEl = document.getElementById('storyEditor');
             if (editorEl) editorEl.value = '';
+            const chapterPlanEl2 = document.getElementById('chapterPlan');
+            if (chapterPlanEl2) chapterPlanEl2.innerHTML = '';
 
             try {
                 const resp = await fetch('/api/signup', {
