@@ -19956,6 +19956,21 @@ Rules:
             const btn = document.getElementById('signinBtn');
             btn.disabled = true;
             btn.textContent = 'Signing in...';
+
+            // Clear all per-user workspace state before signing in so that any
+            // previously active session's story data does not bleed into the new one.
+            currentUser = null;
+            storyData = { title: '', chapters: [], currentChapter: 0, settings: { chapterCount: 10, wordsPerChapter: 1000, genre: 'fiction-literary', tone: 'professional' } };
+            window._userSubscription = null;
+            window._clonedVoicesCache = [];
+            [
+                'authorr_project_state', 'authorr_story_content', 'authorr_story_data',
+                'authorr_supabase_project_id', 'authorrCastingLayer', 'grokCharacterVoices',
+                'mainBookCover', 'clonedVoices', 'clonedActiveVoice'
+            ].forEach(k => localStorage.removeItem(k));
+            const editorEl = document.getElementById('storyEditor');
+            if (editorEl) editorEl.value = '';
+
             const { error } = await client.auth.signInWithPassword({ email, password });
             btn.disabled = false;
             btn.textContent = 'Sign In';
