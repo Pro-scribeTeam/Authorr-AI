@@ -11575,10 +11575,20 @@ Rules:
                 if (assignElInner) assignElInner.classList.toggle('hidden', !toggle.checked);
             }
 
-            // Detect characters with AI
             const listEl = document.getElementById('characterVoiceList');
-            if (listEl) listEl.innerHTML = '<p class="text-xs text-gray-400 italic">Detecting characters...</p>';
-            const chars = await detectCharacters(content);
+            // If the casting screen already built a character list, reuse those exact names
+            // to prevent AI re-detection producing different spellings that break voice lookups
+            const castingChars = (typeof storyBible !== 'undefined' && storyBible.characters && storyBible.characters.length)
+                ? storyBible.characters.map(c => c.name)
+                : null;
+            let chars;
+            if (castingChars && castingChars.length) {
+                chars = castingChars;
+                if (listEl) listEl.innerHTML = '';
+            } else {
+                if (listEl) listEl.innerHTML = '<p class="text-xs text-gray-400 italic">Detecting characters...</p>';
+                chars = await detectCharacters(content);
+            }
             dialogueData.characters = chars;
             populateCharacterVoiceList(chars);
         }
@@ -11629,10 +11639,10 @@ Rules:
                     opt.dataset.voice = o.dataset.voice;
                     sel.appendChild(opt);
                 });
-                // Restore saved selection for this character
-                if (dialogueData.voiceAssignments[name]) {
-                    sel.value = dialogueData.voiceAssignments[name];
-                }
+                // Restore saved selection — exact match first, then case-insensitive fallback
+                const _assignment = dialogueData.voiceAssignments[name] ||
+                    Object.entries(dialogueData.voiceAssignments).find(([k]) => k.toLowerCase() === name.toLowerCase())?.[1];
+                if (_assignment) sel.value = _assignment;
                 sel.onchange = () => {
                     dialogueData.voiceAssignments[name] = sel.value || null;
                     localStorage.setItem('grokCharacterVoices', JSON.stringify({
