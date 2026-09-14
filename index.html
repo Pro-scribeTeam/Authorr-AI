@@ -6604,7 +6604,7 @@ Return the COMPLETE text, dramatically rewritten with visible personality and hu
         async function callOpenRouter(messages, _retryCount = 0) {
             const token = await getAuthToken();
             if (!token) throw new Error('Please log in to use Authorr AI.');
-            const model = localStorage.getItem('openrouterModel') || 'google/gemma-3-27b-it:free';
+            const model = localStorage.getItem('openrouterModel') || 'google/gemma-4-31b-it:free';
             const response = await fetch('/api/generate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },

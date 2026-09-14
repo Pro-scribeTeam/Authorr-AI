@@ -71,7 +71,7 @@ export async function onRequest(context) {
                     'HTTP-Referer': 'https://authorr-ai.pages.dev',
                     'X-Title': 'Authorr AI'
                 },
-                body: JSON.stringify({ model: model || 'google/gemma-3-27b-it:free', messages, temperature, max_tokens })
+                body: JSON.stringify({ model: model || 'google/gemma-4-31b-it:free', messages, temperature, max_tokens })
             });
         }
 
