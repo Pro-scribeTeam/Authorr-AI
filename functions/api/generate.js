@@ -11,6 +11,22 @@
 
 import { requireAuth, json, authError, CORS_HEADERS } from './_shared.js';
 
+// Non-Venice models first (Google/NVIDIA infra), then Venice as fallback.
+// Venice hosts Llama/Hermes/Qwen free models and rate-limits them all together.
+const FALLBACK_MODELS = [
+    'google/gemma-4-31b-it:free',
+    'google/gemma-4-26b-a4b-it:free',
+    'nvidia/nemotron-3-super-120b-a12b:free',
+    'meta-llama/llama-3.3-70b-instruct:free',
+    'meta-llama/llama-3.2-3b-instruct:free',
+];
+
+// Strip <think>...</think> reasoning blocks that some models leak into content
+function stripThinking(text) {
+    if (!text) return text;
+    return text.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+}
+
 async function incrementChapters(supabaseUrl, serviceKey, userId) {
     await fetch(`${supabaseUrl}/rest/v1/rpc/increment_chapters_generated`, {
         method: 'POST',
@@ -50,40 +66,93 @@ export async function onRequest(context) {
     }
 
     try {
-        let upstreamRes;
-
+        // OpenAI direct path
         if (provider === 'openai') {
             const apiKey = env.OPENAI_API_KEY;
             if (!apiKey) return json({ error: 'OPENAI_API_KEY not configured' }, 500);
-            upstreamRes = await fetch('https://api.openai.com/v1/chat/completions', {
+            const res = await fetch('https://api.openai.com/v1/chat/completions', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
                 body: JSON.stringify({ model: model || 'gpt-4o-mini', messages, temperature, max_tokens })
             });
-        } else {
-            const apiKey = env.OPENROUTER_API_KEY;
-            if (!apiKey) return json({ error: 'OPENROUTER_API_KEY not configured' }, 500);
-            upstreamRes = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+            const data = await res.json();
+            if (!res.ok) return json({ error: data }, res.status);
+            if (generation_type === 'chapter' && sub.status === 'trial' && !sub.bypassGates) {
+                await incrementChapters(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, user.id);
+            }
+            return json(data);
+        }
+
+        // OpenRouter path — try requested model first, then fallbacks
+        const apiKey = env.OPENROUTER_API_KEY;
+        if (!apiKey) return json({ error: 'OPENROUTER_API_KEY not configured' }, 500);
+
+        const orHeaders = {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiKey}`,
+            'HTTP-Referer': 'https://authorr-ai.pages.dev',
+            'X-Title': 'Authorr AI'
+        };
+
+        const modelsToTry = model && !FALLBACK_MODELS.includes(model)
+            ? [model, ...FALLBACK_MODELS]
+            : [model || FALLBACK_MODELS[0], ...FALLBACK_MODELS.filter(m => m !== (model || FALLBACK_MODELS[0]))];
+
+        if (env.OPENROUTER_PAID_FALLBACK) modelsToTry.push(env.OPENROUTER_PAID_FALLBACK);
+
+        const attempts = [];
+        for (const tryModel of modelsToTry) {
+            const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${apiKey}`,
-                    'HTTP-Referer': 'https://authorr-ai.pages.dev',
-                    'X-Title': 'Authorr AI'
-                },
-                body: JSON.stringify({ model: model || 'google/gemma-4-31b-it:free', messages, temperature, max_tokens })
+                headers: orHeaders,
+                body: JSON.stringify({ model: tryModel, messages, temperature, max_tokens })
             });
+            const data = await res.json();
+            attempts.push({ model: tryModel, status: res.status, error: data?.error || null });
+            if (!res.ok || data?.error) continue;
+
+            if (data?.choices?.[0]?.message?.content) {
+                data.choices[0].message.content = stripThinking(data.choices[0].message.content);
+            }
+            if (generation_type === 'chapter' && sub.status === 'trial' && !sub.bypassGates) {
+                await incrementChapters(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, user.id);
+            }
+            return json(data);
         }
 
-        const data = await upstreamRes.json();
-        if (!upstreamRes.ok) return json({ error: data }, upstreamRes.status);
-
-        // Increment chapter counter after successful chapter generation (only for trial, not admin bypass)
-        if (generation_type === 'chapter' && sub.status === 'trial' && !sub.bypassGates) {
-            await incrementChapters(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, user.id);
+        // All OpenRouter models failed — try OpenAI as final fallback
+        if (env.OPENAI_API_KEY) {
+            const res = await fetch('https://api.openai.com/v1/chat/completions', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${env.OPENAI_API_KEY}` },
+                body: JSON.stringify({ model: 'gpt-4o-mini', messages, temperature, max_tokens })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                if (generation_type === 'chapter' && sub.status === 'trial' && !sub.bypassGates) {
+                    await incrementChapters(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, user.id);
+                }
+                return json(data);
+            }
         }
 
-        return json(data);
+        // Build meaningful error response
+        const retryAfter = attempts.reduce((min, a) => {
+            const secs = a?.error?.metadata?.retry_after_seconds;
+            return secs && secs < min ? secs : min;
+        }, Infinity);
+        const statuses = attempts.map(a => a.status);
+        let message = 'All AI models temporarily rate-limited. Please wait a moment.';
+        let status = 429;
+        if (statuses.includes(401) || statuses.includes(403)) {
+            message = 'AI provider authentication failed — server API key is invalid or expired.';
+            status = 502;
+        } else if (statuses.every(s => s === 404 || s === 400)) {
+            message = 'AI models unavailable — configured model IDs were rejected by the provider.';
+            status = 502;
+        }
+        return json({ error: { message, retry_after: retryAfter < Infinity ? Math.ceil(retryAfter) + 2 : 30, attempts: attempts.map(a => `${a.model}: ${a.status}`) } }, status);
+
     } catch (err) {
         return json({ error: err.message }, 502);
     }
