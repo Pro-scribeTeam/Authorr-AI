@@ -2632,7 +2632,7 @@
                             </button>
                         </div>
                     </div>
-                    <button onclick="showPage('narration')" id="continueToNarration" class="btn-primary px-6 py-2 rounded-lg font-semibold">
+                    <button onclick="showPage('narration'); setTimeout(scanToNarration, 500);" id="continueToNarration" class="btn-primary px-6 py-2 rounded-lg font-semibold">
                         <i class="fas fa-arrow-right mr-2"></i><span data-i18n="ws_continue_narration">Continue to Narration</span>
                     </button>
                 </div>
@@ -3201,7 +3201,7 @@
 
                         <!-- Continue to Narration Button -->
                         <div class="mt-6 text-center">
-                            <button onclick="showPage('narration')" class="btn-glow bg-cyan-600 hover:bg-cyan-500 text-white px-8 py-3 rounded-lg font-semibold transition-all">
+                            <button onclick="showPage('narration'); setTimeout(scanToNarration, 500);" class="btn-glow bg-cyan-600 hover:bg-cyan-500 text-white px-8 py-3 rounded-lg font-semibold transition-all">
                                 <i class="fas fa-microphone mr-2"></i><span data-i18n="ws_continue_narration">Continue to Narration</span>
                             </button>
                         </div>
@@ -9538,7 +9538,7 @@ JSON Structure:
 Chapter ${chapter.number}: ${chapter.title}
 Summary: ${chapter.summary}
 Key Points: ${(chapter.keyPoints || []).join(', ')}
-Target Word Count: ${chapter.wordCount}
+Target Word Count: ${chapter.wordTarget || chapter.wordCount || 3000}
 Genre: ${document.getElementById('genre')?.value}
 Tone: ${document.getElementById('tone')?.value}${langInstruction}
 
@@ -11210,6 +11210,7 @@ Rules:
                 
                 // Display narration preview
                 displayNarrationPreview(content, { wordCount, charCount, estimatedDuration });
+                updateContentStatus();
                 showNotification(`✅ Story prepared for narration! ${wordCount.toLocaleString()} words ready for narrator.`, 'success');
             } catch (error) {
                 console.error('❌ Narration scan error:', error);
@@ -12036,14 +12037,14 @@ Rules:
                         const first = batch[0];
                         showLoading(`Generating narration… segment ${first.si + 1}/${segments.length} (${first.seg.character}), chunk ${first.j + 1}/${first.subTotal}`);
                         await Promise.all(batch.map(async ({ chunk, seg, si, j }, idx) => {
-                            for (let attempt = 1; attempt <= 5; attempt++) {
+                            for (let attempt = 1; attempt <= 8; attempt++) {
                                 try {
                                     flatBlobs[b + idx] = { blob: await generateSegmentAudio({ type: 'all_content', text: chunk, voice: seg.voice, character: seg.character }), segment: { ...seg, text: chunk } };
                                     return;
                                 } catch (err) {
-                                    if (attempt === 5) throw new Error(`Segment ${si + 1} chunk ${j + 1} failed: ${err.message}`);
-                                    const isRateLimit = /rate limit|429/i.test(err.message);
-                                    await new Promise(r => setTimeout(r, isRateLimit ? 6000 * attempt : 1500 * attempt));
+                                    if (attempt === 8) throw new Error(`Segment ${si + 1} chunk ${j + 1} failed: ${err.message}`);
+                                    const isRateLimit = /rate limit|429|503|service unavail/i.test(err.message);
+                                    await new Promise(r => setTimeout(r, isRateLimit ? 8000 * attempt : 2000 * attempt));
                                 }
                             }
                         }));
@@ -12063,14 +12064,14 @@ Rules:
                         const batch = chunks.slice(i, i + CONCURRENCY);
                         showLoading(`Generating narration… chunks ${i + 1}–${Math.min(i + CONCURRENCY, chunks.length)} of ${chunks.length}`);
                         await Promise.all(batch.map(async (chunk, j) => {
-                            for (let attempt = 1; attempt <= 5; attempt++) {
+                            for (let attempt = 1; attempt <= 8; attempt++) {
                                 try {
                                     chunkBlobs[i + j] = await generateSegmentAudio({ type: 'all_content', text: chunk, voice: narratorVoice, character: 'Narrator' });
                                     return;
                                 } catch (err) {
-                                    if (attempt === 5) throw new Error(`Chunk ${i + j + 1} failed after 5 attempts: ${err.message}`);
-                                    const isRateLimit = /rate limit|429/i.test(err.message);
-                                    await new Promise(r => setTimeout(r, isRateLimit ? 6000 * attempt : 1500 * attempt));
+                                    if (attempt === 8) throw new Error(`Chunk ${i + j + 1} failed after 8 attempts: ${err.message}`);
+                                    const isRateLimit = /rate limit|429|503|service unavail/i.test(err.message);
+                                    await new Promise(r => setTimeout(r, isRateLimit ? 8000 * attempt : 2000 * attempt));
                                 }
                             }
                         }));
@@ -13646,7 +13647,7 @@ Rules:
                             <button onclick="downloadCombinedBook()" class="btn-primary px-6 py-2 rounded-lg">
                                 <i class="fas fa-download mr-2"></i>Download as Text File
                             </button>
-                            <button onclick="showPage('narration'); this.closest('.fixed').remove()" class="btn-secondary px-6 py-2 rounded-lg">
+                            <button onclick="showPage('narration'); this.closest('.fixed').remove(); setTimeout(scanToNarration, 500);" class="btn-secondary px-6 py-2 rounded-lg">
                                 <i class="fas fa-microphone mr-2"></i>Create Narration
                             </button>
                             <button onclick="this.closest('.fixed').remove()" class="btn-gray px-6 py-2 rounded-lg">
