@@ -20364,13 +20364,6 @@ Rules:
             }
         })();
 
-        async function getAuthToken() {
-            const client = ensureSupabase();
-            if (!client) return null;
-            const { data: { session } } = await client.auth.getSession();
-            return session?.access_token || null;
-        }
-
         // ---- Project Save / Load ----
 
         async function saveProjectToSupabase() {
