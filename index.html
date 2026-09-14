@@ -20176,6 +20176,8 @@ Rules:
                 document.getElementById('adminNavLink')?.classList.remove('hidden');
                 document.getElementById('mobileAdminNavLink')?.classList.remove('hidden');
             }
+            // Update plan UI in workspace now that subscription is loaded
+            if (typeof updatePlanTierUI === 'function') updatePlanTierUI();
             // Load credit status after subscription loads
             loadCreditStatus();
         }
