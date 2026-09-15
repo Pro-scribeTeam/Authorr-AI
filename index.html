@@ -12083,13 +12083,25 @@ Rules:
                 }
                 
                 // Loudness-normalize every chunk to the same speech level — fixes volume
-                // fluctuation between narrator chunks AND dialogue louder than narration
+                // fluctuation between narrator chunks AND dialogue louder than narration.
+                // Batched 5-at-a-time: firing all 400+ chunks simultaneously via Promise.all
+                // exhausted OfflineAudioContext memory, causing silent catch fallbacks that
+                // returned un-normalized 24 kHz Chatterbox blobs; those were then embedded
+                // in a 44.1 kHz-header WAV and played at 1.84× speed — the audio corruption bug.
                 if (audioBlobs.length > 1) {
-                    showLoading('Normalizing voice volumes…');
-                    audioBlobs = await Promise.all(audioBlobs.map(async a => ({
-                        ...a,
-                        blob: await normalizeWavBlob(a.blob)
-                    })));
+                    showLoading(`Normalizing voice volumes… 0/${audioBlobs.length}`);
+                    const NORM_BATCH = 5;
+                    const normResults = new Array(audioBlobs.length);
+                    for (let ni = 0; ni < audioBlobs.length; ni += NORM_BATCH) {
+                        const batch = audioBlobs.slice(ni, ni + NORM_BATCH);
+                        const done = await Promise.all(batch.map(async (a) => {
+                            const normBlob = await normalizeWavBlob(a.blob);
+                            return { ...a, blob: normBlob };
+                        }));
+                        done.forEach((r, bi) => { normResults[ni + bi] = r; });
+                        showLoading(`Normalizing voice volumes… ${Math.min(ni + NORM_BATCH, audioBlobs.length)}/${audioBlobs.length}`);
+                    }
+                    audioBlobs = normResults;
                 }
 
                 // Capture per-voice segment timeline BEFORE merging (multi-voice only) so the
@@ -12626,7 +12638,11 @@ Rules:
             console.log('Generating Grok audio, voice:', voiceId);
             const token = await getAuthToken();
             if (!token) throw new Error('Please log in to use Authorr AI.');
-            const grokLang = sanitizeGrokLanguage(document.getElementById('grokLanguageSelect')?.value || 'en');
+            const rawLang = document.getElementById('grokLanguageSelect')?.value || 'en';
+            // 'auto' causes per-chunk language re-detection which misfires on character names
+            // (e.g. Arabic-sounding names trigger Arabic phonology for an entire chunk).
+            // Lock to 'en' for any batch narration job; user can re-select 'auto' for single previews.
+            const grokLang = sanitizeGrokLanguage(rawLang === 'auto' ? 'en' : rawLang);
             const grokBody = { action: 'tts', text, voice_id: voiceId, language: grokLang };
             if (window._narrationIsMultiVoice) grokBody.narration_mode = 'multi_voice';
             const resp = await fetch('/api/grok', {
@@ -12768,90 +12784,113 @@ Rules:
         // down and quiet chunks get cranked up, causing audible volume fluctuation
         // between chunks and dialogue sounding louder than narration. RMS over the
         // voiced portion equalizes perceived loudness across every voice and chunk.
+        // Inner normalize — throws on any failure. Never silently returns a wrong-rate blob.
+        async function _normalizeWavBlobOnce(blob, targetRms, peakCeiling) {
+            const arrayBuffer = await blob.arrayBuffer();
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const decoded = await audioCtx.decodeAudioData(arrayBuffer);
+            audioCtx.close();
+
+            // Measure peak, and RMS over voiced samples only (skip silence/pauses
+            // so long pauses don't make a chunk read as "quiet" and get boosted)
+            let peak = 0, sumSq = 0, voiced = 0;
+            const SILENCE = 0.004;
+            for (let ch = 0; ch < decoded.numberOfChannels; ch++) {
+                const data = decoded.getChannelData(ch);
+                for (let i = 0; i < data.length; i++) {
+                    const abs = Math.abs(data[i]);
+                    if (abs > peak) peak = abs;
+                    if (abs > SILENCE) { sumSq += data[i] * data[i]; voiced++; }
+                }
+            }
+            if (peak < 0.001 || voiced === 0) {
+                // Silent chunk — still must be at 44100 Hz for merge compatibility.
+                // If it's already at target rate, return as-is; otherwise resample.
+                const TARGET_RATE = 44100;
+                if (decoded.sampleRate === TARGET_RATE && decoded.numberOfChannels === 1) return blob;
+                // Fall through to OfflineAudioContext with gain=1 to resample.
+            }
+            const rms = voiced > 0 ? Math.sqrt(sumSq / voiced) : targetRms;
+
+            // Gain to hit target loudness, limited so the peak never clips
+            const gain = peak < 0.001 ? 1 : Math.min(targetRms / rms, peakCeiling / peak);
+
+            // Resample to a uniform 44.1kHz while applying gain — different TTS
+            // engines return different sample rates (Grok 44.1k, fal Chatterbox
+            // 24k) and mergeWavBlobs concatenates raw PCM, so mixed rates would
+            // play at the wrong speed. OfflineAudioContext resamples for us.
+            const TARGET_RATE = 44100;
+            let rendered = decoded;
+            if (decoded.sampleRate !== TARGET_RATE || decoded.numberOfChannels !== 1 || gain !== 1) {
+                const outLen = Math.ceil(decoded.duration * TARGET_RATE);
+                if (outLen < 1) throw new Error(`normalizeWavBlob: decoded duration too short (${decoded.duration}s)`);
+                // Mono output — voice audio, and mergeWavBlobs needs uniform channel count
+                const off = new OfflineAudioContext(1, outLen, TARGET_RATE);
+                const src = off.createBufferSource();
+                src.buffer = decoded;
+                const g = off.createGain();
+                g.gain.value = gain;
+                src.connect(g);
+                g.connect(off.destination);
+                src.start(0);
+                rendered = await off.startRendering();
+            }
+
+            // Short edge fades (kills clicks at chunk merge boundaries)
+            const fadeSamples = Math.min(Math.round(rendered.sampleRate * 0.008), Math.floor(rendered.length / 4));
+            for (let ch = 0; ch < rendered.numberOfChannels; ch++) {
+                const data = rendered.getChannelData(ch);
+                for (let i = 0; i < fadeSamples; i++) {
+                    const f = i / fadeSamples;
+                    data[i] *= f;                          // fade in
+                    data[data.length - 1 - i] *= f;        // fade out
+                }
+            }
+
+            // Encode back to 16-bit PCM WAV
+            const numCh = rendered.numberOfChannels;
+            const numSamples = rendered.length;
+            const dataBytes = numSamples * numCh * 2;
+            const out = new ArrayBuffer(44 + dataBytes);
+            const view = new DataView(out);
+            const ws = (o, s) => { for (let i = 0; i < s.length; i++) view.setUint8(o + i, s.charCodeAt(i)); };
+            ws(0, 'RIFF'); view.setUint32(4, 36 + dataBytes, true);
+            ws(8, 'WAVE'); ws(12, 'fmt '); view.setUint32(16, 16, true);
+            view.setUint16(20, 1, true); // PCM
+            view.setUint16(22, numCh, true);
+            view.setUint32(24, rendered.sampleRate, true);
+            view.setUint32(28, rendered.sampleRate * numCh * 2, true);
+            view.setUint16(32, numCh * 2, true);
+            view.setUint16(34, 16, true);
+            ws(36, 'data'); view.setUint32(40, dataBytes, true);
+            let offset = 44;
+            for (let i = 0; i < numSamples; i++) {
+                for (let ch = 0; ch < numCh; ch++) {
+                    const sample = Math.max(-1, Math.min(1, rendered.getChannelData(ch)[i]));
+                    view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7FFF, true);
+                    offset += 2;
+                }
+            }
+            return new Blob([out], { type: 'audio/wav' });
+        }
+
+        // Public wrapper: retry once on transient OfflineAudioContext failure (memory pressure),
+        // then throw — never silently return an un-normalized blob at the wrong sample rate.
         async function normalizeWavBlob(blob, targetRms = 0.08, peakCeiling = 0.95) {
             try {
-                const arrayBuffer = await blob.arrayBuffer();
-                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                const decoded = await audioCtx.decodeAudioData(arrayBuffer);
-                audioCtx.close();
-
-                // Measure peak, and RMS over voiced samples only (skip silence/pauses
-                // so long pauses don't make a chunk read as "quiet" and get boosted)
-                let peak = 0, sumSq = 0, voiced = 0;
-                const SILENCE = 0.004;
-                for (let ch = 0; ch < decoded.numberOfChannels; ch++) {
-                    const data = decoded.getChannelData(ch);
-                    for (let i = 0; i < data.length; i++) {
-                        const abs = Math.abs(data[i]);
-                        if (abs > peak) peak = abs;
-                        if (abs > SILENCE) { sumSq += data[i] * data[i]; voiced++; }
-                    }
-                }
-                if (peak < 0.001 || voiced === 0) return blob; // silence — return as-is
-                const rms = Math.sqrt(sumSq / voiced);
-
-                // Gain to hit target loudness, limited so the peak never clips
-                const gain = Math.min(targetRms / rms, peakCeiling / peak);
-
-                // Resample to a uniform 44.1kHz while applying gain — different TTS
-                // engines return different sample rates (Grok 44.1k, fal Chatterbox
-                // 24k) and mergeWavBlobs concatenates raw PCM, so mixed rates would
-                // play at the wrong speed. OfflineAudioContext resamples for us.
-                const TARGET_RATE = 44100;
-                let rendered = decoded;
-                if (decoded.sampleRate !== TARGET_RATE || decoded.numberOfChannels !== 1 || gain !== 1) {
-                    const outLen = Math.ceil(decoded.duration * TARGET_RATE);
-                    // Mono output — voice audio, and mergeWavBlobs needs uniform channel count
-                    const off = new OfflineAudioContext(1, outLen, TARGET_RATE);
-                    const src = off.createBufferSource();
-                    src.buffer = decoded;
-                    const g = off.createGain();
-                    g.gain.value = gain;
-                    src.connect(g);
-                    g.connect(off.destination);
-                    src.start(0);
-                    rendered = await off.startRendering();
-                }
-
-                // Short edge fades (kills clicks at chunk merge boundaries)
-                const fadeSamples = Math.min(Math.round(rendered.sampleRate * 0.008), Math.floor(rendered.length / 4));
-                for (let ch = 0; ch < rendered.numberOfChannels; ch++) {
-                    const data = rendered.getChannelData(ch);
-                    for (let i = 0; i < fadeSamples; i++) {
-                        const f = i / fadeSamples;
-                        data[i] *= f;                          // fade in
-                        data[data.length - 1 - i] *= f;        // fade out
-                    }
-                }
-
-                // Encode back to 16-bit PCM WAV
-                const numCh = rendered.numberOfChannels;
-                const numSamples = rendered.length;
-                const dataBytes = numSamples * numCh * 2;
-                const out = new ArrayBuffer(44 + dataBytes);
-                const view = new DataView(out);
-                const ws = (o, s) => { for (let i = 0; i < s.length; i++) view.setUint8(o + i, s.charCodeAt(i)); };
-                ws(0, 'RIFF'); view.setUint32(4, 36 + dataBytes, true);
-                ws(8, 'WAVE'); ws(12, 'fmt '); view.setUint32(16, 16, true);
-                view.setUint16(20, 1, true); // PCM
-                view.setUint16(22, numCh, true);
-                view.setUint32(24, rendered.sampleRate, true);
-                view.setUint32(28, rendered.sampleRate * numCh * 2, true);
-                view.setUint16(32, numCh * 2, true);
-                view.setUint16(34, 16, true);
-                ws(36, 'data'); view.setUint32(40, dataBytes, true);
-                let offset = 44;
-                for (let i = 0; i < numSamples; i++) {
-                    for (let ch = 0; ch < numCh; ch++) {
-                        const sample = Math.max(-1, Math.min(1, rendered.getChannelData(ch)[i]));
-                        view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7FFF, true);
-                        offset += 2;
-                    }
-                }
-                return new Blob([out], { type: 'audio/wav' });
+                return await _normalizeWavBlobOnce(blob, targetRms, peakCeiling);
             } catch (e) {
-                console.warn('normalizeWavBlob failed, using original:', e.message);
-                return blob;
+                console.warn('normalizeWavBlob attempt 1 failed, retrying after 600ms:', e.message);
+                await new Promise(r => setTimeout(r, 600));
+                try {
+                    return await _normalizeWavBlobOnce(blob, targetRms, peakCeiling);
+                } catch (e2) {
+                    // Do NOT silently return the original blob — it is very likely at a
+                    // different sample rate (e.g. 24 kHz Chatterbox) and embedding it
+                    // unchanged in a 44.1 kHz-headered merged WAV produces the
+                    // "reversed / garbled speech at every Chatterbox segment" bug.
+                    throw new Error(`normalizeWavBlob failed after 2 attempts: ${e2.message}`);
+                }
             }
         }
 
@@ -13464,6 +13503,9 @@ Rules:
 
             let offset = 12;
             let fmt = null, dataOffset = -1, dataSize = 0;
+            // Track where the last SUCCESSFULLY consumed chunk ended — used as the
+            // PCM fallback start for fal.ai WAVs that omit the 'data' chunk header.
+            let lastValidEnd = 12;
             while (offset + 8 <= ab.byteLength) {
                 const id = readId(offset);
                 const sz = view.getUint32(offset + 4, true);
@@ -13486,12 +13528,15 @@ Rules:
                 // Advance to next chunk; guard against corrupt sz jumping past EOF
                 const nextOffset = offset + 8 + sz + (sz & 1);
                 if (nextOffset <= offset || nextOffset > ab.byteLength) break;
+                lastValidEnd = nextOffset; // this chunk was fully valid; remember its end
                 offset = nextOffset;
             }
-            // Fal.ai WAV has no 'data' chunk header — PCM starts directly after LIST/INFO metadata
-            if (fmt && dataOffset < 0 && offset < ab.byteLength) {
-                dataOffset = offset;
-                dataSize = ab.byteLength - offset;
+            // Fal.ai WAV has no 'data' chunk header — PCM starts directly after LIST/INFO metadata.
+            // Use lastValidEnd (= byte after last fully-parsed RIFF chunk) NOT offset (= where the
+            // scanner stopped after walking into PCM bytes it mistook for chunk headers).
+            if (fmt && dataOffset < 0 && lastValidEnd < ab.byteLength) {
+                dataOffset = lastValidEnd;
+                dataSize = ab.byteLength - lastValidEnd;
             }
             if (!fmt || dataOffset < 0) {
                 const idAtEnd = (offset + 8 <= ab.byteLength) ? readId(offset) : 'EOF';
@@ -13507,6 +13552,23 @@ Rules:
             // Parse each blob's WAV structure directly — no AudioContext needed
             const wavs = await Promise.all(blobs.map(b => parseWavChunks(b)));
             const { fmt } = wavs[0];
+
+            // Guard: every chunk MUST share the same sample rate and channel count as chunk 0.
+            // A mismatch means normalization silently failed for that chunk, returning a blob
+            // at the wrong rate (e.g. Chatterbox 24 kHz inside a 44.1 kHz-headered output).
+            // Fail loudly rather than produce a silently corrupted audio file.
+            for (let i = 1; i < wavs.length; i++) {
+                const w = wavs[i];
+                if (w.fmt.sampleRate !== fmt.sampleRate || w.fmt.channels !== fmt.channels || w.fmt.bitsPerSample !== fmt.bitsPerSample) {
+                    throw new Error(
+                        `mergeWavBlobs: format mismatch at chunk ${i} — ` +
+                        `chunk ${i} is ${w.fmt.sampleRate}Hz/${w.fmt.channels}ch/${w.fmt.bitsPerSample}bit, ` +
+                        `chunk 0 is ${fmt.sampleRate}Hz/${fmt.channels}ch/${fmt.bitsPerSample}bit. ` +
+                        `All chunks must be normalized to the same format before merging.`
+                    );
+                }
+            }
+
             // 300ms silence between chunks (Chatterbox sometimes clips the tail of the last word)
             const silenceMs = 300;
             const silenceBytes = Math.round(fmt.sampleRate * (silenceMs / 1000)) * fmt.blockAlign;
