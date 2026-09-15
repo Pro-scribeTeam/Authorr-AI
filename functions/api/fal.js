@@ -21,7 +21,7 @@
  *   SUPABASE_SERVICE_ROLE_KEY — service role key (server-side only)
  */
 
-import { requireAuth, deductCredits, checkFeature, creditExhaustedError, json, authError, CORS_HEADERS } from './_shared.js';
+import { requireAuth, deductCredits, checkFeature, creditExhaustedError, kvAcquireSlot, kvReleaseSlot, json, authError, CORS_HEADERS } from './_shared.js';
 
 export async function onRequest(context) {
     const { request, env } = context;
@@ -71,35 +71,61 @@ export async function onRequest(context) {
                 }
             }
 
+            // ── Per-user TTS concurrency cap (Chatterbox only) ────────────────
+            // Uses the same 'tts' KV prefix as /api/grok so the cap is shared
+            // across providers — a user can't bypass it by switching TTS engines.
+            // direct calls block until fal.ai completes (~10-30s); TTL=120s covers this.
+            const TTS_CAP = 4;
+            let ttsSlot = { acquired: true };
+            if (modelLower.includes('chatterbox') && !sub.bypassGates) {
+                ttsSlot = await kvAcquireSlot(env.RATE_LIMIT_KV, user.id, 'tts', TTS_CAP, 120);
+                if (!ttsSlot.acquired) {
+                    return json({
+                        error: 'Please wait for your current narration to finish before starting another.',
+                        code: 'TTS_CONCURRENCY_LIMIT',
+                        in_flight: ttsSlot.count
+                    }, 429);
+                }
+            }
+
             // ── Credit deduction ──────────────────────────────────────────────
             let creditCost = 0;
             if (modelLower.includes('chatterbox')) {
                 const text = payload?.text || payload?.input?.text || '';
                 creditCost = text.length; // 1 credit/char
-                if (!text) return json({ error: 'payload.text is required for Chatterbox TTS' }, 400);
+                if (!text) {
+                    if (ttsSlot.acquired && modelLower.includes('chatterbox')) await kvReleaseSlot(env.RATE_LIMIT_KV, user.id, 'tts');
+                    return json({ error: 'payload.text is required for Chatterbox TTS' }, 400);
+                }
             } else if (modelLower.includes('flux')) {
                 creditCost = 3500; // flat rate for Flux Pro
             }
 
-            if (creditCost > 0) {
-                const credited = await deductCredits(env, user.id, creditCost);
-                if (!credited) return json(creditExhaustedError(sub), 402);
+            try {
+                if (creditCost > 0) {
+                    const credited = await deductCredits(env, user.id, creditCost);
+                    if (!credited) return json(creditExhaustedError(sub), 402);
+                }
+
+                const endpoint = action === 'direct'
+                    ? `https://fal.run/${model}`
+                    : `https://queue.fal.run/${model}`;
+                const resp = await fetch(endpoint, {
+                    method: 'POST', headers: falHeaders, body: JSON.stringify(payload)
+                });
+                const data = await resp.json();
+
+                // Refund on upstream failure
+                if (!resp.ok && creditCost > 0) {
+                    await deductCredits(env, user.id, -creditCost).catch(() => {});
+                }
+
+                return json(data, resp.status);
+            } finally {
+                if (modelLower.includes('chatterbox')) {
+                    await kvReleaseSlot(env.RATE_LIMIT_KV, user.id, 'tts');
+                }
             }
-
-            const endpoint = action === 'direct'
-                ? `https://fal.run/${model}`
-                : `https://queue.fal.run/${model}`;
-            const resp = await fetch(endpoint, {
-                method: 'POST', headers: falHeaders, body: JSON.stringify(payload)
-            });
-            const data = await resp.json();
-
-            // Refund on upstream failure
-            if (!resp.ok && creditCost > 0) {
-                await deductCredits(env, user.id, -creditCost).catch(() => {});
-            }
-
-            return json(data, resp.status);
         }
 
         // ── No-cost polling/fetch actions ─────────────────────────────────────

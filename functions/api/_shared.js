@@ -148,6 +148,48 @@ export function creditExhaustedError(sub) {
 }
 
 /**
+ * Acquire one slot in a per-user KV concurrency counter.
+ * Returns { acquired: true } on success, or { acquired: false, count, cap } when at limit.
+ * Gracefully degrades to { acquired: true } if RATE_LIMIT_KV is not bound or KV errors.
+ *
+ * NOTE: Cloudflare KV is eventually consistent across global PoPs. This guard is a
+ * soft cap — effective for preventing multi-tab abuse within the same session (same PoP).
+ * It is not an atomic hard lock. Use Durable Objects for strict serialization.
+ */
+export async function kvAcquireSlot(kv, userId, prefix, cap, ttlSeconds = 120) {
+    if (!kv) return { acquired: true }; // KV not bound → degrade gracefully
+    try {
+        const key = `${prefix}:${userId}`;
+        const raw = await kv.get(key);
+        const count = parseInt(raw || '0', 10);
+        if (count >= cap) return { acquired: false, count, cap };
+        await kv.put(key, String(count + 1), { expirationTtl: ttlSeconds });
+        return { acquired: true, count: count + 1 };
+    } catch {
+        return { acquired: true }; // KV error → degrade gracefully
+    }
+}
+
+/**
+ * Release one slot from the per-user KV concurrency counter.
+ * Best-effort — errors are silently swallowed.
+ * Call this in a `finally` block so it always runs even if upstream throws.
+ */
+export async function kvReleaseSlot(kv, userId, prefix) {
+    if (!kv) return;
+    try {
+        const key = `${prefix}:${userId}`;
+        const raw = await kv.get(key);
+        const count = Math.max(0, parseInt(raw || '0', 10) - 1);
+        if (count <= 0) {
+            await kv.delete(key);
+        } else {
+            await kv.put(key, String(count), { expirationTtl: 120 });
+        }
+    } catch { /* best-effort */ }
+}
+
+/**
  * Deduct `amount` credits via Supabase RPC.
  * Returns true on success, false if limit exceeded.
  * Admin without simulation active always returns true (DB handles bypass).

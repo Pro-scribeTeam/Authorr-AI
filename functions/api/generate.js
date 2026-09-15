@@ -9,7 +9,7 @@
  *   SUPABASE_SERVICE_ROLE_KEY — service role key (server-side only)
  */
 
-import { requireAuth, json, authError, CORS_HEADERS } from './_shared.js';
+import { requireAuth, kvAcquireSlot, kvReleaseSlot, json, authError, CORS_HEADERS } from './_shared.js';
 
 // Non-Venice models first (Google/NVIDIA infra), then Venice as fallback.
 // Venice hosts Llama/Hermes/Qwen free models and rate-limits them all together.
@@ -63,6 +63,19 @@ export async function onRequest(context) {
         if (generation_type === 'chapter' && sub.chapters_generated >= 3) {
             return json({ error: 'Trial chapter limit reached. You have used all 3 trial chapters. Please upgrade to continue writing.' }, 403);
         }
+    }
+
+    // Per-user concurrency cap: max 3 simultaneous /api/generate calls.
+    // Prevents multi-tab abuse and reduces shared free-model 429s under concurrent load.
+    // Admin bypass (bypassGates) skips the cap so testing is unaffected.
+    const GEN_CAP = 3;
+    const genSlot = sub.bypassGates ? { acquired: true } : await kvAcquireSlot(env.RATE_LIMIT_KV, user.id, 'gen', GEN_CAP, 180);
+    if (!genSlot.acquired) {
+        return json({
+            error: 'You already have content generating. Please wait for it to finish before starting more.',
+            code: 'GENERATE_CONCURRENCY_LIMIT',
+            in_flight: genSlot.count
+        }, 429);
     }
 
     try {
@@ -155,5 +168,7 @@ export async function onRequest(context) {
 
     } catch (err) {
         return json({ error: err.message }, 502);
+    } finally {
+        await kvReleaseSlot(env.RATE_LIMIT_KV, user.id, 'gen');
     }
 }

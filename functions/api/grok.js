@@ -13,7 +13,7 @@
  *   SUPABASE_SERVICE_ROLE_KEY — service role key (server-side only)
  */
 
-import { requireAuth, deductCredits, checkFeature, creditExhaustedError, json, authError, CORS_HEADERS } from './_shared.js';
+import { requireAuth, deductCredits, checkFeature, creditExhaustedError, kvAcquireSlot, kvReleaseSlot, json, authError, CORS_HEADERS } from './_shared.js';
 
 const XAI_BASE = 'https://api.x.ai/v1';
 
@@ -82,38 +82,55 @@ export async function onRequest(context) {
             if (featureErr) return json(featureErr, 403);
         }
 
+        // Per-user TTS concurrency cap: max 4 simultaneous Grok TTS calls.
+        // Matches MULTI_CONCURRENCY=4 so normal single-tab use passes through.
+        // Blocks multi-tab abuse and protects the shared xAI concurrent-session pool.
+        const TTS_CAP = 4;
+        const ttsSlot = sub.bypassGates ? { acquired: true } : await kvAcquireSlot(env.RATE_LIMIT_KV, user.id, 'tts', TTS_CAP, 120);
+        if (!ttsSlot.acquired) {
+            return json({
+                error: 'Please wait for your current narration to finish before starting another.',
+                code: 'TTS_CONCURRENCY_LIMIT',
+                in_flight: ttsSlot.count
+            }, 429);
+        }
+
         const cleanedText = preprocessText(text);
         const creditCost  = cleanedText.length; // 1 credit per character
 
-        // Deduct credits BEFORE calling xAI (admin bypass handled in DB)
-        const credited = await deductCredits(env, user.id, creditCost);
-        if (!credited) return json(creditExhaustedError(sub), 402);
+        try {
+            // Deduct credits BEFORE calling xAI (admin bypass handled in DB)
+            const credited = await deductCredits(env, user.id, creditCost);
+            if (!credited) return json(creditExhaustedError(sub), 402);
 
-        const resp = await fetch(`${XAI_BASE}/tts`, {
-            method: 'POST',
-            headers: { ...authHeader, 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                text: cleanedText,
-                voice_id,
-                language,
-                output_format: { codec: 'wav', sample_rate: 44100 }
-            })
-        });
+            const resp = await fetch(`${XAI_BASE}/tts`, {
+                method: 'POST',
+                headers: { ...authHeader, 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    text: cleanedText,
+                    voice_id,
+                    language,
+                    output_format: { codec: 'wav', sample_rate: 44100 }
+                })
+            });
 
-        if (!resp.ok) {
-            // Attempt to refund credits on upstream failure
-            await deductCredits(env, user.id, -creditCost).catch(() => {});
-            return json({ error: await resp.text() }, resp.status);
+            if (!resp.ok) {
+                // Attempt to refund credits on upstream failure
+                await deductCredits(env, user.id, -creditCost).catch(() => {});
+                return json({ error: await resp.text() }, resp.status);
+            }
+
+            const audioBuffer = await resp.arrayBuffer();
+            const contentType = resp.headers.get('content-type') || 'audio/wav';
+            const bytes = new Uint8Array(audioBuffer);
+            let binary = '';
+            for (let i = 0; i < bytes.length; i += 8192) {
+                binary += String.fromCharCode(...bytes.subarray(i, i + 8192));
+            }
+            return json({ audio: btoa(binary), contentType });
+        } finally {
+            await kvReleaseSlot(env.RATE_LIMIT_KV, user.id, 'tts');
         }
-
-        const audioBuffer = await resp.arrayBuffer();
-        const contentType = resp.headers.get('content-type') || 'audio/wav';
-        const bytes = new Uint8Array(audioBuffer);
-        let binary = '';
-        for (let i = 0; i < bytes.length; i += 8192) {
-            binary += String.fromCharCode(...bytes.subarray(i, i + 8192));
-        }
-        return json({ audio: btoa(binary), contentType });
     }
 
     // ── Voice cloning ────────────────────────────────────────────────────────
