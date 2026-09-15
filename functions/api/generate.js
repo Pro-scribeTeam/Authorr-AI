@@ -68,7 +68,7 @@ export async function onRequest(context) {
     // Per-user concurrency cap: max 3 simultaneous /api/generate calls.
     // Prevents multi-tab abuse and reduces shared free-model 429s under concurrent load.
     // Admin bypass (bypassGates) skips the cap so testing is unaffected.
-    const GEN_CAP = 3;
+    const GEN_CAP = 1; // TEMP: lowered to 1 for concurrency cap test — revert to 3 after test
     const genSlot = sub.bypassGates ? { acquired: true } : await kvAcquireSlot(env.RATE_LIMIT_KV, user.id, 'gen', GEN_CAP, 180);
     if (!genSlot.acquired) {
         return json({

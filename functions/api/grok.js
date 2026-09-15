@@ -85,7 +85,7 @@ export async function onRequest(context) {
         // Per-user TTS concurrency cap: max 4 simultaneous Grok TTS calls.
         // Matches MULTI_CONCURRENCY=4 so normal single-tab use passes through.
         // Blocks multi-tab abuse and protects the shared xAI concurrent-session pool.
-        const TTS_CAP = 4;
+        const TTS_CAP = 1; // TEMP: lowered to 1 for concurrency cap test — revert to 4 after test
         const ttsSlot = sub.bypassGates ? { acquired: true } : await kvAcquireSlot(env.RATE_LIMIT_KV, user.id, 'tts', TTS_CAP, 120);
         if (!ttsSlot.acquired) {
             return json({
