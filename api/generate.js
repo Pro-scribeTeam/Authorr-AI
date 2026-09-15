@@ -7,20 +7,40 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-// Non-Venice models first (Google/NVIDIA infra), then Venice as fallback.
-// Venice hosts Llama/Hermes/Qwen free models and rate-limits them all together.
+// Non-Venice models first (Google/NVIDIA infra), then Llama as fallback.
+// Removed: nvidia/nemotron-3-super-120b-a12b:free — reasoning model that leaks inline
+//   planning text ("Let's draft...", "Word count target...") into chapter content.
+// Removed: meta-llama/llama-3.2-3b-instruct:free — too small (3B params), produces
+//   confused or truncated chapter content under the full chapter prompt.
 const FALLBACK_MODELS = [
   'google/gemma-4-31b-it:free',
   'google/gemma-4-26b-a4b-it:free',
-  'nvidia/nemotron-3-super-120b-a12b:free',
   'meta-llama/llama-3.3-70b-instruct:free',
-  'meta-llama/llama-3.2-3b-instruct:free',
 ];
 
 // Strip <think>...</think> reasoning blocks that some models leak into content
 function stripThinking(text) {
   if (!text) return text;
   return text.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+}
+
+// Backstop: strip plain-text reasoning preambles from models (e.g. Nemotron) that
+// output chain-of-thought inline without XML wrappers. Conservative — prefers
+// false negatives over stripping real prose. Primary fix is the system prompt.
+const PLANNING_PREAMBLE_RE = /^(let['']?s\s+(plan|draft|write\s+the\s+chapter|think|outline)\b|we('ll|'ll|\s+need|\s+should)\s+(plan|draft|write|outline)\b|word\s+count\s+(target|goal|\:|\d)|i('ll|'ll)\s+(plan|draft|outline|structure\s+the\s+chapter)\b|chapter\s+(plan|outline|structure)\s*[:–—]|okay[,.]?\s+let['']?s\s+(plan|draft|write)\b|alright[,.]?\s+let['']?s\s+(plan|draft|write)\b|first[,.]?\s+let['']?s\s+(plan|draft|outline)\b)/i;
+
+function stripReasoningPreamble(text) {
+  if (!text) return text;
+  const lines = text.split('\n');
+  const firstLine = lines.find(l => l.trim().length > 0) || '';
+  if (!PLANNING_PREAMBLE_RE.test(firstLine.trim())) return text;
+  for (let i = 1; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue;
+    if (line.startsWith('#')) return lines.slice(i).join('\n').trim();
+    if (line.length > 60 && !PLANNING_PREAMBLE_RE.test(line)) return lines.slice(i).join('\n').trim();
+  }
+  return text;
 }
 
 module.exports = async function handler(req, res) {
@@ -97,7 +117,7 @@ module.exports = async function handler(req, res) {
       }
       // Strip any leaked <think> reasoning blocks from the response content
       if (data?.choices?.[0]?.message?.content) {
-        data.choices[0].message.content = stripThinking(data.choices[0].message.content);
+        data.choices[0].message.content = stripReasoningPreamble(stripThinking(data.choices[0].message.content));
       }
       if (generation_type === 'chapter' && authData.subscription.status === 'trial' && authData.subscription.bypassGates !== true) {
         await supabase.rpc('increment_chapters_generated', { user_id: authData.user.id }).catch(() => {});

@@ -11,20 +11,47 @@
 
 import { requireAuth, kvAcquireSlot, kvReleaseSlot, json, authError, CORS_HEADERS } from './_shared.js';
 
-// Non-Venice models first (Google/NVIDIA infra), then Venice as fallback.
-// Venice hosts Llama/Hermes/Qwen free models and rate-limits them all together.
+// Non-Venice models first (Google/NVIDIA infra), then Llama as fallback.
+// Removed: nvidia/nemotron-3-super-120b-a12b:free — reasoning model that leaks inline
+//   planning text ("Let's draft...", "Word count target...") into chapter content.
+// Removed: meta-llama/llama-3.2-3b-instruct:free — too small (3B params), produces
+//   confused or truncated chapter content under the full chapter prompt.
+// Tradeoff: 2 fewer 429-fallbacks during gemma outages. Llama 3.3-70B (Meta infra,
+//   separate rate-limit pool) covers the gap without the quality regression risk.
 const FALLBACK_MODELS = [
     'google/gemma-4-31b-it:free',
     'google/gemma-4-26b-a4b-it:free',
-    'nvidia/nemotron-3-super-120b-a12b:free',
     'meta-llama/llama-3.3-70b-instruct:free',
-    'meta-llama/llama-3.2-3b-instruct:free',
 ];
 
 // Strip <think>...</think> reasoning blocks that some models leak into content
 function stripThinking(text) {
     if (!text) return text;
     return text.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+}
+
+// Backstop: strip plain-text reasoning preambles from models (e.g. Nemotron) that
+// output chain-of-thought inline without XML wrappers. Detects only unambiguous
+// planning-language patterns at the very start of the response. The primary fix
+// is the system prompt instruction; this is a secondary safety net.
+// Conservative regex — prefers false negatives over accidentally stripping real prose.
+const PLANNING_PREAMBLE_RE = /^(let['']?s\s+(plan|draft|write\s+the\s+chapter|think|outline)\b|we('ll|'ll|\s+need|\s+should)\s+(plan|draft|write|outline)\b|word\s+count\s+(target|goal|\:|\d)|i('ll|'ll)\s+(plan|draft|outline|structure\s+the\s+chapter)\b|chapter\s+(plan|outline|structure)\s*[:–—]|okay[,.]?\s+let['']?s\s+(plan|draft|write)\b|alright[,.]?\s+let['']?s\s+(plan|draft|write)\b|first[,.]?\s+let['']?s\s+(plan|draft|outline)\b)/i;
+
+function stripReasoningPreamble(text) {
+    if (!text) return text;
+    const lines = text.split('\n');
+    // If the first non-empty line doesn't look like planning, return as-is
+    const firstLine = lines.find(l => l.trim().length > 0) || '';
+    if (!PLANNING_PREAMBLE_RE.test(firstLine.trim())) return text;
+    // Preamble detected — scan forward for the first line that looks like real prose:
+    // a markdown chapter heading (#) or a paragraph > 60 chars that isn't planning-language
+    for (let i = 1; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (!line) continue;
+        if (line.startsWith('#')) return lines.slice(i).join('\n').trim();
+        if (line.length > 60 && !PLANNING_PREAMBLE_RE.test(line)) return lines.slice(i).join('\n').trim();
+    }
+    return text; // couldn't find prose start — return unchanged
 }
 
 async function incrementChapters(supabaseUrl, serviceKey, userId) {
@@ -68,7 +95,7 @@ export async function onRequest(context) {
     // Per-user concurrency cap: max 3 simultaneous /api/generate calls.
     // Prevents multi-tab abuse and reduces shared free-model 429s under concurrent load.
     // Admin bypass (bypassGates) skips the cap so testing is unaffected.
-    const GEN_CAP = 1; // TEMP: lowered to 1 for concurrency cap test — revert to 3 after test
+    const GEN_CAP = 3;
     const genSlot = sub.bypassGates ? { acquired: true } : await kvAcquireSlot(env.RATE_LIMIT_KV, user.id, 'gen', GEN_CAP, 180);
     if (!genSlot.acquired) {
         return json({
@@ -125,7 +152,7 @@ export async function onRequest(context) {
             if (!res.ok || data?.error) continue;
 
             if (data?.choices?.[0]?.message?.content) {
-                data.choices[0].message.content = stripThinking(data.choices[0].message.content);
+                data.choices[0].message.content = stripReasoningPreamble(stripThinking(data.choices[0].message.content));
             }
             if (generation_type === 'chapter' && sub.status === 'trial' && !sub.bypassGates) {
                 await incrementChapters(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, user.id);

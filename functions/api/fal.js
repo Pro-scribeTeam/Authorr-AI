@@ -75,7 +75,7 @@ export async function onRequest(context) {
             // Uses the same 'tts' KV prefix as /api/grok so the cap is shared
             // across providers — a user can't bypass it by switching TTS engines.
             // direct calls block until fal.ai completes (~10-30s); TTL=120s covers this.
-            const TTS_CAP = 1; // TEMP: lowered to 1 for concurrency cap test — revert to 4 after test
+            const TTS_CAP = 4;
             let ttsSlot = { acquired: true };
             if (modelLower.includes('chatterbox') && !sub.bypassGates) {
                 ttsSlot = await kvAcquireSlot(env.RATE_LIMIT_KV, user.id, 'tts', TTS_CAP, 120);
