@@ -147,6 +147,7 @@ export async function onRequest(context) {
             const { url: audioUrl } = body;
             if (!audioUrl) return json({ error: 'Missing url' }, 400);
             const resp = await fetch(audioUrl, { headers: { 'Authorization': `Key ${falKey}` } });
+            if (!resp.ok) return json({ error: `Audio CDN fetch failed: ${resp.status}` }, 502);
             const buffer = await resp.arrayBuffer();
             const contentType = resp.headers.get('content-type') || 'audio/wav';
             const bytes = new Uint8Array(buffer);

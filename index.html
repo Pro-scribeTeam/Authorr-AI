@@ -12039,12 +12039,17 @@ Rules:
                         await Promise.all(batch.map(async ({ chunk, seg, si, j }, idx) => {
                             for (let attempt = 1; attempt <= 8; attempt++) {
                                 try {
-                                    flatBlobs[b + idx] = { blob: await generateSegmentAudio({ type: 'all_content', text: chunk, voice: seg.voice, character: seg.character }), segment: { ...seg, text: chunk } };
+                                    const audioBlob = await generateSegmentAudio({ type: 'all_content', text: chunk, voice: seg.voice, character: seg.character });
+                                    flatBlobs[b + idx] = { blob: audioBlob, segment: { ...seg, text: chunk } };
+                                    console.log(`✅ Chunk ${b + idx + 1}/${allSubChunks.length} idx=${b + idx} [${seg.character}] attempt=${attempt} size=${audioBlob.size}b`);
                                     return;
                                 } catch (err) {
                                     if (attempt === 8) throw new Error(`Segment ${si + 1} chunk ${j + 1} failed: ${err.message}`);
-                                    const isRateLimit = /rate limit|429|503|service unavail/i.test(err.message);
-                                    await new Promise(r => setTimeout(r, isRateLimit ? 8000 * attempt : 2000 * attempt));
+                                    const isRateLimit = /rate.?limit|too many|429|503|504|service unavail/i.test(err.message);
+                                    const baseMs = isRateLimit ? 4000 : 1000;
+                                    const delay = Math.min(baseMs * (2 ** (attempt - 1)), 60000);
+                                    console.warn(`⚠️ Chunk ${b + idx + 1} attempt ${attempt} failed: ${err.message.slice(0, 100)}. Retrying in ${delay}ms`);
+                                    await new Promise(r => setTimeout(r, delay));
                                 }
                             }
                         }));
@@ -12066,12 +12071,17 @@ Rules:
                         await Promise.all(batch.map(async (chunk, j) => {
                             for (let attempt = 1; attempt <= 8; attempt++) {
                                 try {
-                                    chunkBlobs[i + j] = await generateSegmentAudio({ type: 'all_content', text: chunk, voice: narratorVoice, character: 'Narrator' });
+                                    const audioBlob = await generateSegmentAudio({ type: 'all_content', text: chunk, voice: narratorVoice, character: 'Narrator' });
+                                    chunkBlobs[i + j] = audioBlob;
+                                    console.log(`✅ Chunk ${i + j + 1}/${chunks.length} idx=${i + j} [Narrator] attempt=${attempt} size=${audioBlob.size}b`);
                                     return;
                                 } catch (err) {
                                     if (attempt === 8) throw new Error(`Chunk ${i + j + 1} failed after 8 attempts: ${err.message}`);
-                                    const isRateLimit = /rate limit|429|503|service unavail/i.test(err.message);
-                                    await new Promise(r => setTimeout(r, isRateLimit ? 8000 * attempt : 2000 * attempt));
+                                    const isRateLimit = /rate.?limit|too many|429|503|504|service unavail/i.test(err.message);
+                                    const baseMs = isRateLimit ? 4000 : 1000;
+                                    const delay = Math.min(baseMs * (2 ** (attempt - 1)), 60000);
+                                    console.warn(`⚠️ Chunk ${i + j + 1} attempt ${attempt} failed: ${err.message.slice(0, 100)}. Retrying in ${delay}ms`);
+                                    await new Promise(r => setTimeout(r, delay));
                                 }
                             }
                         }));
@@ -12703,7 +12713,12 @@ Rules:
             const binary = atob(base64);
             const bytes = new Uint8Array(binary.length);
             for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-            console.log(`${labelForErrors} direct done. size=${bytes.length} type=${contentType}`);
+            // Validate WAV magic bytes (RIFF) — catches any CDN error body that slipped through
+            if (bytes.length < 44 || bytes[0] !== 0x52 || bytes[1] !== 0x49 || bytes[2] !== 0x46 || bytes[3] !== 0x46) {
+                throw new Error(`${labelForErrors}: non-WAV response (size=${bytes.length}, magic="${String.fromCharCode(bytes[0]||63,bytes[1]||63,bytes[2]||63,bytes[3]||63)}")`);
+            }
+            const wavSampleRate = bytes[24] | (bytes[25] << 8) | (bytes[26] << 16) | (bytes[27] << 24);
+            console.log(`${labelForErrors} direct done. size=${bytes.length} type=${contentType} rate=${wavSampleRate}Hz`);
             return new Blob([bytes], { type: contentType || 'audio/wav' });
         }
 
