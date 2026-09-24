@@ -7,15 +7,17 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-// Non-Venice models first (Google/NVIDIA infra), then Llama as fallback.
+// Model priority: Google infra first, then Qwen (Alibaba infra), then NVIDIA infra.
+// Multiple providers spread rate-limit load — if Google 429s, Qwen/NVIDIA still available.
 // Removed: nvidia/nemotron-3-super-120b-a12b:free — reasoning model that leaks inline
 //   planning text ("Let's draft...", "Word count target...") into chapter content.
-// Removed: meta-llama/llama-3.2-3b-instruct:free — too small (3B params), produces
-//   confused or truncated chapter content under the full chapter prompt.
+// Removed: meta-llama/llama-3.2-3b-instruct:free — too small (3B params).
+// Removed: meta-llama/llama-3.3-70b-instruct:free — no longer available on OpenRouter (404).
 const FALLBACK_MODELS = [
   'google/gemma-4-31b-it:free',
   'google/gemma-4-26b-a4b-it:free',
-  'meta-llama/llama-3.3-70b-instruct:free',
+  'qwen/qwen3.8-27b:free',
+  'nvidia/nemotron-3-ultra-550b-a55b:free',
 ];
 
 // Strip <think>...</think> reasoning blocks that some models leak into content
