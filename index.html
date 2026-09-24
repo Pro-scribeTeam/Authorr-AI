@@ -11805,6 +11805,15 @@ Rules:
                 }
             });
             
+            // Auto-select: use mainVoiceSelect's current value, or fall back to first available option
+            const preferredVoice = mainVoiceSelect.value;
+            if (preferredVoice && narratorVoiceSelect.querySelector(`option[value="${CSS.escape(preferredVoice)}"]`)) {
+                narratorVoiceSelect.value = preferredVoice;
+            } else {
+                const firstOption = narratorVoiceSelect.querySelector('option[value]:not([value=""])');
+                if (firstOption) narratorVoiceSelect.value = firstOption.value;
+            }
+
             // Enable preview button when voice is selected
             narratorVoiceSelect.addEventListener('change', function() {
                 const previewBtn = document.getElementById('narratorPreviewBtn');
@@ -11812,6 +11821,9 @@ Rules:
                     previewBtn.disabled = !this.value;
                 }
             });
+            // Sync initial preview button state
+            const previewBtn = document.getElementById('narratorPreviewBtn');
+            if (previewBtn) previewBtn.disabled = !narratorVoiceSelect.value;
         }
         
         function previewNarratorVoice() {
