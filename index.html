@@ -9351,7 +9351,7 @@ JSON Structure:
                 chapterDiv.innerHTML = `
                     <div class="flex justify-between items-start mb-2">
                         <h3 class="font-bold text-lg editable-title" contenteditable="true" data-chapter="${chapter.number}">${chapter.number}. ${chapter.title}</h3>
-                        <span class="text-xs text-theme-secondary">${chapter.wordCount} words</span>
+                        <span class="text-xs text-theme-secondary">${chapter.wordTarget || ''} words</span>
                     </div>
                     <p class="text-sm text-theme-secondary mb-2 editable-summary" contenteditable="true" data-chapter="${chapter.number}">${chapter.summary}</p>
                     <div class="flex flex-wrap gap-1 mb-3">
@@ -12006,9 +12006,9 @@ Rules:
 
                 let audioBlobs = [];
 
-                // Activate multi-voice when: toggle on, OR voices assigned in casting/narration page, OR Genre Engine markup present
+                // Activate multi-voice when plan allows AND: toggle on, OR voices assigned in casting/narration page, OR Genre Engine markup present
                 const hasCastingAssignments = Object.keys(mergedVoiceMap).length > 0;
-                if (useMultiVoice || hasCastingAssignments || (hasLineMarkup && gmNarrationMode !== 'single')) {
+                if (hasMultiVoicePlan() && (useMultiVoice || hasCastingAssignments || (hasLineMarkup && gmNarrationMode !== 'single'))) {
                     // Signal to API calls in this session that this is multi-voice (server enforces tier 3 gate)
                     window._narrationIsMultiVoice = true;
                     // Multi-voice: route narrator prose and character dialogue to different voices
