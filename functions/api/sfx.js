@@ -17,9 +17,10 @@ export async function onRequest(context) {
     const url = new URL(request.url);
     const params = new URLSearchParams(url.searchParams);
 
-    // Use env var token if set (Cloudflare dashboard), else trust client-supplied token
-    if (env.FREESOUND_TOKEN) {
-        params.set('token', env.FREESOUND_TOKEN);
+    // Use env var token if set — try both naming conventions
+    const serverToken = env.FREESOUND_TOKEN || env.FREESOUND_CLIENT_SECRET;
+    if (serverToken) {
+        params.set('token', serverToken);
     }
 
     // Must have some auth
@@ -28,6 +29,11 @@ export async function onRequest(context) {
             status: 400,
             headers: { 'Content-Type': 'application/json' }
         });
+    }
+
+    // Always request the fields we need for playback
+    if (!params.get('fields')) {
+        params.set('fields', 'id,name,username,duration,previews');
     }
 
     const freesoundUrl = `https://freesound.org/apiv2/search/text/?${params.toString()}`;

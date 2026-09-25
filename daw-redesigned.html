@@ -4856,6 +4856,12 @@
             medieval: 'medieval historical'
         };
 
+        function getFreesoundToken() {
+            try {
+                return (window.parent !== window ? window.parent.localStorage : localStorage).getItem('freesoundApiKey') || '';
+            } catch (e) { return ''; }
+        }
+
         async function dawSearchSFX(trackId) {
             const sel = document.getElementById(`${trackId}Select`);
             const category = sel?.value;
@@ -4868,7 +4874,8 @@
                 const token = await getDawAuthToken();
                 const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
                 const query = SFX_QUERIES[category] || category;
-                const params = new URLSearchParams({ query, page_size: 15, fields: 'id,name,username,duration,previews' });
+                const fsToken = getFreesoundToken();
+                const params = new URLSearchParams({ query, page_size: 15, fields: 'id,name,username,duration,previews', ...(fsToken && { token: fsToken }) });
                 const res = await fetch(`/api/sfx?${params}`, { headers });
                 if (!res.ok) throw new Error(`SFX search failed (${res.status})`);
                 const data = await res.json();
@@ -4900,7 +4907,8 @@
                 const token = await getDawAuthToken();
                 const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
                 const query = SFX_QUERIES[category] || category;
-                const params = new URLSearchParams({ query, page_size: 15, fields: 'id,name,username,duration,previews' });
+                const fsToken = getFreesoundToken();
+                const params = new URLSearchParams({ query, page_size: 15, fields: 'id,name,username,duration,previews', ...(fsToken && { token: fsToken }) });
                 const res = await fetch(`/api/sfx?${params}`, { headers });
                 if (!res.ok) throw new Error(`Freesound API ${res.status}`);
                 const data = await res.json();
