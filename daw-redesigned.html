@@ -4868,7 +4868,7 @@
                 const token = await getDawAuthToken();
                 const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
                 const query = SFX_QUERIES[category] || category;
-                const params = new URLSearchParams({ query, page_size: 15 });
+                const params = new URLSearchParams({ query, page_size: 15, fields: 'id,name,username,duration,previews' });
                 const res = await fetch(`/api/sfx?${params}`, { headers });
                 if (!res.ok) throw new Error(`SFX search failed (${res.status})`);
                 const data = await res.json();
@@ -4877,11 +4877,11 @@
                     return;
                 }
                 const normalized = data.results.map(r => ({
-                    name: r.name.replace(/\.[^.]+$/, ''),
-                    artist_name: r.username,
-                    duration: Math.round(r.duration),
-                    audio: r.previews['preview-hq-mp3']
-                }));
+                    name: r.name ? r.name.replace(/\.[^.]+$/, '') : 'Sound',
+                    artist_name: r.username || '',
+                    duration: r.duration ? Math.round(r.duration) : 0,
+                    audio: r.previews?.['preview-hq-mp3'] || r.previews?.['preview-lq-mp3'] || ''
+                })).filter(r => r.audio);
                 renderJamendoList(resultsEl, normalized, trackId);
             } catch (e) {
                 resultsEl.innerHTML = `<div style="padding:4px;color:#f87171;">Error: ${e.message}</div>`;
@@ -4900,7 +4900,7 @@
                 const token = await getDawAuthToken();
                 const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
                 const query = SFX_QUERIES[category] || category;
-                const params = new URLSearchParams({ query, page_size: 15 });
+                const params = new URLSearchParams({ query, page_size: 15, fields: 'id,name,username,duration,previews' });
                 const res = await fetch(`/api/sfx?${params}`, { headers });
                 if (!res.ok) throw new Error(`Freesound API ${res.status}`);
                 const data = await res.json();
@@ -4909,10 +4909,10 @@
                         <div style="padding:8px 16px;color:#9ca3af;font-size:12px;">No results found for "${category}".</div>`;
                     return;
                 }
-                const rows = data.results.map(r => {
-                    const name = r.name.replace(/\.[^.]+$/, '');
+                const rows = data.results.filter(r => r.previews?.['preview-hq-mp3'] || r.previews?.['preview-lq-mp3']).map(r => {
+                    const name = r.name ? r.name.replace(/\.[^.]+$/, '') : 'Sound';
                     const dur = r.duration ? `${Math.floor(r.duration/60)}:${String(Math.round(r.duration)%60).padStart(2,'0')}` : '';
-                    const safeUrl  = (r.previews['preview-hq-mp3'] || '').replace(/'/g, '%27');
+                    const safeUrl  = (r.previews?.['preview-hq-mp3'] || r.previews?.['preview-lq-mp3'] || '').replace(/'/g, '%27');
                     const safeName = name.replace(/'/g, '').replace(/"/g, '');
                     return `<div class="hjr-row">
                         <div class="hjr-name" title="${safeName}">${safeName}</div>
