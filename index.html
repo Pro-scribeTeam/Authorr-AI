@@ -4122,6 +4122,36 @@
                                 <button onclick="exportTTSManifest()" class="px-4 py-1 rounded text-sm ml-3 whitespace-nowrap border font-semibold" style="border-color:#22c55e;color:#22c55e">Export .json</button>
                             </div>
                         </div>
+
+                        <!-- Print on Demand Package -->
+                        <div class="border border-amber-700 p-4 rounded-lg" style="background:rgba(180,83,9,0.08)">
+                            <div class="flex items-start justify-between mb-1">
+                                <div class="flex-1 mr-3">
+                                    <h3 class="font-semibold text-amber-300"><i class="fas fa-print mr-1"></i>Print on Demand Package</h3>
+                                    <p class="text-xs text-theme-secondary mt-1">Print-ready interior PDF (title page, TOC, formatted chapters) + cover image + metadata sheet. Upload to Amazon KDP, IngramSpark, or Lulu to order hard &amp; soft back copies.</p>
+                                    <div class="flex flex-wrap gap-3 mt-2">
+                                        <div class="flex items-center gap-1">
+                                            <label class="text-xs text-theme-secondary">Platform:</label>
+                                            <select id="podPlatform" class="text-xs bg-theme-primary border border-theme rounded px-2 py-0.5" onchange="updatePodRecommendations()">
+                                                <option value="kdp">Amazon KDP</option>
+                                                <option value="ingramspark">IngramSpark</option>
+                                                <option value="lulu">Lulu.com</option>
+                                            </select>
+                                        </div>
+                                        <div class="flex items-center gap-1">
+                                            <label class="text-xs text-theme-secondary">Trim size:</label>
+                                            <select id="podTrimSize" class="text-xs bg-theme-primary border border-theme rounded px-2 py-0.5" onchange="updatePodRecommendations()">
+                                                <option value="6x9">6&quot; &times; 9&quot; (most common)</option>
+                                                <option value="5.5x8.5">5.5&quot; &times; 8.5&quot;</option>
+                                                <option value="5x8">5&quot; &times; 8&quot;</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <p id="podRecommendNote" class="text-xs text-amber-400 mt-1.5 hidden"></p>
+                                </div>
+                                <button onclick="exportPrintOnDemand()" class="px-4 py-1 rounded text-sm whitespace-nowrap border font-semibold flex-shrink-0 mt-1" style="border-color:#f59e0b;color:#f59e0b">Export</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -13816,6 +13846,80 @@ Rules:
             if (cc) cc.textContent = chapters || '—';
             if (tw) tw.textContent = wordCount > 0 ? wordCount.toLocaleString() : '—';
             if (ed) ed.textContent = durationStr;
+
+            updatePodRecommendations();
+        }
+
+        // Auto-recommend POD trim size and show gutter info based on word count
+        function updatePodRecommendations() {
+            var noteEl    = document.getElementById('podRecommendNote');
+            var trimSel   = document.getElementById('podTrimSize');
+            var platSel   = document.getElementById('podPlatform');
+            if (!noteEl || !trimSel || !platSel) return;
+
+            var text      = getExportText();
+            var wordCount = text ? text.trim().split(/\s+/).filter(function(w){ return w; }).length : 0;
+            if (wordCount < 100) { noteEl.classList.add('hidden'); return; }
+
+            // Words-per-page estimates per trim size (11pt Times, standard margins)
+            var wppMap    = { '6x9': 280, '5.5x8.5': 245, '5x8': 205 };
+            var platform  = platSel.value;
+
+            // Calculate estimated pages for each trim size
+            var estPages  = {
+                '6x9':     Math.ceil(wordCount / 280) + 8,  // +8 for front matter
+                '5.5x8.5': Math.ceil(wordCount / 245) + 8,
+                '5x8':     Math.ceil(wordCount / 205) + 8
+            };
+
+            // Recommend trim based on estimated page count at that size
+            var recommended;
+            var p69 = estPages['6x9'];
+            if (p69 < 120) {
+                recommended = '5x8';        // slim books look proportionate at smaller trim
+            } else if (p69 < 280) {
+                recommended = '5.5x8.5';
+            } else {
+                recommended = '6x9';
+            }
+
+            // Auto-select in dropdown only if user hasn't manually changed it
+            // (we track whether recommendation was applied via a data attribute)
+            var currentVal = trimSel.value;
+            var wasAutoSet = trimSel.dataset.autoSet === '1';
+            if (wasAutoSet || currentVal === trimSel.dataset.lastAuto) {
+                trimSel.value = recommended;
+                trimSel.dataset.autoSet = '1';
+                trimSel.dataset.lastAuto = recommended;
+            }
+
+            var chosenTrim  = trimSel.value;
+            var chosenPages = estPages[chosenTrim] || p69;
+            var trimLabels  = { '6x9': '6"×9"', '5.5x8.5': '5.5"×8.5"', '5x8': '5"×8"' };
+
+            // KDP binding gutter minimums by page count
+            // Source: kdp.amazon.com/en_US/help/topic/GVBQ3CMEQW3W2VL6
+            var kdpGutter = chosenPages <= 150 ? 0.375
+                          : chosenPages <= 300 ? 0.5
+                          : chosenPages <= 500 ? 0.625
+                          : chosenPages <= 700 ? 0.75
+                          :                      0.875;
+
+            // IngramSpark binding gutter minimums
+            var isGutter  = chosenPages <= 150 ? 0.5
+                          : chosenPages <= 400 ? 0.75
+                          :                      1.0;
+
+            var gutter    = platform === 'ingramspark' ? isGutter : kdpGutter;
+            var platName  = platform === 'ingramspark' ? 'IngramSpark' : platform === 'lulu' ? 'Lulu' : 'KDP';
+
+            var note = '\u2139\ufe0f ~' + chosenPages + ' pages \u00B7 '
+                     + trimLabels[chosenTrim] + ' recommended'
+                     + (chosenTrim === recommended ? ' \u2713' : '')
+                     + ' \u00B7 ' + platName + ' requires ' + gutter + '" inside margin (auto-applied at export)';
+
+            noteEl.textContent = note;
+            noteEl.classList.remove('hidden');
         }
 
         // 1. Complete Package — audio + manuscript
@@ -25420,6 +25524,380 @@ function exportTTSManifest() {
     var a = document.createElement('a'); a.href = url; a.download = safe + '_tts_manifest.json'; a.click();
     URL.revokeObjectURL(url);
     showNotification('TTS Manifest exported \u2014 ' + manifest.length + ' segments.', 'success');
+}
+
+// ─── PRINT ON DEMAND EXPORT ──────────────────────────────────────
+function exportPrintOnDemand() {
+    var title    = getExportTitle();
+    var rawText  = getExportText();
+    if (!rawText.trim()) { showNotification('No story content to export.', 'error'); return; }
+
+    var platform = (document.getElementById('podPlatform') || {}).value || 'kdp';
+    var trimSize  = (document.getElementById('podTrimSize') || {}).value || '6x9';
+    var author    = (document.getElementById('coverAuthor') || {}).value || '';
+    author = author.trim() || 'Author Name';
+    var genre     = (document.getElementById('genre') || {}).value || 'fiction';
+    var safe      = safeName(title);
+
+    showLoading();
+
+    try {
+        // ── Platform margin specs (points: 1in = 72pt) ──────────
+        var SPECS = {
+            kdp:         { inside: 63, outside: 45, top: 54, bottom: 54 },
+            ingramspark: { inside: 72, outside: 54, top: 54, bottom: 54 },
+            lulu:        { inside: 63, outside: 45, top: 54, bottom: 54 }
+        };
+        var SIZES = {
+            '6x9':     [432, 648],
+            '5.5x8.5': [396, 612],
+            '5x8':     [360, 576]
+        };
+
+        var m        = SPECS[platform] || SPECS.kdp;
+        var dims     = SIZES[trimSize] || SIZES['6x9'];
+        var pageW    = dims[0];
+        var pageH    = dims[1];
+        var BODY_PT  = 11;
+        var LINE_H   = BODY_PT * 1.45;
+        var HEAD_PT  = 14;
+        var usableW  = pageW - m.inside - m.outside;
+        var usableH  = pageH - m.top - m.bottom;
+        var linesPerPg = Math.floor(usableH / LINE_H);
+
+        var { jsPDF } = window.jspdf;
+
+        // ── Parse chapters ───────────────────────────────────────
+        var chapters = parseStoryMarkdown(rawText).chapters || [];
+
+        // ── Dry run: compute each chapter's starting page number ─
+        // Front matter uses pages 1-8; content starts on page 9 (odd).
+        var CONTENT_START = 9;
+        var simPage = CONTENT_START;
+        var chStartPages = [];
+
+        var tempDoc = new jsPDF({ unit: 'pt', format: [pageW, pageH] });
+        tempDoc.setFont('times', 'normal');
+        tempDoc.setFontSize(BODY_PT);
+
+        chapters.forEach(function(ch) {
+            if (simPage % 2 === 0) simPage++; // start chapters on odd (right-hand) pages
+            chStartPages.push(simPage);
+
+            var lineCount = Math.ceil((HEAD_PT * 2.2) / LINE_H) + 3;
+            ch.scenes.forEach(function(scene) {
+                scene.paragraphs.forEach(function(para) {
+                    if (para === '#SCENE_BREAK#') { lineCount += 3; return; }
+                    var plain = para.replace(/<[^>]+>/g, '').trim();
+                    if (!plain) return;
+                    lineCount += tempDoc.splitTextToSize(plain, usableW).length + 1;
+                });
+            });
+            simPage += Math.ceil(lineCount / linesPerPg);
+        });
+
+        // ── Dynamic margin correction based on actual page count ─
+        // POD platforms mandate wider inside (gutter) margins for thicker books
+        // so the text doesn't disappear into the spine binding.
+        var totalPages = simPage - 1;
+
+        var minInside; // minimum required inside margin in points (1in = 72pt)
+        if (platform === 'ingramspark') {
+            // IngramSpark minimums
+            minInside = totalPages <= 150 ? 36   // 0.5"
+                      : totalPages <= 400 ? 54   // 0.75"
+                      :                     72;  // 1.0"
+        } else {
+            // Amazon KDP & Lulu minimums (source: kdp.amazon.com/en_US/help/topic/GVBQ3CMEQW3W2VL6)
+            minInside = totalPages <= 150 ? 27   // 0.375"
+                      : totalPages <= 300 ? 36   // 0.5"
+                      : totalPages <= 500 ? 45   // 0.625"
+                      : totalPages <= 700 ? 54   // 0.75"
+                      :                     63;  // 0.875"
+        }
+
+        // KDP minimum: 24 pages. Pad with blank pages if needed.
+        var KDP_MIN_PAGES = 24;
+        var pagesToPad = Math.max(0, KDP_MIN_PAGES - totalPages);
+        // Ensure even page count (books have front/back)
+        if ((totalPages + pagesToPad) % 2 !== 0) pagesToPad++;
+
+        if (m.inside < minInside) {
+            m = Object.assign({}, m, { inside: minInside });
+            // Recalculate usableW with corrected margin (affects text wrap)
+            usableW = pageW - m.inside - m.outside;
+        }
+
+        // ── Build the actual PDF ─────────────────────────────────
+        var doc = new jsPDF({ unit: 'pt', format: [pageW, pageH] });
+        var pNum = 1;
+
+        function isOdd(n)  { return n % 2 !== 0; }
+        function lm(n)     { return isOdd(n) ? m.inside : m.outside; } // left margin
+        function tw()      { return pageW - m.inside - m.outside; }    // text width
+        function tx(n)     { return lm(n); }                            // text x origin
+
+        function addRunHdr(chTitle) {
+            if (pNum <= 8) return;
+            doc.setFont('times', 'italic');
+            doc.setFontSize(8);
+            doc.setTextColor(120, 120, 120);
+            if (isOdd(pNum)) {
+                doc.text(chTitle || title, pageW - m.outside - 4, m.top - 16, { align: 'right' });
+            } else {
+                doc.text(title, m.outside, m.top - 16);
+            }
+            doc.setTextColor(0, 0, 0);
+        }
+
+        function addPgNum() {
+            if (pNum < 5) return;
+            doc.setFont('times', 'normal');
+            doc.setFontSize(9);
+            doc.setTextColor(110, 110, 110);
+            doc.text(String(pNum), pageW / 2, pageH - m.bottom + 18, { align: 'center' });
+            doc.setTextColor(0, 0, 0);
+        }
+
+        function np(chTitle) {
+            doc.addPage([pageW, pageH]);
+            pNum++;
+            if (chTitle !== undefined) { addRunHdr(chTitle); addPgNum(); }
+        }
+
+        // PAGE 1: Half-title
+        doc.setFont('times', 'normal');
+        doc.setFontSize(22);
+        doc.text(title, pageW / 2, pageH * 0.38, { align: 'center' });
+
+        // PAGE 2: Blank verso
+        np();
+
+        // PAGE 3: Full title page
+        np();
+        doc.setFont('times', 'bold');
+        doc.setFontSize(28);
+        doc.text(title, pageW / 2, pageH * 0.36, { align: 'center' });
+        doc.setFont('times', 'normal');
+        doc.setFontSize(13);
+        doc.text(author, pageW / 2, pageH * 0.36 + 44, { align: 'center' });
+
+        // PAGE 4: Copyright
+        np();
+        var yr = new Date().getFullYear();
+        doc.setFontSize(9);
+        doc.setFont('times', 'normal');
+        var cpLines = [
+            'Copyright \u00A9 ' + yr + ' ' + author,
+            '',
+            'All rights reserved. No part of this publication may be',
+            'reproduced, distributed, or transmitted in any form or by',
+            'any means without prior written permission of the publisher.',
+            '',
+            'This is a work of fiction. Names, characters, places, and',
+            'incidents are either products of the author\'s imagination',
+            'or used fictitiously. Any resemblance to actual persons,',
+            'living or dead, is purely coincidental.',
+            '',
+            'First published ' + yr,
+            'Printed in the United States of America',
+        ];
+        var cy = m.top + 30;
+        cpLines.forEach(function(l) { doc.text(l, m.outside + 10, cy); cy += 13; });
+        addPgNum();
+
+        // PAGE 5: Dedication placeholder
+        np();
+        doc.setFont('times', 'italic');
+        doc.setFontSize(11);
+        doc.text('[Dedication]', pageW / 2, pageH / 2, { align: 'center' });
+        addPgNum();
+
+        // PAGE 6: Blank (verso before TOC)
+        np();
+        addPgNum();
+
+        // PAGE 7: Table of Contents
+        np();
+        doc.setFont('times', 'bold');
+        doc.setFontSize(15);
+        doc.text('Contents', tx(pNum), m.top + 18);
+        doc.setFont('times', 'normal');
+        doc.setFontSize(BODY_PT);
+        var tocY = m.top + 46;
+        chapters.forEach(function(ch, i) {
+            var pgStr  = String(chStartPages[i] || '\u2013');
+            var chName = ch.title || ('Chapter ' + (i + 1));
+            var pgW2   = doc.getTextWidth(pgStr);
+            var nmW    = doc.getTextWidth(chName);
+            var dotSp  = tw() - nmW - pgW2 - 6;
+            var dots   = '.'.repeat(Math.max(0, Math.floor(dotSp / doc.getTextWidth('.'))));
+            doc.text(chName, tx(pNum), tocY);
+            doc.text(dots, tx(pNum) + nmW + 3, tocY);
+            doc.text(pgStr, tx(pNum) + tw(), tocY, { align: 'right' });
+            tocY += LINE_H + 1;
+            if (tocY > pageH - m.bottom - 10) {
+                np('Contents');
+                tocY = m.top;
+            }
+        });
+        addPgNum();
+
+        // PAGE 8: Blank (verso before Chapter 1)
+        np();
+        addPgNum();
+
+        // ── Chapter pages ────────────────────────────────────────
+        chapters.forEach(function(ch, chIdx) {
+            var chTitle = ch.title || ('Chapter ' + (chIdx + 1));
+
+            // Ensure chapter opens on a recto (odd/right-hand) page.
+            // pNum even (verso)  → one np() lands on the next odd page.
+            // pNum odd  (recto)  → add a blank verso first, then np() reaches the next odd page.
+            if (pNum % 2 !== 0) { np(); } // blank verso when currently on a recto page
+            np(chTitle);
+
+            // Chapter title in upper portion
+            var y = m.top + Math.min(pageH * 0.12, 50);
+            doc.setFont('times', 'bold');
+            doc.setFontSize(HEAD_PT);
+            doc.text(chTitle, tx(pNum), y);
+            y += HEAD_PT * 2.2;
+
+            doc.setFont('times', 'normal');
+            doc.setFontSize(BODY_PT);
+
+            ch.scenes.forEach(function(scene) {
+                scene.paragraphs.forEach(function(para) {
+                    if (para === '#SCENE_BREAK#') {
+                        y += LINE_H;
+                        if (y > pageH - m.bottom - LINE_H) {
+                            np(chTitle); y = m.top;
+                        }
+                        doc.setFontSize(BODY_PT);
+                        doc.text('* * *', pageW / 2, y, { align: 'center' });
+                        y += LINE_H * 1.5;
+                        return;
+                    }
+                    var plain = para.replace(/<[^>]+>/g, '').trim();
+                    if (!plain) return;
+
+                    var lines = doc.splitTextToSize(plain, tw());
+                    lines.forEach(function(line) {
+                        if (y > pageH - m.bottom) {
+                            np(chTitle); y = m.top;
+                        }
+                        doc.text(line, tx(pNum), y);
+                        y += LINE_H;
+                    });
+                    y += LINE_H * 0.25; // paragraph gap
+                });
+            });
+        });
+
+        // Pad to KDP minimum 24 pages (and ensure even count)
+        for (var pi = 0; pi < pagesToPad; pi++) {
+            doc.addPage([pageW, pageH]);
+            pNum++;
+        }
+
+        // Save interior PDF
+        doc.save(safe + '_print_interior.pdf');
+        if (pagesToPad > 0) {
+            showNotification('Note: ' + pagesToPad + ' blank page(s) added to meet KDP\'s 24-page minimum.', 'warning');
+        }
+
+        // ── Cover image ──────────────────────────────────────────
+        setTimeout(function() {
+            var coverEl = document.getElementById('generatedCover');
+            if (coverEl && coverEl.src && coverEl.src.length > 20 && !coverEl.src.endsWith('#')) {
+                var img = new Image();
+                img.crossOrigin = 'anonymous';
+                img.onload = function() {
+                    var canvas = document.createElement('canvas');
+                    canvas.width  = img.naturalWidth;
+                    canvas.height = img.naturalHeight;
+                    canvas.getContext('2d').drawImage(img, 0, 0);
+                    canvas.toBlob(function(blob) {
+                        if (blob) triggerBlobDownload(blob, safe + '_cover.jpg');
+                    }, 'image/jpeg', 0.95);
+                };
+                img.onerror = function() {
+                    showNotification('Cover image unavailable \u2014 skipping cover download.', 'warning');
+                };
+                img.src = coverEl.src;
+            } else {
+                showNotification('No cover image found. Generate one on the Covers page first.', 'warning');
+            }
+        }, 600);
+
+        // ── Metadata text file ───────────────────────────────────
+        setTimeout(function() {
+            var wc        = rawText.trim().split(/\s+/).length;
+            var estPages  = totalPages; // use accurate page count from dry run
+            var platLbls  = { kdp: 'Amazon KDP', ingramspark: 'IngramSpark', lulu: 'Lulu.com' };
+            var trimLbls  = { '6x9': '6" x 9"', '5.5x8.5': '5.5" x 8.5"', '5x8': '5" x 8"' };
+            var genreLbl  = genre.replace(/-/g, ' ').replace(/\b\w/g, function(c) { return c.toUpperCase(); });
+            var actualInside = (m.inside / 72).toFixed(3).replace(/0+$/, '').replace(/\.$/, '') + '"';
+            var printCost = (estPages * 0.055 + 2).toFixed(2);
+            var pbPrice   = Math.ceil(estPages * 0.055 + 7) + '.99';
+            var hcPrice   = Math.ceil(estPages * 0.055 + 17) + '.99';
+
+            var meta = [
+                'BOOK METADATA \u2014 ' + (platLbls[platform] || 'Print on Demand'),
+                '='.repeat(52),
+                '',
+                'Title:        ' + title,
+                'Author:       ' + author,
+                'Genre:        ' + genreLbl,
+                'Chapters:     ' + chapters.length,
+                'Word Count:   ~' + wc.toLocaleString(),
+                'Page Count:   ' + estPages + ' (actual PDF page count)',
+                'Trim Size:    ' + (trimLbls[trimSize] || trimSize),
+                'Inside Margin: ' + actualInside + ' (auto-set for ' + estPages + '-page binding)',
+                'Interior:     Black & White',
+                'Paper:        Cream (recommended for fiction)',
+                '',
+                '\u2500\u2500\u2500 DESCRIPTION (150-200 words recommended) \u2500\u2500\u2500',
+                '',
+                '[Write your book description here. This appears on the back cover and product page.]',
+                '',
+                '\u2500\u2500\u2500 KEYWORDS (up to 7) \u2500\u2500\u2500',
+                '',
+                '[keyword1], [keyword2], [keyword3], [keyword4], [keyword5]',
+                '',
+                '\u2500\u2500\u2500 BISAC CATEGORIES \u2500\u2500\u2500',
+                '',
+                'Primary:   FIC000000 FICTION / General',
+                'Secondary: [choose a second category]',
+                '',
+                '\u2500\u2500\u2500 PRICING GUIDE (~' + estPages + ' pages) \u2500\u2500\u2500',
+                '',
+                '  Print cost (est.): $' + printCost,
+                '  Suggested retail \u2014 Paperback: $' + pbPrice,
+                '                   \u2014 Hardcover: $' + hcPrice,
+                '',
+                '\u2500\u2500\u2500 UPLOAD CHECKLIST \u2500\u2500\u2500',
+                '',
+                '[ ] Interior PDF:   ' + safe + '_print_interior.pdf',
+                '[ ] Cover image:    ' + safe + '_cover.jpg',
+                '[ ] Set trim size:  ' + (trimLbls[trimSize] || trimSize) + ' on ' + (platLbls[platform] || 'your platform'),
+                '[ ] Paper type:     Cream',
+                '[ ] Order a proof copy before publishing',
+                '',
+                '\u2014 Generated by Authorr AI \u2014 ' + new Date().toLocaleDateString(),
+            ].join('\n');
+
+            triggerTextDownload(meta, safe + '_print_metadata.txt');
+            hideLoading();
+            showNotification('Print package ready \u2014 3 files downloaded!', 'success');
+        }, 1400);
+
+    } catch(e) {
+        hideLoading();
+        showNotification('Export failed: ' + e.message, 'error');
+        console.error('[POD export]', e);
+    }
 }
 
     async function adminUpdatePlan(userId, plan) {
