@@ -455,6 +455,8 @@ test.describe('Scene-Aware Pan & Zoom YouTube Export', () => {
         new Blob([new Uint8Array([0,0,0,20,102,116,121,112,105,115,111,109,0,0,2,0,105,115,111,109])], { type: 'video/mp4' });
 
       window.detectSceneBreaks = async () => [];
+      // Auto-proceed through the review modal (no human present in test)
+      window.showVideoReview = async () => true;
       window.showLoading = () => {}; window.hideLoading = () => {};
       window.showNotification = () => {};
 
@@ -516,6 +518,9 @@ test.describe('Scene-Aware Pan & Zoom YouTube Export', () => {
         ctx.fillStyle = '#1a3a5c'; ctx.fillRect(0, 0, canvas.width, canvas.height);
         return new Promise(r => canvas.toBlob(blob => r(URL.createObjectURL(blob)), 'image/jpeg'));
       };
+
+      // Auto-proceed through the review modal (no human present in test)
+      window.showVideoReview = async () => true;
 
       window.assembleKenBurnsVideo = async (imgs, audio, scenes) => {
         window.__calls.assemble++;
@@ -767,27 +772,29 @@ test.describe('Scene-Aware Pan & Zoom YouTube Export', () => {
 
   // ── TC7: Platform toggle — YouTube video button visibility ────────────────
 
-  test('TC7: "Create Pan & Zoom Video" button visible only for YouTube platform', async ({ page }) => {
-    await setupExportPage(page, MULTI_SCENE_CHAPTER);
+  test('TC7: Video Studio page accessible from nav and contains Pan & Zoom card', async ({ page }) => {
+    // Show video-studio by direct DOM manipulation (mirrors setupExportPage pattern —
+    // showPage() checks the closure var `currentUser`, not window.currentUser)
+    await page.evaluate(() => {
+      document.querySelectorAll('.page').forEach(el => el.classList.add('hidden'));
+      const vsEl = document.getElementById('video-studio');
+      if (vsEl) vsEl.classList.remove('hidden');
+      window.currentPage = 'video-studio';
+    });
 
-    // Select YouTube — button must appear
-    await page.evaluate(() => selectPublishPlatform('youtube'));
-    const ytRow = page.locator('#youtubeVideoRow');
-    await expect(ytRow).toBeVisible();
-    await expect(page.locator('#youtubeVideoBtn')).toBeVisible();
+    // The video-studio page must be visible
+    const vsPage = page.locator('#video-studio');
+    await expect(vsPage).toBeVisible();
 
-    // Switch to other platforms — button must be hidden
-    const otherPlatforms = ['acx', 'spotify', 'apple', 'google', 'kobo', 'podcast'];
-    for (const id of otherPlatforms) {
-      await page.evaluate(pid => selectPublishPlatform(pid), id);
-      await expect(ytRow, `YouTube video row must be hidden for platform: ${id}`).toBeHidden();
-    }
+    // The Pan & Zoom start button must be present and enabled
+    const panZoomBtn = page.locator('#vsPanZoomBtn');
+    await expect(panZoomBtn).toBeVisible();
+    await expect(panZoomBtn).toBeEnabled();
 
-    // Switch back to YouTube — must reappear
-    await page.evaluate(() => selectPublishPlatform('youtube'));
-    await expect(ytRow).toBeVisible();
+    // The Export page must not contain a youtubeVideoRow element at all
+    await expect(page.locator('#youtubeVideoRow'), 'youtubeVideoRow must not exist in export page').toHaveCount(0);
 
-    console.log('\n[TC7] Platform toggle: PASS — button appears only for YouTube');
+    console.log('\n[TC7] Video Studio: PASS — page accessible, Pan & Zoom card present, old YouTube row removed');
   });
 
 });

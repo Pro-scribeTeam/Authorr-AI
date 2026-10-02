@@ -1168,6 +1168,9 @@
                     <button data-page="export" onclick="showPage('export')" class="nav-item px-4 py-2 rounded-lg font-semibold">
                         <i class="fas fa-download mr-2"></i><span data-i18n="nav_export">Export</span>
                     </button>
+                    <button data-page="video-studio" onclick="showPage('video-studio')" class="nav-item px-4 py-2 rounded-lg font-semibold">
+                        <i class="fas fa-film mr-2"></i>Video Studio
+                    </button>
                     <button data-page="config" onclick="showPage('config')" class="nav-item px-4 py-2 rounded-lg font-semibold">
                         <i class="fas fa-user-circle mr-2"></i><span data-i18n="nav_config">Account</span>
                     </button>
@@ -1241,6 +1244,9 @@
             </button>
             <button data-page="export" onclick="showPage('export')" class="nav-item px-4 py-3 rounded-lg font-semibold text-left">
                 <i class="fas fa-download mr-2"></i><span data-i18n="nav_export">Export</span>
+            </button>
+            <button data-page="video-studio" onclick="showPage('video-studio')" class="nav-item px-4 py-3 rounded-lg font-semibold text-left">
+                <i class="fas fa-film mr-2"></i>Video Studio
             </button>
             <button data-page="config" onclick="showPage('config')" class="nav-item px-4 py-3 rounded-lg font-semibold text-left">
                 <i class="fas fa-user-circle mr-2"></i><span data-i18n="nav_config">Account</span>
@@ -4249,6 +4255,7 @@
                                 class="btn-secondary py-2 rounded text-sm font-semibold w-full text-center block">
                                 <i class="fas fa-external-link-alt mr-2"></i>Open Upload Page
                             </a>
+                            <!-- Pan & Zoom video moved to Video Studio tab -->
                             <!-- Affiliate section -->
                             <div id="ppDetailAffiliate" class="hidden mt-1 rounded-lg border border-yellow-500/40 bg-yellow-500/5 p-3">
                                 <div class="flex items-center gap-2 mb-1">
@@ -4287,6 +4294,115 @@
                         <div class="text-sm text-theme-secondary" data-i18n="exp_duration">Audio Duration</div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Video Studio Page -->
+    <div id="video-studio" class="page hidden">
+        <div class="container mx-auto px-4 py-8">
+            <h1 class="text-3xl font-bold mb-2">
+                <i class="fas fa-film text-cyan-400 mr-3"></i>Video Studio
+            </h1>
+            <p class="text-theme-secondary mb-8">Create videos from your audiobook — AI scene images, motion effects, and narration synced to picture.</p>
+
+            <div id="vsOptionGrid" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+                <!-- Pan & Zoom -->
+                <div class="vs-option-card bg-theme-secondary p-6 rounded-xl border-2 border-theme flex flex-col gap-3">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background:rgba(220,38,38,0.18)">
+                            <i class="fas fa-film text-red-400 text-lg"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-white">Pan &amp; Zoom YouTube Video</h3>
+                            <span class="text-xs text-green-400 font-semibold"><i class="fas fa-check-circle mr-1"></i>Available</span>
+                        </div>
+                    </div>
+                    <p class="text-sm text-theme-secondary">Claude detects scene breaks in your chapter, Flux Pro generates one cinematic image per scene, and ffmpeg assembles a 1280&times;720 MP4 with Ken Burns pan &amp; zoom motion and your narration synced throughout.</p>
+                    <ul class="text-xs text-theme-secondary space-y-1">
+                        <li><i class="fas fa-check text-green-400 mr-1.5"></i>1&ndash;6 scene images auto-detected</li>
+                        <li><i class="fas fa-check text-green-400 mr-1.5"></i>Ken Burns zoom &amp; pan at 25 fps</li>
+                        <li><i class="fas fa-check text-green-400 mr-1.5"></i>Narration audio synced &middot; MP4 1280&times;720</li>
+                        <li><i class="fas fa-info-circle text-cyan-400 mr-1.5"></i>Narration must be generated first</li>
+                    </ul>
+                    <div class="mt-auto pt-2">
+                        <button id="vsPanZoomBtn" onclick="startPanZoomExport(this)"
+                            class="w-full py-2 rounded-lg text-sm font-bold flex items-center justify-center gap-2 transition-all hover:opacity-90"
+                            style="background:#dc2626;color:#fff">
+                            <i class="fas fa-film"></i>Start Export
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Chapter Series — coming soon -->
+                <div class="vs-option-card bg-theme-secondary p-6 rounded-xl border border-theme flex flex-col gap-3 opacity-50 select-none" style="pointer-events:none">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background:rgba(99,102,241,0.18)">
+                            <i class="fas fa-layer-group text-indigo-400 text-lg"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-white">Chapter Series</h3>
+                            <span class="text-xs text-yellow-400 font-semibold"><i class="fas fa-clock mr-1"></i>Coming Soon</span>
+                        </div>
+                    </div>
+                    <p class="text-sm text-theme-secondary">Export every chapter as a separate video with its own title card, scene images, and narration — ideal for serialised YouTube content.</p>
+                    <ul class="text-xs text-theme-secondary space-y-1">
+                        <li><i class="fas fa-lock text-gray-500 mr-1.5"></i>Requires Author Lite plan or higher</li>
+                        <li><i class="fas fa-lock text-gray-500 mr-1.5"></i>Multi-chapter book required</li>
+                    </ul>
+                </div>
+
+                <!-- Short-Form Clips — coming soon -->
+                <div class="vs-option-card bg-theme-secondary p-6 rounded-xl border border-theme flex flex-col gap-3 opacity-50 select-none" style="pointer-events:none">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background:rgba(16,185,129,0.18)">
+                            <i class="fas fa-mobile-alt text-emerald-400 text-lg"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-white">Short-Form Clips</h3>
+                            <span class="text-xs text-yellow-400 font-semibold"><i class="fas fa-clock mr-1"></i>Coming Soon</span>
+                        </div>
+                    </div>
+                    <p class="text-sm text-theme-secondary">30&ndash;60 second vertical clips from your chapter's most dramatic moments — optimised for YouTube Shorts, Instagram Reels, and TikTok.</p>
+                    <ul class="text-xs text-theme-secondary space-y-1">
+                        <li><i class="fas fa-lock text-gray-500 mr-1.5"></i>Portrait 1080&times;1920 output</li>
+                        <li><i class="fas fa-lock text-gray-500 mr-1.5"></i>Auto hook-finder for viral moments</li>
+                    </ul>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Video Studio — Scene Review Modal -->
+    <!-- Shown after scene images are generated, before ffmpeg assembly begins. -->
+    <!-- Allows user to confirm or cancel without spending further credits.    -->
+    <div id="vsReviewModal" class="fixed inset-0 z-[200]" style="background:rgba(0,0,0,0.88);display:none;align-items:center;justify-content:center">
+        <div class="bg-gray-900 rounded-2xl border border-cyan-700 w-full max-w-3xl mx-4 flex flex-col" style="max-height:90vh">
+            <div class="p-6 border-b border-gray-700 flex-shrink-0">
+                <h2 class="text-xl font-bold flex items-center gap-2">
+                    <i class="fas fa-eye text-cyan-400"></i>Review Scenes Before Export
+                </h2>
+                <p class="text-sm text-gray-400 mt-1">Images are generated. <strong class="text-white">No further credits will be spent.</strong> Confirm scenes below, then click <em class="text-white">Generate Video</em> to begin assembly, or <em class="text-white">Cancel</em> to discard.</p>
+            </div>
+            <div class="overflow-y-auto flex-1 p-6">
+                <div id="vsReviewSceneList" class="space-y-3"></div>
+                <div class="mt-5 p-3 rounded-lg flex items-center gap-2" style="background:#1f2937">
+                    <i class="fas fa-clock text-cyan-400 flex-shrink-0"></i>
+                    <span id="vsReviewEstimateText" class="text-sm text-gray-300">Estimating…</span>
+                </div>
+            </div>
+            <div class="p-6 border-t border-gray-700 flex gap-3 flex-shrink-0">
+                <button onclick="vsReviewProceed()"
+                    class="flex-1 py-2 rounded-lg font-bold flex items-center justify-center gap-2 hover:opacity-90 transition-all"
+                    style="background:#dc2626;color:#fff">
+                    <i class="fas fa-film"></i>Generate Video
+                </button>
+                <button onclick="vsReviewCancel()"
+                    class="px-6 py-2 rounded-lg font-semibold border border-gray-600 text-gray-300 hover:bg-gray-800 transition-all">
+                    Cancel
+                </button>
             </div>
         </div>
     </div>
@@ -12503,7 +12619,7 @@ Rules:
         }
 
         // ── Fal.ai Flux Pro image generation — queue submit → poll → image blob ──
-        async function generateFluxProImage(prompt) {
+        async function generateFluxProImage(prompt, width = 768, height = 1024) {
             const token = await getAuthToken();
             if (!token) throw new Error('Please log in to use Authorr AI.');
             const headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` };
@@ -12511,7 +12627,7 @@ Rules:
 
             const payload = {
                 prompt,
-                image_size: { width: 768, height: 1024 },
+                image_size: { width, height },
                 num_inference_steps: 28,
                 guidance_scale: 3.5,
                 num_images: 1,
@@ -14053,6 +14169,404 @@ Rules:
             showNotification('YouTube audio + description downloaded!', 'success');
         }
 
+        // ── YouTube Pan & Zoom Video Export ───────────────────────────────────────
+
+        // Scene limits (enforced after Claude's raw detection)
+        const SCENE_MIN_WORDS   = 900;  // minimum word gap between any two images
+        const SCENE_MAX_IMAGES  = 6;    // hard cap per chapter
+        const SCENE_SIG_RANK    = { opening: -1, location_change: 0, time_skip: 1, pov_change: 2, minor: 3 };
+
+        // Lazy-load ffmpeg.wasm (single-thread mode, no SharedArrayBuffer required)
+        let _ffmpegInst = null;
+        async function getFFmpeg() {
+            if (_ffmpegInst) return _ffmpegInst;
+            window.__exportStage = 'ffmpeg-import';
+            const { FFmpeg } = await import('https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/esm/index.js');
+            const { fetchFile, toBlobURL } = await import('https://unpkg.com/@ffmpeg/util@0.12.1/dist/esm/index.js');
+
+            // @ffmpeg/ffmpeg creates `new Worker(new URL('./worker.js', import.meta.url))`
+            // inside ffmpeg.load().  Two problems:
+            //   1. Cross-origin Worker restriction: unpkg.com URL blocked on our origin.
+            //   2. worker.js has relative imports (./const.js, ./errors.js) that fail when
+            //      the script is turned into a blob URL (no relative-path context).
+            // Fix: fetch all three files, strip the relative imports, inline them in the
+            // bundle, then proxy the Worker constructor to use our same-origin blob.
+            window.__exportStage = 'ffmpeg-worker-fetch';
+            const _wBase = 'https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/esm';
+            const [_workerSrc, _constSrc, _errorsSrc] = await Promise.all([
+                fetch(`${_wBase}/worker.js`).then(r => r.text()),
+                fetch(`${_wBase}/const.js`).then(r => r.text()),
+                fetch(`${_wBase}/errors.js`).then(r => r.text()),
+            ]);
+            // Remove the two relative import statements; their content is prepended below
+            const _workerStripped = _workerSrc
+                .replace(/^import\s+\{[^}]+\}\s+from\s+['"]\.\/const\.js['"]\s*;?\s*/m, '')
+                .replace(/^import\s+\{[^}]+\}\s+from\s+['"]\.\/errors\.js['"]\s*;?\s*/m, '');
+            const _workerBundle = `${_constSrc}\n${_errorsSrc}\n${_workerStripped}`;
+            const workerBlobURL = URL.createObjectURL(
+                new Blob([_workerBundle], { type: 'text/javascript' })
+            );
+            const OrigWorker = window.Worker;
+            window.Worker = class extends OrigWorker {
+                constructor(url, opts) {
+                    const href = (url instanceof URL) ? url.href : String(url);
+                    super(href.includes('unpkg.com') ? workerBlobURL : url, opts);
+                }
+            };
+
+            const ffmpeg = new FFmpeg();
+            ffmpeg.on('log', ({ message }) => { if (console) console.log('[ffmpeg]', message); });
+            const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm';
+            window.__exportStage = 'ffmpeg-loading';
+            let loadErr;
+            try {
+                await ffmpeg.load({
+                    coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`,   'text/javascript'),
+                    wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
+                });
+            } catch (e) { loadErr = e; }
+            window.Worker = OrigWorker;   // always restore, even on failure
+            if (loadErr) throw loadErr;
+
+            window.__exportStage = 'ffmpeg-ready';
+            _ffmpegInst = { ffmpeg, fetchFile };
+            return _ffmpegInst;
+        }
+
+        async function detectSceneBreaks(chapterText, title, genre) {
+            const token = await getAuthToken();
+            if (!token) throw new Error('Please log in to create videos.');
+            const resp = await fetch('/api/scene-detect', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ chapterText, title, genre: genre || storyData?.genre || 'fiction' })
+            });
+            if (!resp.ok) {
+                const err = await resp.json().catch(() => ({}));
+                throw new Error(err.error || `Scene detection failed (${resp.status})`);
+            }
+            const data = await resp.json();
+            return data.scenes || [];
+        }
+
+        function enforceSceneLimits(rawScenes, fullText) {
+            const totalWords = fullText.trim().split(/\s+/).filter(Boolean).length;
+
+            // Separate opening (word_offset === 0) from the rest
+            const opening = rawScenes.find(s => s.word_offset === 0) || {
+                char_offset: 0, word_offset: 0, significance: 'opening',
+                description: 'Opening scene', visual_prompt: rawScenes[0]?.visual_prompt || ''
+            };
+
+            // Sort remaining candidates by significance (most important first), then by position
+            const candidates = rawScenes
+                .filter(s => s.word_offset > 0)
+                .sort((a, b) => {
+                    const ra = SCENE_SIG_RANK[a.significance] ?? 99;
+                    const rb = SCENE_SIG_RANK[b.significance] ?? 99;
+                    return ra !== rb ? ra - rb : a.word_offset - b.word_offset;
+                });
+
+            // Greedily pick scenes that satisfy the minimum-gap rule
+            const selected = [opening];
+            for (const scene of candidates) {
+                if (selected.length >= SCENE_MAX_IMAGES) break;
+                const lastOffset = selected[selected.length - 1].word_offset;
+                if (scene.word_offset - lastOffset >= SCENE_MIN_WORDS) {
+                    selected.push(scene);
+                }
+            }
+
+            // Re-sort by word position for correct video order
+            selected.sort((a, b) => a.word_offset - b.word_offset);
+            return selected;
+        }
+
+        async function generateSceneImages(scenes, fullText, genre, title) {
+            const genreStyle = {
+                romance:    'warm golden-hour lighting, soft romantic atmosphere, cinematic',
+                fantasy:    'epic fantasy atmosphere, magical glow, detailed environment, cinematic',
+                mystery:    'noir shadows, dramatic contrast, moody atmosphere, cinematic',
+                thriller:   'tense atmosphere, high-contrast lighting, cinematic',
+                scifi:      'futuristic setting, neon accents, sci-fi aesthetic, cinematic',
+                horror:     'dark oppressive atmosphere, eerie green-tinted shadows, cinematic',
+                historical: 'painterly period atmosphere, warm sepia tones, epic scale, cinematic',
+                children:   'vibrant colors, storybook illustration style, warm inviting light',
+            }[String(genre).toLowerCase()] || 'cinematic lighting, dramatic composition';
+
+            const images = [];
+            for (let i = 0; i < scenes.length; i++) {
+                const scene = scenes[i];
+                const prompt = `${scene.visual_prompt}. ${genreStyle}. Wide cinematic landscape composition, 16:9 aspect ratio, photorealistic, high detail, no text, no watermarks, no people.`;
+                showLoading(`Generating scene image ${i + 1} of ${scenes.length}…`);
+                // 1280×720 landscape for YouTube
+                const imageUrl = await generateFluxProImage(prompt, 1280, 720);
+                const resp = await fetch(imageUrl);
+                if (!resp.ok) throw new Error(`Failed to fetch scene ${i + 1} image`);
+                images.push({ blob: await resp.blob(), scene });
+            }
+            return images;
+        }
+
+        function getAudioDurationFromBlob(blob) {
+            return new Promise((resolve, reject) => {
+                const url = URL.createObjectURL(blob);
+                const audio = new Audio(url);
+                audio.addEventListener('loadedmetadata', () => { URL.revokeObjectURL(url); resolve(audio.duration); });
+                audio.addEventListener('error', (e) => { URL.revokeObjectURL(url); reject(e); });
+            });
+        }
+
+        async function assembleKenBurnsVideo(imageData, audioBlob, scenes, fullText) {
+            window.__exportStage = 'assemble-start';
+            showLoading('Loading video engine (first time: ~30 s)…');
+            const { ffmpeg, fetchFile } = await getFFmpeg();
+
+            const words = fullText.trim().split(/\s+/).filter(Boolean);
+            const totalWords = words.length;
+
+            // Determine audio duration to distribute time across scenes proportionally
+            const audioDuration = await getAudioDurationFromBlob(audioBlob);
+
+            // In fast mode (window.__ffmpegFastMode = true) use low-fps static frames to
+            // minimise CPU time on low-spec hardware.  This is purely for automated tests;
+            // production always uses the full Ken Burns pipeline.
+            const FAST = !!window.__ffmpegFastMode;
+            const FPS  = FAST ? 5 : 25;
+
+            // Proportional durations by word count
+            // Floor: 0.5 s in fast mode (test), 2 s in production
+            const rawDurations = scenes.map((scene, i) => {
+                const nextOffset = (scenes[i + 1]?.word_offset) ?? totalWords;
+                const sceneWords = Math.max(1, nextOffset - scene.word_offset);
+                return (sceneWords / totalWords) * audioDuration;
+            });
+            const rawTotal = rawDurations.reduce((a, b) => a + b, 0);
+            const minDur  = FAST ? 0.5 : 2;
+            const durations = rawDurations.map(d => Math.max(minDur, d * (audioDuration / rawTotal)));
+
+            const W = 1280, H = 720;
+            const SCALE_W = FAST ? 1920 : 3840;  // 1920 is minimum for 1.5× zoom; 3840 gives oversampling
+
+            // Ken Burns motion patterns — used in production only
+            // Each returns the zoompan vf expression for the given duration in seconds
+            const motionPatterns = [
+                (d) => `scale=${SCALE_W}:-1,zoompan=z='min(zoom+0.0012,1.5)':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d=${Math.round(d*FPS)}:s=${W}x${H}:fps=${FPS}`,
+                (d) => `scale=${SCALE_W}:-1,zoompan=z='if(lte(zoom,1.0),1.45,max(1.001,zoom-0.0012))':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d=${Math.round(d*FPS)}:s=${W}x${H}:fps=${FPS}`,
+                (d) => `scale=${SCALE_W}:-1,zoompan=z='min(zoom+0.0008,1.2)':x='min(iw*(zoom-1)/2+iw*0.12*on/${Math.round(d*FPS)},iw*(zoom-1)/2+iw*0.12)':y='ih/2-(ih/zoom/2)':d=${Math.round(d*FPS)}:s=${W}x${H}:fps=${FPS}`,
+                (d) => `scale=${SCALE_W}:-1,zoompan=z='min(zoom+0.0008,1.2)':x='max(iw*(zoom-1)/2-iw*0.12*on/${Math.round(d*FPS)},iw*(zoom-1)/2-iw*0.12)':y='ih/2-(ih/zoom/2)':d=${Math.round(d*FPS)}:s=${W}x${H}:fps=${FPS}`,
+            ];
+
+            // Write audio
+            window.__exportStage = 'assemble-audio';
+            showLoading('Preparing audio…');
+            await ffmpeg.writeFile('audio.wav', await fetchFile(audioBlob));
+
+            // Encode each scene as a short H.264 segment
+            const segFiles = [];
+            for (let i = 0; i < imageData.length; i++) {
+                window.__exportStage = `assemble-seg-${i}`;
+                showLoading(`Encoding scene ${i + 1} of ${imageData.length}…`);
+                const imgName = `img${i}.jpg`;
+                const segName = `seg${i}.mp4`;
+                await ffmpeg.writeFile(imgName, await fetchFile(imageData[i].blob));
+
+                // Fast mode: plain scale (no zoompan) — encodes in milliseconds per segment
+                const vf = FAST
+                    ? `scale=${W}:${H}`
+                    : motionPatterns[i % motionPatterns.length](durations[i]);
+                await ffmpeg.exec([
+                    '-framerate', String(FPS),
+                    '-loop', '1',
+                    '-i', imgName,
+                    '-vf', vf,
+                    '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-preset', 'ultrafast',
+                    '-t', durations[i].toFixed(3),
+                    segName
+                ]);
+                segFiles.push(segName);
+            }
+
+            // Concatenate video segments
+            window.__exportStage = 'assemble-concat';
+            showLoading('Joining scenes…');
+            const concatTxt = segFiles.map(f => `file '${f}'`).join('\n');
+            await ffmpeg.writeFile('concat.txt', new TextEncoder().encode(concatTxt));
+            await ffmpeg.exec(['-f', 'concat', '-safe', '0', '-i', 'concat.txt', '-c', 'copy', 'video_silent.mp4']);
+
+            // Mux with narration audio
+            window.__exportStage = 'assemble-mux';
+            showLoading('Adding narration audio…');
+            await ffmpeg.exec([
+                '-i', 'video_silent.mp4', '-i', 'audio.wav',
+                '-c:v', 'copy', '-c:a', 'aac', '-b:a', '192k', '-shortest',
+                'output.mp4'
+            ]);
+
+            window.__exportStage = 'assemble-done';
+            const outputData = await ffmpeg.readFile('output.mp4');
+            return new Blob([outputData.buffer], { type: 'video/mp4' });
+        }
+
+        async function exportYouTubeVideo(callerBtn) {
+            const btn = callerBtn || null;
+            const originalLabel = btn ? btn.innerHTML : '';
+            if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Building video…'; }
+
+            try {
+                const audioBlob = await getExportAudioBlob();
+                if (!audioBlob) {
+                    showNotification('No narration audio found. Generate narration first.', 'error');
+                    return;
+                }
+
+                const title  = getExportTitle();
+                const text   = getExportText();
+                const genre  = storyData?.genre || 'fiction';
+
+                if (!text || text.trim().length < 100) {
+                    showNotification('No story text found. Write or paste your story first.', 'error');
+                    return;
+                }
+
+                // 1. Detect scenes via Claude
+                window.__exportStage = 'detect-scenes';
+                showLoading('Analysing story scenes…');
+                let rawScenes;
+                try {
+                    rawScenes = await detectSceneBreaks(text, title, genre);
+                } catch (err) {
+                    hideLoading();
+                    showNotification('Scene detection failed: ' + err.message, 'error');
+                    window.__exportError = err.message || String(err);
+                    return;
+                }
+                hideLoading();
+                console.log(`Scene detection: ${rawScenes.length} raw scenes found`);
+
+                // 2. Apply limits (800-word gap, 6 max, 1 floor)
+                const scenes = enforceSceneLimits(rawScenes, text);
+                console.log(`Scene limits applied: ${scenes.length} final scenes`);
+                showNotification(`Detected ${scenes.length} scene${scenes.length !== 1 ? 's' : ''}. Generating images…`, 'info');
+
+                // 3. Generate one landscape image per scene
+                window.__exportStage = 'generate-images';
+                let imageData;
+                try {
+                    imageData = await generateSceneImages(scenes, text, genre, title);
+                } catch (err) {
+                    hideLoading();
+                    showNotification('Image generation failed: ' + err.message, 'error');
+                    window.__exportError = err.message || String(err);
+                    return;
+                }
+                hideLoading();
+
+                // 3b. Review checkpoint — show scenes + images to user before assembly
+                const audioDurSecs = await getAudioDurationFromBlob(audioBlob).catch(() => 0);
+                const proceed = await showVideoReview(scenes, imageData, audioDurSecs);
+                if (!proceed) {
+                    if (btn) { btn.disabled = false; btn.innerHTML = originalLabel; }
+                    showNotification('Video export cancelled.', 'info');
+                    return;
+                }
+
+                // 4. Assemble Ken Burns video with ffmpeg.wasm
+                let videoBlob;
+                try {
+                    videoBlob = await assembleKenBurnsVideo(imageData, audioBlob, scenes, text);
+                } catch (err) {
+                    hideLoading();
+                    showNotification('Video assembly failed: ' + err.message, 'error');
+                    console.error('assembleKenBurnsVideo error:', err);
+                    window.__exportError = err.message || String(err);
+                    return;
+                }
+                hideLoading();
+
+                // 5. Trigger download
+                window.__exportStage = 'download';
+                triggerBlobDownload(videoBlob, `${safeName(title)}_youtube_video.mp4`);
+                showNotification(`YouTube video ready! ${scenes.length} scenes, Ken Burns pan & zoom, narration synced.`, 'success');
+
+            } catch (err) {
+                hideLoading();
+                showNotification('Video creation failed: ' + err.message, 'error');
+                console.error('exportYouTubeVideo:', err);
+                window.__exportError = err.message || String(err);
+            } finally {
+                if (btn) { btn.disabled = false; btn.innerHTML = originalLabel; }
+            }
+        }
+
+        // ── Video Studio ──────────────────────────────────────────────────────────
+
+        function startPanZoomExport(callerBtn) {
+            exportYouTubeVideo(callerBtn);
+        }
+
+        // Promise-based scene review modal. Resolves true (proceed) or false (cancel).
+        let _vsReviewResolve = null;
+
+        function showVideoReview(scenes, imageData, audioDurationSecs) {
+            return new Promise(function(resolve) {
+                _vsReviewResolve = resolve;
+
+                // Populate scene list with thumbnails
+                var list = document.getElementById('vsReviewSceneList');
+                list.innerHTML = '';
+                scenes.forEach(function(scene, i) {
+                    var imgBlob = imageData[i] ? imageData[i].blob : null;
+                    var imgUrl  = imgBlob ? URL.createObjectURL(imgBlob) : null;
+                    var row = document.createElement('div');
+                    row.className = 'flex gap-4 items-start p-3 rounded-xl';
+                    row.style.background = '#1f2937';
+                    row.innerHTML =
+                        '<div class="flex-shrink-0 w-28 h-16 rounded-lg overflow-hidden flex items-center justify-center" style="background:#374151">' +
+                        (imgUrl ? '<img src="' + imgUrl + '" class="w-full h-full object-cover" alt="Scene ' + (i + 1) + '">' : '<i class="fas fa-image text-gray-500 text-2xl"></i>') +
+                        '</div>' +
+                        '<div class="flex-1 min-w-0">' +
+                        '<div class="flex items-center gap-2 mb-1">' +
+                        '<span class="text-xs font-bold" style="color:#22d3ee;background:rgba(34,211,238,0.1);padding:2px 8px;border-radius:4px">Scene ' + (i + 1) + '</span>' +
+                        '<span class="text-xs text-gray-500 capitalize">' + (scene.significance || '') + '</span>' +
+                        '</div>' +
+                        '<p class="text-sm text-white font-medium leading-tight">' + (scene.description || '') + '</p>' +
+                        '<p class="text-xs text-gray-400 mt-1" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (scene.visual_prompt || '').slice(0, 120) + '</p>' +
+                        '</div>';
+                    list.appendChild(row);
+                });
+
+                // Estimated length
+                var estSecs = Math.max(scenes.length * 2, Math.round(audioDurationSecs || 0));
+                var mm = Math.floor(estSecs / 60), ss = estSecs % 60;
+                var estStr = mm > 0 ? (mm + 'm ' + ss + 's') : (ss + 's');
+                document.getElementById('vsReviewEstimateText').textContent =
+                    'Estimated video length: ~' + estStr + ' \u00b7 ' + scenes.length + ' scene' + (scenes.length !== 1 ? 's' : '') + ' \u00b7 Assembly takes 3\u201315 min depending on hardware';
+
+                // Show modal
+                document.getElementById('vsReviewModal').style.display = 'flex';
+            });
+        }
+
+        function vsReviewProceed() {
+            _closeVsReviewModal();
+            if (_vsReviewResolve) { _vsReviewResolve(true); _vsReviewResolve = null; }
+        }
+
+        function vsReviewCancel() {
+            _closeVsReviewModal();
+            if (_vsReviewResolve) { _vsReviewResolve(false); _vsReviewResolve = null; }
+        }
+
+        function _closeVsReviewModal() {
+            var modal = document.getElementById('vsReviewModal');
+            if (modal) modal.style.display = 'none';
+            // Revoke blob URLs created for preview thumbnails
+            document.querySelectorAll('#vsReviewSceneList img').forEach(function(img) {
+                if (img.src && img.src.startsWith('blob:')) URL.revokeObjectURL(img.src);
+            });
+        }
+
         // ── Platform Publishing ────────────────────────────────────────────────────
 
         const PUBLISH_PLATFORMS = {
@@ -14325,7 +14839,7 @@ Rules:
                 icon: 'fab fa-youtube',
                 color: 'text-red-500',
                 desc: 'Release as a YouTube video or audiobook series with chapter timestamps.',
-                specs: `Format: WAV or MP3 (YouTube accepts any audio)\nUpload as video: use cover art as static image\nAdd chapter timestamps in description (0:00 format)\nRecommended: split into chapters for playlists\nTip: Use DaVinci Resolve or iMovie to create video.`,
+                specs: `To create a Pan & Zoom video with AI scene images, go to Video Studio (nav above).\n\nAudio-only option: WAV export + chapter timestamps description file.\n\nYouTube tip: Add chapters in description using 0:00 format for better discoverability.`,
                 filenameFn: s => `${s}_youtube_audio.wav`,
                 notesFn: (title) => {
                     const text = getExportText();
