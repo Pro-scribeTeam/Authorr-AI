@@ -608,20 +608,37 @@ test.describe('Scene-Aware Pan & Zoom YouTube Export', () => {
         console.log('[page] notify:', t, msg);
         if (t === 'error') window.__exportError = window.__exportError || msg;
       };
+      // Navigate to Video Studio page (direct DOM, bypasses showPage auth gate)
+      document.querySelectorAll('.page').forEach(el => el.classList.add('hidden'));
+      document.getElementById('video-studio').classList.remove('hidden');
+      window.currentPage = 'video-studio';
     });
 
     const startMs = Date.now();
 
-    // Kick off export without awaiting (it runs for minutes)
+    // Kick off export via the Video Studio Pan & Zoom card (mirrors real user flow)
     await page.evaluate(() => {
-      exportYouTubeVideo();
+      startPanZoomExport(document.getElementById('vsPanZoomBtn'));
     });
 
-    // Wait for download or error.  Allow 38 min (leaves 2 min for setup + assertions within 40 min total).
+    // Wait for review modal to appear (image generation done, assembly not yet started)
+    await page.waitForFunction(
+      () => document.getElementById('vsReviewModal')?.style.display === 'flex',
+      { timeout: 15 * 60 * 1000 }
+    );
+    const reviewSceneCount = await page.evaluate(() =>
+      document.querySelectorAll('#vsReviewSceneList > div').length
+    );
+    console.log(`[TC5] Review modal showed ${reviewSceneCount} scene(s)`);
+
+    // Confirm by clicking "Generate Video" to proceed to assembly
+    await page.locator('#vsReviewModal').getByRole('button', { name: 'Generate Video' }).click();
+
+    // Wait for download or error.  Allow 37 min (leaves 3 min for setup + modal + assertions within 40 min total).
     try {
       await page.waitForFunction(
         () => window.__capturedBytes !== null || (window.__exportError !== null && window.__exportError !== undefined),
-        { timeout: 38 * 60 * 1000 }
+        { timeout: 37 * 60 * 1000 }
       );
     } catch (waitErr) {
       const lastStage = await page.evaluate(() => window.__exportStage || 'unknown').catch(() => 'eval-failed');
@@ -708,15 +725,33 @@ test.describe('Scene-Aware Pan & Zoom YouTube Export', () => {
         console.log('[page] notify:', t, msg);
         if (t === 'error') window.__exportError = window.__exportError || msg;
       };
+      // Navigate to Video Studio page (direct DOM, bypasses showPage auth gate)
+      document.querySelectorAll('.page').forEach(el => el.classList.add('hidden'));
+      document.getElementById('video-studio').classList.remove('hidden');
+      window.currentPage = 'video-studio';
     });
 
     const startMs = Date.now();
 
+    // Kick off export via the Video Studio Pan & Zoom card (mirrors real user flow)
     await page.evaluate(() => {
-      exportYouTubeVideo();
+      startPanZoomExport(document.getElementById('vsPanZoomBtn'));
     });
 
-    // Allow 57 min (leaves 3 min for setup + assertions within 60 min total).
+    // Wait for review modal (6 images generated, before assembly starts)
+    await page.waitForFunction(
+      () => document.getElementById('vsReviewModal')?.style.display === 'flex',
+      { timeout: 15 * 60 * 1000 }
+    );
+    const reviewSceneCount6 = await page.evaluate(() =>
+      document.querySelectorAll('#vsReviewSceneList > div').length
+    );
+    console.log(`[TC6] Review modal showed ${reviewSceneCount6} scene(s)`);
+
+    // Confirm by clicking "Generate Video" to proceed to assembly
+    await page.locator('#vsReviewModal').getByRole('button', { name: 'Generate Video' }).click();
+
+    // Allow 57 min (leaves 3 min for setup + modal + assertions within 60 min total).
     try {
       await page.waitForFunction(
         () => window.__capturedBytes !== null || (window.__exportError !== null && window.__exportError !== undefined),
@@ -795,6 +830,91 @@ test.describe('Scene-Aware Pan & Zoom YouTube Export', () => {
     await expect(page.locator('#youtubeVideoRow'), 'youtubeVideoRow must not exist in export page').toHaveCount(0);
 
     console.log('\n[TC7] Video Studio: PASS — page accessible, Pan & Zoom card present, old YouTube row removed');
+  });
+
+  // ── TC8: Cancel at review modal — assembly never runs ─────────────────────
+
+  test('TC8: Cancel at review modal — assembleKenBurnsVideo never called, no download', async ({ page }) => {
+    // No CDN needed: image gen is stubbed (canvas), assembly is stubbed to count calls.
+    // Modal appears after image gen completes; Cancel must prevent assembly entirely.
+    test.setTimeout(10 * 60 * 1000);
+
+    const twoSceneChapter = MULTI_SCENE_CHAPTER;
+    await setupExportPage(page, twoSceneChapter, 'Cancel Test', 'mystery');
+    await injectCanvasImageGen(page);
+    await injectSilentAudio(page, 5);
+    await interceptDownload(page);
+
+    await page.route('**/api/scene-detect', async route => {
+      const twoScenes = MOCK_DETECT_MULTI.scenes.slice(0, 2);
+      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ success: true, scenes: twoScenes }) });
+    });
+
+    // Stub assembleKenBurnsVideo to count invocations — must remain 0 after Cancel
+    await page.evaluate(() => {
+      window.__assembleCalls = 0;
+      const _real = window.assembleKenBurnsVideo;
+      window.assembleKenBurnsVideo = async (...args) => {
+        window.__assembleCalls++;
+        return _real ? _real(...args) : null;
+      };
+    });
+
+    await page.evaluate(() => {
+      window.__exportError = null;
+      window.__exportStage = 'init';
+      window.getAuthToken = async () => 'playwright-test-token';
+      window.showLoading = (msg) => { console.log('[page] loading:', msg); window.__exportStage = msg; };
+      window.hideLoading = () => {};
+      window.showNotification = (msg, t) => {
+        console.log('[page] notify:', t, msg);
+        if (t === 'error') window.__exportError = window.__exportError || msg;
+      };
+      // Navigate to Video Studio page
+      document.querySelectorAll('.page').forEach(el => el.classList.add('hidden'));
+      document.getElementById('video-studio').classList.remove('hidden');
+      window.currentPage = 'video-studio';
+    });
+
+    // Kick off via Pan & Zoom card
+    await page.evaluate(() => {
+      startPanZoomExport(document.getElementById('vsPanZoomBtn'));
+    });
+
+    // Wait for review modal (image generation done)
+    await page.waitForFunction(
+      () => document.getElementById('vsReviewModal')?.style.display === 'flex',
+      { timeout: 8 * 60 * 1000 }
+    );
+
+    const imageGenCalls = await page.evaluate(() => window.__imageGenCalls || 0);
+    const assembleBeforeCancel = await page.evaluate(() => window.__assembleCalls);
+
+    console.log(`\n[TC8] Review modal appeared`);
+    console.log(`[TC8] Images generated   : ${imageGenCalls} × 3500 fal credits = ${imageGenCalls * 3500} fal credits`);
+    console.log(`[TC8] assembleKenBurnsVideo calls before Cancel: ${assembleBeforeCancel}`);
+
+    // Click Cancel
+    await page.locator('#vsReviewModal').getByRole('button', { name: 'Cancel' }).click();
+
+    // Allow async settle
+    await page.waitForTimeout(2000);
+
+    const assembleAfterCancel = await page.evaluate(() => window.__assembleCalls);
+    const capturedAfterCancel = await page.evaluate(() => window.__capturedBytes);
+
+    console.log(`[TC8] assembleKenBurnsVideo calls after Cancel : ${assembleAfterCancel}`);
+    console.log(`[TC8] Assembly credits                         : 0 (ffmpeg.wasm is client-side and was never reached)`);
+    console.log(`[TC8] Download triggered                       : ${capturedAfterCancel !== null}`);
+    console.log(`\n[TC8] Credit summary:`);
+    console.log(`  Before Cancel — image gen : ${imageGenCalls} × 3500 = ${imageGenCalls * 3500} fal credits`);
+    console.log(`  After Cancel  — assembly  : 0 fal credits (cancelled)`);
+    console.log(`  Net total                 : ${imageGenCalls * 3500} fal credits`);
+
+    expect(assembleAfterCancel, 'assembleKenBurnsVideo must NOT be called after Cancel').toBe(0);
+    expect(capturedAfterCancel, 'No download must occur after Cancel').toBeNull();
+
+    console.log('[TC8] PASS — Cancel confirmed: assembly blocked, no file downloaded');
   });
 
 });
