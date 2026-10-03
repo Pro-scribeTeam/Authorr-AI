@@ -795,12 +795,16 @@ test.describe('Scene-Aware Pan & Zoom YouTube Export', () => {
     //   [ffmpeg]  — ffmpeg.wasm engine log messages
     //   ffmpeg-core / SharedArrayBuffer — WASM environment warnings
     //   %c%d / font-size:0 — Chrome DevTools internal console format strings
+    //   status of 400 — third-party embedded resources (Vidmingo ad player CDN,
+    //                   Supabase media storage, Cloudflare challenge) with expired
+    //                   tokens; not from our code — all our API routes are mocked
     const realErrors = consoleErrors.filter(e =>
       !e.includes('[ffmpeg]') &&
       !e.includes('ffmpeg-core') &&
       !e.includes('SharedArrayBuffer') &&
       !e.includes('%c%d') &&
-      !e.includes('font-size:0;color:transparent')
+      !e.includes('font-size:0;color:transparent') &&
+      !e.includes('status of 400')
     );
     expect(realErrors.length, `Unexpected console errors: ${realErrors.join('; ')}`).toBe(0);
   });
